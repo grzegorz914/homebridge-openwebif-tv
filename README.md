@@ -1,8 +1,5 @@
 # homebridge-openwebif-tv
 Control plugin for Sat Receiver basis on the OpenWebIf interface.
-
-# homebridge-openwebif-tv
-
 Can control receivers (like dreambox or vu+) which run OpenWebIf interface.
 Can operate as TV service, switch and read channels.
 
