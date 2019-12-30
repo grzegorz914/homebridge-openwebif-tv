@@ -1,0 +1,32 @@
+{
+  "name": "homebridge-openwebif-tv",
+  "version": "1.0.7",
+  "description": "Plugin for Homebridge (https://github.com/nfarina/homebridge) to controll of receivers with openwebif interface.",
+  "main": "index.js",
+  "engines": {
+    "node": ">=10.0.0",
+    "homebridge": ">=0.4.46"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "net": "^1.0.2",
+    "request": "^2.65.0"
+  },
+  "keywords": [
+    "homebridge-plugin"
+  ],
+  "author": "grzegorz914",
+  "contributors": [],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/grzegorz914/homebridge-openwebif-tv.git"
+  },
+  "bugs": {
+    "url": "https://github.com/grzegorz914/homebridge-openwebif-tv/issues"
+  },
+  "homepage": "https://github.com/grzegorz914/homebridge-openwebif-tv#readme",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
