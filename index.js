@@ -74,15 +74,12 @@ OpenWebIfTvAccessory.prototype = {
 	
 	generateSpeakerService() {
 		this.speakerService = new Service.TelevisionSpeaker(this.name);
-		this.speakerService
-		    .getCharacteristic(Characteristic.Volume)
+		this.speakerService.getCharacteristic(Characteristic.Volume)
 		    .on('get', this.openwebif.getVolume.bind(this.openwebif))
 		    .on('set', this.openwebif.setVolume.bind(this.openwebif));
-		this.speakerService
-            .getCharacteristic(Characteristic.VolumeSelector) //increase/decrease volume
-            .on('set', this.VolumeSelectorPress.bind(this));
-		this.speakerService
-		    .getCharacteristic(Characteristic.Mute)
+		this.speakerService.getCharacteristic(Characteristic.VolumeSelector) //increase/decrease volume
+                    .on('set', this.VolumeSelectorPress.bind(this));
+		this.speakerService.getCharacteristic(Characteristic.Mute)
 		    .on('get', this.openwebif.getMute.bind(this.openwebif))
 		    .on('set', this.openwebif.setMute.bind(this.openwebif));
 
@@ -93,14 +90,7 @@ OpenWebIfTvAccessory.prototype = {
 
 	
 	generateInputServices() {
-
-	/*	if (this.bouquets == undefined || this.bouquets == null || this.bouquets.length <= 0 || Array.isArray(this.bouquets) == false) {
-			this.log.error("no Bouquet list or not an array");
-			this.openwebif._printBouquets()
-			return;
-		}*/
-
-		// TODO load persisted Names
+                // TODO load persisted Names
 
 		this.inputServices = new Array();
 		this.inputChannels = new Array();
