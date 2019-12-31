@@ -88,7 +88,6 @@ OpenWebIfTvAccessory.prototype = {
 		return this.speakerService;
 	},
 
-	
 	generateInputServices() {
                 // TODO load persisted Names
 
@@ -186,14 +185,12 @@ OpenWebIfTvAccessory.prototype = {
 		this.openwebif.sendCommand(command, callback);
 	},
 	
-
-
 	getDiscSpace(callback) {
 		var me = this;
 		this.openwebif.getDiscSpace(callback);
 	},
 
-	identify(callback) {
+        identify(callback) {
 		this.log("Identify requested!");
 		callback();
 	},
