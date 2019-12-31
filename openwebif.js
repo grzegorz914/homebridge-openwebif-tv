@@ -62,7 +62,7 @@ Openwebif.prototype._httpRequest = function(url, body, method, callback) {
   function(error, response, body) {
     callback(error, response, body);
   });
-};
+}
 
 Openwebif.prototype.getDiscSpace = function(callback) {
   var me = this;
@@ -118,7 +118,7 @@ Openwebif.prototype.getPowerState = function(callback) {
       callback(null, powerOn);
     }
   });
-},
+}
 
 Openwebif.prototype.setVolume = function(volValue, callback) {
   var me = this;
@@ -131,7 +131,7 @@ Openwebif.prototype.setVolume = function(volValue, callback) {
       callback(null, targetValue);
     }
   });
-},
+}
 
 Openwebif.prototype.setPowerState = function(powerOn, callback) {
   powerOn = powerOn ? true : false; //number to boolean
@@ -169,7 +169,7 @@ Openwebif.prototype.getMute = function(callback) {
       callback(null, muteOn);
     }
   });
-},
+}
 
 Openwebif.prototype.getVolume = function(callback) {
   var me = this;
@@ -203,7 +203,7 @@ Openwebif.prototype._printBouquets = function() {
       }
     }
   });
-},
+}
 
 Openwebif.prototype._printBouquetsDetail = function(bouquets, printArray) {
   if (bouquets == undefined || bouquets == null || bouquets.length <= 0) {
@@ -292,7 +292,7 @@ Openwebif.prototype._httpGetForMethod = function(method, callback) {
       callback(new Error("device is off"), null); //receiver is off
     }
   });
-};
+}
 
 Openwebif.prototype._httpRequest = function(url, body, method, callback) {
   request({
@@ -304,7 +304,7 @@ Openwebif.prototype._httpRequest = function(url, body, method, callback) {
   function(error, response, body) {
     callback(error, response, body);
   });
-};
+}
 
 Openwebif.prototype.getDiscSpace = function(callback) {
   var me = this;
@@ -360,7 +360,7 @@ Openwebif.prototype.getPowerState = function(callback) {
       callback(null, powerOn);
     }
   });
-},
+}
 
 Openwebif.prototype.setVolume = function(volValue, callback) {
   var me = this;
@@ -373,7 +373,7 @@ Openwebif.prototype.setVolume = function(volValue, callback) {
       callback(null, targetValue);
     }
   });
-},
+}
 
 Openwebif.prototype.setPowerState = function(powerOn, callback) {
   powerOn = powerOn ? true : false; //number to boolean
@@ -411,7 +411,7 @@ Openwebif.prototype.getMute = function(callback) {
       callback(null, muteOn);
     }
   });
-},
+}
 
 Openwebif.prototype.getVolume = function(callback) {
   var me = this;
@@ -445,7 +445,7 @@ Openwebif.prototype._printBouquets = function() {
       }
     }
   });
-},
+}
 
 Openwebif.prototype._printBouquetsDetail = function(bouquets, printArray) {
   if (bouquets == undefined || bouquets == null || bouquets.length <= 0) {
@@ -482,7 +482,7 @@ Openwebif.prototype._printBouquetsDetail = function(bouquets, printArray) {
 
     }
   });
-},
+}
 
 Openwebif.prototype.getCurrentChannelWithsRef = function(callback) {
   var me = this;
