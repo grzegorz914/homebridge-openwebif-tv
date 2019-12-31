@@ -1,7 +1,7 @@
 const ping = require('./connect');
 const request = require('request');
 
-module.exports = Openwebif;
+module.exports =  Openwebif;
 
 var Openwebif = function(host, port, log) {
   this.host = host;
@@ -44,7 +44,7 @@ Openwebif.prototype._httpGetForMethod = function(method, callback) {
       }.bind(this));
     } else {
       me.log.error("Device not reachable" + me.host + ":" + me.port + " in method: " + method);
-      callback(new Error("device is off"), null); //totally off
+      callback(new Error("device is off"), null); //receiver is off
     }
   });
 }
