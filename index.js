@@ -8,7 +8,7 @@ module.exports = function (homebridge) {
 	Service = homebridge.hap.Service;
 	Characteristic = homebridge.hap.Characteristic;
 	homebridge.registerAccessory("homebridge-openwebif-tv", "OpenWebIfTv", OpenWebIfTvAccessory);
-}
+};
 
 function OpenWebIfTvAccessory(log, config) {
 	this.log = log;
@@ -260,4 +260,4 @@ OpenWebIfTvAccessory.prototype = {
 		inherits(volumeCharacteristic, Characteristic);
 		return volumeCharacteristic;
 	},
-};
+}
