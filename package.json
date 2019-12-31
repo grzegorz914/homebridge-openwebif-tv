@@ -1,6 +1,6 @@
 {
   "name": "homebridge-openwebif-tv",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Plugin for Homebridge (https://github.com/nfarina/homebridge) to controll of receivers with openwebif interface.",
   "main": "index.js",
   "engines": {
