@@ -50,7 +50,7 @@ Openwebif.prototype._httpGetForMethod = function(method, callback) {
       callback(new Error("device is off"), null); //totally off
     }
   });
-};
+}
 
 Openwebif.prototype._httpRequest = function(url, body, method, callback) {
   request({
