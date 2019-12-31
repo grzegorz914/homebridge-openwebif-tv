@@ -44,7 +44,7 @@ OpenWebIfTvAccessory.prototype = {
 			this.log("new input " + inputIdentifier);
 			var channel = this.inputChannels[inputIdentifier]
 			this.openwebif.setCurrentChannelWithsRef(channel.reference, callback);
-		})
+		});
 		.on('get', (callback) => {
 			me.log.error("received information");
 			me.openwebif.getCurrentChannelWithsRef(function(error, ref) {
