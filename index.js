@@ -260,4 +260,4 @@ OpenWebIfTvAccessory.prototype = {
 		inherits(volumeCharacteristic, Characteristic);
 		return volumeCharacteristic;
 	},
-}
+};
