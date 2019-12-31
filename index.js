@@ -181,9 +181,9 @@ OpenWebIfTvAccessory.prototype = {
 			command = Openwebif.RemoteKey.SELECT;
 			break;
 			case Characteristic.RemoteKey.BACK:
-			command = Openwebif.RemoteKey.BACK; // what is the difference between back and exit?
+			command = Openwebif.RemoteKey.BACK;
 			break;
-			case Characteristic.RemoteKey.EXIT: // what is the difference between back and exit?
+			case Characteristic.RemoteKey.EXIT:
 			command = Openwebif.RemoteKey.EXIT;
 			break;
 			case Characteristic.RemoteKey.PLAY_PAUSE:
@@ -191,7 +191,6 @@ OpenWebIfTvAccessory.prototype = {
 			break;
 			case Characteristic.RemoteKey.INFORMATION:
 			command = Openwebif.RemoteKey.INFORMATION;
-			// using menu button here.
 			break;
 		}
 		this.openwebif.sendCommand(command, callback);
