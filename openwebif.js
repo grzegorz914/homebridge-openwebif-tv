@@ -1,8 +1,6 @@
 const ping = require('./connect');
 const request = require('request');
 
-module.exports =  Openwebif;
-
 var Openwebif = function(host, port, log) {
   this.host = host;
   this.port = port;
@@ -254,7 +252,7 @@ Openwebif.prototype.getCurrentChannelWithsRef = function(callback) {
          me.log('getCurrentChannelWithsRef() succeded: %s', ref); 
          callback(null, ref);
         }
-    }
+     }
   });
 }
 
@@ -299,3 +297,5 @@ Openwebif.RemoteKey.PLAY_PAUSE = 164;
 Openwebif.RemoteKey.INFORMATION = 139; // menu button
 Openwebif.RemoteKey.INCREMENT = 115;
 Openwebif.RemoteKey.DECREMENT = 114;
+
+module.exports =  Openwebif;
