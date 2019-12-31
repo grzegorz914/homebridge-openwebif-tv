@@ -238,7 +238,7 @@ OpenWebIfTvAccessory.prototype = {
 				perms: [Characteristic.Perms.READ, Characteristic.Perms.NOTIFY]
 			});
 			this.value = 0;
-		};
+		}
 		inherits(discSpaceChar, Characteristic);
 		return discSpaceChar;
 	},
@@ -256,7 +256,7 @@ OpenWebIfTvAccessory.prototype = {
 				perms: [Characteristic.Perms.READ, Characteristic.Perms.NOTIFY]
 			});
 			this.value = ip;
-		};
+		}
 		inherits(volumeCharacteristic, Characteristic);
 		return volumeCharacteristic;
 	},
