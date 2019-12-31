@@ -35,3 +35,6 @@ HomeBridge: https://github.com/nfarina/homebridge
 - Adapted to working wit JSON using api OpenWebIf.
 - Fixed channels list display if receiver is OFF.
 - Publish to npm
+
+# Development
+- Pull request and help in development highly appreciated.
