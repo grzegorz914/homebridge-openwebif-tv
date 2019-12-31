@@ -22,7 +22,7 @@ HomeBridge: https://github.com/nfarina/homebridge
         {
             "accessory": "OpenWebifTv",
             "name": "Receiver name",
-            "host": "iP adress/Host",
+            "host": "iP/Host",
             "port": 80,
             "bouquets": []
    
