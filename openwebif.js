@@ -1,3 +1,4 @@
+
 const ping = require('./connect');
 const request = require('request');
 
@@ -71,31 +72,8 @@ Openwebif.prototype.getDiscSpace = function(callback) {
       var capacityDiscSpaceValue = json.info.hdd[0].capacity;
       var capacityDouble = parseFloat(capacityDiscSpaceValue);
       var percentage = (freeDouble / capacityDouble) * 100;
-      me.log('getDiscSpace() succeded: %s', freeDiscSpaceValue);
+      me.log('getDiscSpace() succeded, free: %s', percentage);
       callback(null, percentage);
-    }
-  });
-}
-
-Openwebif.prototype.setMute = function(muteOn, callback) {
-  muteOn = muteOn ? true : false; //number to boolean
-  var me = this;
-  me.getMute(function(error, muteOnCurrent) {
-    if (error){
-      callback(null, muteOn? false : true); //receiver is off
-    } else {
-      if (muteOnCurrent == muteOn) { //state like expected
-        callback(null, muteOn);
-      } else { //set new state
-        me._httpGetForMethod("/api/vol?set=mute", function(error) {
-          if (error){
-            callback(error)
-          } else {
-            me.log('setMute() succeded');
-            callback(null, muteOn);
-          }
-        });
-      }
     }
   });
 }
@@ -107,43 +85,29 @@ Openwebif.prototype.getPowerState = function(callback) {
       callback(error)
     } else {
       var json = JSON.parse(data); 
-      var powerValue = json.inStandby;
-      var powerOn = (powerValue == "false");
-      me.log('getPowerState() succeded: %s', powerOn);
-      callback(null, powerOn);
+      var status = (json.inStandby == "false");
+      me.log('getPowerState() succeded: %s', status? 'ON':'OFF');
+      callback(null, status);
     }
   });
 }
 
-Openwebif.prototype.setVolume = function(volValue, callback) {
+Openwebif.prototype.setPowerState = function(state, callback) {
+  var state = state ? true : false; //number to boolean
   var me = this;
-  var targetValue = parseInt(volValue);
-  this._httpGetForMethod("/api/vol?set=set" + targetValue, function(error) {
-    if (error){
-      callback(error)
-    } else {
-      me.log('setVolume() succesed %s', targetValue);
-      callback(null, targetValue);
-    }
-  });
-}
-
-Openwebif.prototype.setPowerState = function(powerOn, callback) {
-  powerOn = powerOn ? true : false; //number to boolean
- var me = this;
-  me.getPowerState(function(error, currentPowerOn) {
+  me.getPowerState(function(error, currentState) {
     if(error){
-      callback(null, powerOn? false : true); //receiver is off
+      callback(null, state? false : true); //receiver is off
     } else {
-      if (currentPowerOn == powerOn) { //state like expected
-        callback(null, powerOn);
+      if (currentState == state) { //state like expected
+        callback(null, state);
       } else { //set new state
         me._httpGetForMethod("/api/powerstate?newstate=0", function(error) {
           if (error){
             callback(error)
           } else {
             me.log('setPowerState() succeded');
-            callback(null, powerOn);
+            callback(null, state);
           }
         });
       }
@@ -158,26 +122,59 @@ Openwebif.prototype.getMute = function(callback) {
       callback(error)
     } else {
       var json = JSON.parse(data);
-      var muteValue = json.muted;
-      var muteOn = (muteValue == "true");
-      me.log('getMute() succeded: %s', muteOn);
-      callback(null, muteOn);
+      var state = (json.muted == "false");
+      me.log('getMute() succeded: %s', state? 'OFF':'ON');
+      callback(null, state);
+    }
+  });
+}
+
+Openwebif.prototype.setMute = function(state, callback) {
+  var state = state ? true : false; //number to boolean
+  var me = this;
+  me.getMute(function(error, currentState) {
+    if (error){
+      callback(null, state? false : true); //receiver is off
+    } else {
+      if (currentState == state) { //state like expected
+        callback(null, state);
+      } else { //set new state
+        me._httpGetForMethod("/api/vol?set=mute", function(error) {
+          if (error){
+            callback(error)
+          } else {
+            me.log('setMute() succeded %s', state);
+            callback(null, state);
+          }
+        });
+      }
     }
   });
 }
 
 Openwebif.prototype.getVolume = function(callback) {
   var me = this;
-  this._httpGetForMethod("/api/vol", function(error,data) {
+  this._httpGetForMethod("/api/statusinfo", function(error,data) {
     if (error){
       callback(error)
     } else {
       var json = JSON.parse(data);
-      var value = json.volume;
-      var percentage = parseFloat(value);
-      var volValue = percentage;
-      me.log('getVolume() succeded: %s', volValue);
-      callback(null, volValue);
+      var volume = parseFloat(json.volume);
+      me.log('getVolume() succeded: %s', volume);
+      callback(null, volume);
+    }
+  });
+}
+
+Openwebif.prototype.setVolume = function(volume, callback) {
+  var me = this;
+  var targetVolume = parseInt(volume);
+  this._httpGetForMethod("/api/vol?set=set" + targetVolume, function(error) {
+    if (error){
+      callback(error)
+    } else {
+      me.log('setVolume() succesed %s', targetVolume);
+      callback(null, targetVolume);
     }
   });
 }
@@ -245,7 +242,7 @@ Openwebif.prototype.getCurrentChannelWithsRef = function(callback) {
     } else {
       var json = JSON.parse(data);
       var ref = json.currservice_serviceref;
-      var result = (ref == "");
+      var result = (json.currservice_serviceref == "");
       if (result == true) {
           callback(null, ("1:0:1:3DD2:640:13E:820000:0:0:0:"));
         } else {
