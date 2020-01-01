@@ -51,8 +51,7 @@ OpenWebIfTvAccessory.prototype = {
 				for (var i = 0; i < me.inputChannels.length; i++) {
 					var channel = me.inputChannels[i];
 					if (channel.reference == ref) {
-						me.log("found reference: " + i);
-						me.log("current channel: " + channel.name);
+						me.log("current channel: " + i + " " + channel.name + " reference: " + ref);
 						callback(null, i);
 						return;
 					}
