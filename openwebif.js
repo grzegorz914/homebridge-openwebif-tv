@@ -122,7 +122,7 @@ Openwebif.prototype.getMute = function(callback) {
       callback(error)
     } else {
       var json = JSON.parse(data);
-      var state = (json.muted == "false");
+      var state = (json.muted == "true");
       me.log('getMute() succeded: %s', state? 'OFF':'ON');
       callback(null, state);
     }
@@ -183,7 +183,6 @@ Openwebif.prototype._printBouquets = function() {
   var me = this;
   this._httpGetForMethod("/api/getservices", function(error,data) {
     if (error){
-         callback(error)
     } else {
       var json = JSON.parse(data);
       var servicesList = json.services;
@@ -191,7 +190,6 @@ Openwebif.prototype._printBouquets = function() {
       var arrayLength = servicesList.length;
       for (var i = 0; i < arrayLength; i++) {
       var service = servicesList[i];
-      callback(null, service);
       }
     }
   });
@@ -211,7 +209,6 @@ Openwebif.prototype._printBouquetsDetail = function(bouquets, printArray) {
   var me = this;
   this._httpGetForMethod("/api/getservices?sRef=" + ref, function(error,data) {
     if (error){
-      callback(error)
     } else {
       var json = JSON.parse(data);
       var servicesList = json.services;
@@ -244,10 +241,10 @@ Openwebif.prototype.getCurrentChannelWithsRef = function(callback) {
       var ref = json.currservice_serviceref;
       var result = (json.currservice_serviceref == "");
       if (result == true) {
-          callback(null, ("1:0:1:3DD2:640:13E:820000:0:0:0:"));
+          callback(null, "1:0:1:3DD2:640:13E:820000:0:0:0:");
         } else {
          me.log('getCurrentChannelWithsRef() succeded: %s', ref); 
-         callback(null, ref);
+         callback(null, String(ref));
         }
      }
   });
@@ -272,7 +269,7 @@ Openwebif.prototype.sendCommand = function(command, callback) {
       callback(error)
     } else { 
       me.log('sendCommand() succeded: %s', command);     
-      callback(null, command);
+      callback(null);
     }
   });
 }
