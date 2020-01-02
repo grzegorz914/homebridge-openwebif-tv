@@ -1,23 +1,16 @@
-"use strict";
-var Accessory, Service, Characteristic, UUIDGen, hap;
+var Service, Characteristic;
 
 var Openwebif = require('./openwebif');
 var inherits = require('util').inherits;
 var Package = require('./package.json');
 
-var accessories = [];
-var controlAccessory;
-
-module.exports = function(homebridge) {
-  Accessory = homebridge.platformAccessory;
-  Service = homebridge.hap.Service;
-  hap = homebridge.hap;
-  Characteristic = homebridge.hap.Characteristic;
-  UUIDGen = homebridge.hap.uuid;
-	homebridge.registerPlatform("homebridge-openwebif-tv", "OpenWebIfTv", OpenWebIfTvPlatform, true);
+module.exports = function (homebridge) {
+	Service = homebridge.hap.Service;
+	Characteristic = homebridge.hap.Characteristic;
+	homebridge.registerAccessory("homebridge-openwebif-tv", "OpenWebIfTv", OpenWebIfTvAccessory);
 };
 
-function OpenWebIfTvPlatform(log, config, api) {
+function OpenWebIfTvAccessory(log, config) {
 	this.log = log;
 	this.config = config
 	this.name = config["name"];
@@ -29,25 +22,10 @@ function OpenWebIfTvPlatform(log, config, api) {
 	this.log("openwebif " + this.openwebif);
 	this.bouquets = config["bouquets"];
 	var me = this;
-	this.api.on('didFinishLaunching', this.didFinishLaunching.bind(this));
+	
 }
 
-OpenWebIfTvPlatform.prototype.configureAccessory = function(accessory) {
-  debug("configureAccessory", accessory);
-};
-
-OpenWebIfTvPlatform.prototype.didFinishLaunching = function() {
-  this.log("Getting OpenWebIf devices.");
-  var that = this;
-  var openwebifDevices = Openwebif
-
-  var uuid = UUIDGen.generate(openwebifDevices);
-  var accessory = new Accessory(openwebifDevices, uuid, hap.Accessory.Categories.TELEVISION);
-  accessory.getServices();
-  accessories.push(accesory);
-};
-
-OpenWebIfTvPlatform.prototype = {
+OpenWebIfTvAccessory.prototype = {
 
 	generateTVService() {
 		var me = this;
@@ -241,11 +219,6 @@ OpenWebIfTvPlatform.prototype = {
 		return services;
 	},
 
-	/**
-	* Custom characteristic for DiscSpace
-	*
-	* @return {Characteristic} The DiscSpace characteristic
-	*/
 	makeDiscSpaceCharacteristic() {
 		var discSpaceChar = function() {
 			Characteristic.call(this, 'DiscSpace', 'B795302F-FFBA-41D9-9076-337986B81D27');
@@ -263,11 +236,6 @@ OpenWebIfTvPlatform.prototype = {
 		return discSpaceChar;
 	},
 
-	/**
-	* Custom characteristic for Hostname /IP
-	*
-	* @return {Characteristic} The characteristic
-	*/
 	makeIPCharacteristic(ip) {
 		var volumeCharacteristic = function() {
 			Characteristic.call(this, 'IP', 'B795302F-FFBA-41D9-9076-337986B81D29');
@@ -281,4 +249,3 @@ OpenWebIfTvPlatform.prototype = {
 		return volumeCharacteristic;
 	},
 };
-
