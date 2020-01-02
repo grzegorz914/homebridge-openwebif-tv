@@ -22,16 +22,14 @@ Openwebif.prototype._httpGetForMethod = function(method, callback) {
     if (reachable) {
       me._httpRequest('http://' + me.host + ':' + me.port + method , '', 'GET', function(error, response, responseBody) {
         if (error) {
-          me.log('%s() failed: %s', method, error.message);
-          callback(error, null);
+          callback(error)
         } else {
           try {
             var result = JSON.stringify(responseBody, function(err, data) {
               if (err) {
-                callback(err, null);
-                me.log('error: ' + err);
+                callback(err)
               } else {
-                me.log('method %s', method);
+                me.log('result %s', data);
                 callback(null, data);
               }
             });
@@ -85,15 +83,15 @@ Openwebif.prototype.getPowerState = function(callback) {
       callback(error)
     } else {
       var json = JSON.parse(data); 
-      var status = (json.inStandby == "false");
-      me.log('getPowerState() succeded: %s', status? 'ON':'OFF');
-      callback(null, status);
+      var state = (json.inStandby == "false");
+      me.log('getPowerState() succeded: %s', state? 'ON':'OFF');
+      callback(null, state);
     }
   });
 }
 
 Openwebif.prototype.setPowerState = function(state, callback) {
-  var state = state ? true : false; //number to boolean
+  var state = state? true : false; //number to boolean
   var me = this;
   me.getPowerState(function(error, currentState) {
     if(error){
@@ -106,7 +104,7 @@ Openwebif.prototype.setPowerState = function(state, callback) {
           if (error){
             callback(error)
           } else {
-            me.log('setPowerState() succeded');
+            me.log('setPowerState() succeded %s', state);
             callback(null, state);
           }
         });
@@ -119,10 +117,10 @@ Openwebif.prototype.getMute = function(callback) {
   var me = this;
   this._httpGetForMethod("/api/statusinfo", function(error,data) {
     if (error){
-      callback(error)
+        callback(error)
     } else {
       var json = JSON.parse(data);
-      var state = (json.muted == "true");
+      var state = (json.muted == false);
       me.log('getMute() succeded: %s', state? 'OFF':'ON');
       callback(null, state);
     }
@@ -130,18 +128,18 @@ Openwebif.prototype.getMute = function(callback) {
 }
 
 Openwebif.prototype.setMute = function(state, callback) {
-  var state = state ? true : false; //number to boolean
+  var state = state? false : true; //number to boolean
   var me = this;
   me.getMute(function(error, currentState) {
     if (error){
-      callback(null, state? false : true); //receiver is off
+      callback(null, state? true : false); //receiver is off
     } else {
       if (currentState == state) { //state like expected
-        callback(null, state);
+          callback(null, state);
       } else { //set new state
         me._httpGetForMethod("/api/vol?set=mute", function(error) {
           if (error){
-            callback(error)
+              callback(error)
           } else {
             me.log('setMute() succeded %s', state);
             callback(null, state);
@@ -204,8 +202,8 @@ Openwebif.prototype._printBouquetsDetail = function(bouquets, printArray) {
   let bouquet = bouquets[0];
   bouquets.shift();
 
-  let name = bouquet.servicename[0];
-  let ref = bouquet.servicereference[0];
+  let name = bouquet.servicename;
+  let ref = bouquet.servicereference;
   var me = this;
   this._httpGetForMethod("/api/getservices?sRef=" + ref, function(error,data) {
     if (error){
@@ -213,20 +211,18 @@ Openwebif.prototype._printBouquetsDetail = function(bouquets, printArray) {
       var json = JSON.parse(data);
       var servicesList = json.services;
       var arr = [];
-
       var arrayLength = servicesList.length;
       for (var i = 0; i < arrayLength; i++) {
         var service = servicesList[i];
-        let name = service.servicename[0];
-        let ref = service.servicereference[0];
+        let name = service.servicename;
+        let ref = service.servicereference;
         var object = {"name": name, "reference": ref};
         arr.push(object);
       }
       var jsonobj = {"name": name, "reference": ref, "channels": arr };
       printArray.push(jsonobj)
-      me.log('JSON for adding to bouquet array in config: %s', string);
+      me.log('Adding this to bouquet array in config: %s', string);
       me._printBouquetsDetail(bouquets, printArray);
-
     }
   });
 }
@@ -235,18 +231,13 @@ Openwebif.prototype.getCurrentChannelWithsRef = function(callback) {
   var me = this;
   this._httpGetForMethod("/api/statusinfo", function(error,data) {
     if (error){
-      callback(error)
+       callback(error)
     } else {
       var json = JSON.parse(data);
       var ref = json.currservice_serviceref;
-      var result = (json.currservice_serviceref == "");
-      if (result == true) {
-          callback(null, "1:0:1:3DD2:640:13E:820000:0:0:0:");
-        } else {
-         me.log('getCurrentChannelWithsRef() succeded: %s', ref); 
-         callback(null, String(ref));
-        }
-     }
+      me.log('getCurrentChannelWithsRef() succeded: %s', ref); 
+      callback(null, String(ref));
+      }
   });
 }
 
@@ -254,10 +245,10 @@ Openwebif.prototype.setCurrentChannelWithsRef = function(ref, callback){
   var me = this;
   this._httpGetForMethod("/api/zap?sRef=" + ref,  function(error) {
     if (error){
-      callback(error)
+       callback(error)
     } else { 
-      me.log('setCurrentChannelWithsRef() succeded: %s', ref);     
-      callback(null, ref);
+         me.log('setCurrentChannelWithsRef() succeded: %s', ref);     
+         callback(null, ref);
     } 
   });
 }
@@ -266,10 +257,10 @@ Openwebif.prototype.sendCommand = function(command, callback) {
   var me = this;
   this._httpGetForMethod("/api/remotecontrol?command=" + command, function(error) {
     if (error){
-      callback(error)
+       callback(error)
     } else { 
-      me.log('sendCommand() succeded: %s', command);     
-      callback(null);
+         me.log('sendCommand() succeded: %s', command);     
+         callback(null,command);
     }
   });
 }
