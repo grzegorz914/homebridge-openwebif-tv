@@ -37,7 +37,8 @@ OpenWebIfTvPlatform.prototype.configureAccessory = function(accessory) {
 };
 
 OpenWebIfTvPlatform.prototype.didFinishLaunching = function() {
-  debug("configureAccessory", accessory);
+  this.log("Getting OpenWebIf devices.");
+  var that = this;
 };
 
 OpenWebIfTvPlatform.prototype = {
