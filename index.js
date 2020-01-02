@@ -1,18 +1,21 @@
-var Service, Characteristic;
+"use strict";
+var Accessory, Service, Characteristic, UUIDGen, hap;
 
 var Openwebif = require('./openwebif');
 var inherits = require('util').inherits;
 var Package = require('./package.json');
 
-module.exports = function (homebridge) {
-	Service = homebridge.hap.Service;
-	Characteristic = homebridge.hap.Characteristic;
-	homebridge.registerAccessory("homebridge-openwebif-tv", "OpenWebIfTv", OpenWebIfTvAccessory);
+module.exports = function(homebridge) {
+  Accessory = homebridge.platformAccessory;
+  Service = homebridge.hap.Service;
+  hap = homebridge.hap;
+  Characteristic = homebridge.hap.Characteristic;
+  UUIDGen = homebridge.hap.uuid;	Characteristic = homebridge.hap.Characteristic;
+	homebridge.registerPlatform("homebridge-openwebif-tv", "OpenWebIfTv", OpenWebIfTvPlatform, true);
 };
 
-function OpenWebIfTvAccessory(log, config) {
+function OpenWebIfTvPlatform(log, config, api) {
 	this.log = log;
-	log("startup " + Openwebif.RemoteKey.FAST_FORWARD);
 	this.config = config
 	this.name = config["name"];
 
@@ -23,10 +26,14 @@ function OpenWebIfTvAccessory(log, config) {
 	this.log("openwebif " + this.openwebif);
 	this.bouquets = config["bouquets"];
 	var me = this;
-	
+	this.api.on('didFinishLaunching', this.didFinishLaunching.bind(this));
 }
 
-OpenWebIfTvAccessory.prototype = {
+OpenWebIfPlatform.prototype.configureAccessory = function(accessory) {
+  debug("configureAccessory", accessory);
+};
+
+OpenWebIfTvPlatform.prototype = {
 
 	generateTVService() {
 		var me = this;
