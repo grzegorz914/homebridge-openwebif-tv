@@ -33,7 +33,7 @@ OpenWebIfPlatform.prototype.configureAccessory = function(accessory) {
   debug("configureAccessory", accessory);
 };
 
-OpenWebIfTvPlatform.prototype.didFinishLaunching = {
+OpenWebIfTvPlatform.prototype = {
 
 	generateTVService() {
 		var me = this;
