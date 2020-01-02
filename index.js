@@ -13,7 +13,7 @@ module.exports = function(homebridge) {
   Service = homebridge.hap.Service;
   hap = homebridge.hap;
   Characteristic = homebridge.hap.Characteristic;
-  UUIDGen = homebridge.hap.uuid;	Characteristic = homebridge.hap.Characteristic;
+  UUIDGen = homebridge.hap.uuid;
 	homebridge.registerPlatform("homebridge-openwebif-tv", "OpenWebIfTv", OpenWebIfTvPlatform, true);
 };
 
