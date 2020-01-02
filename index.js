@@ -49,8 +49,8 @@ OpenWebIfTvAccessory.prototype = {
 			me.log.error("received information");
 			me.openwebif.getCurrentChannelWithsRef(function(error, ref) {
 				for (var i = 0; i < me.inputChannels.length; i++) {
-					var channel = me.inputChannels[i];
-					if (channel.reference == ref) {
+					 var channel = me.inputChannels[i];
+					 if (channel.reference == ref) {
 						me.log("current channel: " + i + " " + channel.name + " reference: " + ref);
 						callback(null, i);
 						return;
@@ -260,3 +260,4 @@ OpenWebIfTvAccessory.prototype = {
 		return volumeCharacteristic;
 	},
 };
+
