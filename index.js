@@ -40,6 +40,11 @@ OpenWebIfTvPlatform.prototype.didFinishLaunching = function() {
   this.log("Getting OpenWebIf devices.");
   var that = this;
   var openwebifDevices = Openwebif
+
+  var uuid = UUIDGen.generate(openwebifDevices);
+  var accessory = new Accessory(openwebifDevices, uuid, hap.Accessory.Categories.TELEVISION);
+  accessory.getServices();
+  accessories.push(accesory);
 };
 
 OpenWebIfTvPlatform.prototype = {
