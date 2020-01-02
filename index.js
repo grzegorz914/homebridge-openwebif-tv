@@ -5,6 +5,9 @@ var Openwebif = require('./openwebif');
 var inherits = require('util').inherits;
 var Package = require('./package.json');
 
+var accessories = [];
+var controlAccessory;
+
 module.exports = function(homebridge) {
   Accessory = homebridge.platformAccessory;
   Service = homebridge.hap.Service;
