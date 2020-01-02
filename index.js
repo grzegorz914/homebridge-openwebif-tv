@@ -32,7 +32,7 @@ function OpenWebIfTvPlatform(log, config, api) {
 	this.api.on('didFinishLaunching', this.didFinishLaunching.bind(this));
 }
 
-OpenWebIfPlatform.prototype.configureAccessory = function(accessory) {
+OpenWebIfTvPlatform.prototype.configureAccessory = function(accessory) {
   debug("configureAccessory", accessory);
 };
 
