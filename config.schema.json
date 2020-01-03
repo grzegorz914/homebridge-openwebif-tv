@@ -24,6 +24,11 @@
         "maximum": 65535,
         "required": true
       },
+      "speakerService": {
+        "title": "Speaker service",
+        "type": "boolean",
+        "default": true
+      },
       "bouquets": {
         "title": "Bouquets",
         "type": "array",
