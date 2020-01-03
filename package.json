@@ -1,22 +1,10 @@
 {
   "name": "homebridge-openwebif-tv",
-  "version": "1.0.8",
-  "description": "Plugin for Homebridge (https://github.com/nfarina/homebridge) to controll of receivers with openwebif interface.",
-  "main": "index.js",
-  "engines": {
-    "node": ">=10.0.0",
-    "homebridge": ">=0.4.46"
-  },
+  "version": "1.2.0",
+  "description": "Plugin for Homebridge (https://github.com/nfarina/homebridge) to controll Sat receivers with openwebif interface.",
   "license": "MIT",
-  "dependencies": {
-    "net": "^1.0.2",
-    "request": "^2.65.0"
-  },
-  "keywords": [
-    "homebridge-plugin"
-  ],
   "author": "grzegorz914",
-  "contributors": [],
+  "homepage": "https://github.com/grzegorz914/homebridge-openwebif-tv#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/grzegorz914/homebridge-openwebif-tv.git"
@@ -24,9 +12,21 @@
   "bugs": {
     "url": "https://github.com/grzegorz914/homebridge-openwebif-tv/issues"
   },
-  "homepage": "https://github.com/grzegorz914/homebridge-openwebif-tv#readme",
+  "main": "index.js",
+  "engines": {
+    "node": ">=10.0.0",
+    "homebridge": ">=0.4.46"
+  },
+  "dependencies": {
+    "net": "^1.0.2",
+    "request": "^2.65.0"
+  },
+  "keywords": [
+    "homebridge-plugin"
+  ],
+  "contributors": [],
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
-  }
+ }
 }
