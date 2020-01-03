@@ -9,12 +9,11 @@
     "accessories": [
      {
       "accessory": "OpenWebIfTv",
-      "name": "Fernseher",
-      "host": "192.168.0.8",
-      "user": "root",
-      "pass": "",
+      "name": "Tuner Sat",
+      "host": "192.168.1.10",
       "port": 80,
-      "bouquets": [
+      "speakerService": true,
+       "bouquets": [
         {
           "name": "Favoriten",
           "reference": "1:7:1:0:0:0:0:0:0:0:FROM BOUQUET \"userbouquet.favourites.tv\" ORDER BY bouquet",
