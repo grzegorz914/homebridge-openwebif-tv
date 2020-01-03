@@ -20,11 +20,12 @@ HomeBridge: https://github.com/nfarina/homebridge
  <pre>
 "accessories": [
         {
+            "accessory": "OpenWebIfTv",
             "name": "Tuner Sat",
             "host": "192.168.1.10",
             "port": 80,
             "speakerService": true,
-            "bouquets": [
+            "bouquets": []
    
         }
     ]
