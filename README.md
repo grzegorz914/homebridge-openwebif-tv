@@ -31,6 +31,8 @@ HomeBridge: https://github.com/nfarina/homebridge
     ]
 </pre>
 
+##Limitations
+Max 50 channels in one bouquet.
 
 # Whats new:
 https://github.com/grzegorz914/homebridge-openwebif-tv/blob/master/CHANGELOG.md
