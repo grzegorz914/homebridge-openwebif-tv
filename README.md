@@ -33,7 +33,7 @@ HomeBridge: https://github.com/nfarina/homebridge
 
 
 # Whats new:
-CHANGELOG.md
+https://github.com/grzegorz914/homebridge-openwebif-tv/blob/master/CHANGELOG.md
 
 # Development
 - Pull request and help in development highly appreciated.
