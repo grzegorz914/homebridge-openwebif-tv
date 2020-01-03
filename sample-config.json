@@ -16,7 +16,7 @@
       "bouquets": [
         {
           "name": "Favoriten",
-          "reference": "1:7:1:0:0:0:0:0:0:0:FROM BOUQUET \"userbouquet.favourites.tv\" ORDER BY bouquet",
+          "reference": "1:7:1:0:0:0:0:0:0:1:FROM BOUQUET \"userbouquet.favourites.tv\" ORDER BY bouquet",
           "channels": [
             {
               "name": "Das Erste HD",
