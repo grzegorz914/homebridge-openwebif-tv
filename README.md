@@ -31,7 +31,7 @@ HomeBridge: https://github.com/nfarina/homebridge
     ]
 </pre>
 
-##Limitations
+# Limitations:
 Max 50 channels in one bouquet.
 
 # Whats new:
