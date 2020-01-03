@@ -3,7 +3,6 @@ const request = require('request');
 
 var Service, Characteristic;
 var inherits = require('util').inherits;
-var Package = require('./package.json');
 
 module.exports = function(homebridge) {
 
