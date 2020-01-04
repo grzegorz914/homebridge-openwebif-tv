@@ -41,14 +41,14 @@ OpenWebIfTvAccessory.prototype = {
 		this.tvService.getCharacteristic(Characteristic.ActiveIdentifier)
 		.on('set', (inputIdentifier, callback) => {
 			this.log("new input " + inputIdentifier);
-			var channel = this.inputChannels[inputIdentifier]
+			var channel = this.inputReference[inputIdentifier]
 			this.setCurrentChannelWithsRef(channel.reference, callback);
 		})
 		.on('get', (callback) => {
 			me.log.error("received information");
 			me.getCurrentChannelWithsRef(function(error, ref) {
-				for (var i = 0; i < me.inputChannels.length; i++) {
-					 var channel = me.inputChannels[i];
+				for (var i = 0; i < me.inputReference.length; i++) {
+					 var channel = me.inputReference[i];
 					 if (channel.reference == ref) {
 						me.log("current channel: " + i + " " + channel.name + " reference: " + ref);
 						callback(null, i);
@@ -89,8 +89,8 @@ OpenWebIfTvAccessory.prototype = {
 	generateInputServices() {
                 // TODO load persisted Names
 
-		this.inputServices = new Array();
-		this.inputChannels = new Array();
+		this.inputName = new Array();
+		this.inputReference = new Array();
 		var counter = 0;
 		this.bouquets.forEach((bouquet, i) => {
 			 bouquet.channels.forEach((channel, i) => {
@@ -111,15 +111,15 @@ OpenWebIfTvAccessory.prototype = {
 					callback()
 				});
 
-				this.inputChannels.push(channel);
-				this.inputServices.push(tmpInput);
+				this.inputReference.push(channel);
+				this.inputName.push(tmpInput);
 				counter++;
 			});
 		});
 		if (counter == 0){
 			this._printBouquets()
 		}
-		return this.inputServices;
+		return this.inputName;
 	},
 
 	volumeSelectorPress(remoteKey, callback) {
@@ -482,7 +482,7 @@ OpenWebIfTvAccessory.prototype = {
 	  _printBouquetsDetail(bouquets, printArray) {
 		if (bouquets == undefined || bouquets == null || bouquets.length <= 0) {
 		  var string =  JSON.stringify(printArray, null, 2);
-		  this.log('JSON for adding to bouquet array in config in openwebif accessory under key bouquets: %s', string);
+		  this.log('JSON for adding to bouquet array in config bouquets: %s', string);
 		  return;
 		}
 		let bouquet = bouquets[0];
@@ -552,5 +552,3 @@ OpenWebIfTvAccessory.prototype = {
 	  }
 
 };
-
-
