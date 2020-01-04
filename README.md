@@ -69,22 +69,6 @@ HomeBridge: https://github.com/nfarina/homebridge
             {
               "name": "SUPER RTL HD",
               "reference": "1:0:19:2E9B:411:1:C00000:0:0:0:"
-            },
-            {
-              "name": "TELE 5 HD",
-              "reference": "1:0:19:1519:455:1:C00000:0:0:0:"
-            },
-            {
-              "name": "ORF1 HD",
-              "reference": "1:0:19:132F:3EF:1:C00000:0:0:0:"
-            },
-            {
-              "name": "ORF2W HD",
-              "reference": "1:0:19:1330:3EF:1:C00000:0:0:0:"
-            },
-            {
-              "name": "RTL UHD",
-              "reference": "1:0:1F:307A:3F5:1:C00000:0:0:0:"
             }
           ]
         }
