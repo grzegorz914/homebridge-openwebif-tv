@@ -19,16 +19,17 @@ HomeBridge: https://github.com/nfarina/homebridge
 
  <pre>
 "accessories": [
-       {
-      "accessory": "OpenWebIfTv",
-      "name": "Tuner Sat",
-      "host": "192.168.1.10",
-      "port": 80,
-      "speakerService": true,
-      "bouquets": [
+        {
+            "accessory": "OpenWebIfTv",
+            "name": "Tuner Sat",
+            "host": "192.168.1.10",
+            "port": 80,
+            "bouquetsDir": "/home/openhabian/.openwebifTv/",
+            "speakerService": true,
+            "bouquets": [
         {
           "name": "Favoriten",
-          "reference": "1:7:1:0:0:0:0:0:0:1:FROM BOUQUET \"userbouquet.favourites.tv\" ORDER BY bouquet",
+          "reference": "1:7:1:0:0:0:0:0:0:0:FROM BOUQUET \"userbouquet.favourites.tv\" ORDER BY bouquet",
           "channels": [
             {
               "name": "Das Erste HD",
@@ -53,34 +54,14 @@ HomeBridge: https://github.com/nfarina/homebridge
             {
               "name": "RTLII HD",
               "reference": "1:0:19:EF15:421:1:C00000:0:0:0:"
-            },
-            {
-              "name": "VOX HD",
-              "reference": "1:0:19:EF11:421:1:C00000:0:0:0:"
-            },
-            {
-              "name": "kabel eins HD",
-              "reference": "1:0:19:EF76:3F9:1:C00000:0:0:0:"
-            },
-            {
-              "name": "SIXX HD",
-              "reference": "1:0:19:EF77:3F9:1:C00000:0:0:0:"
-            },
-            {
-              "name": "SUPER RTL HD",
-              "reference": "1:0:19:2E9B:411:1:C00000:0:0:0:"
             }
           ]
         }
-      ]
-    }
-  ]
-}
+       ]
+     }
     ]
 </pre>
 
-# Limitations:
-Max 50 channels in one bouquet.
 
 # Whats new:
 https://github.com/grzegorz914/homebridge-openwebif-tv/blob/master/CHANGELOG.md
