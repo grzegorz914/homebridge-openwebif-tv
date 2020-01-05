@@ -1,6 +1,9 @@
 # Change Log
 
 All notable changes to this project will be documented in this file.
+## 1.2.4 (05.01.2020)
+- schow channels list if receiver is off.
+
 ## 1.2.3 (05.01.2020)
 - save bouquets to the file and load it as channel list if no bouquets added in config, if Your bouquets contain more as 100 channels HomeKit will no response(HomeKit limitation)
 - some small fixes
