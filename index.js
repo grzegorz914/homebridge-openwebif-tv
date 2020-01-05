@@ -58,14 +58,25 @@ OpenWebIfTvAccessory.prototype = {
 		.on('get', (callback) => {
 			me.log.error("received information");
 			me.getCurrentChannelWithsRef(function(error, ref) {
+				if (ref == undefined || ref == null || ref == "") {
 				for (var i = 0; i < me.inputReference.length; i++) {
-					 var channel = me.inputReference[i];
-					 if (channel.reference == ref) {
-						me.log("current channel: " + i + " " + channel.name + " reference: " + ref);
-						callback(null, i);
+					 var channel = me.inputReference[1];
+					 if (channel.reference !== ref) {
+						me.log("Tuner is off default channel: " + channel.name);
+						callback(null, 1);
 						return;
-					}
-				}
+						} 
+					  }
+				    } else {
+						for (var i = 0; i < me.inputReference.length; i++) {
+							var channel = me.inputReference[i];
+							if (channel.reference == ref) {
+							   me.log("current channel: " + i + " " + channel.name + " reference: " + ref);
+							   callback(null, i);
+							   return;
+				        }
+			          }
+		            }
 				callback("no reference found");
 			});
 		});
@@ -575,4 +586,5 @@ OpenWebIfTvAccessory.prototype = {
 	  }
 
 };
+
 
