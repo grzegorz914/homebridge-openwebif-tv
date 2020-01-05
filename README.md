@@ -16,7 +16,7 @@ HomeBridge: https://github.com/nfarina/homebridge
 3. Update your configuration file. See sample-config.json in this repository for a sample. 
 
 # Limitations
-- if Your bouquets contain more as 50 channels HomeKit app will no response(HomeKit limitation)
+- if Your bouquets contain more as 100 channels HomeKit app will no response(HomeKit limitation)
 
 # Configuration
 
