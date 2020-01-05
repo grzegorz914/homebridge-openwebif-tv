@@ -12,10 +12,16 @@
         "required": true
       },
       "host": {
-        "title": "IP Address / Hostname",
+        "title": "IP Address/Hostname",
         "type": "string",
         "required": true,
         "format": "hostname"
+      },
+      "bouquetsDir": {
+        "title": "Bouquets directory",
+        "type": "string",
+        "default": "/home/openhabian/.openwebifTv/",
+        "required": true
       },
       "port": {
         "title": "Port",
@@ -44,7 +50,7 @@
             "reference": {
               "title": "Bouquet reference",
               "type": "string",
-               "default": "1:7:1:0:0:0:0:0:0:1:FRO BOUQUET \"userbouquet.dbe1a.tv\" ORDER BY bouquet",
+               "default": "1:7:1:0:0:0:0:0:0:0:FRO BOUQUET \"userbouquet.dbe1a.tv\" ORDER BY bouquet",
               "required": false
             },
              "channels": {
@@ -74,3 +80,4 @@
     }
   }
 }
+
