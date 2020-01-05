@@ -1,6 +1,13 @@
 # Change Log
 
 All notable changes to this project will be documented in this file.
+## 1.2.3 (05.01.2020)
+- save bouquets to the file and load it as channel list if no bouquets added in config, if Your bouquets contain more as 50 channels HomeKit will no response(HomeKit limitation)
+- some small fixes
+
+## 1.2.1 (03.01.2020)
+-Update README
+
 ## 1.2.0 (03.01.2020)
 ### Please update Your config or use Config Tool
 - All code moved to index.js
