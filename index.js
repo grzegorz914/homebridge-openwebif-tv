@@ -28,9 +28,10 @@ function OpenWebIfTvAccessory(log, config) {
 	this.bouquetsDir = config["bouquetsDir"] || ppath("openwebifTv/");
 	this.bouquets = config["bouquets"];
 	var me = this;
+
+       this.bouquetsFile = this.bouquetsDir + "bouquets.json"
 	
-	var dir = this.bouquetsDir
-	if (fs.existsSync(dir) === false) {
+	if (fs.existsSync(this.bouquetsDir) === false) {
 		mkdirp(dir);
 	}
 
@@ -51,32 +52,32 @@ OpenWebIfTvAccessory.prototype = {
 		// Identifier of Current Active imput.
 		this.tvService.getCharacteristic(Characteristic.ActiveIdentifier)
 		.on('set', (inputIdentifier, callback) => {
-			this.log("new input " + inputIdentifier);
 			var channel = this.inputReference[inputIdentifier]
+                      me.log("new channel nr:" + inputIdentifier +" name: " + channel.name + " reference: " + channel.reference);
 			this.setCurrentChannelWithsRef(channel.reference, callback);
 		})
 		.on('get', (callback) => {
-			me.log.error("received information");
-			me.getCurrentChannelWithsRef(function(error, ref) {
-				if (ref == undefined || ref == null || ref == "") {
-				for (var i = 0; i < me.inputReference.length; i++) {
-					 var channel = me.inputReference[1];
-					 if (channel.reference !== ref) {
-						me.log("Tuner is off default channel: " + channel.name);
-						callback(null, 1);
-						return;
-						} 
-					  }
-				    } else {
+			me.getCurrentChannelWithsRef(function(error, channelReference) {
+			if (channelReference == undefined || channelReference == null || channelReference == "") {
+			     for (var i = 0; i < me.inputReference.length; i++) {
+				     var channel = me.inputReference[0];
+			                   if (channel.reference !== channelReference) {
+						  me.log("receiver is off, default channel: " + channel.name);
+						  callback(null, 0);
+						  return;
+						  } 
+					      }
+				          } else {
 						for (var i = 0; i < me.inputReference.length; i++) {
 							var channel = me.inputReference[i];
-							if (channel.reference == ref) {
-							   me.log("current channel: " + i + " " + channel.name + " reference: " + ref);
-							   callback(null, i);
-							   return;
-				        }
-			          }
-		            }
+							       if (channel.reference == channelReference) {
+							            me.log("current channel nr:" + i +" name: " + channel.name + " reference: " + channelReference);
+							            callback(null, i);
+							            return;
+				                             }
+			                       }
+		               }
+                              me.log("received information: %s", error);
 				callback("no reference found");
 			});
 		});
@@ -104,19 +105,22 @@ OpenWebIfTvAccessory.prototype = {
 		    .on('set', this.setMute.bind(this));
 
 		this.speakerService.setCharacteristic(Characteristic.VolumeControlType, Characteristic.VolumeControlType.ABSOLUTE);
-
-		return this.speakerService;
+               return this.speakerService;
 	},
 
 	generateInputServices() {
 		// Load persisted bouquets from file
-		var data = fs.readFileSync(this.bouquetsDir + "bouquets.json", 'utf8');
-		if (this.bouquets == undefined || this.bouquets == null || this.bouquets.length <= 0) {
-			var bouquets = JSON.parse(data);
-			this.log(bouquets);
-	    } else {
+               var me = this;
+               if (fs.existsSync(this.bouquetsFile) === false) {
+                     this.printBouquets();
+                     return; 
+                } else if (this.bouquets == undefined || this.bouquets == null || this.bouquets.length <= 0) {
+                            var data = fs.readFileSync(this.bouquetsFile);
+			      var bouquets = JSON.parse(data);
+			      me.log("load bouquets from file: %s", bouquets);
+	            } else {
 			var bouquets = this.bouquets;
-			this.log(bouquets);
+			me.log("load bouquets from config: %s", bouquets);
 		}
 		
 		this.inputName = new Array();
@@ -125,7 +129,7 @@ OpenWebIfTvAccessory.prototype = {
 	
 		    bouquets.forEach((bouquet, i) => {
 			bouquet.channels.forEach((channel, i) => {
-				this.log("Adding channel " + channel.name);
+				me.log("adding channel " + channel.name);
 
 				let tmpInput = new Service.InputSource(channel.name, "channel number" + counter);
 				tmpInput
@@ -138,7 +142,6 @@ OpenWebIfTvAccessory.prototype = {
 				tmpInput
 				.getCharacteristic(Characteristic.ConfiguredName)
 				.on('set', (name, callback) => {
-					// TODO: persist name
 					callback()
 				});
 
@@ -147,14 +150,11 @@ OpenWebIfTvAccessory.prototype = {
 				counter++;
 			});
 		});
-		if (counter == 0){
-			this.printBouquets()
-		}
 		return this.inputName;
 	},
 
 	volumeSelectorPress(remoteKey, callback) {
-		this.log('remote key pressed: %d', remoteKey);
+              var me = this;
 		var command = 0;
 		switch (remoteKey) {
 			case Characteristic.VolumeSelector.INCREMENT:
@@ -164,11 +164,12 @@ OpenWebIfTvAccessory.prototype = {
 			command = 114;
 			break;
 		}
+               me.log('remote key pressed: %s', remoteKey, "remote command send: %s", command);
 		this.sendRemoteControlCommand(command, callback);
 	},
 
 	remoteKeyPress(remoteKey, callback) {
-		this.log('remote key pressed: %d', remoteKey);
+              var me = this;
 		var command = 0;
 		switch (remoteKey) {
 			case Characteristic.RemoteKey.REWIND:
@@ -211,12 +212,8 @@ OpenWebIfTvAccessory.prototype = {
 			command = 139;
 			break;
 		}
+               me.log('remote key pressed: %s', remoteKey, "remote command send: %s", command);
 		this.sendRemoteControlCommand(command, callback);
-	},
-
-    identify(callback) {
-		this.log("Identify requested!");
-		callback();
 	},
 
 	getServices() {
@@ -246,6 +243,7 @@ OpenWebIfTvAccessory.prototype = {
 	},
 
 	makeDiscSpaceCharacteristic() {
+              var me = this;
 		var discSpaceChar = function() {
 			Characteristic.call(this, 'DiscSpace', 'B795302F-FFBA-41D9-9076-337986B81D27');
 			this.setProps({
@@ -263,6 +261,7 @@ OpenWebIfTvAccessory.prototype = {
 	},
 
 	makeIPCharacteristic(ip) {
+              var me = this;
 		var volumeCharacteristic = function() {
 			Characteristic.call(this, 'IP', 'B795302F-FFBA-41D9-9076-337986B81D29');
 			this.setProps({
@@ -308,6 +307,7 @@ OpenWebIfTvAccessory.prototype = {
 	  },
 	  
 	  httpGetForMethod(method, callback) {
+               var me = this;
 		if (!this.host) {
 		  this.log.error("No Host defined in method: " + method);
 		  callback(new Error("No host defined."));
@@ -316,7 +316,6 @@ OpenWebIfTvAccessory.prototype = {
 		  this.log.error("No port defined in method: " + method);
 		  callback(new Error("No port defined."));
 		}
-		var me = this;
 		me._checkHostIsReachable(this.host, this.port, function(reachable) {
 		  if (reachable) {
 			me.httpRequest('http://' + me.host + ':' + me.port + method , '', 'GET', function(error, response, responseBody) {
@@ -352,13 +351,13 @@ OpenWebIfTvAccessory.prototype = {
 		  method: method,
 		  rejectUnauthorized: false
 		},
-		function(error, response, body) {
+		  function(error, response, body) {
 		  callback(error, response, body);
 		});
 	  },
 	  
 	  getDiscSpace(callback) {
-		var me = this;
+               var me = this;
 		this.httpGetForMethod("/api/about", function(error,data) {
 		  if (error){
 			callback(error)
@@ -376,7 +375,7 @@ OpenWebIfTvAccessory.prototype = {
 	  },
 
 	  getDeviceInfo(callback) {
-		var me = this;
+               var me = this;
 		this.httpGetForMethod("/api/about", function(error,data) {
 		  if (error){
 			callback(error)
@@ -393,7 +392,7 @@ OpenWebIfTvAccessory.prototype = {
 	  },
 	  
 	  getPowerState(callback) {
-		var me = this;
+               var me = this;
 		this.httpGetForMethod("/api/statusinfo", function(error,data) {
 		  if (error){
 			callback(error)
@@ -407,8 +406,8 @@ OpenWebIfTvAccessory.prototype = {
 	  },
 	  
 	  setPowerState(state, callback) {
+              var me = this;
 		var state = state? true : false; //number to boolean
-		var me = this;
 		me.getPowerState(function(error, currentState) {
 		  if(error){
 			callback(null, state? false : true); //receiver is off
@@ -416,7 +415,7 @@ OpenWebIfTvAccessory.prototype = {
 			if (currentState == state) { //state like expected
 			  callback(null, state);
 			} else { //set new state
-			  me.httpGetForMethod("/api/powerstate?newstate=0", function(error) {
+			  this.httpGetForMethod("/api/powerstate?newstate=0", function(error) {
 				if (error){
 				  callback(error)
 				} else {
@@ -430,8 +429,8 @@ OpenWebIfTvAccessory.prototype = {
 	  },
 	  
 	  getMute(callback) {
-		var me = this;
-		this.httpGetForMethod("/api/statusinfo", function(error,data) {
+                 var me = this;
+		  this.httpGetForMethod("/api/statusinfo", function(error,data) {
 		  if (error){
 			  callback(error)
 		  } else {
@@ -444,8 +443,8 @@ OpenWebIfTvAccessory.prototype = {
 	  },
 	  
 	  setMute(state, callback) {
+               var me = this;
 		var state = state? false : true; //number to boolean
-		var me = this;
 		me.getMute(function(error, currentState) {
 		  if (error){
 			callback(null, state? true : false); //receiver is off
@@ -453,7 +452,7 @@ OpenWebIfTvAccessory.prototype = {
 			if (currentState == state) { //state like expected
 				callback(null, state);
 			} else { //set new state
-			  me.httpGetForMethod("/api/vol?set=mute", function(error) {
+			  this.httpGetForMethod("/api/vol?set=mute", function(error) {
 				if (error){
 					callback(error)
 				} else {
@@ -467,7 +466,7 @@ OpenWebIfTvAccessory.prototype = {
 	  },
 	  
 	  getVolume(callback) {
-		var me = this;
+               var me = this;
 		this.httpGetForMethod("/api/statusinfo", function(error,data) {
 		  if (error){
 			callback(error)
@@ -481,7 +480,7 @@ OpenWebIfTvAccessory.prototype = {
 	  },
 	  
 	  setVolume(volume, callback) {
-		var me = this;
+               var me = this;
 		var targetVolume = parseInt(volume);
 		this.httpGetForMethod("/api/vol?set=set" + targetVolume, function(error) {
 		  if (error){
@@ -494,8 +493,8 @@ OpenWebIfTvAccessory.prototype = {
 	  },
 
 	  getCurrentChannelWithsRef(callback) {
-		var me = this;
-		this.httpGetForMethod("/api/statusinfo", function(error,data) {
+                 var me = this;
+		  this.httpGetForMethod("/api/statusinfo", function(error,data) {
 		  if (error){
 			 callback(error)
 		  } else {
@@ -508,8 +507,8 @@ OpenWebIfTvAccessory.prototype = {
 	  },
 	  
 	  setCurrentChannelWithsRef(ref, callback){
-		var me = this;
-		this.httpGetForMethod("/api/zap?sRef=" + ref,  function(error) {
+                 var me = this;
+		  this.httpGetForMethod("/api/zap?sRef=" + ref,  function(error) {
 		  if (error){
 			 callback(error)
 		  } else { 
@@ -520,8 +519,8 @@ OpenWebIfTvAccessory.prototype = {
 	  },
 	  
 	  sendRemoteControlCommand(command, callback) {
-		var me = this;
-		this.httpGetForMethod("/api/remotecontrol?command=" + command, function(error) {
+                 var me = this;
+		  this.httpGetForMethod("/api/remotecontrol?command=" + command, function(error) {
 		  if (error){
 			 callback(error)
 		  } else { 
@@ -532,14 +531,14 @@ OpenWebIfTvAccessory.prototype = {
 	  },
 	  
 	  printBouquets() {
-		var me = this;
+               var me = this;
 		this.httpGetForMethod("/api/getservices", function(error,data) {
 			if (error){
-                me.log(error)
+                      me.log(error)
 		  } else {
 			var json = JSON.parse(data);
 			var servicesList = json.services;
-			me.printBouquetsDetail(servicesList, new Array());
+			this.printBouquetsDetail(servicesList, new Array());
 			var arrayLength = servicesList.length;
 			for (var i = 0; i < arrayLength; i++) {
 			var service = servicesList[i];
@@ -550,41 +549,45 @@ OpenWebIfTvAccessory.prototype = {
 	  },
 	  
 	  printBouquetsDetail(bouquets, printArray) {
-        if (bouquets == undefined || bouquets == null || bouquets.length <= 0) {
-			var string =  JSON.stringify(printArray, null, 2);
-            fs.writeFile(this.bouquetsDir + "bouquets.json", string, function (error) {
-				if (error) throw error;
-				console.log("Bouquets saved: %s", string);
-			  });
-		  return;
-		}	
-
+               var me = this;
+		var string =  JSON.stringify(printArray, null, 2);
+           if (fs.existsSync(this.bouquetsFile) === false) {
+                    me.log("bouquets file not exist, will be created");
+                    fs.writeFile(this.bouquetsFile, string, function (error) {
+				if (error){
+                                 me.log(error)
+		           } else {
+				    this.log("bouquets file saved: %s", string);
+                             }
+			  });  
+}
 		let bouquet = bouquets[0];
 		    bouquets.shift();
-	    let name = bouquet.servicename;
-		let ref = bouquet.servicereference;
-		var me = this;
-		this.httpGetForMethod("/api/getservices?sRef=" + ref, function(error,data) {
-		  if (error){
-		  } else {
+	       let bouquetName = bouquet.servicename;
+		let bouquetReference = bouquet.servicereference;
+		this.httpGetForMethod("/api/getservices?sRef=" + bouquetReference, function(error,data) {
+		   if (error){
+                       me.log(error)
+		    } else {
 			var json = JSON.parse(data);
 			var servicesList = json.services;
 			var arr = [];
 			var arrayLength = servicesList.length;
 			for (var i = 0; i < arrayLength; i++) {
 			  var service = servicesList[i];
-			  let name = service.servicename;
-			  let ref = service.servicereference;
-			  var object = {"name": name, "reference": ref};
+			  let serviceName = service.servicename;
+			  let serviceReference = service.servicereference;
+			  var object = {"name": serviceName, "reference": serviceReference};
 			  arr.push(object);
 			}
-			var jsonobj = {"name": name, "reference": ref, "channels": arr };
+			var jsonobj = {"name": bouquetName, "reference": bouquetReference, "channels": arr };
 			printArray.push(jsonobj)
-			me.printBouquetsDetail(bouquets, printArray);
+			this.printBouquetsDetail(bouquets, printArray);
 		  }
 		});
 	  }
 
 };
+
 
 
