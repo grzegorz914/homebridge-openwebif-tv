@@ -1,6 +1,10 @@
 # Change Log
 
 All notable changes to this project will be documented in this file.
+## 1.2.5 (06.01.2020)
+- code cleanup
+- some optimisation of display and working with channels list
+
 ## 1.2.4 (05.01.2020)
 - schow channels list if receiver is off.
 
