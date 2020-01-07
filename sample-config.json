@@ -13,12 +13,7 @@
       "host": "192.168.1.10",
       "port": 80,
       "speakerService": true,
-      "bouquetsDir": "/home/openhabian/.openwebifTv/",
       "bouquets": [
-        {
-          "name": "Favoriten",
-          "reference": "1:7:1:0:0:0:0:0:0:0:FROM BOUQUET \"userbouquet.favourites.tv\" ORDER BY bouquet",
-          "channels": [
             {
               "name": "Das Erste HD",
               "reference": "1:0:19:283D:3FB:1:C00000:0:0:0:"
@@ -75,10 +70,8 @@
               "name": "RTL UHD",
               "reference": "1:0:1F:307A:3F5:1:C00000:0:0:0:"
             }
-          ]
-        }
-      ]
-    }
-  ]
+         ]
+      }
+   ]
 }
 
