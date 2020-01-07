@@ -17,12 +17,6 @@
         "required": true,
         "format": "hostname"
       },
-      "bouquetsDir": {
-        "title": "Bouquets directory",
-        "type": "string",
-        "default": "/home/openhabian/.openwebifTv/",
-        "required": true
-      },
       "port": {
         "title": "Port",
         "type": "integer",
@@ -36,26 +30,8 @@
         "default": true
       },
       "bouquets": {
-        "title": "Bouquets",
-        "type": "array",
-        "items": {
-          "type": "object",
-          "properties": {
-            "name": {
-              "title": "Bouquet name",
-              "type": "string",
-              "default": "Polskie",
-              "required": true
-            },
-            "reference": {
-              "title": "Bouquet reference",
-              "type": "string",
-               "default": "1:7:1:0:0:0:0:0:0:0:FRO BOUQUET \"userbouquet.dbe1a.tv\" ORDER BY bouquet",
-              "required": false
-            },
-             "channels": {
         "title": "Channels",
-          "type": "array",
+        "type": "array",
         "items": {
           "type": "object",
           "properties": {
@@ -77,7 +53,4 @@
           }
         }
       }
-    }
-  }
-}
 
