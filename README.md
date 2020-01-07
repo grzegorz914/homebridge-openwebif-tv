@@ -3,7 +3,7 @@
 
 Control plugin for Sat Receiver basis on the OpenWebIf interface.
 Can control receivers (like dreambox or vu+) which run OpenWebIf interface.
-Can operate as TV service, switch and read channels.
+Can operate as TV service, switch/read channels.
 
 This plugin is basis on homebridge-openwebif-switch created by alex224.
 
@@ -30,7 +30,6 @@ If Your receiver contains maximal 98 channels in all bouquets then U no need to 
             "name": "Tuner Sat",
             "host": "192.168.1.10",
             "port": 80,
-            "bouquetsDir": "/home/openhabian/.openwebifTv/",
             "speakerService": true,
             "bouquets": [
         {
