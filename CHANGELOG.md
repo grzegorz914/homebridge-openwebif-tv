@@ -1,9 +1,15 @@
 # Change Log
 
 All notable changes to this project will be documented in this file.
+## 1.2.6 (07.01.2020)
+- changed config bouquets, please update Your config
+- fixed channel list present if tuner is off or channel not in bouquets
+- some small fixes
+
 ## 1.2.5 (06.01.2020)
 - code cleanup
 - some optimisation of display and working with channels list
+- removed bouquetsDir from config
 
 ## 1.2.4 (05.01.2020)
 - schow channels list if receiver is off.
