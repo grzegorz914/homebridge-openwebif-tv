@@ -32,10 +32,6 @@ If Your receiver contains maximal 98 channels in all bouquets then U no need to 
             "port": 80,
             "speakerService": true,
             "bouquets": [
-        {
-          "name": "Favoriten",
-          "reference": "1:7:1:0:0:0:0:0:0:0:FROM BOUQUET \"userbouquet.favourites.tv\" ORDER BY bouquet",
-          "channels": [
             {
               "name": "Das Erste HD",
               "reference": "1:0:19:283D:3FB:1:C00000:0:0:0:"
@@ -60,8 +56,6 @@ If Your receiver contains maximal 98 channels in all bouquets then U no need to 
               "name": "RTLII HD",
               "reference": "1:0:19:EF15:421:1:C00000:0:0:0:"
             }
-          ]
-        }
        ]
      }
     ]
