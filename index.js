@@ -479,7 +479,7 @@ OpenWebIfTvAccessory.prototype = {
 			 callback(error)
 		  } else {
 			var json = JSON.parse(data);
-			var schannelReference = json.currservice_serviceref;
+			var channelReference = json.currservice_serviceref;
 			me.log('getCurrentChannelWithsRef() succeded: %s', channelReference); 
 			callback(null, channelReference);
 			}
