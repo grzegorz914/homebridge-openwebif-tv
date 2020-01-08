@@ -87,7 +87,7 @@ OpenWebIfTvAccessory.prototype = {
 	},
 	
 	generateSpeakerService() {
-		this.speakerService = new Service.TelevisionSpeaker(this.name);
+		this.speakerService = new Service.TelevisionSpeaker(this.name + ' Volume');
 		this.speakerService.getCharacteristic(Characteristic.Volume)
 		    .on('get', this.getVolume.bind(this))
 		    .on('set', this.setVolume.bind(this));
