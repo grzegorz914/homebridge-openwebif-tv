@@ -1,6 +1,9 @@
 # Change Log
 
 All notable changes to this project will be documented in this file.
+## 1.2.9 (08.01.2020)
+- fixed read current channel reference
+
 ## 1.2.6 (07.01.2020)
 - changed config bouquets, please update Your config
 - fixed channel list present if tuner is off or channel not in bouquets
