@@ -18,8 +18,7 @@ HomeBridge: https://github.com/nfarina/homebridge
 # Limitations
 Due to HomeKit app limitation max. channels in bouquets is 98. Over this value HomeKit app will no response.
 
-# Info
-If Your receiver contains maximal 98 channels in all bouquets then U no need to add this to bouquets config manually, all available channels will be download from receiver and present as channels list in other case add only Yor favorites channels to the config, max 98.
+# Info 
 
 # Configuration
 
