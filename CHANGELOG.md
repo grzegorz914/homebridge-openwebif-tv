@@ -1,8 +1,14 @@
 # Change Log
 
 All notable changes to this project will be documented in this file.
-## 1.2.9 (08.01.2020)
-- fixed read current channel reference
+## 1.2.11 (08.01.2020)
+- fixed current channel identification
+
+## 1.2.10 (08.01.2020)
+- some small changes
+
+## 1.2.9 (07.01.2020)
+- fixed read current reference of channels
 
 ## 1.2.6 (07.01.2020)
 - changed config bouquets, please update Your config
