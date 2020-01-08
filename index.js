@@ -14,25 +14,26 @@ module.exports = function(homebridge) {
         homebridge.registerAccessory("homebridge-openwebif-tv", "OpenWebIfTv", OpenWebIfTvAccessory);
 };
 
-function OpenWebIfTvAccessory(log, config) {
-	this.log = log;
-	this.config = config
-	this.name = config["name"];
+    function OpenWebIfTvAccessory(log, config) {
+	    this.log = log;
+	    this.config = config
+	    this.name = config["name"];
 
-	//required
-	this.host = config["host"];
-	this.port = config["port"] || 80;
-	this.speakerService = config["speakerService"] || true;
-	this.bouquets = config["bouquets"];
-	var me = this;
+	    //required
+	    this.host = config["host"];
+	    this.port = config["port"] || 80;
+	    this.speakerService = config["speakerService"] || true;
+	    this.bouquets = config["bouquets"];
+	    var me = this;
 	
 
-}	
+    }	
 
 OpenWebIfTvAccessory.prototype = {
 
 	generateTVService() {
 		var me = this;
+        this.log("Adding Television Service...");
 		this.tvService = new Service.Television(this.name, 'tvService');
 		this.tvService.setCharacteristic(Characteristic.ConfiguredName, this.name);
 		this.tvService.setCharacteristic(Characteristic.SleepDiscoveryMode, Characteristic.SleepDiscoveryMode.ALWAYS_DISCOVERABLE);
@@ -41,53 +42,45 @@ OpenWebIfTvAccessory.prototype = {
 		.on('get', this.getPowerState.bind(this))
 		.on('set', this.setPowerState.bind(this));
 
-		// Identifier of Current Active imput.
+		// Identifier of current active channel.
 		this.tvService.getCharacteristic(Characteristic.ActiveIdentifier)
 		.on('set', (inputIdentifier, callback) => {
-			this.log("new input " + inputIdentifier);
 			var bouquet = this.inputReference[inputIdentifier]
-			this.setCurrentChannelWithsRef(bouquet.reference, callback);
+			me.log("new channel: " + bouquet.name);
+			this.setChannel(bouquet.reference, callback);
 		})
 		.on('get', (callback) => {
-                      me.getPowerState (function(error, state) {
-                      this.receiverstate = state;
-                      });
-       
-			me.getCurrentChannelWithsRef(function(error, channelReference) {
-				if (this.bouquets == undefined || this.bouquets == null || this.bouquets.length <= 0) {
+			 me.getChannel(function(error, inputReference) {
+				if (inputReference == undefined || inputReference == null || inputReference.length <= 0) {
                     callback(null);
                     return;
-                    } 
-                    if (this.receiverstate == false) {
-				        callback(null, 0);
-				        return;
-                    } else {
-						for (var i = 0; i < me.inputReference.length; i++) {
-							var bouquet = me.inputReference[i];
-							if (bouquet.reference == channelReference) {
-							   me.log("current channel: " + i + " " + bouquet.name + " reference: " + channelReference);
-							   callback(null, i);
-							   return;
-				                      }
-			                      }
-		                       }
-				callback("no reference found");
+                } else {
+					for (var i = 0; i < me.inputReference.length; i++) {
+						 var bouquet = me.inputReference[i];
+							if (bouquet.reference == inputReference) {
+							    me.log("current channel: " + i + " " + bouquet.name + " reference: " + bouquet.reference);
+							    callback(null, i);
+							    return;
+				        }
+			        }
+				}
+				me.log("received information: %s", error);
+				callback("no channel found");
 			});
 		});
-
+               
+        this.log("Adding Remote Key Service...");
 		this.tvService.getCharacteristic(Characteristic.RemoteKey)
-		    .on('set', this.remoteKeyPress.bind(this));
-		this.tvService.addCharacteristic(this.makeDiscSpaceCharacteristic())
-		    .on('get', this.getDiscSpace.bind(this))
-
-		if (this.config["includeIP"] || false) {
-			this.tvService.setCharacteristic(this.makeIPCharacteristic(this.host), this.host);
-		}
+			.on('set', this.remoteKeyPress.bind(this));
+			
 		return this.tvService;
 	},
 	
 	generateSpeakerService() {
-		this.speakerService = new Service.TelevisionSpeaker(this.name + ' Volume');
+        if (this.speakerService){
+            this.log("Adding Speaker Service...");
+        }
+        this.speakerService = new Service.TelevisionSpeaker(this.name + ' Volume');
 		this.speakerService.getCharacteristic(Characteristic.Volume)
 		    .on('get', this.getVolume.bind(this))
 		    .on('set', this.setVolume.bind(this));
@@ -98,21 +91,18 @@ OpenWebIfTvAccessory.prototype = {
 		    .on('set', this.setMute.bind(this));
 
 		this.speakerService.setCharacteristic(Characteristic.VolumeControlType, Characteristic.VolumeControlType.ABSOLUTE);
-
-		return this.speakerService;
+             return this.speakerService;
 	},
 
 	generateInputServices() {
-		var bouquets = this.bouquets;
 		
-		this.channelName = new Array();
-		this.channelReference = new Array();
+        this.inputName = new Array();
+		this.inputReference = new Array();
 		var counter = 0;
-	
-		    bouquets.forEach((bouquet, i) => {
-				this.log("Added channel " + bouquet.name);
+        this.bouquets.forEach((bouquet, i) => {
 
-				let tmpInput = new Service.InputSource(bouquet.name, "channel number" + counter);
+				this.log("Adding Input Service..." + bouquet.name);
+                let tmpInput = new Service.InputSource(bouquet.name, "channel nr:" + counter);
 				tmpInput
 				.setCharacteristic(Characteristic.Identifier, counter)
 				.setCharacteristic(Characteristic.ConfiguredName, bouquet.name)
@@ -123,82 +113,21 @@ OpenWebIfTvAccessory.prototype = {
 				tmpInput
 				.getCharacteristic(Characteristic.ConfiguredName)
 				.on('set', (name, callback) => {
-					// TODO: persist name
 					callback()
 				});
 
-				this.channelReference.push(bouquet);
-				this.channelName.push(tmpInput);
+				this.inputReference.push(bouquet);
+				this.inputName.push(tmpInput);
 				counter++;
-		});
+		    });
                if (counter == 0){
-			this.printBouquets()
-		}
-		return this.channelName;
-	},
-
-	volumeSelectorPress(remoteKey, callback) {
-		var command = 0;
-		switch (remoteKey) {
-			case Characteristic.VolumeSelector.INCREMENT:
-			command = 115;
-			break;
-			case Characteristic.VolumeSelector.DECREMENT:
-			command = 114;
-			break;
-		}
-        this.log('remote key pressed: %s', remoteKey, "remote command send: %s", command);
-		this.sendRemoteControlCommand(command, callback);
-	},
-
-	remoteKeyPress(remoteKey, callback) {
-		var command = 0;
-		switch (remoteKey) {
-			case Characteristic.RemoteKey.REWIND:
-			command = 168;
-			break;
-			case Characteristic.RemoteKey.FAST_FORWARD:
-			command = 159;
-			break;
-			case Characteristic.RemoteKey.NEXT_TRACK:
-			command = 407;
-			break;
-			case Characteristic.RemoteKey.PREVIOUS_TRACK:
-			command = 412;
-			break;
-			case Characteristic.RemoteKey.ARROW_UP:
-			command = 103;
-			break;
-			case Characteristic.RemoteKey.ARROW_DOWN:
-			command = 108;
-			break;
-			case Characteristic.RemoteKey.ARROW_LEFT:
-			command = 105;
-			break;
-			case Characteristic.RemoteKey.ARROW_RIGHT:
-			command = 106;
-			break;
-			case Characteristic.RemoteKey.SELECT:
-			command = 352;
-			break;
-			case Characteristic.RemoteKey.BACK:
-			command = 174;
-			break;
-			case Characteristic.RemoteKey.EXIT:
-			command = 174;
-			break;
-			case Characteristic.RemoteKey.PLAY_PAUSE:
-			command = 164;
-			break;
-			case Characteristic.RemoteKey.INFORMATION:
-			command = 139;
-			break;
-		}
-        this.log('remote key pressed: %s', remoteKey, "remote command send: %s", command);
-		this.sendRemoteControlCommand(command, callback);
+			   this.printBouquets()
+		       }
+		return this.inputName;
 	},
 
 	getServices() {
+        this.log("Adding Information Service...");
 		var informationService = new Service.AccessoryInformation();
 		informationService
 		.setCharacteristic(Characteristic.Manufacturer, "OpenWebIf")
@@ -215,42 +144,11 @@ OpenWebIfTvAccessory.prototype = {
 		});
 
 		if (this.speakerService){
-			this.log("Adding SpeakerService");
 			let speakerService = this.generateSpeakerService();
 			services.push(speakerService);
 			tvService.addLinkedService(speakerService);
 		}
 		return services;
-	},
-
-	makeDiscSpaceCharacteristic() {
-		var discSpaceChar = function() {
-			Characteristic.call(this, 'DiscSpace', 'B795302F-FFBA-41D9-9076-337986B81D27');
-			this.setProps({
-				format: Characteristic.Formats.INT,
-				unit: Characteristic.Units.PERCENTAGE,
-				maxValue: 100,
-				minValue: 0,
-				minStep: 1,
-				perms: [Characteristic.Perms.READ, Characteristic.Perms.NOTIFY]
-			});
-			this.value = 0;
-		}
-		inherits(discSpaceChar, Characteristic);
-		return discSpaceChar;
-	},
-
-	makeIPCharacteristic(ip) {
-		var volumeCharacteristic = function() {
-			Characteristic.call(this, 'IP', 'B795302F-FFBA-41D9-9076-337986B81D29');
-			this.setProps({
-				format: Characteristic.Formats.STRING,
-				perms: [Characteristic.Perms.READ, Characteristic.Perms.NOTIFY]
-			});
-			this.value = ip;
-		}
-		inherits(volumeCharacteristic, Characteristic);
-		return volumeCharacteristic;
 	},
 
 	checkHostIsReachable(host, port, callback) {
@@ -283,9 +181,9 @@ OpenWebIfTvAccessory.prototype = {
 				callbackCalled = true;
 			}
 		}, timeout);
-	  },
+	},
 	  
-	  httpGetForMethod(method, callback) {
+	httpGetForMethod(method, callback) {
 		if (!this.host) {
 		  this.log.error("No Host defined in method: " + method);
 		  callback(new Error("No host defined."));
@@ -322,9 +220,9 @@ OpenWebIfTvAccessory.prototype = {
 			return;
 		  }
 		});
-	  },
+	},
 	  
-	  httpRequest(url, body, method, callback) {
+	httpRequest(url, body, method, callback) {
 		request({
 		  url: url,
 		  body: body,
@@ -334,27 +232,9 @@ OpenWebIfTvAccessory.prototype = {
 		  function(error, response, body) {
 		  callback(error, response, body);
 		});
-	  },
-	  
-	  getDiscSpace(callback) {
-        var me = this;
-		this.httpGetForMethod("/api/about", function(error,data) {
-		  if (error){
-			callback(error)
-		  } else {
-			var json = JSON.parse(data);
-			var freeDiscSpaceValue = json.info.hdd[0].free;
-			var freeDouble = parseFloat(freeDiscSpaceValue);
-			var capacityDiscSpaceValue = json.info.hdd[0].capacity;
-			var capacityDouble = parseFloat(capacityDiscSpaceValue);
-			var percentage = (freeDouble / capacityDouble) * 100;
-			me.log('getDiscSpace() succeded, free: %s', percentage);
-			callback(null, percentage);
-		  }
-		});
-	  },
+	},
 
-	  getDeviceInfo(callback) {
+	getDeviceInfo(callback) {
         var me = this;
 		this.httpGetForMethod("/api/about", function(error,data) {
 		  if (error){
@@ -369,9 +249,9 @@ OpenWebIfTvAccessory.prototype = {
 			callback(null, json);
 		  }
 		});
-	  },
+	},
 	  
-	  getPowerState(callback) {
+	getPowerState(callback) {
         var me = this;
 		this.httpGetForMethod("/api/statusinfo", function(error,data) {
 		  if (error){
@@ -383,9 +263,9 @@ OpenWebIfTvAccessory.prototype = {
 			callback(null, state);
 		  }
 		});
-	  },
+	},
 	  
-	  setPowerState(state, callback) {
+	setPowerState(state, callback) {
         var me = this;
 		var state = state? true : false; //number to boolean
 		me.getPowerState(function(error, currentState) {
@@ -406,9 +286,9 @@ OpenWebIfTvAccessory.prototype = {
 			}
 		  }
 		});
-	  },
+	},
 	  
-	  getMute(callback) {
+	getMute(callback) {
           var me = this;
 		  this.httpGetForMethod("/api/statusinfo", function(error,data) {
 		  if (error){
@@ -420,9 +300,9 @@ OpenWebIfTvAccessory.prototype = {
 			callback(null, state);
 		  }
 		});
-	  },
+	},
 	  
-	  setMute(state, callback) {
+	setMute(state, callback) {
         var me = this;
 		var state = state? false : true; //number to boolean
 		me.getMute(function(error, currentState) {
@@ -443,9 +323,9 @@ OpenWebIfTvAccessory.prototype = {
 			}
 		  }
 		});
-	  },
+	},
 	  
-	  getVolume(callback) {
+	getVolume(callback) {
         var me = this;
 		this.httpGetForMethod("/api/statusinfo", function(error,data) {
 		  if (error){
@@ -457,9 +337,9 @@ OpenWebIfTvAccessory.prototype = {
 			callback(null, volume);
 		  }
 		});
-	  },
+	},
 	  
-	  setVolume(volume, callback) {
+	setVolume(volume, callback) {
         var me = this;
 		var targetVolume = parseInt(volume);
 		this.httpGetForMethod("/api/vol?set=set" + targetVolume, function(error) {
@@ -470,48 +350,108 @@ OpenWebIfTvAccessory.prototype = {
 			callback(null, targetVolume);
 		  }
 		});
-	  },
+	},
 
-	  getCurrentChannelWithsRef(callback) {
+	getChannel(callback) {
           var me = this;
 		  this.httpGetForMethod("/api/statusinfo", function(error,data) {
 		  if (error){
 			 callback(error)
 		  } else {
 			var json = JSON.parse(data);
-			var channelReference = json.currservice_serviceref;
-			me.log('getCurrentChannelWithsRef() succeded: %s', channelReference); 
-			callback(null, channelReference);
+			var inputReference = json.currservice_serviceref;
+			me.log('getChannel() succeded: %s', inputReference); 
+			callback(null, inputReference);
 			}
 		});
-	  },
+	},
 	  
-	  setCurrentChannelWithsRef(ref, callback){
+	setChannel(ref, callback){
           var me = this;
-		  this.httpGetForMethod("/api/zap?sRef=" + channelReference,  function(error) {
+		  this.httpGetForMethod("/api/zap?sRef=" + inputReference,  function(error) {
 		  if (error){
 			 callback(error)
 		  } else { 
-			   me.log('setCurrentChannelWithsRef() succeded: %s', channelReference);     
-			   callback(null, channelReference);
+			   me.log('setChannel() succeded: %s', inputReference);     
+			   callback(null, inputReference);
 		  } 
 		});
 	  },
+
+	volumeSelectorPress(remoteKey, callback) {
+		var command = 0;
+		switch (remoteKey) {
+			case Characteristic.VolumeSelector.INCREMENT:
+			command = "115";
+			break;
+			case Characteristic.VolumeSelector.DECREMENT:
+			command = "114";
+			break;
+		}
+        this.log('remote key pressed: %s', remoteKey, "remote command send: %s", command);
+		this.sendRemoteControlCommand(command, callback);
+	},
+
+	remoteKeyPress(remoteKey, callback) {
+		var command = 0;
+		switch (remoteKey) {
+			case Characteristic.RemoteKey.REWIND:
+			command = "168";
+			break;
+			case Characteristic.RemoteKey.FAST_FORWARD:
+			command = "159";
+			break;
+			case Characteristic.RemoteKey.NEXT_TRACK:
+			command = "407";
+			break;
+			case Characteristic.RemoteKey.PREVIOUS_TRACK:
+			command = "412";
+			break;
+			case Characteristic.RemoteKey.ARROW_UP:
+			command = "103";
+			break;
+			case Characteristic.RemoteKey.ARROW_DOWN:
+			command = "108";
+			break;
+			case Characteristic.RemoteKey.ARROW_LEFT:
+			command = "105";
+			break;
+			case Characteristic.RemoteKey.ARROW_RIGHT:
+			command = "106";
+			break;
+			case Characteristic.RemoteKey.SELECT:
+			command = "352";
+			break;
+			case Characteristic.RemoteKey.BACK:
+			command = "174";
+			break;
+			case Characteristic.RemoteKey.EXIT:
+			command = "174";
+			break;
+			case Characteristic.RemoteKey.PLAY_PAUSE:
+			command = "164";
+			break;
+			case Characteristic.RemoteKey.INFORMATION:
+			command = "139";
+			break;
+		}
+        this.log('remote key pressed: %s', remoteKey, "remote command send: %s", command);
+		this.sendRemoteControlCommand(command, callback);
+	},
+
+	sendRemoteControlCommand(command, callback) {
+		var me = this;
+		this.httpGetForMethod("/api/remotecontrol?command=" + command, function(error) {
+		if (error){
+		   callback(error)
+		} else { 
+			 me.log('sendCommand() succeded: %s', command);     
+			 callback(null, command);
+		}
+	  });
+	},
 	  
-	  sendRemoteControlCommand(command, callback) {
-          var me = this;
-		  this.httpGetForMethod("/api/remotecontrol?command=" + command, function(error) {
-		  if (error){
-			 callback(error)
-		  } else { 
-			   me.log('sendCommand() succeded: %s', command);     
-			   callback(null, command);
-		  }
-		});
-	  },
-	  
-	  
-	  printBouquets() {
+	printBouquets() {
 		var me = this;
 		this.httpGetForMethod("/api/getservices", function(error,data) {
 		  if (error){
@@ -527,7 +467,7 @@ OpenWebIfTvAccessory.prototype = {
 		});
 	  },
 	  
-	  printBouquetsDetail(bouquets, printArray) {
+	printBouquetsDetail(bouquets, printArray) {
 		if (bouquets == undefined || bouquets == null || bouquets.length <= 0) {
 		  var string =  JSON.stringify(printArray, null, 2);
 		  this.log('Add this to bouquet array in config: %s', string);
@@ -561,8 +501,6 @@ OpenWebIfTvAccessory.prototype = {
 	  },
 };
 
-
-};
 
 
 
