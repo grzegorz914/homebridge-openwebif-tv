@@ -1,6 +1,9 @@
 # Change Log
 
 All notable changes to this project will be documented in this file.
+## 1.2.12 (09.01.2020)
+- fixed crash if switch channel
+
 ## 1.2.11 (08.01.2020)
 - fixed current channel identification
 
