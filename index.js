@@ -366,7 +366,7 @@ OpenWebIfTvAccessory.prototype = {
 		});
 	},
 	  
-	setChannel(ref, callback){
+	setChannel(inputReference, callback){
           var me = this;
 		  this.httpGetForMethod("/api/zap?sRef=" + inputReference,  function(error) {
 		  if (error){
