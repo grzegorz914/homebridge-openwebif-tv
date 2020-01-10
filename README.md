@@ -58,7 +58,7 @@ Due to HomeKit app limitation max. channels in bouquets is 97. Over this value H
 </pre>
 
 # Info 
-Sort of channel in HomeKit app is alpahabetically bu U can sort the channel as in Yours receivers adding channel number at first place of every name, some example:
+Sort of channels in HomeKit app is alpahabetically but U can sort the channels as in Yours receivers, just add channel number at first place of every name, some example:
 <pre>
 {
                     "name": "1 TVP HD",
