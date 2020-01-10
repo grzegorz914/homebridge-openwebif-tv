@@ -15,7 +15,7 @@ HomeBridge: https://github.com/nfarina/homebridge
 3. Update your configuration file. See sample-config.json in this repository for a sample. 
 
 # Limitations
-Due to HomeKit app limitation max. channels in bouquets is 98. Over this value HomeKit app will no response.
+Due to HomeKit app limitation max. channels in bouquets is 97. Over this value HomeKit app will no response.
 
 # Info 
 
