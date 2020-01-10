@@ -17,9 +17,49 @@ HomeBridge: https://github.com/nfarina/homebridge
 # Limitations
 Due to HomeKit app limitation max. channels in bouquets is 97. Over this value HomeKit app will no response.
 
+# Configuration
+
+ <pre>
+"accessories": [
+        {
+            "accessory": "OpenWebIfTv",
+            "name": "Tuner Sat",
+            "host": "192.168.1.10",
+            "port": 80,
+            "speakerService": true,
+            "bouquets": [
+            {
+              "name": "Das Erste HD",
+              "reference": "1:0:19:283D:3FB:1:C00000:0:0:0:"
+            },
+            {
+              "name": "ZDF HD",
+              "reference": "1:0:19:2B66:3F3:1:C00000:0:0:0:"
+            },
+            {
+              "name": "RTL HD",
+              "reference": "1:0:19:EF10:421:1:C00000:0:0:0:"
+            },
+            {
+              "name": "SAT.1 HD",
+              "reference": "1:0:19:EF74:3F9:1:C00000:0:0:0:"
+            },
+            {
+              "name": "ProSieben HD",
+              "reference": "1:0:19:EF75:3F9:1:C00000:0:0:0:"
+            },
+            {
+              "name": "RTLII HD",
+              "reference": "1:0:19:EF15:421:1:C00000:0:0:0:"
+            }
+       ]
+     }
+    ]
+</pre>
+
 # Info 
 Sort of channel in HomeKit app is alpahabetically bu U can sort the channel as in Yours receivers adding channel number at first place of every name, some example:
-
+<pre>
 {
                     "name": "1 TVP HD",
                     "reference": "1:0:1:1138:2AF8:13E:820000:0:0:0:"
@@ -80,47 +120,7 @@ Sort of channel in HomeKit app is alpahabetically bu U can sort the channel as i
                     "name": "22 TVN Turbo HD",
                     "reference": "1:0:1:3DD0:640:13E:820000:0:0:0:"
                 },
-
-# Configuration
-
- <pre>
-"accessories": [
-        {
-            "accessory": "OpenWebIfTv",
-            "name": "Tuner Sat",
-            "host": "192.168.1.10",
-            "port": 80,
-            "speakerService": true,
-            "bouquets": [
-            {
-              "name": "Das Erste HD",
-              "reference": "1:0:19:283D:3FB:1:C00000:0:0:0:"
-            },
-            {
-              "name": "ZDF HD",
-              "reference": "1:0:19:2B66:3F3:1:C00000:0:0:0:"
-            },
-            {
-              "name": "RTL HD",
-              "reference": "1:0:19:EF10:421:1:C00000:0:0:0:"
-            },
-            {
-              "name": "SAT.1 HD",
-              "reference": "1:0:19:EF74:3F9:1:C00000:0:0:0:"
-            },
-            {
-              "name": "ProSieben HD",
-              "reference": "1:0:19:EF75:3F9:1:C00000:0:0:0:"
-            },
-            {
-              "name": "RTLII HD",
-              "reference": "1:0:19:EF15:421:1:C00000:0:0:0:"
-            }
-       ]
-     }
-    ]
 </pre>
-
 
 # Whats new:
 https://github.com/grzegorz914/homebridge-openwebif-tv/blob/master/CHANGELOG.md
