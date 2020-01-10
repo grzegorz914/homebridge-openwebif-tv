@@ -18,6 +18,68 @@ HomeBridge: https://github.com/nfarina/homebridge
 Due to HomeKit app limitation max. channels in bouquets is 97. Over this value HomeKit app will no response.
 
 # Info 
+Sort of channel in HomeKit app is alpahabetically bu U can sort the channel as in Yours receivers adding channel number at first place of every name, some example:
+
+{
+                    "name": "1 TVP HD",
+                    "reference": "1:0:1:1138:2AF8:13E:820000:0:0:0:"
+                },
+                {
+                    "name": "10 TVP 1 HD",
+                    "reference": "1:0:1:3ABD:514:13E:820000:0:0:0:"
+                },
+                {
+                    "name": "11 TVP 2 HD",
+                    "reference": "1:0:1:C22:1E78:71:820000:0:0:0:"
+                },
+                {
+                    "name": "12 TVP 3",
+                    "reference": "1:0:1:113B:2AF8:13E:820000:0:0:0:"
+                },
+                {
+                    "name": "13 TVP INFO HD",
+                    "reference": "1:0:1:1139:2AF8:13E:820000:0:0:0:"
+                },
+                {
+                    "name": "14 TVP ABC",
+                    "reference": "1:0:1:3D5F:2C88:13E:820000:0:0:0:"
+                },
+                {
+                    "name": "15 TVP Seriale",
+                    "reference": "1:0:1:3D5C:2C88:13E:820000:0:0:0:"
+                },
+                {
+                    "name": "16 TVP Kultura",
+                    "reference": "1:0:1:3D59:2C88:13E:820000:0:0:0:"
+                },
+                {
+                    "name": "17 TVP Rozrywka",
+                    "reference": "1:0:1:4288:2BC0:13E:820000:0:0:0:"
+                },
+                {
+                    "name": "18 TVP Polonia",
+                    "reference": "1:0:1:132B:33F4:13E:820000:0:0:0:"
+                },
+                {
+                    "name": "19 TVP Sport HD",
+                    "reference": "1:0:1:DB1:2D50:13E:820000:0:0:0:"
+                },
+                {
+                    "name": "2 TVP Historia",
+                    "reference": "1:0:1:3D67:2C88:13E:820000:0:0:0:"
+                },
+                {
+                    "name": "20 TVN HD",
+                    "reference": "1:0:1:3DCD:640:13E:820000:0:0:0:"
+                },
+                {
+                    "name": "21 TVN 7 HD",
+                    "reference": "1:0:1:3DD3:640:13E:820000:0:0:0:"
+                },
+                {
+                    "name": "22 TVN Turbo HD",
+                    "reference": "1:0:1:3DD0:640:13E:820000:0:0:0:"
+                },
 
 # Configuration
 
