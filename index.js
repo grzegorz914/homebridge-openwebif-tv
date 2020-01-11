@@ -1,12 +1,7 @@
-const net = require('net');
 const request = require('request');
-const fs = require('fs');
-const mkdirp = require('mkdirp');
-const ppath = require('persist-path');
 var Package = require('./package.json');
 
 var Service, Characteristic;
-var inherits = require('util').inherits;
 
 module.exports = function(homebridge) {
         Service = homebridge.hap.Service;
@@ -21,10 +16,20 @@ module.exports = function(homebridge) {
 
 	    //required
 	    this.host = config["host"];
-	    this.port = config["port"] || 80;
+		this.port = config["port"] || 80;
+		this.auth = config["auth"] || false;
+		this.user = config["user"] || 'root';
+		this.pass = config["pass"] || '';
 	    this.speakerService = config["speakerService"] || true;
-	    this.bouquets = config["bouquets"];
-	    var me = this;
+		this.bouquets = config["bouquets"];
+
+		var me = this;
+
+		if (me.auth == true) {
+			me.auth = (this.user + ':' + this.pass + '@')
+		} else {
+			me.auth = ''
+	    }
 	
 
     }	
@@ -85,7 +90,7 @@ OpenWebIfTvAccessory.prototype = {
 		    .on('get', this.getVolume.bind(this))
 		    .on('set', this.setVolume.bind(this));
 		this.speakerService.getCharacteristic(Characteristic.VolumeSelector) //increase/decrease volume
-                    .on('set', this.volumeSelectorPress.bind(this));
+            .on('set', this.volumeSelectorPress.bind(this));
 		this.speakerService.getCharacteristic(Characteristic.Mute)
 		    .on('get', this.getMute.bind(this))
 		    .on('set', this.setMute.bind(this));
@@ -102,22 +107,22 @@ OpenWebIfTvAccessory.prototype = {
         this.bouquets.forEach((bouquet, i) => {
 
 				this.log("Adding Input Service..." + bouquet.name);
-                let tmpInput = new Service.InputSource(bouquet.name, "channel nr:" + counter);
-				tmpInput
-				.setCharacteristic(Characteristic.Identifier, counter)
+				let inputService = new Service.InputSource(bouquet.name, i);
+				inputService
+				.setCharacteristic(Characteristic.Identifier, i)
 				.setCharacteristic(Characteristic.ConfiguredName, bouquet.name)
 				.setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
 				.setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.TV)
 				.setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN);
 
-				tmpInput
+				inputService
 				.getCharacteristic(Characteristic.ConfiguredName)
 				.on('set', (name, callback) => {
 					callback()
 				});
-
+				
 				this.inputReference.push(bouquet);
-				this.inputName.push(tmpInput);
+				this.inputName.push(inputService);
 				counter++;
 		    });
                if (counter == 0){
@@ -127,7 +132,8 @@ OpenWebIfTvAccessory.prototype = {
 	},
 
 	getServices() {
-        this.log("Adding Information Service...");
+
+		this.log("Adding Information Service...");
 		var informationService = new Service.AccessoryInformation();
 		informationService
 		.setCharacteristic(Characteristic.Manufacturer, "OpenWebIf")
@@ -150,55 +156,28 @@ OpenWebIfTvAccessory.prototype = {
 		}
 		return services;
 	},
-
-	checkHostIsReachable(host, port, callback) {
-		var timeout = 2000;
-		var callbackCalled = false;
-		
-		var client = new net.Socket();
-		client.on('error', function (err) {
-			clearTimeout(timer);
-			client.destroy();
-			if (!callbackCalled) {
-				callback(false);
-				callbackCalled = true;
-			}
-		})
-		
-		client.connect(port, host, function () {
-			clearTimeout(timer);
-			client.end();
-			if (!callbackCalled) {
-				callback(true);
-				callbackCalled = true;
-			}
-		});
-		
-		var timer = setTimeout(function() {
-			client.end();
-			if (!callbackCalled) {
-				callback(false);
-				callbackCalled = true;
-			}
-		}, timeout);
-	},
 	  
-	httpGetForMethod(method, callback) {
+	httpGet(apipath, callback) {
 		if (!this.host) {
-		  this.log.error("No Host defined in method: " + method);
 		  callback(new Error("No host defined."));
 		}
 		if (!this.port) {
-		  this.log.error("No port defined in method: " + method);
 		  callback(new Error("No port defined."));
 		}
+
+		if (this.auth) {
+			if (!this.user || !this.pass) {
+				callback(new Error("No authentication data defined."));
+			}
+		}
+
 		var me = this;
-		me.checkHostIsReachable(this.host, this.port, function(reachable) {
-		  if (reachable) {
-			me.httpRequest('http://' + me.host + ':' + me.port + method , '', 'GET', function(error, response, responseBody) {
-			  if (error) {
-				callback(error)
-			  } else {
+		me.httpRequest('http://' + me.auth + me.host + ':' + me.port + apipath , '', 'GET', function(error, response, responseBody) {
+			if (error) {
+				callback(error);
+				me.log.error("Device not reachable " + me.host + ":" + me.port + apipath);
+				return;
+			} else {
 				try {
 				  var result = JSON.stringify(responseBody, function(err, data) {
 					if (err) {
@@ -212,22 +191,15 @@ OpenWebIfTvAccessory.prototype = {
 				  callback(e, null);
 				  me.log('error: ' + e);
 				}
-			  }
-			}.bind(this));
-		  } else {
-			me.log.error("Device not reachable" + me.host + ":" + me.port + " in method: " + method);
-			callback(new Error("device is not reachable, please check connection and all config data"), null); //receiver is off
-			return;
-		  }
-		});
+			}
+		}.bind(this)); 
 	},
 	  
-	httpRequest(url, body, method, callback) {
+	httpRequest(url, body, apipath, callback) {
 		request({
 		  url: url,
 		  body: body,
-		  method: method,
-		  rejectUnauthorized: false
+		  method: apipath
 		},
 		  function(error, response, body) {
 		  callback(error, response, body);
@@ -236,7 +208,7 @@ OpenWebIfTvAccessory.prototype = {
 
 	getDeviceInfo(callback) {
         var me = this;
-		this.httpGetForMethod("/api/about", function(error,data) {
+		this.httpGet("/api/about", function(error,data) {
 		  if (error){
 			callback(error)
 		  } else {
@@ -245,7 +217,7 @@ OpenWebIfTvAccessory.prototype = {
 			var model = json.info.bname;
 			var firmware = json.info.enigmaver;
 			var serial = json.ifaces[0].mac;
-			me.log('getDeviceInfo() succeded, free: %s', data);
+			me.log('getDeviceInfo() succeded, free: %s', json);
 			callback(null, json);
 		  }
 		});
@@ -253,7 +225,7 @@ OpenWebIfTvAccessory.prototype = {
 	  
 	getPowerState(callback) {
         var me = this;
-		this.httpGetForMethod("/api/statusinfo", function(error,data) {
+		this.httpGet("/api/statusinfo", function(error,data) {
 		  if (error){
 			callback(error)
 		  } else {
@@ -275,7 +247,7 @@ OpenWebIfTvAccessory.prototype = {
 			if (currentState == state) { //state like expected
 			  callback(null, state);
 			} else { //set new state
-			  me.httpGetForMethod("/api/powerstate?newstate=0", function(error) {
+			  me.httpGet("/api/powerstate?newstate=0", function(error) {
 				if (error){
 				  callback(error)
 				} else {
@@ -290,7 +262,7 @@ OpenWebIfTvAccessory.prototype = {
 	  
 	getMute(callback) {
           var me = this;
-		  this.httpGetForMethod("/api/statusinfo", function(error,data) {
+		  this.httpGet("/api/statusinfo", function(error,data) {
 		  if (error){
 			  callback(error)
 		  } else {
@@ -312,7 +284,7 @@ OpenWebIfTvAccessory.prototype = {
 			if (currentState == state) { //state like expected
 				callback(null, state);
 			} else { //set new state
-			  me.httpGetForMethod("/api/vol?set=mute", function(error) {
+			  me.httpGet("/api/vol?set=mute", function(error) {
 				if (error){
 					callback(error)
 				} else {
@@ -327,7 +299,7 @@ OpenWebIfTvAccessory.prototype = {
 	  
 	getVolume(callback) {
         var me = this;
-		this.httpGetForMethod("/api/statusinfo", function(error,data) {
+		this.httpGet("/api/statusinfo", function(error,data) {
 		  if (error){
 			callback(error)
 		  } else {
@@ -342,7 +314,7 @@ OpenWebIfTvAccessory.prototype = {
 	setVolume(volume, callback) {
         var me = this;
 		var targetVolume = parseInt(volume);
-		this.httpGetForMethod("/api/vol?set=set" + targetVolume, function(error) {
+		this.httpGet("/api/vol?set=set" + targetVolume, function(error) {
 		  if (error){
 			callback(error)
 		  } else {
@@ -354,7 +326,7 @@ OpenWebIfTvAccessory.prototype = {
 
 	getChannel(callback) {
           var me = this;
-		  this.httpGetForMethod("/api/statusinfo", function(error,data) {
+		  this.httpGet("/api/statusinfo", function(error,data) {
 		  if (error){
 			 callback(error)
 		  } else {
@@ -368,7 +340,7 @@ OpenWebIfTvAccessory.prototype = {
 	  
 	setChannel(inputReference, callback){
           var me = this;
-		  this.httpGetForMethod("/api/zap?sRef=" + inputReference,  function(error) {
+		  this.httpGet("/api/zap?sRef=" + inputReference,  function(error) {
 		  if (error){
 			 callback(error)
 		  } else { 
@@ -441,7 +413,7 @@ OpenWebIfTvAccessory.prototype = {
 
 	sendRemoteControlCommand(command, callback) {
 		var me = this;
-		this.httpGetForMethod("/api/remotecontrol?command=" + command, function(error) {
+		this.httpGet("/api/remotecontrol?command=" + command, function(error) {
 		if (error){
 		   callback(error)
 		} else { 
@@ -453,7 +425,7 @@ OpenWebIfTvAccessory.prototype = {
 	  
 	printBouquets() {
 		var me = this;
-		this.httpGetForMethod("/api/getservices", function(error,data) {
+		this.httpGet("/api/getservices", function(error,data) {
 		  if (error){
 		  } else {
 			var json = JSON.parse(data);
@@ -479,7 +451,7 @@ OpenWebIfTvAccessory.prototype = {
 		let name = bouquet.servicename;
 		let ref = bouquet.servicereference;
 		var me = this;
-		this.httpGetForMethod("/api/getservices?sRef=" + ref, function(error,data) {
+		this.httpGet("/api/getservices?sRef=" + ref, function(error,data) {
 		  if (error){
 		  } else {
 			var json = JSON.parse(data);
@@ -500,6 +472,7 @@ OpenWebIfTvAccessory.prototype = {
 		});
 	  },
 };
+
 
 
 
