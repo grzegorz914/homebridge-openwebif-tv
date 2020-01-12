@@ -2,7 +2,7 @@
 [![npm](https://img.shields.io/npm/dt/homebridge-openwebif-tv.svg)](https://www.npmjs.com/package/homebridge-openwebif-tv) [![npm](https://img.shields.io/npm/v/homebridge-openwebif-tv.svg)](https://www.npmjs.com/package/homebridge-openwebif-tv)
 
 Control plugin for Sat Receivers basis on the OpenWebIf interface (Dreambox, VU+, etc..).
-Present in HomeKit as TV service, change channels, volume/mute, power control.
+Present in HomeKit as TV service, schange channels, volume/mute control, power control.
 
 This plugin is basis on homebridge-openwebif-switch created by alex224.
 
@@ -16,6 +16,8 @@ HomeBridge: https://github.com/nfarina/homebridge
 
 # Limitations
 Due to HomeKit app limitation max. channels in bouquets is 97. Over this value HomeKit app will no response.
+Right now plugin read automatiacally 97 channels from the Sat Receiver and store in /home/user/.openwebif/bouquets.json file, 
+if U want somthing changed in channel list please add Yours prefered channels to the config bouquets, this plugin read channels from file only if config bouquets are not configured.
 
 # Configuration
 
@@ -61,9 +63,9 @@ Due to HomeKit app limitation max. channels in bouquets is 97. Over this value H
 </pre>
 
 # Info 
-Sort of channels in HomeKit app is alpahabetically but U can sort the channels as in Yours receivers, just add channel number at first place of every name, some example:
+Sort of channel in HomeKit app is alpahabetically bu U can sort the channel as in Yours receivers adding channel number at first place of every name, some example:
 <pre>
-{
+                {
                     "name": "1 TVP HD",
                     "reference": "1:0:1:1138:2AF8:13E:820000:0:0:0:"
                 },
