@@ -2,7 +2,7 @@
 [![npm](https://img.shields.io/npm/dt/homebridge-openwebif-tv.svg)](https://www.npmjs.com/package/homebridge-openwebif-tv) [![npm](https://img.shields.io/npm/v/homebridge-openwebif-tv.svg)](https://www.npmjs.com/package/homebridge-openwebif-tv)
 
 Control plugin for Sat Receivers basis on the OpenWebIf interface (Dreambox, VU+, etc..).
-Present in HomeKit as TV service, schange channels, volume/mute control, power control.
+Present in HomeKit as TV service, change channels, volume/mute, power control.
 
 This plugin is basis on homebridge-openwebif-switch created by alex224.
 
