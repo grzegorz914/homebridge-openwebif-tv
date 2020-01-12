@@ -1,4 +1,7 @@
 const request = require('request');
+const ppath = require('persist-path');
+const fs = require('fs');
+const mkdirp = require('mkdirp');
 var Package = require('./package.json');
 
 var Service, Characteristic;
@@ -20,18 +23,39 @@ module.exports = function(homebridge) {
 		this.auth = config["auth"] || false;
 		this.user = config["user"] || 'root';
 		this.pass = config["pass"] || '';
+		this.prefsDir = ppath('openwebif/');
 	    this.speakerService = config["speakerService"] || true;
 		this.bouquets = config["bouquets"];
 
 		var me = this;
+		this.bouquetsFile = this.prefsDir + "bouquets.json";
 
 		if (me.auth == true) {
 			me.auth = (this.user + ':' + this.pass + '@')
 		} else {
 			me.auth = ''
-	    }
-	
+		}
 
+		
+		if (this.bouquets == undefined || this.bouquets == null || this.bouquets.length <= 0) {
+			var counter = 0
+		    // check if prefs directory ends with a /, if not then add it
+		if (this.prefsDir.endsWith('/') === false) {
+			this.prefsDir = this.prefsDir + '/';
+		}
+	
+		    // check if the preferences directory exists, if not then create it
+		if (fs.existsSync(this.prefsDir) === false) {
+			mkdirp(this.prefsDir);
+		}
+			// print channels if bouquets not exist in config
+	    if (counter == 0){
+		    counter++;
+		    this.printBouquets();
+			return;
+			}
+		}
+	
     }	
 
 OpenWebIfTvAccessory.prototype = {
@@ -44,31 +68,31 @@ OpenWebIfTvAccessory.prototype = {
 		this.tvService.setCharacteristic(Characteristic.SleepDiscoveryMode, Characteristic.SleepDiscoveryMode.ALWAYS_DISCOVERABLE);
 
 		this.tvService.getCharacteristic(Characteristic.Active)
-		.on('get', this.getPowerState.bind(this))
-		.on('set', this.setPowerState.bind(this));
+		    .on('get', this.getPowerState.bind(this))
+		    .on('set', this.setPowerState.bind(this));
 
 		// Identifier of current active channel.
 		this.tvService.getCharacteristic(Characteristic.ActiveIdentifier)
-		.on('set', (inputIdentifier, callback) => {
-			var bouquet = this.inputReference[inputIdentifier]
-			me.log("new channel: " + bouquet.name);
-			this.setChannel(bouquet.reference, callback);
-		})
-		.on('get', (callback) => {
-			 me.getChannel(function(error, inputReference) {
-				if (inputReference == undefined || inputReference == null || inputReference.length <= 0) {
-                    callback(null);
-                    return;
-                } else {
-					for (var i = 0; i < me.inputReference.length; i++) {
-						 var bouquet = me.inputReference[i];
-							if (bouquet.reference == inputReference) {
-							    me.log("current channel: " + i + " " + bouquet.name + " reference: " + bouquet.reference);
-							    callback(null, i);
-							    return;
-				        }
-			        }
-				}
+		    .on('set', (inputIdentifier, callback) => {
+			    var bouquet = this.inputReference[inputIdentifier]
+			    me.log("new channel: " + bouquet.name);
+			    this.setChannel(bouquet.reference, callback);
+		    })
+		    .on('get', (callback) => {
+			    me.getChannel(function(error, inputReference) {
+				    if (inputReference == undefined || inputReference == null || inputReference.length <= 0) {
+                        callback(null);
+                        return;
+                    } else {
+					    for (var i = 0; i < me.inputReference.length; i++) {
+						     var bouquet = me.inputReference[i];
+							    if (bouquet.reference == inputReference) {
+							        me.log("current channel: " + i + " " + bouquet.name + " reference: " + bouquet.reference);
+							        callback(null, i);
+							        return;
+				                }
+			            }
+				    }
 				me.log("received information: %s", error);
 				callback("no channel found");
 			});
@@ -85,29 +109,37 @@ OpenWebIfTvAccessory.prototype = {
         if (this.speakerService){
             this.log("Adding Speaker Service...");
         }
-        this.speakerService = new Service.TelevisionSpeaker(this.name + ' Volume');
+		this.speakerService = new Service.TelevisionSpeaker(this.name + ' Volume');
+		this.speakerService.getCharacteristic(Characteristic.VolumeSelector)
+            .on('set', this.volumeSelectorPress.bind(this));
 		this.speakerService.getCharacteristic(Characteristic.Volume)
 		    .on('get', this.getVolume.bind(this))
 		    .on('set', this.setVolume.bind(this));
-		this.speakerService.getCharacteristic(Characteristic.VolumeSelector) //increase/decrease volume
-            .on('set', this.volumeSelectorPress.bind(this));
 		this.speakerService.getCharacteristic(Characteristic.Mute)
 		    .on('get', this.getMute.bind(this))
-		    .on('set', this.setMute.bind(this));
-
-		this.speakerService.setCharacteristic(Characteristic.VolumeControlType, Characteristic.VolumeControlType.ABSOLUTE);
-             return this.speakerService;
+			.on('set', this.setMute.bind(this));	
+        this.speakerService.setCharacteristic(Characteristic.VolumeControlType, Characteristic.VolumeControlType.ABSOLUTE);
+		
+		return this.speakerService;
 	},
 
-	generateInputServices() {
-		
+	generateInputServices() {	
+		// Load persisted bouquets from file
+		var data = fs.readFileSync(this.bouquetsFile, 'utf8');
+		if (this.bouquets == undefined || this.bouquets == null || this.bouquets.length <= 0) {
+			var bouquets = JSON.parse(data);
+			//this.log(bouquets);
+	    } else {
+			var bouquets = this.bouquets;
+			//this.log(bouquets);
+		}
+
         this.inputName = new Array();
 		this.inputReference = new Array();
-		var counter = 0;
-        this.bouquets.forEach((bouquet, i) => {
+             bouquets.forEach((bouquet, i) => {
 
-				this.log("Adding Input Service..." + bouquet.name);
-				let inputService = new Service.InputSource(bouquet.name, i);
+			this.log("Adding Input Service..." + bouquet.name);
+			let inputService = new Service.InputSource(bouquet.name, i);
 				inputService
 				.setCharacteristic(Characteristic.Identifier, i)
 				.setCharacteristic(Characteristic.ConfiguredName, bouquet.name)
@@ -121,48 +153,45 @@ OpenWebIfTvAccessory.prototype = {
 					callback()
 				});
 				
-				this.inputReference.push(bouquet);
-				this.inputName.push(inputService);
-				counter++;
-		    });
-               if (counter == 0){
-			   this.printBouquets()
-		       }
-		return this.inputName;
+			this.inputReference.push(bouquet);
+			this.inputName.push(inputService);
+	    });
+	    return this.inputName;
 	},
 
 	getServices() {
 
 		this.log("Adding Information Service...");
-		var informationService = new Service.AccessoryInformation();
-		informationService
-		.setCharacteristic(Characteristic.Manufacturer, "OpenWebIf")
-		.setCharacteristic(Characteristic.Model, "Sat Receiver")
-		.setCharacteristic(Characteristic.SerialNumber, "00000001")
-		.setCharacteristic(Characteristic.FirmwareRevision, Package.version);
+		let informationService = new Service.AccessoryInformation();
+		    informationService
+		    .setCharacteristic(Characteristic.Manufacturer, "OpenWebIf")
+		    .setCharacteristic(Characteristic.Model, "Sat Receiver")
+		    .setCharacteristic(Characteristic.SerialNumber, "00000001")
+			.setCharacteristic(Characteristic.FirmwareRevision, Package.version);
+			
 		var tvService  = this.generateTVService();
 		var services = [informationService, tvService];
 
 		var inputServices = this.generateInputServices();
-		inputServices.forEach((service, i) => {
+		    inputServices.forEach((service, i) => {
 			tvService.addLinkedService(service);
 			services.push(service);
 		});
 
 		if (this.speakerService){
-			let speakerService = this.generateSpeakerService();
-			services.push(speakerService);
-			tvService.addLinkedService(speakerService);
+			var speakerService = this.generateSpeakerService();
+				tvService.addLinkedService(speakerService);
+				services.push(speakerService);
 		}
 		return services;
 	},
 	  
 	httpGet(apipath, callback) {
 		if (!this.host) {
-		  callback(new Error("No host defined."));
+		    callback(new Error("No host defined."));
 		}
 		if (!this.port) {
-		  callback(new Error("No port defined."));
+		    callback(new Error("No port defined."));
 		}
 
 		if (this.auth) {
@@ -209,7 +238,7 @@ OpenWebIfTvAccessory.prototype = {
 	getDeviceInfo(callback) {
         var me = this;
 		this.httpGet("/api/about", function(error,data) {
-		  if (error){
+		if (error){
 			callback(error)
 		  } else {
 			var json = JSON.parse(data);
@@ -440,40 +469,38 @@ OpenWebIfTvAccessory.prototype = {
 	  },
 	  
 	printBouquetsDetail(bouquets, printArray) {
-		if (bouquets == undefined || bouquets == null || bouquets.length <= 0) {
-		  var string =  JSON.stringify(printArray, null, 2);
-		  this.log('Add this to bouquet array in config: %s', string);
-		  return;
-		}
+		var string = JSON.stringify(printArray, null, 2);
+		this.log('Channels: %s', string);
+		fs.writeFile(this.bouquetsFile, string, (err) => {
+			if (err) {
+				this.log.debug('Could not write ichannels file %s', err);
+			} else {
+				this.log.debug('Channels file successfully saved!');
+			}
+		});
+		
 		let bouquet = bouquets[0];
-		bouquets.shift();
-	  
-		let name = bouquet.servicename;
-		let ref = bouquet.servicereference;
+		    bouquets.shift();
+        let ref = bouquet.servicereference;
 		var me = this;
 		this.httpGet("/api/getservices?sRef=" + ref, function(error,data) {
 		  if (error){
 		  } else {
 			var json = JSON.parse(data);
 			var servicesList = json.services;
-			var arr = [];
-			var arrayLength = servicesList.length;
+			var arrayLength = 96;
 			for (var i = 0; i < arrayLength; i++) {
 			  var service = servicesList[i];
 			  let name = service.servicename;
 			  let ref = service.servicereference;
 			  var object = {"name": name, "reference": ref};
-			  arr.push(object);
+			  printArray.push(object);
 			}
-			var jsonobj = {"add this to bouquets in config": arr };
-			printArray.push(jsonobj)
 			me.printBouquetsDetail(bouquets, printArray);
 		  }
 		});
-	  },
+	  }
 };
-
-
 
 
 
