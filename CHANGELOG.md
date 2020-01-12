@@ -1,6 +1,10 @@
 # Change Log
 
 All notable changes to this project will be documented in this file.
+## 1.3.1 (12.01.2020)
+- added automatically reads 97 channels from receiver and add them to the channel list if bouquets in config are not configured.
+- some other fixes
+
 ## 1.3.0 (11.01.2020)
 - please update Yours config
 - added option to use authentication for OpenWebIf
