@@ -63,7 +63,7 @@ if U want somthing changed in channel list please add Yours prefered channels to
 </pre>
 
 # Info 
-Sort of channel in HomeKit app is alpahabetically bu U can sort the channel as in Yours receivers adding channel number at first place of every name, some example:
+Sort of channel in HomeKit app is alpahabetically but U can sort the channels as in Yours receivers adding channel number at first place of every name, some example:
 <pre>
                 {
                     "name": "1 TVP HD",
