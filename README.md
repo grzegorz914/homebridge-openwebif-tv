@@ -26,6 +26,9 @@ Due to HomeKit app limitation max. channels in bouquets is 97. Over this value H
             "name": "Tuner Sat",
             "host": "192.168.1.10",
             "port": 80,
+            "auth": false,
+            "user": "user",
+            "pass": "pass",
             "speakerService": true,
             "bouquets": [
             {
