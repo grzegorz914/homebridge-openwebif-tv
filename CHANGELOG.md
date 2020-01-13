@@ -1,6 +1,15 @@
 # Change Log
 
 All notable changes to this project will be documented in this file.
+## 1.3.5 (13.01.2020)
+- some crash fixes
+
+## 1.3.4 (13.01.2020)
+- save separate bouquets file for multiinstance
+
+## 1.3.2 (13.01.2020)
+- fix read channels if authorization was disabled
+
 ## 1.3.1 (12.01.2020)
 - added automatically reads 97 channels from receiver and add them to the channel list if bouquets in config are not configured.
 - some other fixes
