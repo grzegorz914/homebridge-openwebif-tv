@@ -16,8 +16,9 @@ HomeBridge: https://github.com/nfarina/homebridge
 
 # Limitations
 Due to HomeKit app limitation max. channels in bouquets is 97. Over this value HomeKit app will no response.
-Right now plugin read automatiacally 97 channels from the Sat Receiver and store in /home/user/.openwebif/bouquets.json file, 
-if U want somthing changed in channel list please add Yours prefered channels to the config bouquets, this plugin read channels from file only if config bouquets are not configured.
+Right now plugin read automatiacally all channels from the Sat Receiver and store in /home/user/.openwebif/devicename/bouquets.json file, 
+if U want somthing changed in channel list please add Yours prefered channels to the config bouquets.
+
 
 # Configuration
 
