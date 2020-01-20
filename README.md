@@ -1,5 +1,7 @@
 # homebridge-openwebif-tv
 [![npm](https://img.shields.io/npm/dt/homebridge-openwebif-tv.svg)](https://www.npmjs.com/package/homebridge-openwebif-tv) [![npm](https://img.shields.io/npm/v/homebridge-openwebif-tv.svg)](https://www.npmjs.com/package/homebridge-openwebif-tv)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr/grzegorz914/homebridge-config-ui-x.svg)](https://github.com/oznu/homebridge-openwebif-tv/pulls)
+[![GitHub issues](https://img.shields.io/github/issues/grzegorz914/homebridge-config-ui-x.svg)](https://github.com/oznu/homebridge-openwebif-tv/issues)
 
 Control plugin for Sat Receivers basis on the OpenWebIf interface (Dreambox, VU+, etc..).
 Present in HomeKit as TV service, schange channels, volume/mute control, power control.
@@ -16,51 +18,85 @@ HomeBridge: https://github.com/nfarina/homebridge
 
 # Limitations
 Due to HomeKit app limitation max. channels in bouquets is 97. Over this value HomeKit app will no response.
-Right now plugin read automatiacally all channels from the Sat Receiver and store in /home/user/.openwebif/devicename/bouquets.json file, 
+Right now plugin read automatiacally all channels from the Sat Receiver and store in /home/user/.openwebifTv/,
 if U want somthing changed in channel list please add Yours prefered channels to the config bouquets.
 
 
 # Configuration
 
  <pre>
-"accessories": [
-        {
-            "accessory": "OpenWebIfTv",
-            "name": "Tuner Sat",
-            "host": "192.168.1.10",
-            "port": 80,
-            "auth": false,
-            "user": "user",
-            "pass": "pass",
-            "speakerService": true,
-            "bouquets": [
-            {
-              "name": "Das Erste HD",
-              "reference": "1:0:19:283D:3FB:1:C00000:0:0:0:"
-            },
-            {
-              "name": "ZDF HD",
-              "reference": "1:0:19:2B66:3F3:1:C00000:0:0:0:"
-            },
-            {
-              "name": "RTL HD",
-              "reference": "1:0:19:EF10:421:1:C00000:0:0:0:"
-            },
-            {
-              "name": "SAT.1 HD",
-              "reference": "1:0:19:EF74:3F9:1:C00000:0:0:0:"
-            },
-            {
-              "name": "ProSieben HD",
-              "reference": "1:0:19:EF75:3F9:1:C00000:0:0:0:"
-            },
-            {
-              "name": "RTLII HD",
-              "reference": "1:0:19:EF15:421:1:C00000:0:0:0:"
-            }
-       ]
-     }
+{
+      "platform": "OpenWebIfTv",
+      "checkStateInterval": 5,
+      "devices": [{
+        "name": "Tuner Sat",
+        "host": "192.168.0.4",
+        "port": 80,
+        "auth": false,
+        "user": "user",
+        "pass": "pass",
+        "switchInfoMenu": true,
+        "bouquets": [
+          {
+            "name": "Das Erste HD",
+            "reference": "1:0:19:283D:3FB:1:C00000:0:0:0:"
+          },
+          {
+            "name": "ZDF HD",
+            "reference": "1:0:19:2B66:3F3:1:C00000:0:0:0:"
+          },
+          {
+            "name": "RTL HD",
+            "reference": "1:0:19:EF10:421:1:C00000:0:0:0:"
+          },
+          {
+            "name": "SAT.1 HD",
+            "reference": "1:0:19:EF74:3F9:1:C00000:0:0:0:"
+          },
+          {
+            "name": "ProSieben HD",
+            "reference": "1:0:19:EF75:3F9:1:C00000:0:0:0:"
+          },
+          {
+            "name": "RTLII HD",
+            "reference": "1:0:19:EF15:421:1:C00000:0:0:0:"
+          },
+          {
+            "name": "VOX HD",
+            "reference": "1:0:19:EF11:421:1:C00000:0:0:0:"
+          },
+          {
+            "name": "kabel eins HD",
+            "reference": "1:0:19:EF76:3F9:1:C00000:0:0:0:"
+          },
+          {
+            "name": "SIXX HD",
+            "reference": "1:0:19:EF77:3F9:1:C00000:0:0:0:"
+          },
+          {
+            "name": "SUPER RTL HD",
+            "reference": "1:0:19:2E9B:411:1:C00000:0:0:0:"
+          },
+          {
+            "name": "TELE 5 HD",
+            "reference": "1:0:19:1519:455:1:C00000:0:0:0:"
+          },
+          {
+            "name": "ORF1 HD",
+            "reference": "1:0:19:132F:3EF:1:C00000:0:0:0:"
+          },
+          {
+            "name": "ORF2W HD",
+            "reference": "1:0:19:1330:3EF:1:C00000:0:0:0:"
+          },
+          {
+            "name": "RTL UHD",
+            "reference": "1:0:1F:307A:3F5:1:C00000:0:0:0:"
+          }
+        ]
+      }
     ]
+  }
 </pre>
 
 # Info 
