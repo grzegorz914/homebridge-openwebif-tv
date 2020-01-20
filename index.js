@@ -2,7 +2,7 @@ const request = require('request');
 const ppath = require('persist-path');
 const fs = require('fs');
 const mkdirp = require('mkdirp');
-const infoRetDelay = 1000;
+const responseDelay = 1000;
 
 var Accessory, Service, Characteristic, UUIDGen;
 var checkingInterval;
@@ -46,7 +46,7 @@ class openwebifPlatform {
 		var me = this;
 		setTimeout(function () {
 			me.log.debug('didFinishLaunching');
-		}, (this.devices.length + 1) * infoRetDelay);
+		}, (this.devices.length + 1) * responseDelay);
 	}
 }
 
@@ -114,17 +114,16 @@ class tvClient {
 		}
 
 		/* Delay to wait for retrieve device info */
-		setTimeout(this.setupTvService.bind(this), infoRetDelay);
+		setTimeout(this.setupTvService.bind(this), responseDelay);
 	}
 
 	getDeviceInfo() {
 		var me = this;
-		request(this.authData + this.host + ':' + this.port + 'GET' + '/api/about', function (error, response, body) {
+		request(this.authData + this.host + ':' + this.port + '/api/about', function (error, response, body) {
 			if (error) {
 				me.log.debug("Error while getting information of receiver with IP: %s. %s", me.host, error);
 			} else {
 				try {
-					var body = body.replace(/:/g, '');
 					var json = JSON.parse(body);
 					this.manufacturer = json.info.brand;
 					this.modelName = json.info.mname;
@@ -138,8 +137,7 @@ class tvClient {
 					me.log('Firmware: %s', this.firmwareRevision);
 					me.devInfoSet = true;
 				} catch (error) {
-					me.log.debug('Receiver with IP %s not yet ready.', me.host);
-					me.log.debug(error);
+					me.log('Receiver: %s not reachable %s.', me.host, error);
 				}
 			}
 		});
@@ -297,10 +295,10 @@ class tvClient {
 		} else {
 			this.httpGet('/api/statusinfo', function (error, data) {
 				if (error) {
-					me.log.debug("Error while getting power state %s", error);
+					me.log("Error while getting device state %s", error);
 					me.connected = false;
 				} else if (data.indexOf('Error 403: Forbidden') === 0) {
-					me.log('Can not acces receiver. Might be due to a wrong port in config.');
+					me.log('Can not acces receiver. Might be due to a wrong settings in config.');
 				} else {
 					var json = JSON.parse(data);
 					var powerState = ((json.inStandby == 'false') == true);
@@ -317,10 +315,10 @@ class tvClient {
 							}
 						}
 						me.connected = true;
-						me.log('Check device state %s', me.connected)
+						me.log.debug('Check device state, device: ON')
 					} else {
 						me.connected = false;
-						me.log('Check device state %s', me.connected)
+						me.log('Check device state, device not reachable.')
 					}
 				}
 			});
@@ -381,7 +379,9 @@ class tvClient {
 		var me = this;
 		this.httpGet('/api/statusinfo', function (error, data) {
 			if (error) {
-				callback(error)
+				me.log("Error while getting power state %s", error);
+			} else if (data.indexOf('Error 403: Forbidden') === 0) {
+				me.log('Can not acces receiver. Might be due to a wrong settings in config.');
 			} else {
 				var json = JSON.parse(data);
 				var state = (json.inStandby == "false");
@@ -396,7 +396,11 @@ class tvClient {
 		var state = state ? true : false; //number to boolean
 		me.getPowerState(function (error, currentState) {
 			if (error) {
-				callback(null, state ? false : true); //receiver is off
+				me.log("Error while set power %s", error);
+				if (callback)
+					callback(null, state ? false : true); //receiver is off
+			} else if (currentState.indexOf('Error 403: Forbidden') === 0) {
+				me.log('Can not acces receiver. Might be due to a wrong settings in config.');
 			} else {
 				if (currentState == state) { //state like expected
 					callback(null, state);
@@ -418,7 +422,9 @@ class tvClient {
 		var me = this;
 		this.httpGet('/api/statusinfo', function (error, data) {
 			if (error) {
-				callback(error)
+				me.log("Error while get mute state %s", error);
+			} else if (data.indexOf('Error 403: Forbidden') === 0) {
+				me.log('Can not acces receiver. Might be due to a wrong settings in config.');
 			} else {
 				var json = JSON.parse(data);
 				var state = (json.muted == false);
@@ -433,7 +439,11 @@ class tvClient {
 		var state = state ? false : true; //number to boolean
 		me.getMute(function (error, currentState) {
 			if (error) {
-				callback(null, state ? true : false); //receiver is off
+				me.log("Error while set mute %s", error);
+				if (callback)
+					callback(null, state ? true : false); //receiver is off
+			} else if (currentState.indexOf('Error 403: Forbidden') === 0) {
+				me.log('Can not acces receiver. Might be due to a wrong settings in config.');
 			} else {
 				if (currentState == state) { //state like expected
 					callback(null, state);
@@ -455,7 +465,9 @@ class tvClient {
 		var me = this;
 		this.httpGet('/api/statusinfo', function (error, data) {
 			if (error) {
-				callback(error)
+				me.log("Error while get volume level %s", error);
+			} else if (data.indexOf('Error 403: Forbidden') === 0) {
+				me.log('Can not acces receiver. Might be due to a wrong settings in config.');
 			} else {
 				var json = JSON.parse(data);
 				var volume = parseFloat(json.volume);
@@ -468,9 +480,13 @@ class tvClient {
 	setVolume(volume, callback) {
 		var me = this;
 		var targetVolume = parseInt(volume);
-		this.httpGet('/api/vol?set=set' + targetVolume, function (error) {
+		this.httpGet('/api/vol?set=set' + targetVolume, function (error, data) {
 			if (error) {
-				callback(error)
+				me.log("Error while set volume %s", error);
+				if (callback)
+					callback(error);
+			} else if (data.indexOf('Error 403: Forbidden') === 0) {
+				me.log('Can not acces receiver. Might be due to a wrong settings in config.');
 			} else {
 				me.log('setVolume() succesed %s', targetVolume);
 				callback(null, targetVolume);
@@ -483,9 +499,9 @@ class tvClient {
 		var me = this;
 		this.httpGet('/api/statusinfo', function (error, data) {
 			if (error) {
-				me.log.debug("Error while getting power state %s", error);
+				me.log("Error while get channel %s", error);
 			} else if (data.indexOf('Error 403: Forbidden') === 0) {
-				me.log('Can not acces receiver. Might be due to a wrong port in config file.');
+				me.log('Can not acces receiver. Might be due to a wrong settings in config.');
 			} else {
 				var json = JSON.parse(data);
 				let channelName = json.currservice_serviceref;
@@ -507,12 +523,11 @@ class tvClient {
 			me.channelReferenceSet = true;
 			this.httpGet('/api/zap?sRef=' + channelReference, function (error, data) {
 				if (error) {
-					me.log.debug("Error while switching input %s", error);
+					me.log("Error while set channel %s", error);
 					if (callback)
 						callback(error);
-
 				} else if (data.indexOf('Error 403: Forbidden') === 0) {
-					me.log('Can not acces receiver. Might be due to a wrong port in config file.');
+					me.log('Can not acces receiver. Might be due to a wrong settings in config.');
 				} else {
 					if (callback)
 						callback();
@@ -598,6 +613,9 @@ class tvClient {
 		var me = this;
 		this.httpGet('/api/getservices', function (error, data) {
 			if (error) {
+				me.log.debug("Error while print bouquets %s", error);
+			} else if (data.indexOf('Error 403: Forbidden') === 0) {
+				me.log('Can not acces receiver. Might be due to a wrong settings in config.');
 			} else {
 				var json = JSON.parse(data);
 				var servicesList = json.services;
@@ -644,5 +662,7 @@ class tvClient {
 		});
 	}
 }
+
+
 
 
