@@ -321,7 +321,7 @@ class tvClient {
 						me.log.debug('Check device state, device: %s ON', me.host)
 					} else {
 						me.connected = false;
-						me.log('Device %s not reachable or not added to the HomeKit.', me.host)
+						me.log.debug('Device %s not reachable or power in standby.', me.host)
 					}
 				}
 			});
