@@ -2,629 +2,338 @@ const request = require('request');
 const ppath = require('persist-path');
 const fs = require('fs');
 const mkdirp = require('mkdirp');
-var Package = require('./package.json');
+const infoRetDelay = 1000;
 
-var Service, Characteristic;
+var Accessory, Service, Characteristic, UUIDGen;
+var checkingInterval;
 
-module.exports = function(homebridge) {
-        Service = homebridge.hap.Service;
-        Characteristic = homebridge.hap.Characteristic;
-        homebridge.registerAccessory("homebridge-openwebif-tv", "OpenWebIfTv", OpenWebIfTvAccessory);
+module.exports = homebridge => {
+	Service = homebridge.hap.Service;
+	Characteristic = homebridge.hap.Characteristic;
+	Accessory = homebridge.platformAccessory;
+	UUIDGen = homebridge.hap.uuid;
+
+	homebridge.registerPlatform('homebridge-openwebif-tv', 'OpenWebIfTv', openwebifPlatform, true);
 };
 
-    function OpenWebIfTvAccessory(log, config) {
-	    this.log = log;
-	    this.config = config
-	    this.name = config["name"];
 
-	    //required
-	    this.host = config["host"];
-		this.port = config["port"] || 80;
-		this.auth = config["auth"] || false;
-		this.user = config["user"] || 'root';
-		this.pass = config["pass"] || '';
-		this.prefsDir = ppath('openwebif/');
-	    this.speakerService = config["speakerService"] || true;
-		this.bouquets = config["bouquets"];
+class openwebifPlatform {
+	constructor(log, config, api) {
+		this.log = log;
+		this.config = config;
+		this.api = api;
 
-		var me = this;
-		this.bouquetsFile = this.prefsDir + "bouquets.json";
+		this.tvAccessories = [];
 
-		if (me.auth == true) {
-			me.auth = (this.user + ':' + this.pass + '@')
-		} else {
-			me.auth = ''
+		this.checkingInterval = config.checkSatateInterval || 5;
+		this.checkingInterval = this.checkingInterval * 1000;
+		checkingInterval = this.checkingInterval;
+		this.devices = config.devices || [];
+
+		if (this.version < 2.1) {
+			throw new Error("Unexpected API version.");
 		}
 
-		
-		if (this.bouquets == undefined || this.bouquets == null || this.bouquets.length <= 0) {
-			var counter = 0
-		    // check if prefs directory ends with a /, if not then add it
+		for (var i in this.devices) {
+			this.tvAccessories.push(new tvClient(log, this.devices[i], api));
+		}
+
+		this.api.on('didFinishLaunching', this.didFinishLaunching.bind(this));
+	}
+	configureAccessory() { }
+	removeAccessory() { }
+	didFinishLaunching() {
+		var me = this;
+		setTimeout(function () {
+			me.log.debug('didFinishLaunching');
+		}, (this.devices.length + 1) * infoRetDelay);
+	}
+}
+
+class tvClient {
+	constructor(log, device, api) {
+		this.log = log;
+		this.api = api;
+		this.device = device;
+
+		this.devInfoSet = false;
+
+		this.manufacturer = device.manufacturer || 'OpenWebIf';
+		this.modelName = device.model || 'homebridge-openwebif-tv';
+		this.serialNumber = device.serialNumber || 'SN00000001';
+		this.firmwareRevision = device.firmwareRevision || 'FW00000002';
+
+		// devices configuration
+		this.name = device.name || 'OpenWebIf Receiver';
+		this.host = device.host;
+		this.port = device.port || 80;
+		this.auth = device.auth || false;
+		this.user = device.user || 'root';
+		this.pass = device.pass || '';
+
+		this.getDeviceInfo();
+		this.bouquets = device.bouquets;
+
+		this.switchInfoMenu = device.switchInfoMenu;
+		if (this.switchInfoMenu === true) {
+			this.infoButton = '358';
+			this.menuButton = '139';
+		} else {
+			this.infoButton = '139';
+			this.menuButton = '358';
+		}
+
+		/* setup variables */
+		this.connected = false;
+		this.channelReferenceSet = false;
+		this.channelReferences = new Array();
+		this.checkAliveInterval = null;
+
+		this.prefsDir = ppath('openwebifTv/');
+		this.channelsFile = this.prefsDir + 'channels_' + this.host.split('.').join('');
+
+		if (this.auth == true) {
+			this.authData = ('http://' + this.user + ':' + this.pass + '@');
+		} else {
+			this.authData = ('http://');
+		}
+
+		//check if prefs directory ends with a /, if not then add it
 		if (this.prefsDir.endsWith('/') === false) {
 			this.prefsDir = this.prefsDir + '/';
 		}
-	
-		    // check if the preferences directory exists, if not then create it
+
+		// check if the directory exists, if not then create it
 		if (fs.existsSync(this.prefsDir) === false) {
 			mkdirp(this.prefsDir);
 		}
-			// print channels if bouquets not exist in config
-	    if (counter == 0){
-		    counter++;
-		    this.printBouquets();
-			return;
-			}
-		}
-	
-    }	
 
-OpenWebIfTvAccessory.prototype = {
-
-	generateTVService() {
-		var me = this;
-        this.log("Adding Television Service...");
-		this.tvService = new Service.Television(this.name, 'tvService');
-		this.tvService.setCharacteristic(Characteristic.ConfiguredName, this.name);
-		this.tvService.setCharacteristic(Characteristic.SleepDiscoveryMode, Characteristic.SleepDiscoveryMode.ALWAYS_DISCOVERABLE);
-
-		this.tvService.getCharacteristic(Characteristic.Active)
-		    .on('get', this.getPowerState.bind(this))
-		    .on('set', this.setPowerState.bind(this));
-
-		// Identifier of current active channel.
-		this.tvService.getCharacteristic(Characteristic.ActiveIdentifier)
-		    .on('set', (inputIdentifier, callback) => {
-			    var bouquet = this.inputReference[inputIdentifier]
-			    me.log("new channel: " + bouquet.name);
-			    this.setChannel(bouquet.reference, callback);
-		    })
-		    .on('get', (callback) => {
-			    me.getChannel(function(error, inputReference) {
-				    if (inputReference == undefined || inputReference == null || inputReference.length <= 0) {
-                        callback(null);
-                        return;
-                    } else {
-					    for (var i = 0; i < me.inputReference.length; i++) {
-						     var bouquet = me.inputReference[i];
-							    if (bouquet.reference == inputReference) {
-							        me.log("current channel: " + i + " " + bouquet.name + " reference: " + bouquet.reference);
-							        callback(null, i);
-							        return;
-				                }
-			            }
-				    }
-				me.log("received information: %s", error);
-				callback("no channel found");
-			});
-		});
-               
-        this.log("Adding Remote Key Service...");
-		this.tvService.getCharacteristic(Characteristic.RemoteKey)
-			.on('set', this.remoteKeyPress.bind(this));
-			
-		return this.tvService;
-	},
-	
-	generateSpeakerService() {
-        if (this.speakerService){
-            this.log("Adding Speaker Service...");
-        }
-		this.speakerService = new Service.TelevisionSpeaker(this.name + ' Volume');
-		this.speakerService.getCharacteristic(Characteristic.VolumeSelector)
-            .on('set', this.volumeSelectorPress.bind(this));
-		this.speakerService.getCharacteristic(Characteristic.Volume)
-		    .on('get', this.getVolume.bind(this))
-		    .on('set', this.setVolume.bind(this));
-		this.speakerService.getCharacteristic(Characteristic.Mute)
-		    .on('get', this.getMute.bind(this))
-			.on('set', this.setMute.bind(this));	
-        this.speakerService.setCharacteristic(Characteristic.VolumeControlType, Characteristic.VolumeControlType.ABSOLUTE);
-		
-		return this.speakerService;
-	},
-
-	generateInputServices() {	
-		// Load persisted bouquets from file
-		var data = fs.readFileSync(this.bouquetsFile, 'utf8');
-		if (this.bouquets == undefined || this.bouquets == null || this.bouquets.length <= 0) {
-			var bouquets = JSON.parse(data);
-			//this.log(bouquets);
-	    } else {
-			var bouquets = this.bouquets;
-			//this.log(bouquets);
-		}
-
-        this.inputName = new Array();
-		this.inputReference = new Array();
-             bouquets.forEach((bouquet, i) => {
-
-			this.log("Adding Input Service..." + bouquet.name);
-			let inputService = new Service.InputSource(bouquet.name, i);
-				inputService
-				.setCharacteristic(Characteristic.Identifier, i)
-				.setCharacteristic(Characteristic.ConfiguredName, bouquet.name)
-				.setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
-				.setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.TV)
-				.setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN);
-
-				inputService
-				.getCharacteristic(Characteristic.ConfiguredName)
-				.on('set', (name, callback) => {
-					callback()
-				});
-				
-			this.inputReference.push(bouquet);
-			this.inputName.push(inputService);
-	    });
-	    return this.inputName;
-	},
-
-	getServices() {
-
-		this.log("Adding Information Service...");
-		let informationService = new Service.AccessoryInformation();
-		    informationService
-		    .setCharacteristic(Characteristic.Manufacturer, "OpenWebIf")
-		    .setCharacteristic(Characteristic.Model, "Sat Receiver")
-		    .setCharacteristic(Characteristic.SerialNumber, "00000001")
-			.setCharacteristic(Characteristic.FirmwareRevision, Package.version);
-			
-		var tvService  = this.generateTVService();
-		var services = [informationService, tvService];
-
-		var inputServices = this.generateInputServices();
-		    inputServices.forEach((service, i) => {
-			tvService.addLinkedService(service);
-			services.push(service);
-		});
-
-		if (this.speakerService){
-			var speakerService = this.generateSpeakerService();
-				tvService.addLinkedService(speakerService);
-				services.push(speakerService);
-		}
-		return services;
-	},
-	  
-	httpGet(apipath, callback) {
-		if (!this.host) {
-		    callback(new Error("No host defined."));
-		}
-		if (!this.port) {
-		    callback(new Error("No port defined."));
-		}
-
-		if (this.auth) {
-			if (!this.user || !this.pass) {
-				callback(new Error("No authentication data defined."));
-			}
-		}
-
-		var me = this;
-		me.httpRequest('http://' + me.auth + me.host + ':' + me.port + apipath , '', 'GET', function(error, response, responseBody) {
-			if (error) {
-				callback(error);
-				me.log.error("Device not reachable " + me.host + ":" + me.port + apipath);
-				return;
-			} else {
-				try {
-				  var result = JSON.stringify(responseBody, function(err, data) {
-					if (err) {
-					  callback(err)
-					} else {
-					  //me.log('result %s', data);
-					  callback(null, data);
-					}
-				  });
-				} catch (e) {
-				  callback(e, null);
-				  me.log('error: ' + e);
-				}
-			}
-		}.bind(this)); 
-	},
-	  
-	httpRequest(url, body, apipath, callback) {
-		request({
-		  url: url,
-		  body: body,
-		  method: apipath
-		},
-		  function(error, response, body) {
-		  callback(error, response, body);
-		});
-	},
-
-	getDeviceInfo(callback) {
-        var me = this;
-		this.httpGet("/api/about", function(error,data) {
-		if (error){
-			callback(error)
-		  } else {
-			var json = JSON.parse(data);
-			var brand = json.info.brand;
-			var model = json.info.bname;
-			var firmware = json.info.enigmaver;
-			var serial = json.ifaces[0].mac;
-			me.log('getDeviceInfo() succeded, free: %s', json);
-			callback(null, json);
-		  }
-		});
-	},
-	  
-	getPowerState(callback) {
-        var me = this;
-		this.httpGet("/api/statusinfo", function(error,data) {
-		  if (error){
-			callback(error)
-		  } else {
-			var json = JSON.parse(data); 
-			var state = (json.inStandby == "false");
-			me.log('getPowerState() succeded: %s', state? 'ON':'OFF');
-			callback(null, state);
-		  }
-		});
-	},
-	  
-	setPowerState(state, callback) {
-        var me = this;
-		var state = state? true : false; //number to boolean
-		me.getPowerState(function(error, currentState) {
-		  if(error){
-			callback(null, state? false : true); //receiver is off
-		  } else {
-			if (currentState == state) { //state like expected
-			  callback(null, state);
-			} else { //set new state
-			  me.httpGet("/api/powerstate?newstate=0", function(error) {
-				if (error){
-				  callback(error)
-				} else {
-				  me.log('setPowerState() succeded %s', state? 'ON':'OFF');
-				  callback(null, state);
-				}
-			  });
-			}
-		  }
-		});
-	},
-	  
-	getMute(callback) {
-          var me = this;
-		  this.httpGet("/api/statusinfo", function(error,data) {
-		  if (error){
-			  callback(error)
-		  } else {
-			var json = JSON.parse(data);
-			var state = (json.muted == false);
-			me.log('getMute() succeded: %s', state? 'OFF':'ON');
-			callback(null, state);
-		  }
-		});
-	},
-	  
-	setMute(state, callback) {
-        var me = this;
-		var state = state? false : true; //number to boolean
-		me.getMute(function(error, currentState) {
-		  if (error){
-			callback(null, state? true : false); //receiver is off
-		  } else {
-			if (currentState == state) { //state like expected
-				callback(null, state);
-			} else { //set new state
-			  me.httpGet("/api/vol?set=mute", function(error) {
-				if (error){
-					callback(error)
-				} else {
-				  me.log('setMute() succeded %s',  state? 'OFF':'ON');
-				  callback(null, state);
-				}
-			  });
-			}
-		  }
-		});
-	},
-	  
-	getVolume(callback) {
-        var me = this;
-		this.httpGet("/api/statusinfo", function(error,data) {
-		  if (error){
-			callback(error)
-		  } else {
-			var json = JSON.parse(data);
-			var volume = parseFloat(json.volume);
-			me.log('getVolume() succeded: %s', volume);
-			callback(null, volume);
-		  }
-		});
-	},
-	  
-	setVolume(volume, callback) {
-        var me = this;
-		var targetVolume = parseInt(volume);
-		this.httpGet("/api/vol?set=set" + targetVolume, function(error) {
-		  if (error){
-			callback(error)
-		  } else {
-			me.log('setVolume() succesed %s', targetVolume);
-			callback(null, targetVolume);
-		  }
-		});
-	},
-
-	getChannel(callback) {
-          var me = this;
-		  this.httpGet("/api/statusinfo", function(error,data) {
-		  if (error){
-			 callback(error)
-		  } else {
-			var json = JSON.parse(data);
-			var inputReference = json.currservice_serviceref;
-			me.log('getChannel() succeded: %s', inputReference); 
-			callback(null, inputReference);
-			}
-		});
-	},
-	  
-	setChannel(inputReference, callback){
-          var me = this;
-		  this.httpGet("/api/zap?sRef=" + inputReference,  function(error) {
-		  if (error){
-			 callback(error)
-		  } else { 
-			   me.log('setChannel() succeded: %s', inputReference);     
-			   callback(null, inputReference);
-		  } 
-		});
-	  },
-
-	volumeSelectorPress(remoteKey, callback) {
-		var command = 0;
-		switch (remoteKey) {
-			case Characteristic.VolumeSelector.INCREMENT:
-			command = "115";
-			break;
-			case Characteristic.VolumeSelector.DECREMENT:
-			command = "114";
-			break;
-		}
-        this.log('remote key pressed: %s', remoteKey, "remote command send: %s", command);
-		this.sendRemoteControlCommand(command, callback);
-	},
-
-	remoteKeyPress(remoteKey, callback) {
-		var command = 0;
-		switch (remoteKey) {
-			case Characteristic.RemoteKey.REWIND:
-			command = "168";
-			break;
-			case Characteristic.RemoteKey.FAST_FORWARD:
-			command = "159";
-			break;
-			case Characteristic.RemoteKey.NEXT_TRACK:
-			command = "407";
-			break;
-			case Characteristic.RemoteKey.PREVIOUS_TRACK:
-			command = "412";
-			break;
-			case Characteristic.RemoteKey.ARROW_UP:
-			command = "103";
-			break;
-			case Characteristic.RemoteKey.ARROW_DOWN:
-			command = "108";
-			break;
-			case Characteristic.RemoteKey.ARROW_LEFT:
-			command = "105";
-			break;
-			case Characteristic.RemoteKey.ARROW_RIGHT:
-			command = "106";
-			break;
-			case Characteristic.RemoteKey.SELECT:
-			command = "352";
-			break;
-			case Characteristic.RemoteKey.BACK:
-			command = "174";
-			break;
-			case Characteristic.RemoteKey.EXIT:
-			command = "174";
-			break;
-			case Characteristic.RemoteKey.PLAY_PAUSE:
-			command = "164";
-			break;
-			case Characteristic.RemoteKey.INFORMATION:
-			command = "139";
-			break;
-		}
-        this.log('remote key pressed: %s', remoteKey, "remote command send: %s", command);
-		this.sendRemoteControlCommand(command, callback);
-	},
-
-const request = require('request');
-const ppath = require('persist-path');
-const fs = require('fs');
-const mkdirp = require('mkdirp');
-var Package = require('./package.json');
-
-var Service, Characteristic;
-
-module.exports = function(homebridge) {
-        Service = homebridge.hap.Service;
-        Characteristic = homebridge.hap.Characteristic;
-        homebridge.registerAccessory("homebridge-openwebif-tv", "OpenWebIfTv", OpenWebIfTvAccessory);
-};
-
-    function OpenWebIfTvAccessory(log, config) {
-	    this.log = log;
-	    this.config = config
-	    this.name = config["name"];
-
-	    //required
-	    this.host = config["host"];
-		this.port = config["port"] || 80;
-		this.auth = config["auth"] || false;
-		this.user = config["user"] || 'root';
-		this.pass = config["pass"] || '';
-	    this.speakerService = config["speakerService"] || true;
-		this.bouquets = config["bouquets"];
-
-		var me = this;
-              	this.prefsDir = ppath('openwebif' + '/' + this.name + '/');
-		this.bouquetsFile = this.prefsDir + "bouquets.json";
-
-		if (me.auth == true) {
-			this.authData = ('http://' + this.user + ':' + this.pass + '@')
-		} else {
-                      this.authData = ('http://')
-               }
-
-		var counter = 0
-		if (this.bouquets == undefined || this.bouquets == null || this.bouquets.length <= 0) {
-		// check if prefs directory ends with a /, if not then add it
-		if (this.prefsDir.endsWith('/') === false) {
-			this.prefsDir = this.prefsDir + '/';
-		}
-	
-		 // check if the preferences directory exists, if not then create it
-		if (fs.existsSync(this.prefsDir) === false) {
-			mkdirp(this.prefsDir);
-		}
-		
-
-		if (counter == 0){
+		if (fs.existsSync(this.channelsFile) === false) {
 			this.printBouquets();
-                      counter++;
+			this.log.info("Channels file will be created and saved in %s", this.prefsDir);
 		}
-             
-	
-	}	
-}	
 
-OpenWebIfTvAccessory.prototype = {
+		/* Delay to wait for retrieve device info */
+		setTimeout(this.setupTvService.bind(this), infoRetDelay);
+	}
 
-	generateTVService() {
+	getDeviceInfo() {
 		var me = this;
-        this.log("Adding Television Service...");
+		request(this.authData + this.host + ':' + this.port + 'GET' + '/api/about', function (error, response, body) {
+			if (error) {
+				me.log.debug("Error while getting information of receiver with IP: %s. %s", me.host, error);
+			} else {
+				try {
+					var body = body.replace(/:/g, '');
+					var json = JSON.parse(body);
+					this.manufacturer = json.info.brand;
+					this.modelName = json.info.mname;
+					this.serialNumber = json.info.kernelver;
+					this.firmwareRevision = json.info.enigmaver;
+
+					me.log('----------Device Info----------');
+					me.log('Manufacturer: %s', this.manufacturer);
+					me.log('Model: %s', this.modelName);
+					me.log('Serialnumber: %s', this.serialNumber);
+					me.log('Firmware: %s', this.firmwareRevision);
+					me.devInfoSet = true;
+				} catch (error) {
+					me.log.debug('Receiver with IP %s not yet ready.', me.host);
+					me.log.debug(error);
+				}
+			}
+		});
+	}
+
+	//Start of TV integration service 
+	setupTvService() {
+		this.log.debug('setupTvService');
+		this.tvAccesory = new Accessory(this.name, UUIDGen.generate(this.host + this.name));
+
 		this.tvService = new Service.Television(this.name, 'tvService');
 		this.tvService.setCharacteristic(Characteristic.ConfiguredName, this.name);
 		this.tvService.setCharacteristic(Characteristic.SleepDiscoveryMode, Characteristic.SleepDiscoveryMode.ALWAYS_DISCOVERABLE);
 
 		this.tvService.getCharacteristic(Characteristic.Active)
-		    .on('get', this.getPowerState.bind(this))
-		    .on('set', this.setPowerState.bind(this));
+			.on('get', this.getPowerState.bind(this))
+			.on('set', this.setPowerState.bind(this));
 
-		// Identifier of current active channel.
 		this.tvService.getCharacteristic(Characteristic.ActiveIdentifier)
-		    .on('set', (inputIdentifier, callback) => {
-			    var bouquet = this.inputReference[inputIdentifier]
-			    me.log("new channel: " + bouquet.name);
-			    this.setChannel(bouquet.reference, callback);
-		    })
-		    .on('get', (callback) => {
-			    me.getChannel(function(error, inputReference) {
-				    if (inputReference == undefined || inputReference == null || inputReference.length <= 0) {
-                        callback(null);
-                        return;
-                    } else {
-					    for (var i = 0; i < me.inputReference.length; i++) {
-						     var bouquet = me.inputReference[i];
-							    if (bouquet.reference == inputReference) {
-							        me.log("current channel: " + i + " " + bouquet.name + " reference: " + bouquet.reference);
-							        callback(null, i);
-							        return;
-				                }
-			            }
-				    }
-				me.log("received information: %s", error);
-				callback("no channel found");
-			});
-		});
-               
-        this.log("Adding Remote Key Service...");
+			.on('set', (inputIdentifier, callback) => {
+				this.setChannel(true, callback, this.channelReferences[inputIdentifier]);
+			})
+			.on('get', this.getChannel.bind(this));
+
 		this.tvService.getCharacteristic(Characteristic.RemoteKey)
 			.on('set', this.remoteKeyPress.bind(this));
-			
-		return this.tvService;
-	},
-	
-	generateSpeakerService() {
-        if (this.speakerService){
-            this.log("Adding Speaker Service...");
-        }
-		this.speakerService = new Service.TelevisionSpeaker(this.name + ' Volume');
-		this.speakerService.getCharacteristic(Characteristic.VolumeSelector)
-            .on('set', this.volumeSelectorPress.bind(this));
-		this.speakerService.getCharacteristic(Characteristic.Volume)
-		    .on('get', this.getVolume.bind(this))
-		    .on('set', this.setVolume.bind(this));
-		this.speakerService.getCharacteristic(Characteristic.Mute)
-		    .on('get', this.getMute.bind(this))
-			.on('set', this.setMute.bind(this));	
-        this.speakerService.setCharacteristic(Characteristic.VolumeControlType, Characteristic.VolumeControlType.ABSOLUTE);
-		
-		return this.speakerService;
-	},
 
-	generateInputServices() {	
+		this.tvService.getCharacteristic(Characteristic.PowerModeSelection)
+			.on('set', (newValue, callback) => {
+				if (this.connected) {
+					if (this.devInfoSet == false)
+						this.getDeviceInfo();
+					else
+						this.httpGet('/api/remotecontrol?command=' + this.menuButton, function (error, data) { });
+				}
+				callback();
+			});
 
-        this.inputName = new Array();
-		this.inputReference = new Array();
-                      this.bouquets.forEach((bouquet, i) => {
 
-			this.log("Adding Input Service..." + bouquet.name);
-			let inputService = new Service.InputSource(bouquet.name, i);
-				inputService
-				.setCharacteristic(Characteristic.Identifier, i)
-				.setCharacteristic(Characteristic.ConfiguredName, bouquet.name)
-				.setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
-				.setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.TV)
-				.setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN);
+		this.tvAccesory
+			.getService(Service.AccessoryInformation)
+			.setCharacteristic(Characteristic.Manufacturer, this.manufacturer)
+			.setCharacteristic(Characteristic.Model, this.modelName)
+			.setCharacteristic(Characteristic.SerialNumber, this.serialNumber)
+			.setCharacteristic(Characteristic.FirmwareRevision, this.firmwareRevision);
 
-				inputService
-				.getCharacteristic(Characteristic.ConfiguredName)
-				.on('set', (name, callback) => {
-					callback()
-				});
-				
-			this.inputReference.push(bouquet);
-			this.inputName.push(inputService);
-	    });
-	    return this.inputName;
-	},
+		this.tvAccesory.addService(this.tvService);
 
-	getServices() {
+		this.setupTvSpeakerService();
+		this.prepareInputServices();
 
-		this.log("Adding Information Service...");
-		let informationService = new Service.AccessoryInformation();
-		    informationService
-		    .setCharacteristic(Characteristic.Manufacturer, "OpenWebIf")
-		    .setCharacteristic(Characteristic.Model, "Sat Receiver")
-		    .setCharacteristic(Characteristic.SerialNumber, "00000001")
-			.setCharacteristic(Characteristic.FirmwareRevision, Package.version);
-			
-		var tvService  = this.generateTVService();
-		var services = [informationService, tvService];
 
-		var inputServices = this.generateInputServices();
-		    inputServices.forEach((service, i) => {
-			tvService.addLinkedService(service);
-			services.push(service);
-		});
+		this.log.debug('publishExternalAccessories');
+		this.api.publishExternalAccessories('homebridge-openwebif-tv', [this.tvAccesory]);
 
-		if (this.speakerService){
-			var speakerService = this.generateSpeakerService();
-				tvService.addLinkedService(speakerService);
-				services.push(speakerService);
+		/* start the polling */
+		if (!this.checkAliveInterval) {
+			this.checkAliveInterval = setInterval(this.checkDeviceState.bind(this, this.updateReceiverStatus.bind(this)), checkingInterval);
 		}
-		return services;
-	},
-	  
+	}
+
+	setupTvSpeakerService() {
+		this.log.debug('setupTvSpeakerService');
+		this.tvSpeakerService = new Service.TelevisionSpeaker(this.name + ' Volume', 'tvSpeakerService');
+		this.tvSpeakerService
+			.setCharacteristic(Characteristic.Active, Characteristic.Active.ACTIVE)
+			.setCharacteristic(Characteristic.VolumeControlType, Characteristic.VolumeControlType.ABSOLUTE);
+		this.tvSpeakerService.getCharacteristic(Characteristic.VolumeSelector)
+			.on('set', this.volumeSelectorPress.bind(this));
+		this.tvSpeakerService.getCharacteristic(Characteristic.Volume)
+			.on('get', this.getVolume.bind(this))
+			.on('set', this.setVolume.bind(this));
+		this.tvSpeakerService.getCharacteristic(Characteristic.Mute)
+			.on('get', this.getMute.bind(this))
+			.on('set', this.setMute.bind(this));
+
+		this.tvAccesory.addService(this.tvSpeakerService);
+		this.tvService.addLinkedService(this.tvSpeakerService);
+	}
+
+	prepareInputServices() {
+		this.log.debug('prepareInputServices');
+		if (this.bouquets === undefined || this.bouquets === null || this.bouquets.length <= 0) {
+			return;
+		}
+
+		if (Array.isArray(this.bouquets) === false) {
+			this.bouquets = [this.bouquets];
+		}
+
+		let savedNames = {};
+
+		this.bouquets.forEach((bouquet, i) => {
+
+			// get channel reference
+			let channelReference = null;
+
+			if (bouquet.reference !== undefined) {
+				channelReference = bouquet.reference;
+			} else {
+				channelReference = bouquet;
+			}
+
+			// get channel name		
+			let channelName = channelReference;
+
+			if (savedNames && savedNames[channelReference]) {
+				channelName = savedNames[channelReference];
+			} else if (bouquet.name) {
+				channelName = bouquet.name;
+			}
+
+			// if reference not null or empty add the input
+			if (channelReference !== undefined && channelReference !== null && channelReference !== '') {
+				channelReference = channelReference.replace(/\s/g, ''); // remove all white spaces from the string
+
+				let tempInput = new Service.InputSource(channelReference, 'inputSource' + i);
+				tempInput
+					.setCharacteristic(Characteristic.Identifier, i)
+					.setCharacteristic(Characteristic.ConfiguredName, channelName)
+					.setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
+					.setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.TV)
+					.setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN);
+
+				tempInput
+					.getCharacteristic(Characteristic.ConfiguredName)
+					.on('set', (name, callback) => {
+						this.bouquets[channelReference] = name;
+						fs.writeFile(this.channelsFile, JSON.stringify(this.bouquets), (err) => {
+							if (err) {
+								this.log('Error occured could not write new channel name %s', err);
+							} else {
+								this.log('New channel name successfully saved! New name: %s reference: %s', name, channelReference);
+							}
+						});
+						callback()
+					});
+				this.tvAccesory.addService(tempInput);
+				if (!tempInput.linked)
+					this.tvService.addLinkedService(tempInput);
+				this.channelReferences.push(channelReference);
+			}
+
+		});
+	}
+
+	updateReceiverStatus(error, tvStatus, channelReference) {
+		this.log.debug('updateReceiverStatus');
+	}
+
+	checkDeviceState(callback) {
+		var me = this;
+		if (this.devInfoSet == false) {
+			this.getDeviceInfo();
+		} else {
+			this.httpGet('/api/statusinfo', function (error, data) {
+				if (error) {
+					me.log.debug("Error while getting power state %s", error);
+					me.connected = false;
+				} else if (data.indexOf('Error 403: Forbidden') === 0) {
+					me.log('Can not acces receiver. Might be due to a wrong port in config.');
+				} else {
+					var json = JSON.parse(data);
+					var powerState = ((json.inStandby == 'false') == true);
+					if (powerState == true) {
+						let channelName = json.currservice_serviceref;
+						for (let i = 0; i < me.channelReferences.length; i++) {
+							if (channelName === me.channelReferences[i]) {
+								if (me.channelReferenceSet === false)
+									me.tvService
+										.getCharacteristic(Characteristic.ActiveIdentifier)
+										.updateValue(i);
+								else
+									me.channelReferenceSet = false;
+							}
+						}
+						me.connected = true;
+						me.log('Check device state %s', me.connected)
+					} else {
+						me.connected = false;
+						me.log('Check device state %s', me.connected)
+					}
+				}
+			});
+		}
+		callback(null, this.connected, this.channelReference);
+	}
+
 	httpGet(apipath, callback) {
 		if (!this.host) {
-		    callback(new Error("No host defined."));
+			callback(new Error("No host defined."));
 		}
 		if (!this.port) {
-		    callback(new Error("No port defined."));
+			callback(new Error("No port defined."));
 		}
 
 		if (this.auth) {
@@ -634,300 +343,306 @@ OpenWebIfTvAccessory.prototype = {
 		}
 
 		var me = this;
-		me.httpRequest(me.authData + me.host + ':' + me.port + apipath , '', 'GET', function(error, response, responseBody) {
+		me.httpRequest(me.authData + me.host + ':' + me.port + apipath, '', 'GET', function (error, response, responseBody) {
 			if (error) {
 				callback(error);
 				me.log.error("Device not reachable " + me.host + ":" + me.port + apipath);
 				return;
 			} else {
 				try {
-				  var result = JSON.stringify(responseBody, function(err, data) {
-					if (err) {
-					  callback(err)
-					} else {
-					  //me.log('result %s', data);
-					  callback(null, data);
-					}
-				  });
+					var result = JSON.stringify(responseBody, function (err, data) {
+						if (err) {
+							callback(err)
+						} else {
+							//me.log('result %s', data);
+							callback(null, data);
+						}
+					});
 				} catch (e) {
-				  callback(e, null);
-				  me.log('error: ' + e);
+					callback(e, null);
+					me.log('error: ' + e);
 				}
 			}
-		}.bind(this)); 
-	},
-	  
+		}.bind(this));
+	}
+
 	httpRequest(url, body, apipath, callback) {
 		request({
-		  url: url,
-		  body: body,
-		  method: apipath
+			url: url,
+			body: body,
+			method: apipath
 		},
-		  function(error, response, body) {
-		  callback(error, response, body);
-		});
-	},
+			function (error, response, body) {
+				callback(error, response, body);
+			});
+	}
 
-	getDeviceInfo(callback) {
-        var me = this;
-		this.httpGet("/api/about", function(error,data) {
-		if (error){
-			callback(error)
-		  } else {
-			var json = JSON.parse(data);
-			var brand = json.info.brand;
-			var model = json.info.bname;
-			var firmware = json.info.enigmaver;
-			var serial = json.ifaces[0].mac;
-			me.log('getDeviceInfo() succeded, free: %s', json);
-			callback(null, json);
-		  }
-		});
-	},
-	  
 	getPowerState(callback) {
-        var me = this;
-		this.httpGet("/api/statusinfo", function(error,data) {
-		  if (error){
-			callback(error)
-		  } else {
-			var json = JSON.parse(data); 
-			var state = (json.inStandby == "false");
-			me.log('getPowerState() succeded: %s', state? 'ON':'OFF');
-			callback(null, state);
-		  }
-		});
-	},
-	  
-	setPowerState(state, callback) {
-        var me = this;
-		var state = state? true : false; //number to boolean
-		me.getPowerState(function(error, currentState) {
-		  if(error){
-			callback(null, state? false : true); //receiver is off
-		  } else {
-			if (currentState == state) { //state like expected
-			  callback(null, state);
-			} else { //set new state
-			  me.httpGet("/api/powerstate?newstate=0", function(error) {
-				if (error){
-				  callback(error)
-				} else {
-				  me.log('setPowerState() succeded %s', state? 'ON':'OFF');
-				  callback(null, state);
-				}
-			  });
-			}
-		  }
-		});
-	},
-	  
-	getMute(callback) {
-          var me = this;
-		  this.httpGet("/api/statusinfo", function(error,data) {
-		  if (error){
-			  callback(error)
-		  } else {
-			var json = JSON.parse(data);
-			var state = (json.muted == false);
-			me.log('getMute() succeded: %s', state? 'OFF':'ON');
-			callback(null, state);
-		  }
-		});
-	},
-	  
-	setMute(state, callback) {
-        var me = this;
-		var state = state? false : true; //number to boolean
-		me.getMute(function(error, currentState) {
-		  if (error){
-			callback(null, state? true : false); //receiver is off
-		  } else {
-			if (currentState == state) { //state like expected
+		var me = this;
+		this.httpGet('/api/statusinfo', function (error, data) {
+			if (error) {
+				callback(error)
+			} else {
+				var json = JSON.parse(data);
+				var state = (json.inStandby == "false");
+				me.log('getPowerState() succeded: %s', state ? 'ON' : 'OFF');
 				callback(null, state);
-			} else { //set new state
-			  me.httpGet("/api/vol?set=mute", function(error) {
-				if (error){
-					callback(error)
-				} else {
-				  me.log('setMute() succeded %s',  state? 'OFF':'ON');
-				  callback(null, state);
-				}
-			  });
 			}
-		  }
 		});
-	},
-	  
+	}
+
+	setPowerState(state, callback) {
+		var me = this;
+		var state = state ? true : false; //number to boolean
+		me.getPowerState(function (error, currentState) {
+			if (error) {
+				callback(null, state ? false : true); //receiver is off
+			} else {
+				if (currentState == state) { //state like expected
+					callback(null, state);
+				} else { //set new state
+					me.httpGet("/api/powerstate?newstate=0", function (error) {
+						if (error) {
+							callback(error)
+						} else {
+							me.log('setPowerState() succeded %s', state ? 'ON' : 'OFF');
+							callback(null, state);
+						}
+					});
+				}
+			}
+		});
+	}
+
+	getMute(callback) {
+		var me = this;
+		this.httpGet('/api/statusinfo', function (error, data) {
+			if (error) {
+				callback(error)
+			} else {
+				var json = JSON.parse(data);
+				var state = (json.muted == false);
+				me.log('getMute() succeded: %s', state ? 'OFF' : 'ON');
+				callback(null, state);
+			}
+		});
+	}
+
+	setMute(state, callback) {
+		var me = this;
+		var state = state ? false : true; //number to boolean
+		me.getMute(function (error, currentState) {
+			if (error) {
+				callback(null, state ? true : false); //receiver is off
+			} else {
+				if (currentState == state) { //state like expected
+					callback(null, state);
+				} else { //set new state
+					this.httpGet('/api/vol?set=mute', function (error) {
+						if (error) {
+							callback(error)
+						} else {
+							me.log('setMute() succeded %s', state ? 'OFF' : 'ON');
+							callback(null, state);
+						}
+					});
+				}
+			}
+		});
+	}
+
 	getVolume(callback) {
-        var me = this;
-		this.httpGet("/api/statusinfo", function(error,data) {
-		  if (error){
-			callback(error)
-		  } else {
-			var json = JSON.parse(data);
-			var volume = parseFloat(json.volume);
-			me.log('getVolume() succeded: %s', volume);
-			callback(null, volume);
-		  }
+		var me = this;
+		this.httpGet('/api/statusinfo', function (error, data) {
+			if (error) {
+				callback(error)
+			} else {
+				var json = JSON.parse(data);
+				var volume = parseFloat(json.volume);
+				me.log('getVolume() succeded: %s', volume);
+				callback(null, volume);
+			}
 		});
-	},
-	  
+	}
+
 	setVolume(volume, callback) {
-        var me = this;
+		var me = this;
 		var targetVolume = parseInt(volume);
-		this.httpGet("/api/vol?set=set" + targetVolume, function(error) {
-		  if (error){
-			callback(error)
-		  } else {
-			me.log('setVolume() succesed %s', targetVolume);
-			callback(null, targetVolume);
-		  }
+		this.httpGet('/api/vol?set=set' + targetVolume, function (error) {
+			if (error) {
+				callback(error)
+			} else {
+				me.log('setVolume() succesed %s', targetVolume);
+				callback(null, targetVolume);
+			}
 		});
-	},
+
+	}
 
 	getChannel(callback) {
-          var me = this;
-		  this.httpGet("/api/statusinfo", function(error,data) {
-		  if (error){
-			 callback(error)
-		  } else {
-			var json = JSON.parse(data);
-			var inputReference = json.currservice_serviceref;
-			me.log('getChannel() succeded: %s', inputReference); 
-			callback(null, inputReference);
+		var me = this;
+		this.httpGet('/api/statusinfo', function (error, data) {
+			if (error) {
+				me.log.debug("Error while getting power state %s", error);
+			} else if (data.indexOf('Error 403: Forbidden') === 0) {
+				me.log('Can not acces receiver. Might be due to a wrong port in config file.');
+			} else {
+				var json = JSON.parse(data);
+				let channelName = json.currservice_serviceref;
+				for (let i = 0; i < me.channelReferences.length; i++) {
+					if (channelName === me.channelReferences[i]) {
+						me.tvService
+							.getCharacteristic(Characteristic.ActiveIdentifier)
+							.updateValue(i);
+					}
+				}
+				callback();
 			}
 		});
-	},
-	  
-	setChannel(inputReference, callback){
-          var me = this;
-		  this.httpGet("/api/zap?sRef=" + inputReference,  function(error) {
-		  if (error){
-			 callback(error)
-		  } else { 
-			   me.log('setChannel() succeded: %s', inputReference);     
-			   callback(null, inputReference);
-		  } 
-		});
-	  },
+	}
+
+	setChannel(state, callback, channelReference) {
+		if (state) {
+			var me = this;
+			me.channelReferenceSet = true;
+			this.httpGet('/api/zap?sRef=' + channelReference, function (error, data) {
+				if (error) {
+					me.log.debug("Error while switching input %s", error);
+					if (callback)
+						callback(error);
+
+				} else if (data.indexOf('Error 403: Forbidden') === 0) {
+					me.log('Can not acces receiver. Might be due to a wrong port in config file.');
+				} else {
+					if (callback)
+						callback();
+				}
+			});
+		}
+	}
 
 	volumeSelectorPress(remoteKey, callback) {
 		var command = 0;
 		switch (remoteKey) {
 			case Characteristic.VolumeSelector.INCREMENT:
-			command = "115";
-			break;
+				command = "115";
+				break;
 			case Characteristic.VolumeSelector.DECREMENT:
-			command = "114";
-			break;
+				command = "114";
+				break;
 		}
-        this.log('remote key pressed: %s', remoteKey, "remote command send: %s", command);
+		this.log('remote key pressed: %s', remoteKey, "remote command send: %s", command);
 		this.sendRemoteControlCommand(command, callback);
-	},
+	}
 
 	remoteKeyPress(remoteKey, callback) {
 		var command = 0;
 		switch (remoteKey) {
 			case Characteristic.RemoteKey.REWIND:
-			command = "168";
-			break;
+				command = "168";
+				break;
 			case Characteristic.RemoteKey.FAST_FORWARD:
-			command = "159";
-			break;
+				command = "159";
+				break;
 			case Characteristic.RemoteKey.NEXT_TRACK:
-			command = "407";
-			break;
+				command = "407";
+				break;
 			case Characteristic.RemoteKey.PREVIOUS_TRACK:
-			command = "412";
-			break;
+				command = "412";
+				break;
 			case Characteristic.RemoteKey.ARROW_UP:
-			command = "103";
-			break;
+				command = "103";
+				break;
 			case Characteristic.RemoteKey.ARROW_DOWN:
-			command = "108";
-			break;
+				command = "108";
+				break;
 			case Characteristic.RemoteKey.ARROW_LEFT:
-			command = "105";
-			break;
+				command = "105";
+				break;
 			case Characteristic.RemoteKey.ARROW_RIGHT:
-			command = "106";
-			break;
+				command = "106";
+				break;
 			case Characteristic.RemoteKey.SELECT:
-			command = "352";
-			break;
+				command = "352";
+				break;
 			case Characteristic.RemoteKey.BACK:
-			command = "174";
-			break;
+				command = "174";
+				break;
 			case Characteristic.RemoteKey.EXIT:
-			command = "174";
-			break;
+				command = "174";
+				break;
 			case Characteristic.RemoteKey.PLAY_PAUSE:
-			command = "164";
-			break;
+				command = "164";
+				break;
 			case Characteristic.RemoteKey.INFORMATION:
-			command = "139";
-			break;
+				command = "139";
+				break;
 		}
-        this.log('remote key pressed: %s', remoteKey, "remote command send: %s", command);
+		this.log('remote key pressed: %s', remoteKey, "remote command send: %s", command);
 		this.sendRemoteControlCommand(command, callback);
-	},
+	}
 
 	sendRemoteControlCommand(command, callback) {
 		var me = this;
-		this.httpGet("/api/remotecontrol?command=" + command, function(error) {
-		if (error){
-		   callback(error)
-		} else { 
-			 me.log('sendCommand() succeded: %s', command);     
-			 callback(null, command);
-		}
-	  });
-	},
-	  
+		this.httpGet('/api/remotecontrol?command=' + command, function (error) {
+			if (error) {
+				callback(error)
+			} else {
+				me.log('sendCommand() succeded: %s', command);
+				callback(null, command);
+			}
+		});
+	}
+
 	printBouquets() {
 		var me = this;
-		this.httpGet("/api/getservices", function(error,data) {
-		  if (error){
-		  } else {
-			var json = JSON.parse(data);
-			var servicesList = json.services;
-			me.printBouquetsDetail(servicesList, new Array());
-			var arrayLength = servicesList.length;
-			for (var i = 0; i < arrayLength; i++) {
-			var service = servicesList[i];
+		this.httpGet('/api/getservices', function (error, data) {
+			if (error) {
+			} else {
+				var json = JSON.parse(data);
+				var servicesList = json.services;
+				me.printBouquetsDetail(servicesList, new Array());
+				var arrayLength = servicesList.length;
+				for (var i = 0; i < arrayLength; i++) {
+					var service = servicesList[i];
+				}
 			}
-		  }
 		});
-	  },
-	  
+	}
+
 	printBouquetsDetail(bouquets, printArray) {
-		var string = JSON.stringify(printArray, null, 2);
-		this.log('Channels: %s', string);
-		fs.writeFileSync(this.bouquetsFile, string, 'utf8', (err) => {
+		string = JSON.stringify(printArray, null, 2);
+		this.log('Channels file successfully saved');
+		fs.writeFileSync(this.channelsFile, string, 'utf8', (err) => {
 			if (err) throw err;
-			this.log('Channels file successfully saved!');
 		});
-		
+
+		//bouquets
 		let bouquet = bouquets[0];
-		    bouquets.shift();
-        let ref = bouquet.servicereference;
+		bouquets.shift();
+		let name = bouquet.servicename;
+		let ref = bouquet.servicereference;
+
+		//channels
 		var me = this;
-		this.httpGet("/api/getservices?sRef=" + ref, function(error,data) {
-		  if (error){
-		  } else {
-			var json = JSON.parse(data);
-			var servicesList = json.services;
-			var arrayLength = servicesList.length;
-			for (var i = 0; i < arrayLength; i++) {
-			  var service = servicesList[i];
-			  let name = service.servicename;
-			  let ref = service.servicereference;
-			  var object = {"name": name, "reference": ref};
-			  printArray.push(object);
+		this.httpGet('/api/getservices?sRef=' + ref, function (error, data) {
+			if (error) {
+			} else {
+				var json = JSON.parse(data);
+				var servicesList = json.services;
+				var arr = [];
+				var arrayLength = 96;
+				for (var i = 0; i < arrayLength; i++) {
+					var service = servicesList[i];
+					let name = service.servicename;
+					let ref = service.servicereference;
+					var object = { "name": name, "reference": ref };
+					printArray.push(object);
+				}
+				me.printBouquetsDetail(bouquets, printArray);
 			}
-			me.printBouquetsDetail(bouquets, printArray);
-		  }
 		});
-	  }
-};
+	}
+}
+
+
