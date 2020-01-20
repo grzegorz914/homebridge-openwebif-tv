@@ -1,6 +1,23 @@
 # Change Log
 
 All notable changes to this project will be documented in this file.
+## 2.0.2(20.01.2020)
+- small fixes
+
+
+## 2.0.0(19.01.2020)
+- all moved to the platform and publisch as externall accessory
+- please update Yours config!!!
+
+
+## 1.3.8 (19.01.2020)
+- some fixes and improwements
+
+## 1.3.6 (15.01.2020)
+- some crash fixes
+- added Power Mode Selection
+- removed possibility to disable speaker service
+
 ## 1.3.5 (13.01.2020)
 - some crash fixes
 
@@ -13,6 +30,7 @@ All notable changes to this project will be documented in this file.
 ## 1.3.1 (12.01.2020)
 - added automatically reads 97 channels from receiver and add them to the channel list if bouquets in config are not configured.
 - some other fixes
+
 
 ## 1.3.0 (11.01.2020)
 - please update Yours config
