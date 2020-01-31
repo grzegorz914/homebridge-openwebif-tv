@@ -5,7 +5,6 @@ const mkdirp = require('mkdirp');
 const responseDelay = 1000;
 
 var Accessory, Service, Characteristic, UUIDGen;
-var checkingInterval;
 
 module.exports = homebridge => {
 	Service = homebridge.hap.Service;
@@ -25,17 +24,16 @@ class openwebifPlatform {
 
 		this.tvAccessories = [];
 
-		this.checkingInterval = config.checkStateInterwal || 5;
-		this.checkingInterval = this.checkingInterval * 1000;
-		checkingInterval = this.checkingInterval;
+		this.checkStateInterval = config.checkStateInterval || 5;
+		this.checkIntervel = this.checkStateInterval * 1000;
 		this.devices = config.devices || [];
 
 		if (this.version < 2.1) {
-			throw new Error("Unexpected API version.");
+			throw new Error('Unexpected API version.');
 		}
 
 		for (var i in this.devices) {
-			this.tvAccessories.push(new tvClient(log, this.devices[i], api));
+			this.tvAccessories.push(new openwebifTvDevice(log, this.devices[i], api));
 		}
 
 		this.api.on('didFinishLaunching', this.didFinishLaunching.bind(this));
@@ -50,13 +48,11 @@ class openwebifPlatform {
 	}
 }
 
-class tvClient {
+class openwebifTvDevice {
 	constructor(log, device, api) {
 		this.log = log;
 		this.api = api;
 		this.device = device;
-
-		this.devInfoSet = false;
 
 		this.manufacturer = device.manufacturer || 'OpenWebIf';
 		this.modelName = device.model || 'homebridge-openwebif-tv';
@@ -72,7 +68,11 @@ class tvClient {
 		this.pass = device.pass || '';
 		this.bouquets = device.bouquets;
 
-		this.getDeviceInfo();
+		if (this.auth == true) {
+			this.authData = ('http://' + this.user + ':' + this.pass + '@');
+		} else {
+			this.authData = ('http://');
+		}
 
 		this.switchInfoMenu = device.switchInfoMenu;
 		if (this.switchInfoMenu === true) {
@@ -83,20 +83,14 @@ class tvClient {
 			this.menuButton = '358';
 		}
 
-		/* setup variables */
+		//setup variables
 		this.connected = false;
-		this.channelReferenceSet = false;
 		this.channelReferences = new Array();
-		this.checkAliveInterval = null;
+
+		this.getDeviceInfo();
 
 		this.prefsDir = ppath('openwebifTv/');
 		this.channelsFile = this.prefsDir + 'channels_' + this.host.split('.').join('');
-
-		if (this.auth == true) {
-			this.authData = ('http://' + this.user + ':' + this.pass + '@');
-		} else {
-			this.authData = ('http://');
-		}
 
 		//check if prefs directory ends with a /, if not then add it
 		if (this.prefsDir.endsWith('/') === false) {
@@ -109,19 +103,19 @@ class tvClient {
 		}
 
 		if (fs.existsSync(this.channelsFile) === false) {
-			this.printBouquets();
-			this.log.info("Channels file for device: %s, will be created and saved in %s", this.host, this.prefsDir);
+			this.getBouquets();
+			this.log.info('Channels for device: %s, will be created and saved in %s', this.host, this.prefsDir);
 		}
 
-		/* Delay to wait for retrieve device info */
-		setTimeout(this.setupTvService.bind(this), responseDelay);
+		//Delay to wait for retrieve device info
+		setTimeout(this.prepareTvService.bind(this), responseDelay);
 	}
 
 	getDeviceInfo() {
 		var me = this;
 		request(this.authData + this.host + ':' + this.port + '/api/about', function (error, response, body) {
 			if (error) {
-				me.log.debug("Error while getting information of device: %s, error: %s", me.host, error);
+				me.log.error('Openwebif - Error: %s', error);
 			} else {
 				try {
 					var json = JSON.parse(body);
@@ -139,17 +133,16 @@ class tvClient {
 					me.log('Chipset: %s', chipset);
 					me.log('Firmware: %s', me.firmwareRevision);
 					me.log('Webif version.: %s', webifver);
-					me.devInfoSet = true;
 				} catch (error) {
-					me.log('Device: %s, not reachable %s.', me.host, error);
+					me.log.error('Device: %s, not reachable %s.', me.host, error);
 				}
 			}
 		});
 	}
 
 	//Start of TV integration service 
-	setupTvService() {
-		this.log.debug('setupTvService');
+	prepareTvService() {
+		this.log.debug('prepareTvService');
 		this.tvAccesory = new Accessory(this.name, UUIDGen.generate(this.host + this.name));
 
 		this.tvService = new Service.Television(this.name, 'tvService');
@@ -162,7 +155,7 @@ class tvClient {
 
 		this.tvService.getCharacteristic(Characteristic.ActiveIdentifier)
 			.on('set', (inputIdentifier, callback) => {
-				this.setChannel(true, callback, this.channelReferences[inputIdentifier]);
+				this.setChannel(callback, this.channelReferences[inputIdentifier]);
 			})
 			.on('get', this.getChannel.bind(this));
 
@@ -172,10 +165,7 @@ class tvClient {
 		this.tvService.getCharacteristic(Characteristic.PowerModeSelection)
 			.on('set', (newValue, callback) => {
 				if (this.connected) {
-					if (this.devInfoSet == false)
-						this.getDeviceInfo();
-					else
-						this.httpGet('/api/remotecontrol?command=' + this.menuButton, function (error, data) { });
+					this.httpGET('/api/remotecontrol?command=' + this.menuButton, function (error, data) { });
 				}
 				callback();
 			});
@@ -190,21 +180,16 @@ class tvClient {
 
 		this.tvAccesory.addService(this.tvService);
 
-		this.setupTvSpeakerService();
+		this.prepareTvSpeakerService();
 		this.prepareInputServices();
 
 
 		this.log.debug('publishExternalAccessories for device: %s', this.host);
 		this.api.publishExternalAccessories('homebridge-openwebif-tv', [this.tvAccesory]);
-
-		//start the state checking
-		if (!this.checkAliveInterval) {
-			this.checkAliveInterval = setInterval(this.checkDeviceState.bind(this, this.updateReceiverStatus.bind(this)), checkingInterval);
-		}
 	}
 
-	setupTvSpeakerService() {
-		this.log.debug('setupTvSpeakerService');
+	prepareTvSpeakerService() {
+		this.log.debug('prepareTvSpeakerService');
 		this.tvSpeakerService = new Service.TelevisionSpeaker(this.name + ' Volume', 'tvSpeakerService');
 		this.tvSpeakerService
 			.setCharacteristic(Characteristic.Active, Characteristic.Active.ACTIVE)
@@ -288,80 +273,27 @@ class tvClient {
 		});
 	}
 
-	updateReceiverStatus(error, tvStatus, channelReference) {
-		this.log.debug('updateReceiverStatus');
-	}
-
-	checkDeviceState(callback) {
-		var me = this;
-		if (this.devInfoSet == false) {
-			this.getDeviceInfo();
-		} else {
-			this.httpGet('/api/statusinfo', function (error, data) {
-				if (error) {
-					me.log("Error while getting device state %s", error);
-					me.connected = false;
-					me.log('Can not acces device: %s. Might be due to a wrong settings in config, error %s:', me.host, error);
-				} else {
-					var json = JSON.parse(data);
-					var powerState = ((json.inStandby == 'false') == true);
-					if (powerState == true) {
-						let channelName = json.currservice_serviceref;
-						for (let i = 0; i < me.channelReferences.length; i++) {
-							if (channelName === me.channelReferences[i]) {
-								if (me.channelReferenceSet === false)
-									me.tvService
-										.getCharacteristic(Characteristic.ActiveIdentifier)
-										.updateValue(i);
-								else
-									me.channelReferenceSet = false;
-							}
-						}
-						me.connected = true;
-						me.log.debug('Check device state, device: %s ON', me.host)
-					} else {
-						me.connected = false;
-						me.log.debug('Device %s not reachable or power in standby.', me.host)
-					}
-				}
-			});
-		}
-		callback(null, this.connected, this.channelReference);
-	}
-
-	httpGet(apipath, callback) {
-		if (!this.host) {
-			callback(new Error('No host defined for device: %s.', this.host));
-		}
-		if (!this.port) {
-			callback(new Error('No port defined for device: %s.', this.host));
-		}
-
-		if (this.auth) {
-			if (!this.user || !this.pass) {
-				callback(new Error('No authentication data defined for device: %s.', this.host));
-			}
-		}
-
+	httpGET(apipath, callback) {
 		var me = this;
 		me.httpRequest(me.authData + me.host + ':' + me.port + apipath, '', 'GET', function (error, response, responseBody) {
 			if (error) {
 				callback(error);
-				me.log.error('Device: %s, not reachable.', me.host + ":" + me.port + apipath);
+				me.log.error('Device: %s, not reachable.', me.host + ':' + me.port + apipath);
 				return;
 			} else {
 				try {
 					var result = JSON.stringify(responseBody, function (err, data) {
 						if (err) {
-							callback(err)
+							callback(err);
 						} else {
-							//me.log('result %s', data);
+							me.log.debug('result %s', data);
+							me.connected = true;
 							callback(null, data);
 						}
 					});
 				} catch (e) {
 					callback(e, null);
-					me.log('error: ' + e);
+					me.log.error('error: ' + e);
 				}
 			}
 		}.bind(this));
@@ -380,13 +312,15 @@ class tvClient {
 
 	getPowerState(callback) {
 		var me = this;
-		this.httpGet('/api/statusinfo', function (error, data) {
+		this.httpGET('/api/statusinfo', function (error, data) {
 			if (error) {
-				me.log('Can not acces device: %s. Might be due to a wrong settings in config, error %s:', me.host, error);
+				me.log.error('Can not acces device: %s and get Power. Might be due to a wrong settings in config, error %s:', me.host, error);
+				if (callback)
+					callback(error);
 			} else {
 				var json = JSON.parse(data);
-				var state = (json.inStandby == "false");
-				me.log('Device: %s, get Power succeded: %s', me.host, state ? 'ON' : 'OFF');
+				var state = (json.inStandby == 'false');
+				me.log('Device: %s, get Power succeded: %s', me.host, state ? 'ON' : 'STANDBY');
 				callback(null, state);
 			}
 		});
@@ -397,19 +331,19 @@ class tvClient {
 		var state = state ? true : false; //number to boolean
 		me.getPowerState(function (error, currentState) {
 			if (error) {
-				me.log("Error while set power %s", error);
+				me.log.error('Can not acces device: %s and get current Power state. Might be due to a wrong settings in config, error %s:', me.host, error);
 				if (callback)
 					callback(null, state ? false : true); //receiver is off
-				me.log('Can not acces device: %s. Might be due to a wrong settings in config, error %s:', me.host, error);
 			} else {
 				if (currentState == state) { //state like expected
 					callback(null, state);
 				} else { //set new state
-					me.httpGet("/api/powerstate?newstate=0", function (error) {
+					me.httpGET('/api/powerstate?newstate=0', function (error) {
 						if (error) {
-							callback(error)
+							me.log.error('Can not acces device: %s and set Power. Might be due to a wrong settings in config, error %s:', me.host, error);
+							callback(error);
 						} else {
-							me.log('Device: %s, set Power succeded %s', me.host, state ? 'ON' : 'OFF');
+							me.log('Device: %s, set Power succeded: %s', me.host, currentState ? 'STANDBY' : 'ON');
 							callback(null, state);
 						}
 					});
@@ -420,13 +354,15 @@ class tvClient {
 
 	getMute(callback) {
 		var me = this;
-		this.httpGet('/api/statusinfo', function (error, data) {
+		this.httpGET('/api/statusinfo', function (error, data) {
 			if (error) {
-				me.log('Can not acces device: %s. Might be due to a wrong settings in config, error %s:', me.host, error);
+				me.log.error('Can not acces device: %s. Might be due to a wrong settings in config, error %s:', me.host, error);
+				if (callback)
+					callback(error);
 			} else {
 				var json = JSON.parse(data);
 				var state = (json.muted == false);
-				me.log('Device: %s, get Mute succeded: %s',me.host, state ? 'OFF' : 'ON');
+				me.log('Device: %s, get Mute succeded: %s', me.host, state ? 'OFF' : 'ON');
 				callback(null, state);
 			}
 		});
@@ -437,19 +373,19 @@ class tvClient {
 		var state = state ? false : true; //number to boolean
 		me.getMute(function (error, currentState) {
 			if (error) {
-				me.log("Error while set mute %s", error);
+				me.log.error('Can not acces device: %s and get current Mute state. Might be due to a wrong settings in config, error %s:', me.host, error);
 				if (callback)
 					callback(null, state ? true : false); //receiver is off
-				me.log('Can not acces device: %s. Might be due to a wrong settings in config, error %s:', me.host, error);
 			} else {
 				if (currentState == state) { //state like expected
 					callback(null, state);
 				} else { //set new state
-					this.httpGet('/api/vol?set=mute', function (error) {
+					me.httpGET('/api/vol?set=mute', function (error) {
 						if (error) {
-							callback(error)
+							me.log.error('Can not acces device: %s and set Mute. Might be due to a wrong settings in config, error %s:', me.host, error);
+							callback(error);
 						} else {
-							me.log('Device: %s, set Mute succeded: %s',me.host, state ? 'OFF' : 'ON');
+							me.log('Device: %s, set Mute succeded: %s', me.host, currentState ? 'OFF' : 'ON');
 							callback(null, state);
 						}
 					});
@@ -460,13 +396,15 @@ class tvClient {
 
 	getVolume(callback) {
 		var me = this;
-		this.httpGet('/api/statusinfo', function (error, data) {
+		this.httpGET('/api/statusinfo', function (error, data) {
 			if (error) {
-				me.log('Can not acces device: %s. Might be due to a wrong settings in config, error %s:', me.host, error);
+				me.log.error('Can not acces device: %s and get Volume. Might be due to a wrong settings in config, error %s:', me.host, error);
+				if (callback)
+					callback(error);
 			} else {
 				var json = JSON.parse(data);
 				var volume = parseFloat(json.volume);
-				me.log('Device: %s, get Volume succeded: %s',me.host, volume);
+				me.log('Device: %s, get Volume succeded: %s', me.host, volume);
 				callback(null, volume);
 			}
 		});
@@ -475,15 +413,14 @@ class tvClient {
 	setVolume(volume, callback) {
 		var me = this;
 		var targetVolume = parseInt(volume);
-		this.httpGet('/api/vol?set=set' + targetVolume, function (error, data) {
+		this.httpGET('/api/vol?set=set' + targetVolume, function (error, data) {
 			if (error) {
-				me.log("Error while set volume %s", error);
+				me.log.error('Can not acces device: %s and set Volume. Might be due to a wrong settings in config, error %s:', me.host, error);
 				if (callback)
 					callback(error);
-				me.log('Can not acces device: %s. Might be due to a wrong settings in config, error %s:', me.host, error);
 			} else {
-				me.log('Device: %s, set Volume succesed: %s',me.host, targetVolume);
-				callback(null, targetVolume);
+				me.log('Device: %s, set Volume succesed: %s', me.host, targetVolume);
+				callback(null, volume);
 			}
 		});
 
@@ -491,110 +428,109 @@ class tvClient {
 
 	getChannel(callback) {
 		var me = this;
-		this.httpGet('/api/statusinfo', function (error, data) {
+		this.httpGET('/api/statusinfo', function (error, data) {
 			if (error) {
-				me.log('Can not acces devive: %s. Might be due to a wrong settings in config, error %s:', me.host, error);
+				me.log.error('Can not acces devive: %s and get Channel. Might be due to a wrong settings in config, error %s:', me.host, error);
+				if (callback)
+					callback();
 			} else {
 				var json = JSON.parse(data);
-				let channelName = json.currservice_serviceref;
+				let channelReference = json.currservice_serviceref;
 				for (let i = 0; i < me.channelReferences.length; i++) {
-					if (channelName === me.channelReferences[i]) {
+					if (channelReference === me.channelReferences[i]) {
 						me.tvService
 							.getCharacteristic(Characteristic.ActiveIdentifier)
 							.updateValue(i);
-							me.log('Device: %s, get Channel succesed %s:',me.host, channelName);
+						me.log('Device: %s, get Channel succesed %s:', me.host, channelReference);
 					}
 				}
-				callback();
+				callback(null, channelReference);
 			}
 		});
 	}
 
-	setChannel(state, callback, channelReference) {
-		if (state) {
-			var me = this;
-			me.channelReferenceSet = true;
-			this.httpGet('/api/zap?sRef=' + channelReference, function (error, data) {
-				if (error) {
-					me.log("Error while set channel on device: %s, error: %s", me.host, error);
-					if (callback)
-						callback(error);
-					me.log('Can not acces device: %s. Might be due to a wrong settings in config.', me.host);
-				} else {
-					if (callback)
-						callback();
-						me.log('Device: %s, set Channel succesed %s:',me.host, channelReference);	
-				}
-			});
-		}
+	setChannel(callback, channelReference) {
+		var me = this;
+		me.channelReferenceSet = true;
+		this.httpGET('/api/zap?sRef=' + channelReference, function (error, data) {
+			if (error) {
+				me.log.error('Can not acces device: %s and set Channel. Might be due to a wrong settings in config, error: %s.', me.host, error);
+				if (callback)
+					callback();
+			} else {
+				me.log('Device: %s, set Channel succesed %s:', me.host, channelReference);
+				if (callback)
+					callback(null, channelReference);
+			}
+		});
 	}
 
 	volumeSelectorPress(remoteKey, callback) {
-               var me = this;
+		var me = this;
 		var command = 0;
 		switch (remoteKey) {
 			case Characteristic.VolumeSelector.INCREMENT:
-				command = "115";
+				command = '115';
 				break;
 			case Characteristic.VolumeSelector.DECREMENT:
-				command = "114";
+				command = '114';
 				break;
 		}
-		this.log('Device: %s, key prssed: %s, command: %s', me.host, remoteKey, command);
+		me.log('Device: %s, key prssed: %s, command: %s', me.host, remoteKey, command);
 		this.sendRemoteControlCommand(command, callback);
 	}
 
 	remoteKeyPress(remoteKey, callback) {
-               var me = this;
+		var me = this;
 		var command = 0;
 		switch (remoteKey) {
 			case Characteristic.RemoteKey.REWIND:
-				command = "168";
+				command = '168';
 				break;
 			case Characteristic.RemoteKey.FAST_FORWARD:
-				command = "159";
+				command = '159';
 				break;
 			case Characteristic.RemoteKey.NEXT_TRACK:
-				command = "407";
+				command = '407';
 				break;
 			case Characteristic.RemoteKey.PREVIOUS_TRACK:
-				command = "412";
+				command = '412';
 				break;
 			case Characteristic.RemoteKey.ARROW_UP:
-				command = "103";
+				command = '103';
 				break;
 			case Characteristic.RemoteKey.ARROW_DOWN:
-				command = "108";
+				command = '108';
 				break;
 			case Characteristic.RemoteKey.ARROW_LEFT:
-				command = "105";
+				command = '105';
 				break;
 			case Characteristic.RemoteKey.ARROW_RIGHT:
-				command = "106";
+				command = '106';
 				break;
 			case Characteristic.RemoteKey.SELECT:
-				command = "352";
+				command = '352';
 				break;
 			case Characteristic.RemoteKey.BACK:
-				command = "174";
+				command = '174';
 				break;
 			case Characteristic.RemoteKey.EXIT:
-				command = "174";
+				command = '174';
 				break;
 			case Characteristic.RemoteKey.PLAY_PAUSE:
-				command = "164";
+				command = '164';
 				break;
 			case Characteristic.RemoteKey.INFORMATION:
-				command = "139";
+				command = '139';
 				break;
 		}
-		this.log('Device: %s, key prssed: %s, command: %s', me.host, remoteKey, command);
+		me.log('Device: %s, key prssed: %s, command: %s', me.host, remoteKey, command);
 		this.sendRemoteControlCommand(command, callback);
 	}
 
 	sendRemoteControlCommand(command, callback) {
 		var me = this;
-		this.httpGet('/api/remotecontrol?command=' + command, function (error) {
+		this.httpGET('/api/remotecontrol?command=' + command, function (error) {
 			if (error) {
 				callback(error)
 			} else {
@@ -604,15 +540,14 @@ class tvClient {
 		});
 	}
 
-	printBouquets() {
+	getBouquets() {
 		var me = this;
-		this.httpGet('/api/getservices', function (error, data) {
+		this.httpGET('/api/getservices', function (error, data) {
 			if (error) {
-				me.log('Can not acces device: %s. Might be due to a wrong settings in config, error %s:', me.host, error);
 			} else {
 				var json = JSON.parse(data);
 				var servicesList = json.services;
-				me.printBouquetsDetail(servicesList, new Array());
+				me.saveBouquetsChannels(servicesList, new Array());
 				var arrayLength = servicesList.length;
 				for (var i = 0; i < arrayLength; i++) {
 					var service = servicesList[i];
@@ -621,12 +556,7 @@ class tvClient {
 		});
 	}
 
-	printBouquetsDetail(bouquets, printArray) {
-		string = JSON.stringify(printArray, null, 2);
-		this.log('Device: %s, saved channels file successfully.', me.host);
-		fs.writeFileSync(this.channelsFile, string, 'utf8', (err) => {
-			if (err) throw err;
-		});
+	saveBouquetsChannels(bouquets, printArray) {
 
 		//bouquets
 		let bouquet = bouquets[0];
@@ -636,7 +566,7 @@ class tvClient {
 
 		//channels
 		var me = this;
-		this.httpGet('/api/getservices?sRef=' + ref, function (error, data) {
+		this.httpGET('/api/getservices?sRef=' + ref, function (error, data) {
 			if (error) {
 			} else {
 				var json = JSON.parse(data);
@@ -647,12 +577,17 @@ class tvClient {
 					var service = servicesList[i];
 					let name = service.servicename;
 					let ref = service.servicereference;
-					var object = { "name": name, "reference": ref };
+					var object = { 'name': name, 'reference': ref };
 					printArray.push(object);
 				}
-				me.printBouquetsDetail(bouquets, printArray);
+				var string = JSON.stringify(printArray, null, 2);
+				me.log.info('Device: %s, saved channels file successfully in %s:', me.host, me.prefsDir);
+				fs.writeFileSync(me.channelsFile, string, 'utf8', (err) => {
+					if (err) throw err;
+				});
 			}
 		});
 	}
 }
+
 
