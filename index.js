@@ -105,7 +105,7 @@ class openwebIfTvDevice {
 		var me = this;
 		request(this.authData + this.host + ':' + this.port + '/api/about', function (error, response, body) {
 			if (error) {
-				me.log.debug('Device: %s, not reachable, request error: %s', me.host, error);
+				me.log.debug('Device: %s, can not request getDeviceInfo, error: %s', me.host, error);
 			} else {
 				try {
 					var json = JSON.parse(body);
@@ -125,8 +125,9 @@ class openwebIfTvDevice {
 					me.log('Chipset: %s', chipset);
 					me.log('Webif version.: %s', webifver);
 					me.log('Firmware: %s', enigmaversion);
+					me.log('Device: %s, getDeviceInfo succesfull.', me.host);
 				} catch (error) {
-					me.log.debug('Device: %s, can not get device info, error: %s', me.host, error);
+					me.log.debug('Device: %s, getDeviceInfo error: %s.', me.host, error);
 				}
 			}
 		});
@@ -271,10 +272,10 @@ class openwebIfTvDevice {
 				try {
 					var result = JSON.stringify(responseBody, function (error, data) {
 						if (error) {
-							me.log.debug('Device: %s, parse string error: %s', me.host, error);
+							me.log.debug('Device: %s, parse string result error: %s', me.host, error);
 							callback(error);
 						} else {
-							me.log.debug('Device: %s, parse string successfull: %s', me.host, data);
+							me.log.debug('Device: %s, parse string result: %s', me.host, data);
 							callback(null, data);
 						}
 					});
@@ -302,7 +303,7 @@ class openwebIfTvDevice {
 		var me = this;
 		this.httpGET('/api/statusinfo', function (error, data) {
 			if (error) {
-				me.log.debug('Device: %s, can not get current Power state. Might be due to a wrong settings in config, error %s:', me.host, error);
+				me.log.debug('Device: %s, can not get current Power state. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
 			} else {
 				var json = JSON.parse(data);
@@ -318,7 +319,7 @@ class openwebIfTvDevice {
 		var newState = state ? '4' : '5'
 		me.httpGET('/api/powerstate?newstate=' + newState, function (error) {
 			if (error) {
-				me.log.debug('Device: %s, can not set new Power state. Might be due to a wrong settings in config, error %s:', me.host, error);
+				me.log.debug('Device: %s, can not set new Power state. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
 			} else {
 				me.log('Device: %s, set new Power state successfull: %s', me.host, state ? 'ON' : 'STANDBY');
@@ -331,7 +332,7 @@ class openwebIfTvDevice {
 		var me = this;
 		this.httpGET('/api/statusinfo', function (error, data) {
 			if (error) {
-				me.log.debug('Device: %s, can not get current Mute state. Might be due to a wrong settings in config, error %s:', me.host, error);
+				me.log.debug('Device: %s, can not get current Mute state. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
 			} else {
 				var json = JSON.parse(data);
@@ -346,7 +347,7 @@ class openwebIfTvDevice {
 		var me = this;
 		me.httpGET('/api/vol?set=mute', function (error) {
 			if (error) {
-				me.log.debug('Device: %s, can not set Mute. Might be due to a wrong settings in config, error %s:', me.host, error);
+				me.log.debug('Device: %s, can not set Mute. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
 			} else {
 				me.log('Device: %s, set Mute successfull: %s', me.host, state ? 'ON' : 'OFF');
@@ -359,7 +360,7 @@ class openwebIfTvDevice {
 		var me = this;
 		this.httpGET('/api/statusinfo', function (error, data) {
 			if (error) {
-				me.log.debug('Device: %s, can not get Volume level. Might be due to a wrong settings in config, error %s:', me.host, error);
+				me.log.debug('Device: %s, can not get Volume level. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
 			} else {
 				var json = JSON.parse(data);
@@ -375,7 +376,7 @@ class openwebIfTvDevice {
 		var targetVolume = parseInt(volume);
 		me.httpGET('/api/vol?set=set' + targetVolume, function (error, data) {
 			if (error) {
-				me.log.debug('Device: %s, can not set new Volume level. Might be due to a wrong settings in config, error %s:', me.host, error);
+				me.log.debug('Device: %s, can not set new Volume level. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
 			} else {
 				me.log('Device: %s, set new Volume level successfull: %s', me.host, targetVolume);
@@ -388,7 +389,7 @@ class openwebIfTvDevice {
 		var me = this;
 		this.httpGET('/api/statusinfo', function (error, data) {
 			if (error) {
-				me.log.debug('Devive: %s, can not get current Channel. Might be due to a wrong settings in config, error %s:', me.host, error);
+				me.log.debug('Devive: %s, can not get current Channel. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
 			} else {
 				var json = JSON.parse(data);
@@ -398,7 +399,7 @@ class openwebIfTvDevice {
 						me.tvService
 							.getCharacteristic(Characteristic.ActiveIdentifier)
 							.updateValue(i);
-						me.log('Device: %s, get current Channel successfull %s:', me.host, channelReference);
+						me.log('Device: %s, get current Channel successfull: %s', me.host, channelReference);
 					}
 				}
 				callback(null, channelReference);
@@ -410,7 +411,7 @@ class openwebIfTvDevice {
 		var me = this;
 		me.getChannel(function (error, currentChannelReference) {
 			if (error) {
-				me.log.debug('Device: %s, can not get current Channel Reference. Might be due to a wrong settings in config, error %s:', me.host, error);
+				me.log.debug('Device: %s, can not get current Channel Reference. Might be due to a wrong settings in config, error: %s', me.host, error);
 				if (callback)
 					callback(error);
 			} else {
@@ -422,7 +423,7 @@ class openwebIfTvDevice {
 							me.log.debug('Device: %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', me.host, error);
 							callback(error);
 						} else {
-							me.log('Device: %s, set new Channel successfull %s:', me.host, channelReference);
+							me.log('Device: %s, set new Channel successfull: %s', me.host, channelReference);
 							callback(null, channelReference);
 						}
 					});
@@ -436,10 +437,10 @@ class openwebIfTvDevice {
 		var command = this.menuButton ? '358' : '139';
 		me.httpGET('/api/remotecontrol?command=' + command, function (error, data) {
 			if (error) {
-				me.log.debug('Device: %s, can not set new Power Mode. Might be due to a wrong settings in config, error %s:', me.host, error);
+				me.log.debug('Device: %s, can not set new Power Mode. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
 			} else {
-				me.log('Device: %s, set new Power Mode successfull and send command: %s:', me.host, command);
+				me.log('Device: %s, set new Power Mode successfull, send command: %s', me.host, command);
 				callback(null, state);
 			}
 		});
@@ -512,7 +513,7 @@ class openwebIfTvDevice {
 		var me = this;
 		this.httpGET('/api/remotecontrol?command=' + command, function (error) {
 			if (error) {
-				me.log.debug('Device: %s can not send RC Command. Might be due to a wrong settings in config, error: %s.', me.host, error);
+				me.log.debug('Device: %s can not send RC Command. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
 			} else {
 				me.log('Device: %s, send RC Command successfull: %s', me.host, command);
