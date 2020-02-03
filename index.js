@@ -12,10 +12,10 @@ module.exports = homebridge => {
 	Accessory = homebridge.platformAccessory;
 	UUIDGen = homebridge.hap.uuid;
 
-	homebridge.registerPlatform('homebridge-openwebif-tv', 'OpenWebIfTv', openwebifPlatform, true);
+	homebridge.registerPlatform('homebridge-openwebif-tv', 'OpenWebIfTv', openwebIfTvPlatform, true);
 };
 
-class openwebifPlatform {
+class openwebIfTvPlatform {
 	constructor(log, config, api) {
 		this.log = log;
 		this.config = config;
@@ -32,7 +32,7 @@ class openwebifPlatform {
 		}
 
 		for (var i in this.devices) {
-			this.tvAccessories.push(new openwebifTvDevice(log, this.devices[i], api));
+			this.tvAccessories.push(new openwebIfTvDevice(log, this.devices[i], api));
 		}
 
 		this.api.on('didFinishLaunching', this.didFinishLaunching.bind(this));
@@ -47,7 +47,7 @@ class openwebifPlatform {
 	}
 }
 
-class openwebifTvDevice {
+class openwebIfTvDevice {
 	constructor(log, device, api) {
 		this.log = log;
 		this.api = api;
