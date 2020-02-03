@@ -1,6 +1,34 @@
 # Change Log
 
 All notable changes to this project will be documented in this file.
+## 2.0.25 (03.02.2020)
+- switch channel usig scenes fixed
+- some small changes
+
+## 2.0.17 (01.02.2020)
+- fixed set channel using scenes
+- some other fixes
+
+## 2.0.15 (31.01.2020)
+- finally fixed all problems witch autocreate channels file
+
+## 2.0.14 (31.01.2020)
+- some fixes, cpde cleanup
+
+## 2.0.11 (21.01.2020)
+- fixed check state interval crash
+
+## 2.0.8 (20.01.2020)
+- changes in logging
+- changes in readme
+- code cleanup
+
+## 2.0.4 (20.01.2020)
+- many changes in logging
+
+## 2.0.3(20.01.2020)
+- code cleanup
+
 ## 2.0.2(20.01.2020)
 - small fixes
 
