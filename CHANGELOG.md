@@ -1,6 +1,11 @@
 # Change Log
 
 All notable changes to this project will be documented in this file.
+## 2.1.0 (03.02.2020)
+- log corrections
+- performance improvements
+- some small fixes
+
 ## 2.0.25 (03.02.2020)
 - switch channel usig scenes fixed
 - some small changes
