@@ -15,7 +15,6 @@ module.exports = homebridge => {
 	homebridge.registerPlatform('homebridge-openwebif-tv', 'OpenWebIfTv', openwebifPlatform, true);
 };
 
-
 class openwebifPlatform {
 	constructor(log, config, api) {
 		this.log = log;
@@ -54,11 +53,6 @@ class openwebifTvDevice {
 		this.api = api;
 		this.device = device;
 
-		this.manufacturer = device.manufacturer || 'OpenWebIf';
-		this.modelName = device.model || 'homebridge-openwebif-tv';
-		this.serialNumber = device.serialNumber || 'SN00000001';
-		this.firmwareRevision = device.firmwareRevision || 'FW00000002';
-
 		// devices configuration
 		this.name = device.name || 'Sat Receiver';
 		this.host = device.host;
@@ -66,6 +60,7 @@ class openwebifTvDevice {
 		this.auth = device.auth || false;
 		this.user = device.user || 'root';
 		this.pass = device.pass || '';
+		this.switchInfoMenu = device.switchInfoMenu;
 		this.bouquets = device.bouquets;
 
 		if (this.auth == true) {
@@ -74,20 +69,15 @@ class openwebifTvDevice {
 			this.authData = ('http://');
 		}
 
-		this.switchInfoMenu = device.switchInfoMenu;
-		if (this.switchInfoMenu === true) {
-			this.infoButton = '358';
-			this.menuButton = '139';
-		} else {
-			this.infoButton = '139';
-			this.menuButton = '358';
-		}
+		//get Device info
+		this.getDeviceInfo();
+		this.manufacturer = device.manufacturer || 'OpenWebIf';
+		this.modelName = device.model || 'homebridge-openwebif-tv';
+		this.serialNumber = device.serialNumber || 'SN00000001';
+		this.firmwareRevision = device.firmwareRevision || 'FW00000002';
 
 		//setup variables
-		this.connected = false;
 		this.channelReferences = new Array();
-
-		this.getDeviceInfo();
 
 		this.prefsDir = ppath('openwebifTv/');
 		this.channelsFile = this.prefsDir + 'channels_' + this.host.split('.').join('');
@@ -107,7 +97,7 @@ class openwebifTvDevice {
 			this.log.info('Channels for device: %s, will be created and saved in %s', this.host, this.prefsDir);
 		}
 
-		//Delay to wait for retrieve device info
+		//Delay to wait for device info
 		setTimeout(this.prepareTvService.bind(this), responseDelay);
 	}
 
@@ -115,26 +105,28 @@ class openwebifTvDevice {
 		var me = this;
 		request(this.authData + this.host + ':' + this.port + '/api/about', function (error, response, body) {
 			if (error) {
-				me.log.error('Openwebif - Error: %s', error);
+				me.log.debug('Openwebif - Error: %s', error);
 			} else {
 				try {
 					var json = JSON.parse(body);
 					me.manufacturer = json.info.brand;
 					me.modelName = json.info.mname;
-					me.serialNumber = json.info.kernelver;
-					me.firmwareRevision = json.info.enigmaver;
+					me.serialNumber = 'SN000001';
+					me.firmwareRevision = json.info.kernelver;
+					var enigmaversion = json.info.enigmaver;
 					var chipset = json.info.chipset;
 					var webifver = json.info.webifver;
+
 
 					me.log('-----Device %s-----', me.host);
 					me.log('Manufacturer: %s', me.manufacturer);
 					me.log('Model: %s', me.modelName);
-					me.log('Kernel: %s', me.serialNumber);
+					me.log('Kernel: %s', me.firmwareRevision);
 					me.log('Chipset: %s', chipset);
-					me.log('Firmware: %s', me.firmwareRevision);
 					me.log('Webif version.: %s', webifver);
+					me.log('Firmware: %s', enigmaversion);
 				} catch (error) {
-					me.log.error('Device: %s, not reachable %s.', me.host, error);
+					me.log.debug('Device: %s, not reachable %s.', me.host, error);
 				}
 			}
 		});
@@ -143,7 +135,7 @@ class openwebifTvDevice {
 	//Start of TV integration service 
 	prepareTvService() {
 		this.log.debug('prepareTvService');
-		this.tvAccesory = new Accessory(this.name, UUIDGen.generate(this.host + this.name));
+		this.tvAccesory = new Accessory(this.name, UUIDGen.generate(this.name + this.host));
 
 		this.tvService = new Service.Television(this.name, 'tvService');
 		this.tvService.setCharacteristic(Characteristic.ConfiguredName, this.name);
@@ -154,21 +146,16 @@ class openwebifTvDevice {
 			.on('set', this.setPowerState.bind(this));
 
 		this.tvService.getCharacteristic(Characteristic.ActiveIdentifier)
+			.on('get', this.getChannel.bind(this))
 			.on('set', (inputIdentifier, callback) => {
 				this.setChannel(callback, this.channelReferences[inputIdentifier]);
-			})
-			.on('get', this.getChannel.bind(this));
+			});
 
 		this.tvService.getCharacteristic(Characteristic.RemoteKey)
 			.on('set', this.remoteKeyPress.bind(this));
 
 		this.tvService.getCharacteristic(Characteristic.PowerModeSelection)
-			.on('set', (newValue, callback) => {
-				if (this.connected) {
-					this.httpGET('/api/remotecontrol?command=' + this.menuButton, function (error, data) { });
-				}
-				callback();
-			});
+			.on('set', this.setPowerMode.bind(this));
 
 
 		this.tvAccesory
@@ -190,7 +177,7 @@ class openwebifTvDevice {
 
 	prepareTvSpeakerService() {
 		this.log.debug('prepareTvSpeakerService');
-		this.tvSpeakerService = new Service.TelevisionSpeaker(this.name + ' Volume', 'tvSpeakerService');
+		this.tvSpeakerService = new Service.TelevisionSpeaker(this.name, 'tvSpeakerService');
 		this.tvSpeakerService
 			.setCharacteristic(Characteristic.Active, Characteristic.Active.ACTIVE)
 			.setCharacteristic(Characteristic.VolumeControlType, Characteristic.VolumeControlType.ABSOLUTE);
@@ -255,9 +242,9 @@ class openwebifTvDevice {
 					.getCharacteristic(Characteristic.ConfiguredName)
 					.on('set', (name, callback) => {
 						this.bouquets[channelReference] = name;
-						fs.writeFile(this.channelsFile, JSON.stringify(this.bouquets), (err) => {
-							if (err) {
-								this.log('Error occuredon device: %s, could not write new channel name %s', me.host, err);
+						fs.writeFile(this.channelsFile, JSON.stringify(this.bouquets), (error) => {
+							if (error) {
+								this.log.debug('Error occuredon device: %s, could not write new channel name %s', me.host, error);
 							} else {
 								this.log('New channel name for device: %s, successfully saved! New name: %s reference: %s', me.host, name, channelReference);
 							}
@@ -277,25 +264,26 @@ class openwebifTvDevice {
 		var me = this;
 		me.httpRequest(me.authData + me.host + ':' + me.port + apipath, '', 'GET', function (error, response, responseBody) {
 			if (error) {
+				me.log.debug('Device: %s, not reachable.', me.host + ':' + me.port + apipath);
 				callback(error);
-				me.log.error('Device: %s, not reachable.', me.host + ':' + me.port + apipath);
 				return;
 			} else {
 				try {
-					var result = JSON.stringify(responseBody, function (err, data) {
-						if (err) {
-							callback(err);
+					var result = JSON.stringify(responseBody, function (error, data) {
+						if (error) {
+							me.log.debug('Parse String for device: %s, error: %s', me.host, error);
+							callback(error);
 						} else {
-							me.log.debug('result %s', data);
-							me.connected = true;
+							me.log.debug('Parse string result: %s', data);
 							callback(null, data);
 						}
 					});
 				} catch (e) {
 					callback(e, null);
-					me.log.error('error: ' + e);
+					me.log.debug('error: %s', e);
 				}
 			}
+			me.log('Get data from device: %s, successful', me.host);
 		}.bind(this));
 	}
 
@@ -314,13 +302,12 @@ class openwebifTvDevice {
 		var me = this;
 		this.httpGET('/api/statusinfo', function (error, data) {
 			if (error) {
-				me.log.error('Can not acces device: %s and get Power. Might be due to a wrong settings in config, error %s:', me.host, error);
-				if (callback)
-					callback(error);
+				me.log.debug('Can not acces device: %s and get current Power state. Might be due to a wrong settings in config, error %s:', me.host, error);
+				callback(error);
 			} else {
 				var json = JSON.parse(data);
 				var state = (json.inStandby == 'false');
-				me.log('Device: %s, get Power succeded: %s', me.host, state ? 'ON' : 'STANDBY');
+				me.log('Device: %s, get current Power state succeded: %s', me.host, state ? 'ON' : 'STANDBY');
 				callback(null, state);
 			}
 		});
@@ -328,26 +315,14 @@ class openwebifTvDevice {
 
 	setPowerState(state, callback) {
 		var me = this;
-		var state = state ? true : false; //number to boolean
-		me.getPowerState(function (error, currentState) {
+		var newState = state ? '4' : '5'
+		me.httpGET('/api/powerstate?newstate=' + newState, function (error) {
 			if (error) {
-				me.log.error('Can not acces device: %s and get current Power state. Might be due to a wrong settings in config, error %s:', me.host, error);
-				if (callback)
-					callback(null, state ? false : true); //receiver is off
+				me.log.debug('Can not acces device: %s and set new Power state. Might be due to a wrong settings in config, error %s:', me.host, error);
+				callback(error);
 			} else {
-				if (currentState == state) { //state like expected
-					callback(null, state);
-				} else { //set new state
-					me.httpGET('/api/powerstate?newstate=0', function (error) {
-						if (error) {
-							me.log.error('Can not acces device: %s and set Power. Might be due to a wrong settings in config, error %s:', me.host, error);
-							callback(error);
-						} else {
-							me.log('Device: %s, set Power succeded: %s', me.host, currentState ? 'STANDBY' : 'ON');
-							callback(null, state);
-						}
-					});
-				}
+				me.log('Device: %s, set new Power state succeded: %s', me.host, state ? 'ON' : 'STANDBY');
+				callback(null, state);
 			}
 		});
 	}
@@ -356,13 +331,12 @@ class openwebifTvDevice {
 		var me = this;
 		this.httpGET('/api/statusinfo', function (error, data) {
 			if (error) {
-				me.log.error('Can not acces device: %s. Might be due to a wrong settings in config, error %s:', me.host, error);
-				if (callback)
-					callback(error);
+				me.log.debug('Can not acces device: %s. Might be due to a wrong settings in config, error %s:', me.host, error);
+				callback(error);
 			} else {
 				var json = JSON.parse(data);
-				var state = (json.muted == false);
-				me.log('Device: %s, get Mute succeded: %s', me.host, state ? 'OFF' : 'ON');
+				var state = (json.muted == true);
+				me.log('Device: %s, get Mute state succeded: %s', me.host, state ? 'ON' : 'OFF');
 				callback(null, state);
 			}
 		});
@@ -370,26 +344,13 @@ class openwebifTvDevice {
 
 	setMute(state, callback) {
 		var me = this;
-		var state = state ? false : true; //number to boolean
-		me.getMute(function (error, currentState) {
+		me.httpGET('/api/vol?set=mute', function (error) {
 			if (error) {
-				me.log.error('Can not acces device: %s and get current Mute state. Might be due to a wrong settings in config, error %s:', me.host, error);
-				if (callback)
-					callback(null, state ? true : false); //receiver is off
+				me.log.debug('Can not acces device: %s and set Mute. Might be due to a wrong settings in config, error %s:', me.host, error);
+				callback(error);
 			} else {
-				if (currentState == state) { //state like expected
-					callback(null, state);
-				} else { //set new state
-					me.httpGET('/api/vol?set=mute', function (error) {
-						if (error) {
-							me.log.error('Can not acces device: %s and set Mute. Might be due to a wrong settings in config, error %s:', me.host, error);
-							callback(error);
-						} else {
-							me.log('Device: %s, set Mute succeded: %s', me.host, currentState ? 'OFF' : 'ON');
-							callback(null, state);
-						}
-					});
-				}
+				me.log('Device: %s, set Mute succeded: %s', me.host, state ? 'ON' : 'OFF');
+				callback(null, state);
 			}
 		});
 	}
@@ -398,13 +359,12 @@ class openwebifTvDevice {
 		var me = this;
 		this.httpGET('/api/statusinfo', function (error, data) {
 			if (error) {
-				me.log.error('Can not acces device: %s and get Volume. Might be due to a wrong settings in config, error %s:', me.host, error);
-				if (callback)
-					callback(error);
+				me.log.debug('Can not acces device: %s and get Volume level. Might be due to a wrong settings in config, error %s:', me.host, error);
+				callback(error);
 			} else {
 				var json = JSON.parse(data);
 				var volume = parseFloat(json.volume);
-				me.log('Device: %s, get Volume succeded: %s', me.host, volume);
+				me.log('Device: %s, get Volume level succeded: %s', me.host, volume);
 				callback(null, volume);
 			}
 		});
@@ -413,26 +373,23 @@ class openwebifTvDevice {
 	setVolume(volume, callback) {
 		var me = this;
 		var targetVolume = parseInt(volume);
-		this.httpGET('/api/vol?set=set' + targetVolume, function (error, data) {
+		me.httpGET('/api/vol?set=set' + targetVolume, function (error, data) {
 			if (error) {
-				me.log.error('Can not acces device: %s and set Volume. Might be due to a wrong settings in config, error %s:', me.host, error);
-				if (callback)
-					callback(error);
+				me.log.debug('Can not acces device: %s and set new Volume level. Might be due to a wrong settings in config, error %s:', me.host, error);
+				callback(error);
 			} else {
-				me.log('Device: %s, set Volume succesed: %s', me.host, targetVolume);
+				me.log('Device: %s, set new Volume level succesed: %s', me.host, targetVolume);
 				callback(null, volume);
 			}
 		});
-
 	}
 
 	getChannel(callback) {
 		var me = this;
 		this.httpGET('/api/statusinfo', function (error, data) {
 			if (error) {
-				me.log.error('Can not acces devive: %s and get Channel. Might be due to a wrong settings in config, error %s:', me.host, error);
-				if (callback)
-					callback();
+				me.log.debug('Can not acces devive: %s and get current Channel. Might be due to a wrong settings in config, error %s:', me.host, error);
+				callback(error);
 			} else {
 				var json = JSON.parse(data);
 				let channelReference = json.currservice_serviceref;
@@ -441,7 +398,7 @@ class openwebifTvDevice {
 						me.tvService
 							.getCharacteristic(Characteristic.ActiveIdentifier)
 							.updateValue(i);
-						me.log('Device: %s, get Channel succesed %s:', me.host, channelReference);
+						me.log('Device: %s, get current Channel succesed %s:', me.host, channelReference);
 					}
 				}
 				callback(null, channelReference);
@@ -451,16 +408,39 @@ class openwebifTvDevice {
 
 	setChannel(callback, channelReference) {
 		var me = this;
-		me.channelReferenceSet = true;
-		this.httpGET('/api/zap?sRef=' + channelReference, function (error, data) {
+		me.getChannel(function (error, currentChannelReference) {
 			if (error) {
-				me.log.error('Can not acces device: %s and set Channel. Might be due to a wrong settings in config, error: %s.', me.host, error);
+				me.log.debug('Can not acces device: %s and get current Channel Reference. Might be due to a wrong settings in config, error %s:', me.host, error);
 				if (callback)
-					callback();
+					callback(error);
 			} else {
-				me.log('Device: %s, set Channel succesed %s:', me.host, channelReference);
-				if (callback)
+				if (currentChannelReference == channelReference) {
 					callback(null, channelReference);
+				} else {
+					me.httpGET('/api/zap?sRef=' + channelReference, function (error, data) {
+						if (error) {
+							me.log.debug('Can not acces device: %s and set new Channel. Might be due to a wrong settings in config, error: %s.', me.host, error);
+							callback(error);
+						} else {
+							me.log('Device: %s, set new Channel succesed %s:', me.host, channelReference);
+							callback(null, channelReference);
+						}
+					});
+				}
+			}
+		});
+	}
+
+	setPowerMode(callback, state) {
+		var me = this;
+		var command = this.menuButton ? '358' : '139';
+		me.httpGET('/api/remotecontrol?command=' + command, function (error, data) {
+			if (error) {
+				me.log.debug('Can not acces device: %s and set new Power Mode. Might be due to a wrong settings in config, error %s:', me.host, error);
+				callback(error);
+			} else {
+				me.log('Device: %s, set new Power Mode succesed and send command: %s:', me.host, command);
+				callback(null, state);
 			}
 		});
 	}
@@ -532,9 +512,10 @@ class openwebifTvDevice {
 		var me = this;
 		this.httpGET('/api/remotecontrol?command=' + command, function (error) {
 			if (error) {
-				callback(error)
+				me.log.debug('Can not acces device: %s and send RC Command. Might be due to a wrong settings in config, error: %s.', me.host, error);
+				callback(error);
 			} else {
-				me.log('Device: %s, send Command succeded: %s', me.host, command);
+				me.log('Device: %s, send RC Command succeded: %s', me.host, command);
 				callback(null, command);
 			}
 		});
@@ -546,27 +527,23 @@ class openwebifTvDevice {
 			if (error) {
 			} else {
 				var json = JSON.parse(data);
-				var servicesList = json.services;
-				me.saveBouquetsChannels(servicesList, new Array());
-				var arrayLength = servicesList.length;
+				var bouquetsList = json.services;
+				me.saveBouquetsChannels(bouquetsList, new Array());
+				var arrayLength = bouquetsList.length;
 				for (var i = 0; i < arrayLength; i++) {
-					var service = servicesList[i];
+					var bouquet = bouquetsList[i];
 				}
 			}
 		});
 	}
 
 	saveBouquetsChannels(bouquets, printArray) {
-
-		//bouquets
+		var me = this;
 		let bouquet = bouquets[0];
 		bouquets.shift();
-		let name = bouquet.servicename;
-		let ref = bouquet.servicereference;
+		let bouquetReference = bouquet.servicereference;
 
-		//channels
-		var me = this;
-		this.httpGET('/api/getservices?sRef=' + ref, function (error, data) {
+		this.httpGET('/api/getservices?sRef=' + bouquetReference, function (error, data) {
 			if (error) {
 			} else {
 				var json = JSON.parse(data);
@@ -581,13 +558,13 @@ class openwebifTvDevice {
 					printArray.push(object);
 				}
 				var string = JSON.stringify(printArray, null, 2);
-				me.log.info('Device: %s, saved channels file successfully in %s:', me.host, me.prefsDir);
-				fs.writeFileSync(me.channelsFile, string, 'utf8', (err) => {
-					if (err) throw err;
+				me.log('Device: %s, saved channels file successfully in %s:', me.host, me.prefsDir);
+				fs.writeFileSync(me.channelsFile, string, 'utf8', (error) => {
+					if (error) {
+						me.log.debug('Create channels file error: %s', error);
+					}
 				});
 			}
 		});
 	}
 }
-
-
