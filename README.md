@@ -27,7 +27,6 @@ if U want somthing changed in channel list please add Yours prefered channels to
  <pre>
 {
       "platform": "OpenWebIfTv",
-      "checkStateInterval": 5,
       "devices": [{
         "name": "Tuner Sat",
         "host": "192.168.0.4",
