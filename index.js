@@ -62,17 +62,22 @@ class openwebIfTvDevice {
 		this.bouquets = device.bouquets;
 
 		//authentication basic
-		this.authData = this.auth ? ('http://' + this.user + ':' + this.pass + '@') : ('http://');
+		this.url = this.auth ? ('http://' + this.user + ':' + this.pass + '@' + this.host + ':' + this.port) : ('http://' + this.host + ':' + this.port);
 
 		//get Device info
-		this.getDeviceInfo();
 		this.manufacturer = device.manufacturer || 'openWebIf';
-		this.modelName = device.model || 'homebridge-openwebif-tv';
+		this.modelName = device.modelName || 'homebridge-openwebif-tv';
 		this.serialNumber = device.serialNumber || 'SN0000001';
 		this.firmwareRevision = device.firmwareRevision || 'FW0000001';
 
 		//setup variables
+		this.channelReferences = new Array();
 		this.connectionStatus = false;
+		this.currentPowerState = false;
+		this.currentMuteState = false;
+		this.currentVolume = 0;
+		this.currentChannelReference = null;
+		this.currentInfoMenuState = false;
 		this.prefDir = ppath('openwebifTv/');
 		this.channelsFile = this.prefDir + 'channels_' + this.host.split('.').join('');
 
@@ -95,58 +100,52 @@ class openwebIfTvDevice {
 		//Check net state
 		setInterval(function () {
 			var me = this;
-			request(me.authData + me.host + ':' + me.port + '/api/statusinfo', function (error, response, body) {
+			request(me.url + '/api/about/', function (error, response, data) {
 				if (error) {
 					me.log('Device: %s, name: %s, state: Offline', me.host, me.name);
 					me.connectionStatus = false;
-				} else {
-					if (!me.connectionStatus) {
-						me.log('Device: %s, name: %s, state: Online', me.host, me.name);
-						me.connectionStatus = true;
-
-					}
+				} else if (!me.connectionStatus) {
+					me.log('Device: %s, name: %s, state: Online', me.host, me.name);
+					me.connectionStatus = true;
+					me.getDeviceInfo();
 				}
 			});
 		}.bind(this), 5000);
 
 		//Delay to wait for device info before publish
 		setTimeout(this.prepareTvService.bind(this), responseDelay);
-
-		var deviceName = this.name;
-		var uuid = UUIDGen.generate(deviceName);
-		this.tvAccesory = new Accessory(deviceName, uuid, hap.Accessory.Categories.TV);
-		this.log.debug('Device: %s, publishExternalAccessories: %s', this.host, this.name);
-		this.api.publishExternalAccessories('homebridge-openwebif-tv', [this.tvAccesory]);
 	}
 
-	//get device info
-	getDeviceInfo() {
+	getDeviceInfo(callback) {
 		var me = this;
 		setTimeout(() => {
-			request(me.authData + me.host + ':' + me.port + '/api/about', (error, response, data) => {
+			request(me.url + '/api/about', (error, response, data) => {
 				if (error) {
 					me.log('Device: %s, get info error: %s', me.host, error);
 				} else {
-					var json = JSON.parse(data);
-					me.manufacturer = json.info.brand;
-					me.modelName = json.info.mname;
-
-					me.log('-----Device: %s-----', me.host);
-					me.log('Manufacturer: %s', json.info.brand);
-					me.log('Model: %s', json.info.mname);
-					me.log('Kernel: %s', json.info.kernelver);
-					me.log('Chipset: %s', json.info.chipset);
-					me.log('Webif version.: %s', json.info.webifver);
-					me.log('Firmware: %s', json.info.enigmaver);
-					me.log('Device: %s, getDeviceInfo successfull.', me.host);
+					setTimeout(() => {
+						var json = JSON.parse(data);
+						me.manufacturer = json.info.brand;
+						me.modelName = json.info.mname;
+						me.log('-------- %s --------', me.name);
+						me.log('Manufacturer: %s', json.info.brand);
+						me.log('Model: %s', json.info.mname);
+						me.log('Kernel: %s', json.info.kernelver);
+						me.log('Chipset: %s', json.info.chipset);
+						me.log('Webif version.: %s', json.info.webifver);
+						me.log('Firmware: %s', json.info.enigmaver);
+						me.log('----------------------------------');
+					}, 250);
 				}
 			});
-		}, 200);
+		}, 250);
 	}
 
 	//Prepare TV service 
 	prepareTvService() {
 		this.log.debug('prepareTvService');
+		this.tvAccesory = new Accessory(this.name, UUIDGen.generate(this.host + this.name));
+
 		this.tvService = new Service.Television(this.name, 'tvService');
 		this.tvService.setCharacteristic(Characteristic.ConfiguredName, this.name);
 		this.tvService.setCharacteristic(Characteristic.SleepDiscoveryMode, Characteristic.SleepDiscoveryMode.ALWAYS_DISCOVERABLE);
@@ -165,7 +164,7 @@ class openwebIfTvDevice {
 			.on('set', this.remoteKeyPress.bind(this));
 
 		this.tvService.getCharacteristic(Characteristic.PowerModeSelection)
-			.on('set', this.setPowerMode.bind(this));
+			.on('set', this.setPowerModeSelection.bind(this));
 
 
 		this.tvAccesory
@@ -178,6 +177,9 @@ class openwebIfTvDevice {
 		this.tvAccesory.addService(this.tvService);
 		this.prepareTvSpeakerService();
 		this.prepareInputServices();
+
+		this.log.debug('Device: %s, publishExternalAccessories: %s', this.host, this.name);
+		this.api.publishExternalAccessories('homebridge-openwebif-tv', [this.tvAccesory]);
 	}
 
 	//Prepare speaker service 
@@ -218,7 +220,6 @@ class openwebIfTvDevice {
 			this.log.debug('Device: %s, channels file does not exist', this.host);
 		}
 
-		this.channelReferences = new Array();
 		this.bouquets.forEach((bouquet, i) => {
 
 			//get channel reference
@@ -248,7 +249,7 @@ class openwebIfTvDevice {
 					.setCharacteristic(Characteristic.Identifier, i)
 					.setCharacteristic(Characteristic.ConfiguredName, channelName)
 					.setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
-					.setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.TV)
+					.setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.APPLICATION)
 					.setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN);
 
 				tempInput
@@ -273,337 +274,278 @@ class openwebIfTvDevice {
 		});
 	}
 
-	httpGET(apipath, callback) {
-		var me = this;
-		me.httpRequest(me.authData + me.host + ':' + me.port + apipath, '', 'GET', function (error, response, responseBody) {
-			if (error) {
-				me.log.debug('Device: %s, not reachable, error: %s.', me.host, error);
-				me.connectionStatus = false;
-				callback(error);
-				return;
-			} else {
-				try {
-					var result = JSON.stringify(responseBody, function (error, data) {
-						if (error) {
-							me.log.debug('Device: %s, JSON stringify error: %s', me.host, error);
-							callback(error);
-						} else {
-							me.log.debug('Device: %s, JSON stringify successfull: %s', me.host, data);
-							callback(null, data);
-						}
-					});
-				} catch (e) {
-					callback(e, null);
-					me.log.debug('error: %s', e);
-				}
-			}
-			me.log('Device: %s, get data successfull.', me.host);
-		}.bind(this));
-	}
-
-	httpRequest(url, body, apipath, callback) {
-		request({
-			url: url,
-			body: body,
-			method: apipath
-		},
-			function (error, response, body) {
-				callback(error, response, body);
-			});
-	}
-
 	getPowerState(callback) {
 		var me = this;
-		if (me.connectionStatus) {
-			this.httpGET('/api/statusinfo', function (error, data) {
-				if (error) {
-					me.log.debug('Device: %s, can not get current Power state. Might be due to a wrong settings in config, error: %s', me.host, error);
-					if (callback)
-						callback(error);
-				} else {
-					var json = JSON.parse(data);
-					var state = (json.inStandby == 'false');
-					me.log('Device: %s, get current Power state successfull: %s', me.host, state ? 'ON' : 'STANDBY');
-					callback(null, state);
-				}
-			});
-		} else {
-			me.log('Device: %s, get current Power state failed, not connected to network.', me.host);
-			callback(null, false);
-		}
+		request(me.url + '/api/statusinfo', function (error, response, data) {
+			if (error) {
+				me.log.debug('Device: %s, can not get current Power state. Might be due to a wrong settings in config, error: %s', me.host, error);
+				callback(error);
+			} else {
+				var json = JSON.parse(data);
+				var state = (json.inStandby == 'false');
+				me.log('Device: %s, get current Power state successfull: %s', me.host, state ? 'ON' : 'STANDBY');
+				me.currentPowerState = state;
+				callback(null, state);
+			}
+		});
 	}
 
 	setPowerState(state, callback) {
-		var me = this;
-		var newState = state ? '4' : '5'
-		if (me.connectionStatus) {
-			me.httpGET('/api/powerstate?newstate=' + newState, function (error) {
+	var me = this;
+		request(me.url + '/api/statusinfo', function (error, response, data) {
+			if (error) {
+				me.log.debug('Device: %s, can not get current Power for new state. Might be due to a wrong settings in config, error: %s', me.host, error);
+				callback(error);
+			} else {
+				var json = JSON.parse(data);
+				var currentPowerState = (json.inStandby == 'false');
+		   if (state !== currentPowerState) {
+			request(me.url + '/api/powerstate?newstate=0', function (error, response, data) {
 				if (error) {
 					me.log.debug('Device: %s, can not set new Power state. Might be due to a wrong settings in config, error: %s', me.host, error);
-					if (callback)
-						callback(error);
+					callback(error);
 				} else {
 					me.log('Device: %s, set new Power state successfull: %s', me.host, state ? 'ON' : 'STANDBY');
+					me.currentPowerState = state;
 					callback(null, state);
-				}
-			});
-		} else {
-			me.log('Device: %s, set new Power state failed, not connected to network.', me.host);
-		}
+				 }
+			  });
+		    }
+              }
+          });
 	}
 
 	getMute(callback) {
 		var me = this;
-		if (me.connectionStatus) {
-			this.httpGET('/api/statusinfo', function (error, data) {
-				if (error) {
-					me.log.debug('Device: %s, can not get current Mute state. Might be due to a wrong settings in config, error: %s', me.host, error);
-					if (callback)
-						callback(error);
-				} else {
-					var json = JSON.parse(data);
-					var state = (json.muted == true);
-					me.log('Device: %s, get current Mute state successfull: %s', me.host, state ? 'ON' : 'OFF');
-					callback(null, state);
-				}
-			});
-		} else {
-			me.log('Device: %s, get current Mute failed, not connected to network.', me.host);
-			callback(null, false);
-		}
+		request(me.url + '/api/statusinfo', function (error, response, data) {
+			if (error) {
+				me.log.debug('Device: %s, can not get current Mute state. Might be due to a wrong settings in config, error: %s', me.host, error);
+				callback(error);
+			} else {
+				var json = JSON.parse(data);
+				var state = (json.muted == true);
+				me.log('Device: %s, get current Mute state successfull: %s', me.host, state ? 'ON' : 'OFF');
+				me.currentMuteState = state;
+				callback(null, state);
+			}
+		});
 	}
 
 	setMute(state, callback) {
 		var me = this;
-		if (me.connectionStatus) {
-			me.httpGET('/api/vol?set=mute', function (error) {
+		request(me.url + '/api/statusinfo', function (error, response, data) {
+			if (error) {
+				me.log.debug('Device: %s, can not get current Mute for new state. Might be due to a wrong settings in config, error: %s', me.host, error);
+				callback(error);
+			} else {
+				var json = JSON.parse(data);
+				var currentMuteState = (json.muted == true);
+		    if (state !== currentMuteState) {
+			request(me.url + '/api/vol?set=mute', function (error, response, data) {
 				if (error) {
 					me.log.debug('Device: %s, can not set Mute. Might be due to a wrong settings in config, error: %s', me.host, error);
-					if (callback)
-						callback(error);
+					callback(error);
 				} else {
 					me.log('Device: %s, set Mute successfull: %s', me.host, state ? 'ON' : 'OFF');
+					me.currentMuteState = state;
 					callback(null, state);
-				}
-			});
-		} else {
-			me.log('Device: %s, set Mute failed, not connected to network.', me.host);
-		}
+				   }
+			     });
+		       }
+                 }
+           });
 	}
 
 	getVolume(callback) {
 		var me = this;
-		if (me.connectionStatus) {
-			this.httpGET('/api/statusinfo', function (error, data) {
-				if (error) {
-					me.log.debug('Device: %s, can not get current Volume level. Might be due to a wrong settings in config, error: %s', me.host, error);
-					if (callback)
-						callback(error);
-				} else {
-					var json = JSON.parse(data);
-					var volume = parseFloat(json.volume);
-					me.log('Device: %s, get current Volume level successfull: %s', me.host, volume);
-					callback(null, volume);
-				}
-			});
-		} else {
-			me.log('Device: %s, get Volume level failed, not connected to network.', me.host);
-			callback(null, false);
-		}
+		request(me.url + '/api/statusinfo', function (error, response, data) {
+			if (error) {
+				me.log.debug('Device: %s, can not get current Volume level. Might be due to a wrong settings in config, error: %s', me.host, error);
+				callback(error);
+			} else {
+				var json = JSON.parse(data);
+				var volume = parseFloat(json.volume);
+				me.log('Device: %s, get current Volume level successfull: %s', me.host, volume);
+				me.currentVolume = volume;
+				callback(null, volume);
+			}
+		});
 	}
 
 	setVolume(volume, callback) {
 		var me = this;
-		if (me.connectionStatus) {
-			var targetVolume = parseInt(volume);
-			me.httpGET('/api/vol?set=set' + targetVolume, function (error, data) {
-				if (error) {
-					me.log.debug('Device: %s, can not set new Volume level. Might be due to a wrong settings in config, error: %s', me.host, error);
-					if (callback)
-						callback(error);
-				} else {
-					me.log('Device: %s, set new Volume level successfull: %s', me.host, targetVolume);
-					callback(null, volume);
-				}
-			});
-		} else {
-			me.log('Device: %s, set new Volume level failed, not connected to network.', me.host);
-		}
+		var targetVolume = parseInt(volume);
+		request(me.url + '/api/vol?set=set' + targetVolume, function (error, response, data) {
+			if (error) {
+				me.log.debug('Device: %s, can not set new Volume level. Might be due to a wrong settings in config, error: %s', me.host, error);
+				callback(error);
+			} else {
+				me.log('Device: %s, set new Volume level successfull: %s', me.host, volume);
+				me.currentVolume = volume;
+				callback(null, volume);
+			}
+		});
 	}
 
 	getChannel(callback) {
 		var me = this;
-		if (me.connectionStatus) {
-			this.httpGET('/api/statusinfo', function (error, data) {
-				if (error) {
-					me.log.debug('Devive: %s, can not get current Channel. Might be due to a wrong settings in config, error: %s', me.host, error);
-					if (callback)
-						callback(error);
+		request(me.url + '/api/statusinfo', function (error, response, data) {
+			if (error) {
+				me.log.debug('Devive: %s, can not get current Channel. Might be due to a wrong settings in config, error: %s', me.host, error);
+				callback(error);
+			} else {
+				var json = JSON.parse(data);
+				var channelReference = json.currservice_serviceref;
+				var channelName = json.currservice_station;
+				if (!me.connectionStatus || channelReference === '' || channelReference === undefined || channelReference === null) {
+					me.tvService
+						.getCharacteristic(Characteristic.ActiveIdentifier)
+						.updateValue(0);
+					callback(null, channelReference);
 				} else {
-					var json = JSON.parse(data);
-					let channelReference = json.currservice_serviceref;
 					for (let i = 0; i < me.channelReferences.length; i++) {
 						if (channelReference === me.channelReferences[i]) {
 							me.tvService
 								.getCharacteristic(Characteristic.ActiveIdentifier)
 								.updateValue(i);
-							me.log('Device: %s, get current Channel successfull: %s', me.host, channelReference);
+							me.log('Device: %s, get current Channel successfull: %s %s', me.host, channelName, channelReference);
+							me.currentChannelReference = channelReference;
 						}
 					}
 					callback(null, channelReference);
 				}
-			});
-		} else {
-			me.log('Device: %s, get current Channel failed, not connected to network.', me.host);
-			callback(null, false);
-		}
+			}
+		});
 	}
 
 	setChannel(callback, channelReference) {
 		var me = this;
-		if (me.connectionStatus) {
-			me.getChannel(function (error, currentChannelReference) {
-				if (error) {
-					me.log.debug('Device: %s, can not get current Channel Reference. Might be due to a wrong settings in config, error: %s', me.host, error);
-					if (callback)
-						callback(error);
-				} else {
-					if (currentChannelReference == channelReference) {
-						callback(null, channelReference);
-					} else {
-						me.httpGET('/api/zap?sRef=' + channelReference, function (error, data) {
-							if (error) {
-								me.log.debug('Device: %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', me.host, error);
-								if (callback)
-									callback(error);
-							} else {
-								me.log('Device: %s, set new Channel successfull: %s', me.host, channelReference);
-								callback(null, channelReference);
-							}
-						});
-					}
+		request(me.url + '/api/statusinfo', function (error, response, data) {
+			if (error) {
+				me.log.debug('Devive: %s, can not get current Channel for new Channel. Might be due to a wrong settings in config, error: %s', me.host, error);
+				callback(error);
+			} else {
+				var json = JSON.parse(data);
+				var currentChannelReference = json.currservice_serviceref;
+				if (channelReference !== currentChannelReference) {
+					request(me.url + '/api/zap?sRef=' + channelReference, function (error, response, data) {
+						if (error) {
+							me.log.debug('Device: %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', me.host, error);
+							callback(error);
+						} else {
+							me.log('Device: %s, set new Channel successfull: %s', me.host, channelReference);
+							me.currentChannelReference = channelReference;
+							callback(null, channelReference);
+						}
+					});
 				}
-			});
-		} else {
-			me.log('Device: %s, set new Channel failed, not connected to network.', me.host);
-		}
+			}
+		});
 	}
 
-	setPowerMode(callback, state) {
+	setPowerModeSelection(state, callback) {
 		var me = this;
-		if (me.connectionStatus) {
-			var command = this.menuButton ? '358' : '139';
-			me.httpGET('/api/remotecontrol?command=' + command, function (error, data) {
-				if (error) {
-					me.log.debug('Device: %s, can not set new Power Mode. Might be due to a wrong settings in config, error: %s', me.host, error);
-					if (callback)
-						callback(error);
-				} else {
-					me.log('Device: %s, set new Power Mode successfull, send command: %s', me.host, command);
-					callback(null, state);
-				}
-			});
+		var command = '0';
+		if (me.currentInfoMenuState) {
+			command = '174';
 		} else {
-			me.log('Device: %s, set new PowerModeSelection failed, not connected to network.', me.host);
+			command = me.switchInfoMenu ? '139' : '358';
 		}
+		request(me.url + '/api/remotecontrol?command=' + command, function (error, response, data) {
+			if (error) {
+				me.log.debug('Device: %s can not send RC Command. Might be due to a wrong settings in config, error: %s', me.host, error);
+			} else {
+				me.log('Device: %s, setPowerModeSelection successfull, state: %s, command: %s', me.host, state ? 'HIDDEN' : 'SHOW', command);
+				me.currentInfoMenuState = !me.currentInfoMenuState;
+				callback(null, state);
+			}
+		});
 	}
 
 	volumeSelectorPress(remoteKey, callback) {
 		var me = this;
-		var command = 0;
-		if (me.connectionStatus) {
-			switch (remoteKey) {
-				case Characteristic.VolumeSelector.INCREMENT:
-					command = '115';
-					break;
-				case Characteristic.VolumeSelector.DECREMENT:
-					command = '114';
-					break;
-			}
-			me.log('Device: %s, key prssed: %s, command: %s', me.host, remoteKey, command);
-			this.sendRemoteControlCommand(command, callback);
-		} else {
-			me.log('Device: %s, set new Volume level failed, not connected to network.', me.host);
+		var command = '0';
+		switch (remoteKey) {
+			case Characteristic.VolumeSelector.INCREMENT:
+				command = '115';
+				break;
+			case Characteristic.VolumeSelector.DECREMENT:
+				command = '114';
+				break;
 		}
+		request(me.url + '/api/remotecontrol?command=' + command, function (error, response, data) {
+			if (error) {
+				me.log.debug('Device: %s can not send RC Command. Might be due to a wrong settings in config, error: %s', me.host, error);
+				callback(error);
+			} else {
+				me.log('Device: %s, send RC Command successfull: %s', me.host, command);
+				callback(null, remoteKey);
+			}
+		});
 	}
 
 	remoteKeyPress(remoteKey, callback) {
 		var me = this;
-		var command = 0;
-		if (me.connectionStatus) {
-			switch (remoteKey) {
-				case Characteristic.RemoteKey.REWIND:
-					command = '168';
-					break;
-				case Characteristic.RemoteKey.FAST_FORWARD:
-					command = '159';
-					break;
-				case Characteristic.RemoteKey.NEXT_TRACK:
-					command = '407';
-					break;
-				case Characteristic.RemoteKey.PREVIOUS_TRACK:
-					command = '412';
-					break;
-				case Characteristic.RemoteKey.ARROW_UP:
-					command = '103';
-					break;
-				case Characteristic.RemoteKey.ARROW_DOWN:
-					command = '108';
-					break;
-				case Characteristic.RemoteKey.ARROW_LEFT:
-					command = '105';
-					break;
-				case Characteristic.RemoteKey.ARROW_RIGHT:
-					command = '106';
-					break;
-				case Characteristic.RemoteKey.SELECT:
-					command = '352';
-					break;
-				case Characteristic.RemoteKey.BACK:
-					command = '174';
-					break;
-				case Characteristic.RemoteKey.EXIT:
-					command = '174';
-					break;
-				case Characteristic.RemoteKey.PLAY_PAUSE:
-					command = '164';
-					break;
-				case Characteristic.RemoteKey.INFORMATION:
-					command = '139';
-					break;
-			}
-			me.log('Device: %s, key prssed: %s, command: %s', me.host, remoteKey, command);
-			this.sendRemoteControlCommand(command, callback);
-		} else {
-			me.log('Device: %s, set RemoteKey failed, not connected to network.', me.host);
+		var command = '0';
+		switch (remoteKey) {
+			case Characteristic.RemoteKey.REWIND:
+				command = '168';
+				break;
+			case Characteristic.RemoteKey.FAST_FORWARD:
+				command = '159';
+				break;
+			case Characteristic.RemoteKey.NEXT_TRACK:
+				command = '407';
+				break;
+			case Characteristic.RemoteKey.PREVIOUS_TRACK:
+				command = '412';
+				break;
+			case Characteristic.RemoteKey.ARROW_UP:
+				command = '103';
+				break;
+			case Characteristic.RemoteKey.ARROW_DOWN:
+				command = '108';
+				break;
+			case Characteristic.RemoteKey.ARROW_LEFT:
+				command = '105';
+				break;
+			case Characteristic.RemoteKey.ARROW_RIGHT:
+				command = '106';
+				break;
+			case Characteristic.RemoteKey.SELECT:
+				command = '352';
+				break;
+			case Characteristic.RemoteKey.BACK:
+				command = '174';
+				break;
+			case Characteristic.RemoteKey.EXIT:
+				command = '174';
+				break;
+			case Characteristic.RemoteKey.PLAY_PAUSE:
+				command = '164';
+				break;
+			case Characteristic.RemoteKey.INFORMATION:
+				command = this.switchInfoMenu ? '358' : '139';
+				break;
 		}
+		request(me.url + '/api/remotecontrol?command=' + command, function (error, response, data) {
+			if (error) {
+				me.log.debug('Device: %s can not send RC Command. Might be due to a wrong settings in config, error: %s', me.host, error);
+				callback(error);
+			} else {
+				me.log('Device: %s, send RC Command successfull, remoteKey: %s, command: %s', me.host, command, remoteKey);
+				callback(null, remoteKey);
+			}
+		});
 	}
 
-	sendRemoteControlCommand(command, callback) {
-		var me = this;
-		if (!me.connectionStatus) {
-			this.httpGET('/api/remotecontrol?command=' + command, function (error) {
-				if (error) {
-					me.log.debug('Device: %s can not send RC Command. Might be due to a wrong settings in config, error: %s', me.host, error);
-					if (callback)
-						callback(error);
-				} else {
-					me.log('Device: %s, send RC Command successfull: %s', me.host, command);
-					callback(null, command);
-				}
-			});
-		} else {
-			me.log('Device: %s, send RC command failed, not connected to network.', me.host);
-			callback(null, false);
-		}
-	}
 
 	getBouquets() {
 		var me = this;
 		if (!me.connectionStatus) {
 			return;
 		} else {
-			this.httpGET('/api/getservices', function (error, data) {
+			request(me.url + '/api/getservices', function (error, response, data) {
 				if (error) {
 				} else {
 					var json = JSON.parse(data);
@@ -623,7 +565,7 @@ class openwebIfTvDevice {
 		let bouquet = bouquets[0];
 		bouquets.shift();
 		let bouquetReference = bouquet.servicereference;
-		this.httpGET('/api/getservices?sRef=' + bouquetReference, function (error, data) {
+		request(me.url + '/api/getservices?sRef=' + bouquetReference, function (error, response, data) {
 			if (error) {
 			} else {
 				var json = JSON.parse(data);
