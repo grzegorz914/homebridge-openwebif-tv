@@ -21,8 +21,7 @@
   "dependencies": {
     "request": ">=2.88",
     "mkdirp": ">=0.5.1",
-    "persist-path": ">=1.0.2",
-    "xml2js": ">=0.4.23"
+    "persist-path": ">=1.0.2"
   },
   "keywords": [
     "homebridge",
