@@ -122,6 +122,7 @@ class openwebIfTvDevice {
 			request(me.url + '/api/about', (error, response, data) => {
 				if (error) {
 					me.log('Device: %s, get info error: %s', me.host, error);
+                                     return;
 				} else {
 					setTimeout(() => {
 						var json = JSON.parse(data);
@@ -300,7 +301,8 @@ class openwebIfTvDevice {
 				var json = JSON.parse(data);
 				var currentPowerState = (json.inStandby == 'false');
 		   if (state !== currentPowerState) {
-			request(me.url + '/api/powerstate?newstate=0', function (error, response, data) {
+                      var newState = state ? '4' : '5';
+			request(me.url + '/api/powerstate?newstate=' + newState, function (error, response, data) {
 				if (error) {
 					me.log.debug('Device: %s, can not set new Power state. Might be due to a wrong settings in config, error: %s', me.host, error);
 					callback(error);
@@ -445,7 +447,7 @@ class openwebIfTvDevice {
 
 	setPowerModeSelection(state, callback) {
 		var me = this;
-		var command = '0';
+		var command = '500';
 		if (me.currentInfoMenuState) {
 			command = '174';
 		} else {
@@ -464,7 +466,7 @@ class openwebIfTvDevice {
 
 	volumeSelectorPress(remoteKey, callback) {
 		var me = this;
-		var command = '0';
+		var command = '500';
 		switch (remoteKey) {
 			case Characteristic.VolumeSelector.INCREMENT:
 				command = '115';
@@ -486,7 +488,7 @@ class openwebIfTvDevice {
 
 	remoteKeyPress(remoteKey, callback) {
 		var me = this;
-		var command = '0';
+		var command = '500';
 		switch (remoteKey) {
 			case Characteristic.RemoteKey.REWIND:
 				command = '168';
@@ -589,4 +591,4 @@ class openwebIfTvDevice {
 			}
 		});
 	}
-}
+};
