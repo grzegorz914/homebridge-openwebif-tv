@@ -1,73 +1,81 @@
-     {
-      "platform": "OpenWebIfTv",
-      "devices": [{
-        "name": "Tuner Sat",
-        "host": "192.168.0.4",
-        "port": 80,
-        "auth": false,
-        "user": "user",
-        "pass": "pass",
-        "switchInfoMenu": true,
-        "bouquets": [
-          {
-            "name": "Das Erste HD",
-            "reference": "1:0:19:283D:3FB:1:C00000:0:0:0:"
-          },
-          {
-            "name": "ZDF HD",
-            "reference": "1:0:19:2B66:3F3:1:C00000:0:0:0:"
-          },
-          {
-            "name": "RTL HD",
-            "reference": "1:0:19:EF10:421:1:C00000:0:0:0:"
-          },
-          {
-            "name": "SAT.1 HD",
-            "reference": "1:0:19:EF74:3F9:1:C00000:0:0:0:"
-          },
-          {
-            "name": "ProSieben HD",
-            "reference": "1:0:19:EF75:3F9:1:C00000:0:0:0:"
-          },
-          {
-            "name": "RTLII HD",
-            "reference": "1:0:19:EF15:421:1:C00000:0:0:0:"
-          },
-          {
-            "name": "VOX HD",
-            "reference": "1:0:19:EF11:421:1:C00000:0:0:0:"
-          },
-          {
-            "name": "kabel eins HD",
-            "reference": "1:0:19:EF76:3F9:1:C00000:0:0:0:"
-          },
-          {
-            "name": "SIXX HD",
-            "reference": "1:0:19:EF77:3F9:1:C00000:0:0:0:"
-          },
-          {
-            "name": "SUPER RTL HD",
-            "reference": "1:0:19:2E9B:411:1:C00000:0:0:0:"
-          },
-          {
-            "name": "TELE 5 HD",
-            "reference": "1:0:19:1519:455:1:C00000:0:0:0:"
-          },
-          {
-            "name": "ORF1 HD",
-            "reference": "1:0:19:132F:3EF:1:C00000:0:0:0:"
-          },
-          {
-            "name": "ORF2W HD",
-            "reference": "1:0:19:1330:3EF:1:C00000:0:0:0:"
-          },
-          {
-            "name": "RTL UHD",
-            "reference": "1:0:1F:307A:3F5:1:C00000:0:0:0:"
+{
+  "pluginAlias": "OpenWebIfTv",
+  "pluginType": "platform",
+  "footerDisplay": "This plugin works with Sat receivers with OpenWebIf interface which is available [here](https://github.com/grzegorz914/homebridge-openwebif-tv).",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "devices": {
+        "title": "Devices",
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "title": "Name",
+              "type": "string",
+              "default": "Sat receiver",
+              "required": true
+            },
+            "host": {
+              "title": "IP Address/Hostname",
+              "type": "string",
+              "required": true,
+              "format": "hostname"
+            },
+            "port": {
+              "title": "Port",
+              "type": "integer",
+              "default": 80,
+              "maximum": 65535,
+              "required": true
+            },
+            "auth": {
+              "title": "Authentication",
+              "type": "boolean",
+              "default": false,
+              "required": true
+            },
+            "user": {
+              "title": "User",
+              "type": "string",
+              "required": false
+            },
+            "pass": {
+              "title": "Password",
+              "type": "string",
+              "required": false
+            },
+            "switchInfoMenu": {
+              "title": "Switch Info/Menu",
+              "type": "boolean",
+              "default": true,
+              "required": true
+            },
+            "bouquets": {
+              "title": "Channels",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "title": "Channel name",
+                    "type": "string",
+                    "default": "TVN 24",
+                    "required": true
+                  },
+                  "reference": {
+                    "title": "Chanel reference",
+                    "type": "string",
+                    "default": "1:0:1:3DD2:640:13E:820000:0:0:0:",
+                    "required": true
+                  }
+                }
+              }
+            }
           }
-        ]
+        }
       }
-    ]
+    }
   }
-
-
+}
