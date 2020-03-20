@@ -8,23 +8,17 @@ Present in HomeKit as TV service, schange channels, volume/mute control, power c
 
 This plugin is basis on homebridge-openwebif-switch created by alex224.
 
-HomeBridge: https://github.com/nfarina/homebridge
+Homebridge: https://github.com/homebridge/homebridge
 
-# Installation
+## Installation
 
-1. Install homebridge using: npm install -g homebridge
-2. Install homebridge-openwebif-tv using: npm install -g homebridge-openwebif-tv
-3. Update your configuration file. See sample-config.json in this repository for a sample. 
+1. Follow the step-by-step instructions on the [Homebridge Wiki](https://github.com/homebridge/homebridge/wiki) for how to install Homebridge.
+2. Install homebridge-openwebif-tv using: `npm install -g homebridge-openwebif-tv`
+3. Update your configuration file. See `sample-config.json` in this repository for a sample. 
 
-# Limitations
-Due to HomeKit app limitation max. channels in bouquets is 97. Over this value HomeKit app will no response.
-Right now plugin read automatiacally all channels from the Sat Receiver and store in /home/user/.openwebifTv/,
-if U want somthing changed in channel list please add Yours prefered channels to the config bouquets.
+## Configuration
 
-
-# Configuration
-
- <pre>
+```json
 {
       "platform": "OpenWebIfTv",
       "devices": [{
@@ -96,7 +90,7 @@ if U want somthing changed in channel list please add Yours prefered channels to
       }
     ]
   }
-</pre>
+```
 
 # Info 
 Sort of channel in HomeKit app is alpahabetically but U can sort the channels as in Yours receivers adding channel number at first place of every name, some example:
