@@ -2,7 +2,6 @@ const request = require('request');
 const ppath = require('persist-path');
 const fs = require('fs');
 const mkdirp = require('mkdirp');
-const responseDelay = 1000;
 
 var Accessory, Service, Characteristic, hap, UUIDGen;
 
@@ -39,10 +38,8 @@ class openwebIfTvPlatform {
 	removeAccessory() { }
 	didFinishLaunching() {
 		var me = this;
-		setTimeout(function () {
-			me.log.debug('didFinishLaunching');
-		}, (this.devices.length + 1) * responseDelay);
-	}
+		me.log.debug('didFinishLaunching');
+	};
 }
 
 class openwebIfTvDevice {
@@ -98,13 +95,13 @@ class openwebIfTvDevice {
 				if (error) {
 					me.log('Device: %s, name: %s, state: Offline', me.host, me.name);
 					me.connectionStatus = false;
-				} else if (!me.connectionStatus) {
-					me.log('Device: %s, name: %s, state: Online', me.host, me.name);
-					me.connectionStatus = true;
-					if (fs.existsSync(me.channelsFile) === false) {
-						me.getBouquets();
-					}
-					setTimeout(() => {
+				} else {
+					if (!me.connectionStatus) {
+						me.log('Device: %s, name: %s, state: Online', me.host, me.name);
+						me.connectionStatus = true;
+						if (fs.existsSync(me.channelsFile) === false) {
+							me.getBouquets();
+						}
 						var json = JSON.parse(data);
 						me.manufacturer = json.brand;
 						me.modelName = json.mname;
@@ -116,13 +113,12 @@ class openwebIfTvDevice {
 						me.log('Webif version.: %s', json.webifver);
 						me.log('Firmware: %s', json.enigmaver);
 						me.log('----------------------------------');
-					}, 200);
+					}
 				}
 			});
 		}.bind(this), 5000);
 
-		//Delay to wait for device info before publish
-		setTimeout(this.prepareTvService.bind(this), responseDelay);
+		this.prepareTvService();
 	}
 
 	//Prepare TV service 
@@ -377,13 +373,14 @@ class openwebIfTvDevice {
 			} else {
 				var json = JSON.parse(data);
 				var channelReference = json.currservice_serviceref;
-				var channelName = json.currservice_station;
 				if (!me.connectionStatus || channelReference === '' || channelReference === undefined || channelReference === null) {
 					me.tvService
 						.getCharacteristic(Characteristic.ActiveIdentifier)
 						.updateValue(0);
 					callback(null, channelReference);
 				} else {
+					var channelReference = json.currservice_serviceref;
+					var channelName = json.currservice_station;
 					for (let i = 0; i < me.channelReferences.length; i++) {
 						if (channelReference === me.channelReferences[i]) {
 							me.tvService
