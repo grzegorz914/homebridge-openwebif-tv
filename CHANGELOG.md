@@ -1,10 +1,23 @@
 # Change Log
-
 All notable changes to this project will be documented in this file.
+## 2.3.39 (21.03.2020)
+- corrections for homebridge git
+- performance improvement
+
+## 2.1.2 (6.02.2020)
+- removed checkStateInterval from Config
+- some small fixes
+
+## 2.1.1 (03.02.2020)
+- fixed crasch during saved changed channel name
+
 ## 2.1.0 (03.02.2020)
 - log corrections
 - performance improvements
 - some small fixes
+
+## 2.0.26 (03.02.2020)
+- code cleanup
 
 ## 2.0.25 (03.02.2020)
 - switch channel usig scenes fixed
