@@ -1,12 +1,9 @@
 # homebridge-openwebif-tv
-[![npm](https://badgen.net/npm/dt/homebridge-openwebif-tv?color=purple)](https://www.npmjs.com/package/homebridge-openwebif-tv) [![npm](https://badgen.net/npm/v/homebridge-openwebif-tv?color=purple)](https://www.npmjs.com/package/homebridge-openwebif-tv)
+[![npm](https://img.shields.io/npm/dt/homebridge-openwebif-tv.svg)](https://www.npmjs.com/package/homebridge-openwebif-tv) [![npm](https://img.shields.io/npm/v/homebridge-openwebif-tv.svg)](https://www.npmjs.com/package/homebridge-openwebif-tv)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/grzegorz914/homebridge-openwebif-tv.svg)](https://github.com/grzegorz914/homebridge-openwebif-tv/pulls)
 [![GitHub issues](https://img.shields.io/github/issues/grzegorz914/homebridge-openwebif-tv.svg)](https://github.com/grzegorz914/homebridge-openwebif-tv/issues)
 
-Control plugin for Sat Receivers basis on the OpenWebIf interface (Dreambox, VU+, etc..).
-Present in HomeKit as TV service, schange channels, volume/mute control, power control.
-
-This plugin is basis on homebridge-openwebif-switch created by alex224.
+Control plugin for Sat Receivers basis on the OpenWebIf interface (Dreambox, VU+, etc..). Present as TV service, change inputs, volume/mute control, power control.
 
 Homebridge: https://github.com/homebridge/homebridge
 
@@ -92,9 +89,11 @@ Homebridge: https://github.com/homebridge/homebridge
   }
 ```
 
-# Info 
+## Info 
+
 Sort of channel in HomeKit app is alpahabetically but U can sort the channels as in Yours receivers adding channel number at first place of every name, some example:
-<pre>
+
+```json
                 {
                     "name": "1 TVP HD",
                     "reference": "1:0:1:1138:2AF8:13E:820000:0:0:0:"
@@ -155,10 +154,10 @@ Sort of channel in HomeKit app is alpahabetically but U can sort the channels as
                     "name": "22 TVN Turbo HD",
                     "reference": "1:0:1:3DD0:640:13E:820000:0:0:0:"
                 },
-</pre>
+```
 
-# Whats new:
+## Whats new:
 https://github.com/grzegorz914/homebridge-openwebif-tv/blob/master/CHANGELOG.md
 
-# Development
+## Development
 - Pull request and help in development highly appreciated.
