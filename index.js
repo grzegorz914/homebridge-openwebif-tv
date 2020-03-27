@@ -245,8 +245,7 @@ class openwebIfTvDevice {
 						callback()
 					});
 				this.tvAccesory.addService(tempInput);
-				if (!tempInput.linked)
-					this.tvService.addLinkedService(tempInput);
+				this.tvService.addLinkedService(tempInput);
 				this.channelReferences.push(channelReference);
 			}
 
