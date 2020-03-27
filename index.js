@@ -5,7 +5,7 @@ const mkdirp = require('mkdirp');
 
 var Accessory, Service, Characteristic, UUIDGen;
 
-module.exports = function(homebridge) {
+module.exports = function (homebridge) {
 	Service = homebridge.hap.Service;
 	Characteristic = homebridge.hap.Characteristic;
 	Accessory = homebridge.platformAccessory;
@@ -373,21 +373,19 @@ class openwebIfTvDevice {
 				var json = JSON.parse(data);
 				var channelReference = json.currservice_serviceref;
 				var channelName = json.currservice_station;
-				if (!me.connectionStatus || channelReference === '' || channelReference === undefined || channelReference === null) {
-					me.tvService
-						.getCharacteristic(Characteristic.ActiveIdentifier)
-						.updateValue(0);
-					callback(null, channelReference);
-				} else {
-					for (let i = 0; i < me.channelReferences.length; i++) {
-						if (channelReference === me.channelReferences[i]) {
-							me.tvService
-								.getCharacteristic(Characteristic.ActiveIdentifier)
-								.updateValue(i);
-							me.log('Device: %s, get current Channel successfull: %s %s', me.host, channelName, channelReference);
-							me.currentChannelReference = channelReference;
-							callback(null, channelReference);
-						}
+				for (let i = 0; i < me.channelReferences.length; i++) {
+					if ((channelReference !== me.channelReferences[i]) || (!me.connectionStatus || channelReference === '' || channelReference === undefined || channelReference === null)) {
+						me.tvService
+							.getCharacteristic(Characteristic.ActiveIdentifier)
+							.updateValue(0);
+						callback(null, channelReference);
+					} else {
+						me.tvService
+							.getCharacteristic(Characteristic.ActiveIdentifier)
+							.updateValue(i);
+						me.log('Device: %s, get current Channel successfull: %s %s', me.host, channelName, channelReference);
+						me.currentChannelReference = channelReference;
+						callback(null, channelReference);
 					}
 				}
 			}
