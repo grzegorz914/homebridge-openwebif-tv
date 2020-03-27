@@ -48,7 +48,7 @@ class openwebIfTvDevice {
 
 		//device configuration
 		this.device = device;
-		this.name = device.name || 'Sat Receiver';
+		this.name = device.name;
 		this.host = device.host;
 		this.port = device.port || 80;
 		this.auth = device.auth || false;
@@ -372,14 +372,13 @@ class openwebIfTvDevice {
 			} else {
 				var json = JSON.parse(data);
 				var channelReference = json.currservice_serviceref;
+				var channelName = json.currservice_station;
 				if (!me.connectionStatus || channelReference === '' || channelReference === undefined || channelReference === null) {
 					me.tvService
 						.getCharacteristic(Characteristic.ActiveIdentifier)
 						.updateValue(0);
 					callback(null, channelReference);
 				} else {
-					var channelReference = json.currservice_serviceref;
-					var channelName = json.currservice_station;
 					for (let i = 0; i < me.channelReferences.length; i++) {
 						if (channelReference === me.channelReferences[i]) {
 							me.tvService
@@ -387,9 +386,9 @@ class openwebIfTvDevice {
 								.updateValue(i);
 							me.log('Device: %s, get current Channel successfull: %s %s', me.host, channelName, channelReference);
 							me.currentChannelReference = channelReference;
+							callback(null, channelReference);
 						}
 					}
-					callback(null, channelReference);
 				}
 			}
 		});
