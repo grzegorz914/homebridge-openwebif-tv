@@ -374,12 +374,7 @@ class openwebIfTvDevice {
 				var channelReference = json.currservice_serviceref;
 				var channelName = json.currservice_station;
 				for (let i = 0; i < me.channelReferences.length; i++) {
-					if ((channelReference !== me.channelReferences[i]) || (!me.connectionStatus || channelReference === '' || channelReference === undefined || channelReference === null)) {
-						me.tvService
-							.getCharacteristic(Characteristic.ActiveIdentifier)
-							.updateValue(0);
-						callback(null, channelReference);
-					} else {
+					if (channelReference == me.channelReferences[i]) {
 						me.tvService
 							.getCharacteristic(Characteristic.ActiveIdentifier)
 							.updateValue(i);
