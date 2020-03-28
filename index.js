@@ -3,13 +3,14 @@ const ppath = require('persist-path');
 const fs = require('fs');
 const mkdirp = require('mkdirp');
 
-var Accessory, Service, Characteristic, UUIDGen;
+var Accessory, Service, Characteristic, hap, UUIDGen;
 
-module.exports = function (homebridge) {
+module.exports = homebridge => {
 	Service = homebridge.hap.Service;
 	Characteristic = homebridge.hap.Characteristic;
 	Accessory = homebridge.platformAccessory;
 	UUIDGen = homebridge.hap.uuid;
+	hap = homebridge.hap;
 
 	homebridge.registerPlatform('homebridge-openwebif-tv', 'OpenWebIfTv', openwebIfTvPlatform, true);
 };
@@ -48,7 +49,7 @@ class openwebIfTvDevice {
 
 		//device configuration
 		this.device = device;
-		this.name = device.name;
+		this.name = device.name || 'Sat Receiver';
 		this.host = device.host;
 		this.port = device.port || 80;
 		this.auth = device.auth || false;
@@ -245,7 +246,8 @@ class openwebIfTvDevice {
 						callback()
 					});
 				this.tvAccesory.addService(tempInput);
-				this.tvService.addLinkedService(tempInput);
+				if (!tempInput.linked)
+					this.tvService.addLinkedService(tempInput);
 				this.channelReferences.push(channelReference);
 			}
 
@@ -371,16 +373,24 @@ class openwebIfTvDevice {
 			} else {
 				var json = JSON.parse(data);
 				var channelReference = json.currservice_serviceref;
-				var channelName = json.currservice_station;
-				for (let i = 0; i < me.channelReferences.length; i++) {
-					if (channelReference == me.channelReferences[i]) {
-						me.tvService
-							.getCharacteristic(Characteristic.ActiveIdentifier)
-							.updateValue(i);
-						me.log('Device: %s, get current Channel successfull: %s %s', me.host, channelName, channelReference);
-						me.currentChannelReference = channelReference;
-						callback(null, channelReference);
+				if (!me.connectionStatus || channelReference === '' || channelReference === undefined || channelReference === null) {
+					me.tvService
+						.getCharacteristic(Characteristic.ActiveIdentifier)
+						.updateValue(0);
+					callback(null, channelReference);
+				} else {
+					var channelReference = json.currservice_serviceref;
+					var channelName = json.currservice_station;
+					for (let i = 0; i < me.channelReferences.length; i++) {
+						if (channelReference === me.channelReferences[i]) {
+							me.tvService
+								.getCharacteristic(Characteristic.ActiveIdentifier)
+								.updateValue(i);
+							me.log('Device: %s, get current Channel successfull: %s %s', me.host, channelName, channelReference);
+							me.currentChannelReference = channelReference;
+						}
 					}
+					callback(null, channelReference);
 				}
 			}
 		});
