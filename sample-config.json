@@ -1,6 +1,5 @@
 {
   "platform": "OpenWebIfTv",
-  "checkStateInterval": 5,
   "devices": [
     {
       "name": "Tuner Sat",
