@@ -14,12 +14,13 @@
             "name": {
               "title": "Name",
               "type": "string",
-              "default": "Sat receiver",
+              "default": "Sat Receiver",
               "required": true
             },
             "host": {
               "title": "IP Address/Hostname",
               "type": "string",
+              "default": "192.160.1.10",
               "required": true,
               "format": "hostname"
             },
@@ -34,7 +35,7 @@
               "title": "Authentication",
               "type": "boolean",
               "default": false,
-              "required": true
+              "required": false
             },
             "user": {
               "title": "User",
@@ -49,8 +50,8 @@
             "switchInfoMenu": {
               "title": "Switch Info/Menu",
               "type": "boolean",
-              "default": true,
-              "required": true
+              "default": false,
+              "required": false
             },
             "bouquets": {
               "title": "Channels",
