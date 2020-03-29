@@ -2,9 +2,9 @@
 
 let Accessory, Service, Characteristic, hap, UUIDGen;
 const request = require('request');
-const ppath = require('persist-path');
 const fs = require('fs');
 const mkdirp = require('mkdirp');
+const path = require('path');
 
 module.exports = homebridge => {
 	Service = homebridge.hap.Service;
@@ -19,7 +19,7 @@ module.exports = homebridge => {
 class openwebIfTvPlatform {
 	constructor(log, config, api) {
 		// only load if configured
-		if (!config) {
+		if (!config || !Array.isArray(config.devices)) {
 			log('No configuration found for homebridge-openwebif-tv');
 			return;
 		}
@@ -88,8 +88,8 @@ class openwebIfTvDevice {
 		this.currentVolume = 0;
 		this.currentChannelReference = null;
 		this.currentInfoMenuState = false;
-		this.prefDir = ppath('openwebifTv/');
-		this.channelsFile = this.prefDir + 'channels_' + this.host.split('.').join('');
+		this.prefDir = path.join(api.user.storagePath(), 'openwebifTv');
+		this.channelsFile = this.prefDir + '/' + 'channels_' + this.host.split('.').join('');
 
 		//check if prefs directory ends with a /, if not then add it
 		if (this.prefDir.endsWith('/') === false) {

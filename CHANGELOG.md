@@ -1,5 +1,8 @@
 # Change Log
 All notable changes to this project will be documented in this file.
+## 2.4.5 (29.03.2020)
+- fixed store file inside the Homebridge directory
+
 ## 2.4.3 (29.03.2020)
 - fixes crasch if no name defined
 
