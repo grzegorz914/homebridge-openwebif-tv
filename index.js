@@ -36,7 +36,11 @@ class openwebIfTvPlatform {
 
 			for (let i = 0, len = this.config.devices.length; i < len; i++) {
 				let deviceName = this.config.devices[i];
-				this.tvAccessories.push(new openwebIfTvDevice(log, deviceName, api));
+				if (!deviceName.name) {
+					this.log.warn('Device Name Missing')
+				} else {
+					this.tvAccessories.push(new denonTvDevice(log, deviceName, api));
+				}
 			}
 			this.api.on('didFinishLaunching', this.didFinishLaunching.bind(this));
 		}
