@@ -19,13 +19,13 @@ Homebridge: https://github.com/homebridge/homebridge
 {
       "platform": "OpenWebIfTv",
       "devices": [{
-        "name": "Tuner Sat",
+        "name": "Sat Receiver",
         "host": "192.168.0.4",
         "port": 80,
         "auth": false,
         "user": "user",
         "pass": "pass",
-        "switchInfoMenu": true,
+        "switchInfoMenu": false,
         "bouquets": [
           {
             "name": "Das Erste HD",
