@@ -1,7 +1,7 @@
 {
   "pluginAlias": "OpenWebIfTv",
   "pluginType": "platform",
-  "footerDisplay": "This plugin works with Sat receivers with OpenWebIf interface which is available [here](https://github.com/grzegorz914/homebridge-openwebif-tv).",
+  "footerDisplay": "This plugin works with Sat Receivers basis on OpenWebIf interface which is available [here](https://github.com/grzegorz914/homebridge-openwebif-tv).",
   "schema": {
     "type": "object",
     "properties": {
