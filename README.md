@@ -23,7 +23,8 @@ Due to HomeKit app limitation max. channels in bouquets is 97. Over this value H
 ```json
 {
       "platform": "OpenWebIfTv",
-      "devices": [{
+      "devices": [
+        {
         "name": "Sat Receiver",
         "host": "192.168.0.4",
         "port": 80,
