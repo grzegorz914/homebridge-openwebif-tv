@@ -1,5 +1,8 @@
 # Change Log
 All notable changes to this project will be documented in this file.
+## 2.4.2 (29.03.2020)
+- small fixes
+
 ## 2.4.1 (29.03.2020)
 - update config.schema.json
 
