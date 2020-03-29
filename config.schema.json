@@ -18,7 +18,7 @@
               "required": true
             },
             "host": {
-              "title": "IP Address/Hostname",
+              "title": "IP Address",
               "type": "string",
               "default": "192.160.1.10",
               "required": true,
