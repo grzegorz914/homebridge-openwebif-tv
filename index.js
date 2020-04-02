@@ -1,9 +1,9 @@
 'use strict';
 
-let Accessory, Service, Characteristic, hap, UUIDGen;
-const request = require('request');
+let Accessory, Service, Characteristic, UUIDGen;
 const fs = require('fs');
 const mkdirp = require('mkdirp');
+const request = require('request');
 const path = require('path');
 
 module.exports = homebridge => {
@@ -11,7 +11,6 @@ module.exports = homebridge => {
 	Characteristic = homebridge.hap.Characteristic;
 	Accessory = homebridge.platformAccessory;
 	UUIDGen = homebridge.hap.uuid;
-	hap = homebridge.hap;
 
 	homebridge.registerPlatform('homebridge-openwebif-tv', 'OpenWebIfTv', openwebIfTvPlatform, true);
 };
@@ -48,7 +47,7 @@ class openwebIfTvPlatform {
 
 	configureAccessory() {
 		this.log.debug('configureAccessory');
-	 }
+	}
 	didFinishLaunching() {
 		this.log.debug('didFinishLaunching');
 	}
@@ -62,8 +61,9 @@ class openwebIfTvDevice {
 		this.api = api;
 
 		//device configuration
+		this.device = device;
 		this.name = device.name || 'Sat Receiver';
-		this.host = device.host;
+		this.host = device.host || '192.168.1.10';
 		this.port = device.port || 80;
 		this.auth = device.auth || false;
 		this.user = device.user || 'root';
@@ -74,22 +74,22 @@ class openwebIfTvDevice {
 		//authentication basic
 		this.url = this.auth ? ('http://' + this.user + ':' + this.pass + '@' + this.host + ':' + this.port) : ('http://' + this.host + ':' + this.port);
 
-		//get Device info
-		this.manufacturer = device.manufacturer || 'openWebIf';
-		this.modelName = device.modelName || 'homebridge-openwebif-tv';
-		this.serialNumber = device.serialNumber || 'SN0000001';
-		this.firmwareRevision = device.firmwareRevision || 'FW0000001';
-
 		//setup variables
 		this.channelReferences = new Array();
 		this.connectionStatus = false;
 		this.currentPowerState = false;
 		this.currentMuteState = false;
 		this.currentVolume = 0;
-		this.currentChannelReference = null;
+		this.currentChannelReference = '';
 		this.currentInfoMenuState = false;
 		this.prefDir = path.join(api.user.storagePath(), 'openwebifTv');
 		this.channelsFile = this.prefDir + '/' + 'channels_' + this.host.split('.').join('');
+
+		//get Device info
+		this.manufacturer = device.manufacturer || 'openWebIf';
+		this.modelName = device.modelName || 'homebridge-openwebif-tv';
+		this.serialNumber = device.serialNumber || 'SN0000001';
+		this.firmwareRevision = device.firmwareRevision || 'FW0000001';
 
 		//check if prefs directory ends with a /, if not then add it
 		if (this.prefDir.endsWith('/') === false) {
@@ -242,28 +242,26 @@ class openwebIfTvDevice {
 					.setCharacteristic(Characteristic.Identifier, i)
 					.setCharacteristic(Characteristic.ConfiguredName, channelName)
 					.setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
-					.setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.APPLICATION)
+					.setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.TV)
 					.setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN);
 
 				tempInput
 					.getCharacteristic(Characteristic.ConfiguredName)
-					.on('set', (name, callback) => {
-						this.bouquets[channelReference] = name;
+					.on('set', (newChannelName, callback) => {
+						this.bouquets[channelReference] = newChannelName;
 						fs.writeFile(this.channelsFile, JSON.stringify(this.bouquets), (error) => {
 							if (error) {
 								this.log.debug('Device: %s, can not write new channel name, error: %s', this.host, error);
 							} else {
-								this.log('Device: %s, saved new channel successfull, name: %s, reference: %s', this.host, name, channelReference);
+								this.log('Device: %s, saved new channel successfull, name: %s, reference: %s', this.host, newChannelName, channelReference);
 							}
 						});
 						callback()
 					});
 				this.tvAccesory.addService(tempInput);
-				if (!tempInput.linked)
-					this.tvService.addLinkedService(tempInput);
+				this.tvService.addLinkedService(tempInput);
 				this.channelReferences.push(channelReference);
 			}
-
 		});
 	}
 
