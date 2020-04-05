@@ -20,7 +20,7 @@ Control plugin for Sat Receivers basis on the OpenWebIf API. Tested with Dreambo
 
 ## Configuration
 
-1. Use Homebridge Config UI X to configure the plugin (strongly recomended), or update your configuration file manually. See `sample-config.json` in this repository for a sample or add the bottom example to Your config.json file.
+1. Use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) to configure the plugin (strongly recomended), or update your configuration file manually. See `sample-config.json` in this repository for a sample or add the bottom example to Your config.json file.
 
 ```json
 {
