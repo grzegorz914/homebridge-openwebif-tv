@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://github.com/grzegorz914/homebridge-openwebif-tv/blob/master/openwebif.png" height="140"></a>
+  <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://github.com/grzegorz914/homebridge-openwebif-tv/blob/master/graphics/openwebif.png" height="140"></a>
 </p>
 
 <span align="center">
@@ -30,6 +30,10 @@ Control plugin for Sat Receivers basis on the OpenWebIf API. Tested with Dreambo
 Due to HomeKit app limitation max. channels in bouquets is 97. Over this value HomeKit app will no response. Right now plugin read automatiacally 97 channels from the Sat Receiver and store in homebridge `openwebifTv` directory, if U want somthing changed in channel list please add Yours prefered channels to the config bouquets.
 
 ## Configuration
+
+<p align="left">
+  <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://github.com/grzegorz914/homebridge-openwebif-tv/blob/master//graphics/ustawienia.png" height="100"></a>
+</p>
 
 1. Use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) to configure the plugin (strongly recomended), or update your configuration file manually. See `sample-config.json` in this repository for a sample or add the bottom example to Your config.json file.
 
