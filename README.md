@@ -12,6 +12,8 @@
 
 Control plugin for Sat Receivers basis on the OpenWebIf API. Tested with Dreambox DM900, VU+ Ultimo 4K, Formuler F4 Turbo. Present as TV service, change channels, volume/mute control, power control.
 
+</span>
+
 ## Package
 
 1. [Homebridge](https://github.com/homebridge/homebridge)
