@@ -4,15 +4,17 @@
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/grzegorz914/homebridge-openwebif-tv.svg)](https://github.com/grzegorz914/homebridge-openwebif-tv/pulls)
 [![GitHub issues](https://img.shields.io/github/issues/grzegorz914/homebridge-openwebif-tv.svg)](https://github.com/grzegorz914/homebridge-openwebif-tv/issues)
 
-Control plugin for Sat Receivers basis on the OpenWebIf interface (Dreambox, VU+, etc..). Present as TV service, change inputs, volume/mute control, power control.
+Control plugin for Sat Receivers basis on the OpenWebIf API. Tested with Dreambox DM900, VU+ Ultimo 4K, Formuler F4 Turbo. Present as TV service, change channels, volume/mute control, power control.
 
 Homebridge: https://github.com/homebridge/homebridge
+Homebridge Config UI X: https://github.com/oznu/homebridge-config-ui-x
 
 ## Installation
 
 1. Follow the step-by-step instructions on the [Homebridge Wiki](https://github.com/homebridge/homebridge/wiki) for how to install Homebridge.
-2. Install homebridge-openwebif-tv using: `npm install -g homebridge-openwebif-tv`
-3. Update your configuration file. See `sample-config.json` in this repository for a sample. 
+2. Follow the step-by-step instructions on the [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) for how to install Homebridge Config UI X.
+3. Install homebridge-lgwebos-tv using: `npm install -g homebridge-openwebif-tv`
+4. Use Homebridge Config UI X to configure the plugin(strongly recomended) or update your configuration file manually. See `sample-config.json` in this repository for a sample. 
 
 ## Limitations
 
