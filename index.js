@@ -24,6 +24,7 @@ class openwebIfTvPlatform {
 		}
 		this.log = log;
 		this.config = config;
+		this.devices = config.devices || [];
 		this.tvAccessories = [];
 
 		if (api) {
@@ -33,8 +34,8 @@ class openwebIfTvPlatform {
 				throw new Error('Unexpected API version.');
 			}
 
-			for (let i = 0, len = this.config.devices.length; i < len; i++) {
-				let deviceName = this.config.devices[i];
+			for (let i = 0, len = this.devices.length; i < len; i++) {
+				let deviceName = this.devices[i];
 				if (!deviceName.name) {
 					this.log.warn('Device Name Missing')
 				} else {
