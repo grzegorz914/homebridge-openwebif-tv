@@ -10,7 +10,7 @@
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/grzegorz914/homebridge-openwebif-tv.svg)](https://github.com/grzegorz914/homebridge-openwebif-tv/pulls)
 [![GitHub issues](https://img.shields.io/github/issues/grzegorz914/homebridge-openwebif-tv.svg)](https://github.com/grzegorz914/homebridge-openwebif-tv/issues)
 
-Control plugin for Sat Receivers basis on the OpenWebIf API. Tested with Dreambox DM900, VU+ Ultimo 4K, Formuler F4 Turbo. Present as TV service, change channels, volume/mute control, power control, RC control.
+Control plugin for Sat Receivers basis on the OpenWebIf API. Tested with Dreambox DM900, VU+ Ultimo 4K, Formuler F4 Turbo. Present as TV service, change channels, volume/mute control, power control, RC control, Siri control.
 
 </span>
 
@@ -27,7 +27,7 @@ Control plugin for Sat Receivers basis on the OpenWebIf API. Tested with Dreambo
 
 ## Limitations
 
-Due to HomeKit app limitation max. channels in bouquets is 97. Over this value HomeKit app will no response. Right now plugin read automatiacally 97 channels from the Sat Receiver and store in homebridge `openwebifTv` directory, if U want somthing changed in channel list please add Yours prefered channels to the config bouquets.
+Due to HomeKit app limitation max. channels in bouquets is 97. Over this value HomeKit app will no response. Right now plugin read automatiacally 97 channels from the sat receiver.
 
 ## Configuration
 
@@ -36,6 +36,8 @@ Due to HomeKit app limitation max. channels in bouquets is 97. Over this value H
 </p>
 
 1. Use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) to configure the plugin (strongly recomended), or update your configuration file manually. See `sample-config.json` in this repository for a sample or add the bottom example to Your config.json file.
+2. If port `80` not working check wich port is set for Your Sat Receiver.
+3. All reference and name from Your sat receiver are stored in `homebridge_directory/openwebifTv/channels_19216804`, if U want somthing changed in channel list please add Yours prefered channels to the config bouquets.
 
 ```json
 {
