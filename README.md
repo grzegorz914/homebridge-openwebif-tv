@@ -10,9 +10,15 @@
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/grzegorz914/homebridge-openwebif-tv.svg)](https://github.com/grzegorz914/homebridge-openwebif-tv/pulls)
 [![GitHub issues](https://img.shields.io/github/issues/grzegorz914/homebridge-openwebif-tv.svg)](https://github.com/grzegorz914/homebridge-openwebif-tv/issues)
 
-Control plugin for Sat Receivers basis on the OpenWebIf API. Tested with Dreambox DM900, VU+ Ultimo 4K, Formuler F4 Turbo. Present as TV service, change channels, volume/mute control, power control, RC control, Siri control.
+Homebridge plugin to control Sat Receivers basis on the OpenWebIf API. Tested with Dreambox DM900, VU+ Ultimo 4K, Formuler F4 Turbo.
 
 </span>
+
+## Info
+1. The Volume/Mute and RC/Media is possible after You go to RC Control app on iPhone/iPad.
+2. Volume and Mute can be changed using hardware buttons on iPhone/iPad.
+3. RC/Media control function available from RC Control app on iPhone/iPad
+4. Siri control using siri command.
 
 ## Package
 
