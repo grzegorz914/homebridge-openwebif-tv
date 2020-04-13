@@ -179,7 +179,7 @@ Sort of channel in HomeKit app is alpahabetically but U can sort the channels as
                 {
                     "name": "22 TVN Turbo HD",
                     "reference": "1:0:1:3DD0:640:13E:820000:0:0:0:"
-                },
+                }
 ```
 
 ## Limitations
