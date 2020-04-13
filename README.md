@@ -25,29 +25,23 @@ Homebridge plugin to control Sat Receivers basis on the OpenWebIf API. Tested wi
 </p>
 
 ## Package
-
 1. [Homebridge](https://github.com/homebridge/homebridge)
 2. [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x)
 
 ## Installation
-
 1. Follow the step-by-step instructions on the [Homebridge Wiki](https://github.com/homebridge/homebridge/wiki) for how to install Homebridge.
 2. Follow the step-by-step instructions on the [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) for how to install Homebridge Config UI X.
 3. Install homebridge-openwebif-tv using: `npm install -g homebridge-openwebif-tv`.
 
-## Limitations
-
-Due to HomeKit app limitation max. channels in bouquets is 97. Over this value HomeKit app will no response. Right now plugin read automatiacally 97 channels from the sat receiver.
-
 ## Configuration
-
-<p align="left">
-  <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://github.com/grzegorz914/homebridge-openwebif-tv/blob/master/graphics/ustawienia.png" height="100"></a>
-</p>
 
 1. Use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) to configure the plugin (strongly recomended), or update your configuration file manually. See `sample-config.json` in this repository for a sample or add the bottom example to Your config.json file.
 2. If port `80` not working check wich port is set for Your Sat Receiver.
 3. All `reference` and `name` from Your sat receiver are stored in `homebridge_directory/openwebifTv/channels_19216804`, if U want somthing changed in channel list please add Yours prefered channels to the config bouquets.
+
+<p align="left">
+  <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://github.com/grzegorz914/homebridge-openwebif-tv/blob/master/graphics/ustawienia.png" height="100"></a>
+</p>
 
 ```json
 {
@@ -124,8 +118,6 @@ Due to HomeKit app limitation max. channels in bouquets is 97. Over this value H
   }
 ```
 
-## Info 
-
 Sort of channel in HomeKit app is alpahabetically but U can sort the channels as in Yours receivers adding channel number at first place of every name, some example:
 
 ```json
@@ -190,6 +182,9 @@ Sort of channel in HomeKit app is alpahabetically but U can sort the channels as
                     "reference": "1:0:1:3DD0:640:13E:820000:0:0:0:"
                 },
 ```
+
+## Limitations
+Due to HomeKit app limitation max. channels in bouquets is 97. Over this value HomeKit app will no response. Right now plugin read automatiacally 97 channels from the sat receiver.
 
 ## Whats new:
 https://github.com/grzegorz914/homebridge-openwebif-tv/blob/master/CHANGELOG.md
