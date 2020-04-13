@@ -34,7 +34,6 @@ Homebridge plugin to control Sat Receivers basis on the OpenWebIf API. Tested wi
 3. Install homebridge-openwebif-tv using: `npm install -g homebridge-openwebif-tv`.
 
 ## Configuration
-
 1. Use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) to configure the plugin (strongly recomended), or update your configuration file manually. See `sample-config.json` in this repository for a sample or add the bottom example to Your config.json file.
 2. If port `80` not working check wich port is set for Your Sat Receiver.
 3. All `reference` and `name` from Your sat receiver are stored in `homebridge_directory/openwebifTv/channels_19216804`, if U want somthing changed in channel list please add Yours prefered channels to the config bouquets.
