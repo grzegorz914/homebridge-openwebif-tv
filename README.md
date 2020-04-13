@@ -23,7 +23,7 @@ Homebridge plugin to control Sat Receivers basis on the OpenWebIf API. Tested wi
 6. Change Channels after loong press tile in HomeKit app.
 
 <p align="left">
-  <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://github.com/grzegorz914/homebridge-openwebif-tv/blob/master/graphics/RC.png" height="140"></a>
+  <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://github.com/grzegorz914/homebridge-openwebif-tv/blob/master/graphics/homekit.png" height="300"></a>  <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://github.com/grzegorz914/homebridge-openwebif-tv/blob/master/graphics/inputs.png" height="300"></a>  <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://github.com/grzegorz914/homebridge-openwebif-tv/blob/master/graphics/RC.png" height="300"></a>
 </p>
 
 ## Package
