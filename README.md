@@ -19,7 +19,7 @@ Homebridge plugin to control Sat Receivers basis on the OpenWebIf API. Tested wi
 2. Power ON/OFF short press tile in HomeKit app and select from the list.
 3. Channels can be changed after loong press tile in HomeKit app.
 4. Volume/Mute can be changed using hardware buttons on iPhone/iPad.
-5. RC/Media control function available from RC Control app on iPhone/iPad.
+5. RC/Media control function available from RC app on iPhone/iPad.
 6. Siri control using siri command.
 
 <p align="left">
