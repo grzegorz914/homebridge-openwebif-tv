@@ -41,7 +41,7 @@ Homebridge plugin to control Sat Receivers basis on the OpenWebIf API. Tested wi
 3. All `reference` and `name` from Your sat receiver are stored in `homebridge_directory/openwebifTv/channels_19216804`, if U want somthing changed in channel list please add Yours prefered channels to the config bouquets.
 
 <p align="left">
-  <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://github.com/grzegorz914/homebridge-openwebif-tv/blob/master/graphics/ustawienia.png" height="100"></a>
+  <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://github.com/grzegorz914/homebridge-openwebif-tv/blob/master/graphics/ustawienia.png" height="150"></a>
 </p>
 
 ```json
