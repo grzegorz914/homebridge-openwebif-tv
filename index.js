@@ -1,10 +1,11 @@
 'use strict';
 
-let Accessory, Service, Characteristic, UUIDGen;
 const fs = require('fs');
 const mkdirp = require('mkdirp');
 const request = require('request');
 const path = require('path');
+
+let Accessory, Service, Characteristic, UUIDGen;
 
 module.exports = homebridge => {
 	Service = homebridge.hap.Service;
@@ -29,7 +30,6 @@ class openwebIfTvPlatform {
 
 		if (api) {
 			this.api = api;
-
 			if (this.version < 2.1) {
 				throw new Error('Unexpected API version.');
 			}
@@ -48,12 +48,14 @@ class openwebIfTvPlatform {
 			}
 		}
 	}
+
 	configureAccessory(platformAccessory) {
 		this.log.debug('configureAccessory');
 		if (this.tvAccessories) {
 			this.tvAccessories.push(platformAccessory);
 		}
 	}
+
 	removeAccessory(platformAccessory) {
 		this.log.debug('removeAccessory');
 		this.api.unregisterPlatformAccessories('homebridge-openwebif-tv', 'OpenWebIfTv', [platformAccessory]);
@@ -69,12 +71,12 @@ class openwebIfTvDevice {
 
 		//device configuration
 		this.device = device;
-		this.name = device.name || 'Sat Receiver';
-		this.host = device.host || '192.168.1.10';
-		this.port = device.port || 80;
-		this.auth = device.auth || false;
-		this.user = device.user || 'root';
-		this.pass = device.pass || '';
+		this.name = device.name;
+		this.host = device.host;
+		this.port = device.port;
+		this.auth = device.auth;
+		this.user = device.user;
+		this.pass = device.pass;
 		this.switchInfoMenu = device.switchInfoMenu;
 		this.bouquets = device.bouquets;
 
@@ -146,7 +148,7 @@ class openwebIfTvDevice {
 	prepareTvService() {
 		this.log.debug('prepareTvService');
 		this.tvAccesory = new Accessory(this.name, UUIDGen.generate(this.host + this.name));
-		
+
 		this.tvService = new Service.Television(this.name, 'tvService');
 		this.tvService.setCharacteristic(Characteristic.ConfiguredName, this.name);
 		this.tvService.setCharacteristic(Characteristic.SleepDiscoveryMode, Characteristic.SleepDiscoveryMode.ALWAYS_DISCOVERABLE);
