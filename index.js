@@ -92,7 +92,7 @@ class openwebIfTvDevice {
 		this.currentPowerState = false;
 		this.currentMuteState = false;
 		this.currentVolume = 0;
-		this.currentChannelReference = '';
+		this.currentChannelReference = null;
 		this.currentInfoMenuState = false;
 		this.prefDir = path.join(api.user.storagePath(), 'openwebifTv');
 		this.channelsFile = this.prefDir + '/' + 'channels_' + this.host.split('.').join('');
@@ -256,7 +256,7 @@ class openwebIfTvDevice {
 			}
 
 			//If reference not null or empty add the input
-			if (channelReference !== undefined && channelReference !== null && channelReference !== '') {
+			if (channelReference !== undefined && channelReference !== null) {
 				channelReference = channelReference.replace(/\s/g, ''); // remove all white spaces from the string
 
 				let tempInput = new Service.InputSource(channelReference, 'channel' + i);
@@ -406,11 +406,11 @@ class openwebIfTvDevice {
 			} else {
 				var json = JSON.parse(data);
 				var channelReference = json.currservice_serviceref;
-				if (!me.connectionStatus || channelReference === '' || channelReference === undefined || channelReference === null) {
+				if (!me.connectionStatus || channelReference === undefined || channelReference === null) {
 					me.tvService
 						.getCharacteristic(Characteristic.ActiveIdentifier)
 						.updateValue(0);
-					callback(null, channelReference);
+					callback(null);
 				} else {
 					var channelReference = json.currservice_serviceref;
 					var channelName = json.currservice_station;
