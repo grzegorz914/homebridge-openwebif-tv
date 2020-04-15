@@ -68,9 +68,9 @@ class openwebIfTvDevice {
 		this.log = log;
 		this.device = device;
 		this.api = api;
+		this.device = device;
 
 		//device configuration
-		this.device = device;
 		this.name = device.name;
 		this.host = device.host;
 		this.port = device.port;
@@ -80,8 +80,11 @@ class openwebIfTvDevice {
 		this.switchInfoMenu = device.switchInfoMenu;
 		this.bouquets = device.bouquets;
 
-		//authentication basic
-		this.url = this.auth ? ('http://' + this.user + ':' + this.pass + '@' + this.host + ':' + this.port) : ('http://' + this.host + ':' + this.port);
+		//get Device info
+		this.manufacturer = device.manufacturer || 'openWebIf';
+		this.modelName = device.modelName || 'homebridge-openwebif-tv';
+		this.serialNumber = device.serialNumber || 'SN0000001';
+		this.firmwareRevision = device.firmwareRevision || 'FW0000001';
 
 		//setup variables
 		this.channelReferences = new Array();
@@ -93,12 +96,7 @@ class openwebIfTvDevice {
 		this.currentInfoMenuState = false;
 		this.prefDir = path.join(api.user.storagePath(), 'openwebifTv');
 		this.channelsFile = this.prefDir + '/' + 'channels_' + this.host.split('.').join('');
-
-		//get Device info
-		this.manufacturer = device.manufacturer || 'openWebIf';
-		this.modelName = device.modelName || 'homebridge-openwebif-tv';
-		this.serialNumber = device.serialNumber || 'SN0000001';
-		this.firmwareRevision = device.firmwareRevision || 'FW0000001';
+		this.url = this.auth ? ('http://' + this.user + ':' + this.pass + '@' + this.host + ':' + this.port) : ('http://' + this.host + ':' + this.port);
 
 		//check if prefs directory ends with a /, if not then add it
 		if (this.prefDir.endsWith('/') === false) {
@@ -117,24 +115,13 @@ class openwebIfTvDevice {
 				if (error) {
 					me.log('Device: %s, name: %s, state: Offline', me.host, me.name);
 					me.connectionStatus = false;
-				} else {
-					if (!me.connectionStatus) {
-						me.log('Device: %s, name: %s, state: Online', me.host, me.name);
-						me.connectionStatus = true;
-						if (fs.existsSync(me.channelsFile) === false) {
-							me.getBouquets();
-						}
-						var json = JSON.parse(data);
-						me.manufacturer = json.brand;
-						me.modelName = json.mname;
-						me.log('-------- %s --------', me.name);
-						me.log('Manufacturer: %s', json.brand);
-						me.log('Model: %s', json.mname);
-						me.log('Kernel: %s', json.kernelver);
-						me.log('Chipset: %s', json.chipset);
-						me.log('Webif version.: %s', json.webifver);
-						me.log('Firmware: %s', json.enigmaver);
-						me.log('----------------------------------');
+					return;
+				} else if (!me.connectionStatus) {
+					me.log('Device: %s, name: %s, state: Online', me.host, me.name);
+					me.connectionStatus = true;
+					me.getDeviceInfo();
+					if (fs.existsSync(me.channelsFile) === false) {
+						me.getBouquets();
 					}
 				}
 			});
@@ -143,6 +130,31 @@ class openwebIfTvDevice {
 		//Delay to wait for device info before publish
 		setTimeout(this.prepareTvService.bind(this), 1000);
 	}
+
+	getDeviceInfo() {
+		var me = this;
+		setTimeout(() => {
+			me.log.debug('Device: %s, requesting information from: %s', me.host, me.name);
+			request(me.url + '/api/deviceinfo', function (error, response, data) {
+				if (error) {
+					me.log.debug('Device: %s, name: %s, getDeviceInfo eror: %s', me.host, me.name, error);
+				} else {
+					var json = JSON.parse(data);
+					me.manufacturer = json.brand;
+					me.modelName = json.mname;
+					me.log('-------- %s --------', me.name);
+					me.log('Manufacturer: %s', json.brand);
+					me.log('Model: %s', json.mname);
+					me.log('Kernel: %s', json.kernelver);
+					me.log('Chipset: %s', json.chipset);
+					me.log('Webif version.: %s', json.webifver);
+					me.log('Firmware: %s', json.enigmaver);
+					me.log('----------------------------------');
+				}
+			});
+		}, 350);
+	}
+
 
 	//Prepare TV service 
 	prepareTvService() {
