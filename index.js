@@ -423,7 +423,7 @@ class openwebIfTvDevice {
 							me.currentChannelReference = channelReference;
 						}
 					}
-					callback(null, channelReference);
+					callback();
 				}
 			}
 		});
@@ -444,7 +444,7 @@ class openwebIfTvDevice {
 						} else {
 							me.log('Device: %s, set new Channel successfull: %s', me.host, channelReference);
 							me.currentChannelReference = channelReference;
-							callback(null, channelReference);
+							callback();
 						}
 					});
 				}
