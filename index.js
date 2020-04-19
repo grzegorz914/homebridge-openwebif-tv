@@ -423,7 +423,7 @@ class openwebIfTvDevice {
 							me.currentChannelReference = channelReference;
 						}
 					}
-					callback();
+					callback(null);
 				}
 			}
 		});
@@ -444,7 +444,7 @@ class openwebIfTvDevice {
 						} else {
 							me.log('Device: %s, set new Channel successfull: %s', me.host, channelReference);
 							me.currentChannelReference = channelReference;
-							callback();
+							callback(null);
 						}
 					});
 				}
@@ -488,7 +488,7 @@ class openwebIfTvDevice {
 				callback(error);
 			} else {
 				me.log('Device: %s, send RC Command successfull: %s', me.host, command);
-				callback(null, remoteKey);
+				callback(null);
 			}
 		});
 	}
@@ -543,7 +543,7 @@ class openwebIfTvDevice {
 				callback(error);
 			} else {
 				me.log('Device: %s, send RC Command successfull, remoteKey: %s, command: %s', me.host, command, remoteKey);
-				callback(null, remoteKey);
+				callback(null);
 			}
 		});
 	}
