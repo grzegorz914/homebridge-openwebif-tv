@@ -93,6 +93,7 @@ class openwebIfTvDevice {
 		this.currentMuteState = false;
 		this.currentVolume = 0;
 		this.currentChannelReference = null;
+		this.currentInfoMenuState = false;
 		this.prefDir = path.join(api.user.storagePath(), 'openwebifTv');
 		this.channelsFile = this.prefDir + '/' + 'channels_' + this.host.split('.').join('');
 		this.url = this.auth ? ('http://' + this.user + ':' + this.pass + '@' + this.host + ':' + this.port) : ('http://' + this.host + ':' + this.port);
@@ -274,7 +275,7 @@ class openwebIfTvDevice {
 							if (error) {
 								this.log.debug('Device: %s, can not write new channel name, error: %s', this.host, error);
 							} else {
-								this.log('Device: %s, saved new channel successfull, name: %s, reference: %s', this.host, newChannelName, channelReference);
+								this.log('Device: %s, saved new channel successful, name: %s, reference: %s', this.host, newChannelName, channelReference);
 							}
 						});
 						callback()
@@ -295,7 +296,7 @@ class openwebIfTvDevice {
 			} else {
 				var json = JSON.parse(data);
 				var state = (json.inStandby == 'false');
-				me.log('Device: %s, get current Power state successfull: %s', me.host, state ? 'ON' : 'STANDBY');
+				me.log('Device: %s, get current Power state successful: %s', me.host, state ? 'ON' : 'STANDBY');
 				me.currentPowerState = state;
 				callback(null, state);
 			}
@@ -316,7 +317,7 @@ class openwebIfTvDevice {
 							me.log.debug('Device: %s, can not set new Power state. Might be due to a wrong settings in config, error: %s', me.host, error);
 							callback(error);
 						} else {
-							me.log('Device: %s, set new Power state successfull: %s', me.host, state ? 'ON' : 'STANDBY');
+							me.log('Device: %s, set new Power state successful: %s', me.host, state ? 'ON' : 'STANDBY');
 							me.currentPowerState = state;
 							callback(null, state);
 						}
@@ -335,7 +336,7 @@ class openwebIfTvDevice {
 			} else {
 				var json = JSON.parse(data);
 				var state = (json.muted == true);
-				me.log('Device: %s, get current Mute state successfull: %s', me.host, state ? 'ON' : 'OFF');
+				me.log('Device: %s, get current Mute state successful: %s', me.host, state ? 'ON' : 'OFF');
 				me.currentMuteState = state;
 				callback(null, state);
 			}
@@ -355,7 +356,7 @@ class openwebIfTvDevice {
 							me.log.debug('Device: %s, can not set Mute. Might be due to a wrong settings in config, error: %s', me.host, error);
 							callback(error);
 						} else {
-							me.log('Device: %s, set Mute successfull: %s', me.host, state ? 'ON' : 'OFF');
+							me.log('Device: %s, set Mute successful: %s', me.host, state ? 'ON' : 'OFF');
 							me.currentMuteState = state;
 							callback(null, state);
 						}
@@ -374,7 +375,7 @@ class openwebIfTvDevice {
 			} else {
 				var json = JSON.parse(data);
 				var volume = parseFloat(json.volume);
-				me.log('Device: %s, get current Volume level successfull: %s', me.host, volume);
+				me.log('Device: %s, get current Volume level successful: %s', me.host, volume);
 				me.currentVolume = volume;
 				callback(null, volume);
 			}
@@ -389,7 +390,7 @@ class openwebIfTvDevice {
 				me.log.debug('Device: %s, can not set new Volume level. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
 			} else {
-				me.log('Device: %s, set new Volume level successfull: %s', me.host, volume);
+				me.log('Device: %s, set new Volume level successful: %s', me.host, volume);
 				me.currentVolume = volume;
 				callback(null, volume);
 			}
@@ -418,7 +419,7 @@ class openwebIfTvDevice {
 							me.tvService
 								.getCharacteristic(Characteristic.ActiveIdentifier)
 								.updateValue(i);
-							me.log('Device: %s, get current Channel successfull: %s %s', me.host, channelName, channelReference);
+							me.log('Device: %s, get current Channel successful: %s %s', me.host, channelName, channelReference);
 							me.currentChannelReference = channelReference;
 						}
 					}
@@ -441,7 +442,7 @@ class openwebIfTvDevice {
 							me.log.debug('Device: %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', me.host, error);
 							callback(error);
 						} else {
-							me.log('Device: %s, set new Channel successfull: %s', me.host, channelReference);
+							me.log('Device: %s, set new Channel successful: %s', me.host, channelReference);
 							me.currentChannelReference = channelReference;
 							callback(null);
 						}
@@ -451,12 +452,16 @@ class openwebIfTvDevice {
 		});
 	}
 
-       setPowerModeSelection(remoteKey, callback) {
+	setPowerModeSelection(remoteKey, callback) {
 		var me = this;
-		var command ='500';
-	        switch (remoteKey) {
+		var command = '500';
+		switch (remoteKey) {
 			case Characteristic.PowerModeSelection.SHOW:
-				command = me.switchInfoMenu ? '139' : '358';
+				if (me.currentInfoMenuState) {
+					command = '174';
+				} else {
+					command = me.switchInfoMenu ? '139' : '358';
+				}
 				break;
 			case Characteristic.PowerModeSelection.HIDE:
 				command = '174';
@@ -467,7 +472,8 @@ class openwebIfTvDevice {
 				me.log.debug('Device: %s can not setPowerModeSelection. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
 			} else {
-				me.log('Device: %s, setPowerModeSelection successfull, remoteKey: %s, command: %s', me.host, remoteKey, command);
+				me.log('Device: %s, setPowerModeSelection successful, remoteKey: %s, command: %s', me.host, remoteKey, command);
+				me.currentInfoMenuState = !me.currentInfoMenuState;
 				callback(null, remoteKey);
 			}
 		});
@@ -489,7 +495,7 @@ class openwebIfTvDevice {
 				me.log.debug('Device: %s can not setVolumeSelector. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
 			} else {
-				me.log('Device: %s, setVolumeSelector successfull, remoteKey: %s, command: %s', me.host, remoteKey, command);
+				me.log('Device: %s, setVolumeSelector successful, remoteKey: %s, command: %s', me.host, remoteKey, command);
 				callback(null, remoteKey);
 			}
 		});
@@ -544,7 +550,7 @@ class openwebIfTvDevice {
 				me.log.debug('Device: %s can not setRemoteKey. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
 			} else {
-				me.log('Device: %s, setRemoteKey successfull, remoteKey: %s, command: %s', me.host, command, remoteKey);
+				me.log('Device: %s, setRemoteKey successful, remoteKey: %s, command: %s', me.host, remoteKey, command);
 				callback(null, remoteKey);
 			}
 		});
@@ -591,7 +597,7 @@ class openwebIfTvDevice {
 					printArray.push(object);
 				}
 				var string = JSON.stringify(printArray, null, 2);
-				me.log('Device: %s, saved channels successfull in: %s', me.host, me.prefDir);
+				me.log('Device: %s, saved channels successful in: %s', me.host, me.prefDir);
 				fs.writeFileSync(me.channelsFile, string, 'utf8', (error) => {
 					if (error) {
 						me.log.debug('Device: %s, can not create channels file, error: %s', me.host, error);
