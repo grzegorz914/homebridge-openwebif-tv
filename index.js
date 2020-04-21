@@ -175,7 +175,7 @@ class openwebIfTvDevice {
 			});
 
 		this.tvService.getCharacteristic(Characteristic.RemoteKey)
-			.on('set', this.remoteKeyPress.bind(this));
+			.on('set', this.setRemoteKey.bind(this));
 
 		this.tvService.getCharacteristic(Characteristic.PowerModeSelection)
 			.on('set', this.setPowerModeSelection.bind(this));
@@ -204,7 +204,7 @@ class openwebIfTvDevice {
 			.setCharacteristic(Characteristic.Active, Characteristic.Active.ACTIVE)
 			.setCharacteristic(Characteristic.VolumeControlType, Characteristic.VolumeControlType.ABSOLUTE);
 		this.tvSpeakerService.getCharacteristic(Characteristic.VolumeSelector)
-			.on('set', this.volumeSelectorPress.bind(this));
+			.on('set', this.setVolumeSelector.bind(this));
 		this.tvSpeakerService.getCharacteristic(Characteristic.Volume)
 			.on('get', this.getVolume.bind(this))
 			.on('set', this.setVolume.bind(this));
@@ -462,12 +462,18 @@ class openwebIfTvDevice {
 				command = '174';
 				break;
 		}
-		this.pointerInputSocket.send('button', { name: command });
-		me.log('Device: %s, setPowerModeSelection successfull, remoteKey: %s, command: %s', me.host, remoteKey, command);
-		callback(null, remoteKey);
+		request(me.url + '/api/remotecontrol?command=' + command, function (error, response, data) {
+			if (error) {
+				me.log.debug('Device: %s can not setPowerModeSelection. Might be due to a wrong settings in config, error: %s', me.host, error);
+				callback(error);
+			} else {
+				me.log('Device: %s, setPowerModeSelection successfull, remoteKey: %s, command: %s', me.host, remoteKey, command);
+				callback(null, remoteKey);
+			}
+		});
 	}
 
-	volumeSelectorPress(remoteKey, callback) {
+	setVolumeSelector(remoteKey, callback) {
 		var me = this;
 		var command = '500';
 		switch (remoteKey) {
@@ -480,16 +486,16 @@ class openwebIfTvDevice {
 		}
 		request(me.url + '/api/remotecontrol?command=' + command, function (error, response, data) {
 			if (error) {
-				me.log.debug('Device: %s can not send RC Command (Volume button). Might be due to a wrong settings in config, error: %s', me.host, error);
+				me.log.debug('Device: %s can not setVolumeSelector. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
 			} else {
-				me.log('Device: %s, send RC Command (Volume button) successfull, remoteKey: %s, command: %s', me.host, remoteKey, command);
+				me.log('Device: %s, setVolumeSelector successfull, remoteKey: %s, command: %s', me.host, remoteKey, command);
 				callback(null, remoteKey);
 			}
 		});
 	}
 
-	remoteKeyPress(remoteKey, callback) {
+	setRemoteKey(remoteKey, callback) {
 		var me = this;
 		var command = '500';
 		switch (remoteKey) {
@@ -535,14 +541,15 @@ class openwebIfTvDevice {
 		}
 		request(me.url + '/api/remotecontrol?command=' + command, function (error, response, data) {
 			if (error) {
-				me.log.debug('Device: %s can not send RC Command. Might be due to a wrong settings in config, error: %s', me.host, error);
+				me.log.debug('Device: %s can not setRemoteKey. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
 			} else {
-				me.log('Device: %s, send RC Command successfull, remoteKey: %s, command: %s', me.host, command, remoteKey);
+				me.log('Device: %s, setRemoteKey successfull, remoteKey: %s, command: %s', me.host, command, remoteKey);
 				callback(null, remoteKey);
 			}
 		});
 	}
+
 
 
 	getBouquets() {
