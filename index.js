@@ -93,7 +93,6 @@ class openwebIfTvDevice {
 		this.currentMuteState = false;
 		this.currentVolume = 0;
 		this.currentChannelReference = null;
-		this.currentInfoMenuState = false;
 		this.prefDir = path.join(api.user.storagePath(), 'openwebifTv');
 		this.channelsFile = this.prefDir + '/' + 'channels_' + this.host.split('.').join('');
 		this.url = this.auth ? ('http://' + this.user + ':' + this.pass + '@' + this.host + ':' + this.port) : ('http://' + this.host + ':' + this.port);
@@ -159,7 +158,7 @@ class openwebIfTvDevice {
 	//Prepare TV service 
 	prepareTvService() {
 		this.log.debug('prepareTvService');
-		this.tvAccesory = new Accessory(this.name, UUIDGen.generate(this.host + this.name));
+		this.tvAccesory = new Accessory(this.name, UUIDGen.generate(this.name));
 
 		this.tvService = new Service.Television(this.name, 'tvService');
 		this.tvService.setCharacteristic(Characteristic.ConfiguredName, this.name);
@@ -452,24 +451,20 @@ class openwebIfTvDevice {
 		});
 	}
 
-	setPowerModeSelection(state, callback) {
+       setPowerModeSelection(remoteKey, callback) {
 		var me = this;
-		var command = '500';
-		if (me.currentInfoMenuState) {
-			command = '174';
-		} else {
-			command = me.switchInfoMenu ? '139' : '358';
+		var command ='500';
+	        switch (remoteKey) {
+			case Characteristic.PowerModeSelection.SHOW:
+				command = me.switchInfoMenu ? '139' : '358';
+				break;
+			case Characteristic.PowerModeSelection.HIDE:
+				command = '174';
+				break;
 		}
-		request(me.url + '/api/remotecontrol?command=' + command, function (error, response, data) {
-			if (error) {
-				me.log.debug('Device: %s can not setPowerModeSelection. Might be due to a wrong settings in config, error: %s', me.host, error);
-				callback(error);
-			} else {
-				me.log('Device: %s, setPowerModeSelection successfull, state: %s, command: %s', me.host, me.currentInfoMenuState ? 'HIDE' : 'SHOW', command);
-				me.currentInfoMenuState = !me.currentInfoMenuState;
-				callback(null, state);
-			}
-		});
+		this.pointerInputSocket.send('button', { name: command });
+		me.log('Device: %s, setPowerModeSelection successfull, remoteKey: %s, command: %s', me.host, remoteKey, command);
+		callback(null, remoteKey);
 	}
 
 	volumeSelectorPress(remoteKey, callback) {
@@ -489,7 +484,7 @@ class openwebIfTvDevice {
 				callback(error);
 			} else {
 				me.log('Device: %s, send RC Command (Volume button) successfull, remoteKey: %s, command: %s', me.host, remoteKey, command);
-				callback(null);
+				callback(null, remoteKey);
 			}
 		});
 	}
@@ -544,7 +539,7 @@ class openwebIfTvDevice {
 				callback(error);
 			} else {
 				me.log('Device: %s, send RC Command successfull, remoteKey: %s, command: %s', me.host, command, remoteKey);
-				callback(null);
+				callback(null, remoteKey);
 			}
 		});
 	}
