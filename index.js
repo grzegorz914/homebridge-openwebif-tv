@@ -278,7 +278,7 @@ class openwebIfTvDevice {
 								this.log('Device: %s, saved new channel successful, name: %s, reference: %s', this.host, newChannelName, channelReference);
 							}
 						});
-						callback()
+						callback(null, newChannelName)
 					});
 				this.tvAccesory.addService(tempInput);
 				this.tvService.addLinkedService(tempInput);
