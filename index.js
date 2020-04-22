@@ -429,7 +429,7 @@ class openwebIfTvDevice {
 		});
 	}
 
-	setChannel(callback, channelReference) {
+	setChannel(channelReference, callback) {
 		var me = this;
 		me.getChannel(function (error, currentChannelReference) {
 			if (error) {
