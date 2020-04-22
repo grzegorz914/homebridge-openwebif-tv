@@ -172,7 +172,7 @@ class openwebIfTvDevice {
 		this.tvService.getCharacteristic(Characteristic.ActiveIdentifier)
 			.on('get', this.getChannel.bind(this))
 			.on('set', (inputIdentifier, callback) => {
-				this.setChannel(callback, this.channelReferences[inputIdentifier]);
+				this.setChannel(this.channelReferences[inputIdentifier], callback);
 			});
 
 		this.tvService.getCharacteristic(Characteristic.RemoteKey)
