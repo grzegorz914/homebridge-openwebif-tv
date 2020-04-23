@@ -404,26 +404,20 @@ class openwebIfTvDevice {
 				me.log.debug('Devive: %s, can not get current Channel. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
 			} else {
-				var json = JSON.parse(data);
-				var channelReference = json.currservice_serviceref;
+				let json = JSON.parse(data);
+				let channelReference = json.currservice_serviceref;
 				if (!me.connectionStatus || channelReference === undefined || channelReference === null) {
-					me.tvService
-						.getCharacteristic(Characteristic.ActiveIdentifier)
-						.updateValue(0);
-					callback(null);
+					callback(null, 0);
 				} else {
-					var channelReference = json.currservice_serviceref;
-					var channelName = json.currservice_station;
+					let channelReference = json.currservice_serviceref;
+					let channelName = json.currservice_station;
 					for (let i = 0; i < me.channelReferences.length; i++) {
 						if (channelReference === me.channelReferences[i]) {
-							me.tvService
-								.getCharacteristic(Characteristic.ActiveIdentifier)
-								.updateValue(i);
 							me.log('Device: %s, get current Channel successful: %s %s', me.host, channelName, channelReference);
 							me.currentChannelReference = channelReference;
+							callback(null, i);
 						}
 					}
-					callback(null);
 				}
 			}
 		});
