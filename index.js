@@ -139,7 +139,7 @@ class openwebIfTvDevice {
 				if (error) {
 					me.log.debug('Device: %s, name: %s, getDeviceInfo eror: %s', me.host, me.name, error);
 				} else {
-					var json = JSON.parse(data);
+					let json = JSON.parse(data);
 					me.manufacturer = json.brand;
 					me.modelName = json.mname;
 					me.log('-------- %s --------', me.name);
@@ -294,8 +294,8 @@ class openwebIfTvDevice {
 				me.log.debug('Device: %s, can not get current Power state. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
 			} else {
-				var json = JSON.parse(data);
-				var state = (json.inStandby == 'false');
+				let json = JSON.parse(data);
+				let state = (json.inStandby == 'false');
 				me.log('Device: %s, get current Power state successful: %s', me.host, state ? 'ON' : 'STANDBY');
 				me.currentPowerState = state;
 				callback(null, state);
@@ -311,7 +311,7 @@ class openwebIfTvDevice {
 				callback(error);
 			} else {
 				if (state !== currentPowerState) {
-					var newState = state ? '4' : '5';
+					let newState = state ? '4' : '5';
 					request(me.url + '/api/powerstate?newstate=' + newState, function (error, response, data) {
 						if (error) {
 							me.log.debug('Device: %s, can not set new Power state. Might be due to a wrong settings in config, error: %s', me.host, error);
@@ -334,8 +334,8 @@ class openwebIfTvDevice {
 				me.log.debug('Device: %s, can not get current Mute state. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
 			} else {
-				var json = JSON.parse(data);
-				var state = (json.muted == true);
+				let json = JSON.parse(data);
+				let state = (json.muted == true);
 				me.log('Device: %s, get current Mute state successful: %s', me.host, state ? 'ON' : 'OFF');
 				me.currentMuteState = state;
 				callback(null, state);
@@ -373,8 +373,8 @@ class openwebIfTvDevice {
 				me.log.debug('Device: %s, can not get current Volume level. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
 			} else {
-				var json = JSON.parse(data);
-				var volume = parseFloat(json.volume);
+				let json = JSON.parse(data);
+				let volume = parseFloat(json.volume);
 				me.log('Device: %s, get current Volume level successful: %s', me.host, volume);
 				me.currentVolume = volume;
 				callback(null, volume);
@@ -384,7 +384,7 @@ class openwebIfTvDevice {
 
 	setVolume(volume, callback) {
 		var me = this;
-		var targetVolume = parseInt(volume);
+		let targetVolume = parseInt(volume);
 		request(me.url + '/api/vol?set=set' + targetVolume, function (error, response, data) {
 			if (error) {
 				me.log.debug('Device: %s, can not set new Volume level. Might be due to a wrong settings in config, error: %s', me.host, error);
@@ -404,26 +404,17 @@ class openwebIfTvDevice {
 				me.log.debug('Devive: %s, can not get current Channel. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
 			} else {
-				var json = JSON.parse(data);
-				var channelReference = json.currservice_serviceref;
-				if (!me.connectionStatus || channelReference === undefined || channelReference === null) {
-					me.tvService
-						.getCharacteristic(Characteristic.ActiveIdentifier)
-						.updateValue(0);
-					callback(null);
-				} else {
-					var channelReference = json.currservice_serviceref;
-					var channelName = json.currservice_station;
-					for (let i = 0; i < me.channelReferences.length; i++) {
-						if (channelReference === me.channelReferences[i]) {
-							me.tvService
-								.getCharacteristic(Characteristic.ActiveIdentifier)
-								.updateValue(i);
-							me.log('Device: %s, get current Channel successful: %s %s', me.host, channelName, channelReference);
-							me.currentChannelReference = channelReference;
-						}
+				let json = JSON.parse(data);
+				let channelReference = json.currservice_serviceref;
+				let channelName = json.currservice_station;
+				for (let i = 0; i < me.channelReferences.length; i++) {
+					if (channelReference === me.channelReferences[i]) {
+						me.log('Device: %s, get current Channel successful: %s %s', me.host, channelName, channelReference);
+						me.currentChannelReference = channelReference;
+						callback(null, i);
+					} else {
+						callback(null, 0);
 					}
-					callback(null);
 				}
 			}
 		});
@@ -454,7 +445,7 @@ class openwebIfTvDevice {
 
 	setPowerModeSelection(remoteKey, callback) {
 		var me = this;
-		var command = '500';
+		let command = '500';
 		switch (remoteKey) {
 			case Characteristic.PowerModeSelection.SHOW:
 				if (me.currentInfoMenuState) {
@@ -481,7 +472,7 @@ class openwebIfTvDevice {
 
 	setVolumeSelector(remoteKey, callback) {
 		var me = this;
-		var command = '500';
+		let command = '500';
 		switch (remoteKey) {
 			case Characteristic.VolumeSelector.INCREMENT:
 				command = '115';
@@ -503,7 +494,7 @@ class openwebIfTvDevice {
 
 	setRemoteKey(remoteKey, callback) {
 		var me = this;
-		var command = '500';
+		let command = '500';
 		switch (remoteKey) {
 			case Characteristic.RemoteKey.REWIND:
 				command = '168';
@@ -563,10 +554,10 @@ class openwebIfTvDevice {
 		request(me.url + '/api/getservices', function (error, response, data) {
 			if (error) {
 			} else {
-				var json = JSON.parse(data);
-				var bouquetsList = json.services;
-				var arrayLength = bouquetsList.length;
-				for (var i = 0; i < arrayLength; i++) { }
+				let json = JSON.parse(data);
+				let bouquetsList = json.services;
+				let arrayLength = bouquetsList.length;
+				for (let i = 0; i < arrayLength; i++) { }
 				me.log.debug('Bouquets list', bouquetsList);
 				me.saveBouquetsChannels(bouquetsList, new Array());
 			}
@@ -581,22 +572,22 @@ class openwebIfTvDevice {
 		request(me.url + '/api/getservices?sRef=' + bouquetReference, function (error, response, data) {
 			if (error) {
 			} else {
-				var json = JSON.parse(data);
-				var servicesList = json.services;
+				let json = JSON.parse(data);
+				let servicesList = json.services;
 				if (servicesList.length > 96) {
-					var arrayLength = 96;
+					let arrayLength = 96;
 				} else {
-					var arrayLength = servicesList.length;
+					let arrayLength = servicesList.length;
 				}
-				for (var i = 0; i < arrayLength; i++) {
-					var service = servicesList[i];
+				for (let i = 0; i < arrayLength; i++) {
+					let service = servicesList[i];
 					let name = service.servicename;
 					let ref = service.servicereference;
-					var object = { 'name': name, 'reference': ref };
+					let object = { 'name': name, 'reference': ref };
 					me.log.debug('Prepare channels to save in file', object);
 					printArray.push(object);
 				}
-				var string = JSON.stringify(printArray, null, 2);
+				let string = JSON.stringify(printArray, null, 2);
 				me.log('Device: %s, saved channels successful in: %s', me.host, me.prefDir);
 				fs.writeFileSync(me.channelsFile, string, 'utf8', (error) => {
 					if (error) {
