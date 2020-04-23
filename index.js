@@ -412,8 +412,6 @@ class openwebIfTvDevice {
 						me.log('Device: %s, get current Channel successful: %s %s', me.host, channelName, channelReference);
 						me.currentChannelReference = channelReference;
 						callback(null, i);
-					} else {
-						callback(null, 0);
 					}
 				}
 			}
