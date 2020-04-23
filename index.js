@@ -171,9 +171,7 @@ class openwebIfTvDevice {
 
 		this.tvService.getCharacteristic(Characteristic.ActiveIdentifier)
 			.on('get', this.getChannel.bind(this))
-			.on('set', (inputIdentifier, callback) => {
-				this.setChannel(this.channelReferences[inputIdentifier], callback);
-			});
+			.on('set', this.setChannel.bind(this));
 
 		this.tvService.getCharacteristic(Characteristic.RemoteKey)
 			.on('set', this.setRemoteKey.bind(this));
@@ -422,14 +420,15 @@ class openwebIfTvDevice {
 		}
 	}
 
-	setChannel(channelReference, callback) {
+	setChannel(inputIdentifier, callback) {
 		var me = this;
 		me.getChannel(function (error, currentChannelReference) {
 			if (error) {
 				me.log.debug('Devive: %s, can not get current Channel for new Channel. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
 			} else {
-				if (channelReference !== currentChannelReference) {
+				if (me.channelReferences[inputIdentifier] !== currentChannelReference) {
+                                     let channelReference = me.channelReferences[inputIdentifier];
 					request(me.url + '/api/zap?sRef=' + channelReference, function (error, response, data) {
 						if (error) {
 							me.log.debug('Device: %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', me.host, error);
@@ -437,7 +436,7 @@ class openwebIfTvDevice {
 						} else {
 							me.log('Device: %s, set new Channel successful: %s', me.host, channelReference);
 							me.currentChannelReference = channelReference;
-							callback(null);
+							callback(null, inputIdentifier);
 						}
 					});
 				}
