@@ -399,17 +399,16 @@ class openwebIfTvDevice {
 
 	getChannel(callback) {
 		var me = this;
-		request(me.url + '/api/statusinfo', function (error, response, data) {
-			if (error) {
-				me.log.debug('Devive: %s, can not get current Channel. Might be due to a wrong settings in config, error: %s', me.host, error);
-				callback(error);
-			} else {
-				let json = JSON.parse(data);
-				let channelReference = json.currservice_serviceref;
-				if (!me.connectionStatus || channelReference === undefined || channelReference === null) {
-					callback(null, 0);
+		if (!me.connectionStatus || !me.currentPowerState) {
+			callback(null, 0);
+		} else {
+			request(me.url + '/api/statusinfo', function (error, response, data) {
+				if (error) {
+					me.log.debug('Devive: %s, can not get current Channel. Might be due to a wrong settings in config, error: %s', me.host, error);
+					callback(error);
 				} else {
-					let channelReference = json.currservice_serviceref;
+					let json = JSON.parse(data);
+					let channelReference = json.currservice_serviceref;;
 					let channelName = json.currservice_station;
 					for (let i = 0; i < me.channelReferences.length; i++) {
 						if (channelReference === me.channelReferences[i]) {
@@ -419,8 +418,8 @@ class openwebIfTvDevice {
 						}
 					}
 				}
-			}
-		});
+			});
+		}
 	}
 
 	setChannel(channelReference, callback) {
