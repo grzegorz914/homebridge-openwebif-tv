@@ -428,7 +428,7 @@ class openwebIfTvDevice {
 				callback(error);
 			} else {
 				let channelReference = me.channelReferences[inputIdentifier];
-				if (me.channelReferences[inputIdentifier] !== currentChannelReference) {
+				if (channelReference !== currentChannelReference) {
 					request(me.url + '/api/zap?sRef=' + channelReference, function (error, response, data) {
 						if (error) {
 							me.log.debug('Device: %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', me.host, error);
