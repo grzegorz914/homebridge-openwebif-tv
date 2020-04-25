@@ -117,16 +117,15 @@ class openwebIfTvDevice {
 					me.connectionStatus = false;
 					return;
 				} else {
-                                       if (!me.connectionStatus) {
-					me.log('Device: %s, name: %s, state: Online', me.host, me.name);
-					me.connectionStatus = true;
-					me.getDeviceInfo();
-                                     me.getDeviceState();
-					if (fs.existsSync(me.channelsFile) === false) {
-						me.getBouquets();
+					if (!me.connectionStatus) {
+						me.log('Device: %s, name: %s, state: Online', me.host, me.name);
+						me.connectionStatus = true;
+						me.getDeviceInfo();
+						if (fs.existsSync(me.channelsFile) === false) {
+							me.getBouquets();
+						}
 					}
-                                } 
-                             }
+				}
 			});
 		}.bind(this), 5000);
 
@@ -157,32 +156,6 @@ class openwebIfTvDevice {
 			});
 		}, 350);
 	}
-
-       getDeviceState() {
-		var me = this;
-		request(me.url + '/api/statusinfo', function (error, response, data) {
-			if (error) {
-				me.log.debug('Device: %s, can not get current Power state. Might be due to a wrong settings in config, error: %s', me.host, error);
-				callback(error);
-			} else {
-				let json = JSON.parse(data);
-				let powerState = (json.inStandby == 'false');
-                             let muteState = (json.muted == true);
-                             let volume = parseFloat(json.volume);
-                             let channelReference = json.currservice_serviceref;
-				let channelName = json.currservice_station;
-				me.log('Device: %s, get current Power state successful: %s', me.host, powerState ? 'ON' : 'STANDBY');
-                             me.log('Device: %s, get current Mute state successful: %s', me.host, muteState ? 'ON' : 'OFF');
-                             me.log('Device: %s, get current Volume level successful: %s', me.host, volume);
-                             me.log('Device: %s, get current Channel successful: %s %s', me.host, channelName, channelReference);
-				me.currentPowerState = powerState;
-                             me.currentMuteState = muteState;
-                             me.currentVolume = volume;
-                             me.currentChannelReference = channelReference;
-			}
-		});
-	}
-
 
 	//Prepare TV service 
 	prepareTvService() {
@@ -282,7 +255,7 @@ class openwebIfTvDevice {
 			}
 
 			//If reference not null or empty add the input
-			if (channelReference !== undefined && channelReference !== null || channelReference !== ' ') {
+			if (channelReference !== undefined && channelReference !== null || channelReference !== '') {
 				channelReference = channelReference.replace(/\s/g, ''); // remove all white spaces from the string
 
 				let tempInput = new Service.InputSource(channelReference, 'channel' + i);
@@ -425,7 +398,7 @@ class openwebIfTvDevice {
 
 	getChannel(callback) {
 		var me = this;
-		if (!me.connectionStatus || !me.currentPowerState) {
+		if (!me.connectionStatus) {
 			callback(null, 0);
 		} else {
 			request(me.url + '/api/statusinfo', function (error, response, data) {
