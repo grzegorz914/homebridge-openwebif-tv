@@ -116,14 +116,17 @@ class openwebIfTvDevice {
 					me.log('Device: %s, name: %s, state: Offline', me.host, me.name);
 					me.connectionStatus = false;
 					return;
-				} else if (!me.connectionStatus) {
+				} else {
+                                       if (!me.connectionStatus) {
 					me.log('Device: %s, name: %s, state: Online', me.host, me.name);
 					me.connectionStatus = true;
 					me.getDeviceInfo();
+                                     me.getDeviceState();
 					if (fs.existsSync(me.channelsFile) === false) {
 						me.getBouquets();
 					}
-				}
+                                } 
+                             }
 			});
 		}.bind(this), 5000);
 
@@ -153,6 +156,31 @@ class openwebIfTvDevice {
 				}
 			});
 		}, 350);
+	}
+
+       getDeviceState() {
+		var me = this;
+		request(me.url + '/api/statusinfo', function (error, response, data) {
+			if (error) {
+				me.log.debug('Device: %s, can not get current Power state. Might be due to a wrong settings in config, error: %s', me.host, error);
+				callback(error);
+			} else {
+				let json = JSON.parse(data);
+				let powerState = (json.inStandby == 'false');
+                             let muteState = (json.muted == true);
+                             let volume = parseFloat(json.volume);
+                             let channelReference = json.currservice_serviceref;
+				let channelName = json.currservice_station;
+				me.log('Device: %s, get current Power state successful: %s', me.host, powerState ? 'ON' : 'STANDBY');
+                             me.log('Device: %s, get current Mute state successful: %s', me.host, muteState ? 'ON' : 'OFF');
+                             me.log('Device: %s, get current Volume level successful: %s', me.host, volume);
+                             me.log('Device: %s, get current Channel successful: %s %s', me.host, channelName, channelReference);
+				me.currentPowerState = powerState;
+                             me.currentMuteState = muteState;
+                             me.currentVolume = volume;
+                             me.currentChannelReference = channelReference;
+			}
+		});
 	}
 
 
@@ -428,7 +456,7 @@ class openwebIfTvDevice {
 				callback(error);
 			} else {
 				let channelReference = me.channelReferences[inputIdentifier];
-				if (me.channelReferences[inputIdentifier] !== currentChannelReference) {
+				if (channelReference !== currentChannelReference) {
 					request(me.url + '/api/zap?sRef=' + channelReference, function (error, response, data) {
 						if (error) {
 							me.log.debug('Device: %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', me.host, error);

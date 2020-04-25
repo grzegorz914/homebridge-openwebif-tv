@@ -1,6 +1,6 @@
 {
   "name": "homebridge-openwebif-tv",
-  "version": "2.4.40",
+  "version": "2.4.45",
   "description": "Homebridge plugin (https://github.com/homebridge/homebridge) to control Sat Receivers with openWebIf interface.",
   "license": "MIT",
   "author": "grzegorz914",
