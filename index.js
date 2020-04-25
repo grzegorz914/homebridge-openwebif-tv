@@ -282,7 +282,7 @@ class openwebIfTvDevice {
 			}
 
 			//If reference not null or empty add the input
-			if (channelReference !== undefined && channelReference !== null) {
+			if (channelReference !== undefined && channelReference !== null || channelReference !== ' ') {
 				channelReference = channelReference.replace(/\s/g, ''); // remove all white spaces from the string
 
 				let tempInput = new Service.InputSource(channelReference, 'channel' + i);
