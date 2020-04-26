@@ -413,7 +413,6 @@ class openwebIfTvDevice {
 						callback(null, i);
 					}
 				}
-				callback(null);
 			}
 		});
 	}
