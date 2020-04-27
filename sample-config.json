@@ -25,7 +25,8 @@
           "auth": false,
           "user": "user",
           "pass": "pass",
-          "switchInfoMenu": true,
+          "volumeControl": false,
+          "switchInfoMenu": false,
           "bouquets": [
             {
               "name": "Das Erste HD",

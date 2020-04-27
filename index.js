@@ -78,6 +78,7 @@ class openwebIfTvDevice {
 		this.auth = device.auth;
 		this.user = device.user;
 		this.pass = device.pass;
+		this.volumeControl = device.volumeControl;
 		this.switchInfoMenu = device.switchInfoMenu;
 		this.bouquets = device.bouquets;
 
@@ -190,10 +191,12 @@ class openwebIfTvDevice {
 			.setCharacteristic(Characteristic.SerialNumber, this.serialNumber)
 			.setCharacteristic(Characteristic.FirmwareRevision, this.firmwareRevision);
 
-		this.accessory.addService(this.televisionService);
-		this.prepareSpeakerService();
-		this.prepareVolumeService();
-		this.prepareInputsService();
+			this.accessory.addService(this.televisionService);
+			this.prepareSpeakerService();
+			this.prepareInputsService();
+			if (this.volumeControl) {
+				this.prepareVolumeService();
+			}
 
 		this.log.debug('Device: %s, publishExternalAccessories: %s', this.host, this.name);
 		this.api.publishExternalAccessories('homebridge-openwebif-tv', [this.accessory]);
