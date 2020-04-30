@@ -227,10 +227,7 @@ class openwebIfTvDevice {
 		this.log.debug('prepareVolumeService');
 		this.volumeService = new Service.Lightbulb(this.name + ' Volume', 'volumeService');
 		this.volumeService.getCharacteristic(Characteristic.On)
-			.on('get', function (callback) {
-				let mute = this.currentMuteState ? 0 : 1;
-				callback(null, mute);
-			});
+			.on('get', this.getMuteSlider.bind(this));
 		this.volumeService.getCharacteristic(Characteristic.Brightness)
 			.on('get', this.getVolume.bind(this))
 			.on('set', this.setVolume.bind(this));
@@ -320,7 +317,7 @@ class openwebIfTvDevice {
 				let state = (json.inStandby == 'false');
 				me.log('Device: %s, get current Power state successful: %s', me.host, state ? 'ON' : 'STANDBY');
 				me.currentPowerState = state;
-				callback(null, state);
+                             callback(null, state);
 			}
 		});
 	}
@@ -341,7 +338,7 @@ class openwebIfTvDevice {
 						} else {
 							me.log('Device: %s, set new Power state successful: %s', me.host, state ? 'ON' : 'STANDBY');
 							me.currentPowerState = state;
-							callback(null, state);
+                                                    callback(null, state);
 						}
 					});
 				}
@@ -388,6 +385,12 @@ class openwebIfTvDevice {
 		});
 	}
 
+        getMuteSlider(callback) {
+		var me = this;
+		let state = !me.currentMuteState;
+		callback(null, state);
+	}
+
 	getVolume(callback) {
 		var me = this;
 		request(me.url + '/api/statusinfo', function (error, response, data) {
@@ -429,12 +432,22 @@ class openwebIfTvDevice {
 				let json = JSON.parse(data);
 				let channelReference = json.currservice_serviceref;;
 				let channelName = json.currservice_station;
+                            if (!me.connectionStatus || channelReference === undefined || channelReference === null) {
+					me.televisionService
+						.getCharacteristic(Characteristic.ActiveIdentifier)
+						.updateValue(0);
+					callback(null);
+                              } else {
 				for (let i = 0; i < me.channelReferences.length; i++) {
 					if (channelReference === me.channelReferences[i]) {
+                                         me.televisionService
+								.getCharacteristic(Characteristic.ActiveIdentifier)
+								.updateValue(i);
 						me.log('Device: %s, get current Channel successful: %s %s', me.host, channelName, channelReference);
 						me.currentChannelReference = channelReference;
-						callback(null, i);
+                                        }
 					}
+                                           callback(null);
 				}
 			}
 		});
@@ -456,7 +469,7 @@ class openwebIfTvDevice {
 						} else {
 							me.log('Device: %s, set new Channel successful: %s', me.host, channelReference);
 							me.currentChannelReference = channelReference;
-							callback(null, inputIdentifier);
+                                         callback(null);
 						}
 					});
 				}
