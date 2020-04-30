@@ -126,6 +126,10 @@ class openwebIfTvDevice {
 						if (fs.existsSync(me.channelsFile) === false) {
 							me.getBouquets();
 						}
+					} else {
+						if (me.currentPowerState) {
+							me.getDeviceState();
+						}
 					}
 				}
 			});
@@ -157,6 +161,45 @@ class openwebIfTvDevice {
 				}
 			});
 		}, 350);
+	}
+
+	getDeviceState() {
+		var me = this;
+		request(me.url + '/api/statusinfo', function (error, response, data) {
+			if (error) {
+				me.log('Device: %s, name: %s, state: Offline', me.host, me.name);
+			} else {
+				let json = JSON.parse(data);
+				let powerState = (json.inStandby == 'false');
+				me.currentPowerState = powerState;
+
+				if (me.televisionService && me.channelReferences && me.channelReferences.length > 0) {
+					let inputIdentifier = me.channelReferences.indexOf(json.currservice_serviceref);
+					me.televisionService.getCharacteristic(Characteristic.ActiveIdentifier).updateValue(inputIdentifier);
+				}
+				if (me.speakerService && data.changed) {
+					let muteState = (json.muted == true);
+					me.speakerService.getCharacteristic(Characteristic.Mute).updateValue(data.muted);
+					me.log.info('Device: %s, get current Mute state: %s', me.host, muteState ? 'ON' : 'OFF');
+					me.currentMuteState = muteState;
+				}
+				if (me.volumeService && data.changed) {
+					let muteState = (json.muted == true);
+					me.volumeService.getCharacteristic(Characteristic.On).updateValue(!muteState);
+				}
+				if (me.speakerService && data.changed) {
+					let volume = parseFloat(json.volume);
+					this.speakerService.getCharacteristic(Characteristic.Volume).updateValue(volume);
+					me.log.info('Device: %s, get current Volume level: %s', me.host, volume);
+					me.currentVolume = volume;
+				}
+				if (me.volumeService && data.changed) {
+					let volume = parseFloat(json.volume);
+					me.volumeService.getCharacteristic(Characteristic.Brightness).updateValue(volume);
+				}
+
+			}
+		});
 	}
 
 	//Prepare TV service 
@@ -430,7 +473,7 @@ class openwebIfTvDevice {
 				callback(error);
 			} else {
 				let json = JSON.parse(data);
-				let channelReference = json.currservice_serviceref;;
+				let channelReference = json.currservice_serviceref;
 				let channelName = json.currservice_station;
 				if (!me.connectionStatus || channelReference === undefined || channelReference === null) {
 					me.televisionService
