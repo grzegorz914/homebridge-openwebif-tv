@@ -113,7 +113,7 @@ class openwebIfTvDevice {
 		//Check net state
 		setInterval(function () {
 			var me = this;
-			request(me.url + '/api/deviceinfo', function (error, response, data) {
+			request(me.url + '/api/deviceinfo', (error, response, data) => {
 				if (error) {
 					me.log('Device: %s, name: %s, state: Offline', me.host, me.name);
 					me.connectionStatus = false;
@@ -123,9 +123,6 @@ class openwebIfTvDevice {
 						me.log('Device: %s, name: %s, state: Online', me.host, me.name);
 						me.connectionStatus = true;
 						me.getDeviceInfo();
-						if (fs.existsSync(me.channelsFile) === false) {
-							me.getBouquets();
-						}
 					} else {
 						if (me.currentPowerState) {
 							me.getDeviceState();
@@ -141,9 +138,30 @@ class openwebIfTvDevice {
 
 	getDeviceInfo() {
 		var me = this;
+		request(me.url + '/api/getallservices', (error, response, data) => {
+			if (error) {
+				me.log.debug('Device: %s, get Channels list error: %s', me.host, error);
+			} else {
+				if (fs.existsSync(me.channelsFile) === false) {
+					let json = JSON.parse(data);
+					let channels = json.services;
+					me.log.debug('Device: %s, get Channels list successful: %s', me.host, JSON.stringify(channels, null, 2));
+					fs.writeFile(me.channelsFile, JSON.stringify(channels), (error) => {
+						if (error) {
+							me.log.debug('Device: %s, could not write channelsFile, error: %s', me.host, error);
+						} else {
+							me.log('Device: %s, saved channels successful in: %s', me.host, me.prefDir);
+						}
+					});
+				} else {
+					me.log.debug('Device: %s, channelsFile already exists, not saving', me.host);
+				}
+			}
+		});
+
 		setTimeout(() => {
 			me.log.debug('Device: %s, requesting information from: %s', me.host, me.name);
-			request(me.url + '/api/deviceinfo', function (error, response, data) {
+			request(me.url + '/api/deviceinfo', (error, response, data) => {
 				if (error) {
 					me.log.debug('Device: %s, name: %s, getDeviceInfo eror: %s', me.host, me.name, error);
 				} else {
@@ -165,39 +183,38 @@ class openwebIfTvDevice {
 
 	getDeviceState() {
 		var me = this;
-		request(me.url + '/api/statusinfo', function (error, response, data) {
+		request(me.url + '/api/statusinfo', (error, response, data) => {
 			if (error) {
 				me.log('Device: %s, name: %s, state: Offline', me.host, me.name);
 			} else {
 				let json = JSON.parse(data);
 				let powerState = (json.inStandby == 'false');
 				me.currentPowerState = powerState;
-
-				if (me.televisionService && me.channelReferences && me.channelReferences.length > 0) {
-					let inputIdentifier = me.channelReferences.indexOf(json.currservice_serviceref);
-					me.televisionService.getCharacteristic(Characteristic.ActiveIdentifier).updateValue(inputIdentifier);
-				}
-				if (me.speakerService && data.changed) {
-					let muteState = (json.muted == true);
-					me.speakerService.getCharacteristic(Characteristic.Mute).updateValue(data.muted);
-					me.log.info('Device: %s, get current Mute state: %s', me.host, muteState ? 'ON' : 'OFF');
-					me.currentMuteState = muteState;
-				}
-				if (me.volumeService && data.changed) {
-					let muteState = (json.muted == true);
-					me.volumeService.getCharacteristic(Characteristic.On).updateValue(!muteState);
-				}
-				if (me.speakerService && data.changed) {
-					let volume = parseFloat(json.volume);
-					this.speakerService.getCharacteristic(Characteristic.Volume).updateValue(volume);
-					me.log.info('Device: %s, get current Volume level: %s', me.host, volume);
-					me.currentVolume = volume;
-				}
-				if (me.volumeService && data.changed) {
-					let volume = parseFloat(json.volume);
-					me.volumeService.getCharacteristic(Characteristic.Brightness).updateValue(volume);
+				if (me.televisionService) {
+					me.televisionService.getCharacteristic(Characteristic.Active).updateValue(powerState);
+					me.log('Device: %s, get current Power state successful: %s', me.host, powerState ? 'ON' : 'STANDBY');
 				}
 
+				let channelReference = json.currservice_serviceref;
+				me.currentChannelReference = channelReference;
+				if (me.televisionService) {
+					if (me.channelReferences && me.channelReferences.length > 0) {
+						let inputIdentifier = me.channelReferences.indexOf(channelReference);
+						me.televisionService.getCharacteristic(Characteristic.ActiveIdentifier).updateValue(inputIdentifier);
+						me.log('Device: %s, get current Channel successful: %s', me.host, channelReference);
+					}
+				}
+
+				let muteState = (json.muted == true);
+				let volume = parseInt(json.volume);
+				me.currentMuteState = muteState;
+				me.currentVolume = volume;
+				if (me.speakerService) {
+					me.speakerService.getCharacteristic(Characteristic.Mute).updateValue(muteState);
+					me.log('Device: %s, get current Mute state: %s', me.host, muteState ? 'ON' : 'OFF');
+					me.speakerService.getCharacteristic(Characteristic.Volume).updateValue(volume);
+					me.log('Device: %s, get current Volume level: %s', me.host, volume);
+				}
 			}
 		});
 	}
@@ -442,7 +459,7 @@ class openwebIfTvDevice {
 				callback(error);
 			} else {
 				let json = JSON.parse(data);
-				let volume = parseFloat(json.volume);
+				let volume = parseInt(json.volume);
 				me.log('Device: %s, get current Volume level successful: %s', me.host, volume);
 				me.currentVolume = volume;
 				callback(null, volume);
@@ -473,7 +490,7 @@ class openwebIfTvDevice {
 				callback(error);
 			} else {
 				let json = JSON.parse(data);
-				let channelReference = json.currservice_serviceref;
+				let channelReference = json.currservice_serviceref;;
 				let channelName = json.currservice_station;
 				if (!me.connectionStatus || channelReference === undefined || channelReference === null) {
 					me.televisionService
@@ -620,57 +637,6 @@ class openwebIfTvDevice {
 			} else {
 				me.log('Device: %s, setRemoteKey successful, remoteKey: %s, command: %s', me.host, remoteKey, command);
 				callback(null, remoteKey);
-			}
-		});
-	}
-
-
-
-	getBouquets() {
-		var me = this;
-		request(me.url + '/api/getservices', function (error, response, data) {
-			if (error) {
-			} else {
-				let json = JSON.parse(data);
-				let bouquetsList = json.services;
-				let arrayLength = bouquetsList.length;
-				for (let i = 0; i < arrayLength; i++) { }
-				me.log.debug('Bouquets list', bouquetsList);
-				me.saveBouquetsChannels(bouquetsList, new Array());
-			}
-		});
-	}
-
-	saveBouquetsChannels(bouquets, printArray) {
-		var me = this;
-		let bouquet = bouquets[0];
-		bouquets.shift();
-		let bouquetReference = bouquet.servicereference;
-		request(me.url + '/api/getservices?sRef=' + bouquetReference, function (error, response, data) {
-			if (error) {
-			} else {
-				let json = JSON.parse(data);
-				let servicesList = json.services;
-				if (servicesList.length > 96) {
-					let arrayLength = 96;
-				} else {
-					let arrayLength = servicesList.length;
-				}
-				for (let i = 0; i < arrayLength; i++) {
-					let service = servicesList[i];
-					let name = service.servicename;
-					let ref = service.servicereference;
-					let object = { 'name': name, 'reference': ref };
-					me.log.debug('Prepare channels to save in file', object);
-					printArray.push(object);
-				}
-				let string = JSON.stringify(printArray, null, 2);
-				me.log('Device: %s, saved channels successful in: %s', me.host, me.prefDir);
-				fs.writeFileSync(me.channelsFile, string, 'utf8', (error) => {
-					if (error) {
-						me.log.debug('Device: %s, can not create channels file, error: %s', me.host, error);
-					}
-				});
 			}
 		});
 	}
