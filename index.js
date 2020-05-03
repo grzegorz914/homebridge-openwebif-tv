@@ -124,13 +124,13 @@ class openwebIfTvDevice {
 						me.connectionStatus = true;
 						me.getDeviceInfo();
 					} else {
-						if (me.currentPowerState) {
+						if (me.connectionStatus) {
 							me.getDeviceState();
 						}
 					}
 				}
 			});
-		}.bind(this), 5000);
+		}.bind(this), 3000);
 
 		//Delay to wait for device info before publish
 		setTimeout(this.prepareTelevisionService.bind(this), 1000);
@@ -189,32 +189,35 @@ class openwebIfTvDevice {
 			} else {
 				let json = JSON.parse(data);
 				let powerState = (json.inStandby == 'false');
-				me.currentPowerState = powerState;
 				if (me.televisionService) {
 					me.televisionService.getCharacteristic(Characteristic.Active).updateValue(powerState);
 					me.log('Device: %s, get current Power state successful: %s', me.host, powerState ? 'ON' : 'STANDBY');
 				}
-
 				let channelReference = json.currservice_serviceref;
-				me.currentChannelReference = channelReference;
+				let channelName = json.currservice_station;
 				if (me.televisionService) {
 					if (me.channelReferences && me.channelReferences.length > 0) {
 						let inputIdentifier = me.channelReferences.indexOf(channelReference);
 						me.televisionService.getCharacteristic(Characteristic.ActiveIdentifier).updateValue(inputIdentifier);
-						me.log('Device: %s, get current Channel successful: %s', me.host, channelReference);
+						me.log('Device: %s, get current Channel successful: %s %s', me.host, channelName, channelReference);
 					}
 				}
-
-				let muteState = (json.muted == true);
+				let muteState = powerState ? (json.muted == true) : true;
 				let volume = parseInt(json.volume);
-				me.currentMuteState = muteState;
-				me.currentVolume = volume;
 				if (me.speakerService) {
 					me.speakerService.getCharacteristic(Characteristic.Mute).updateValue(muteState);
-					me.log('Device: %s, get current Mute state: %s', me.host, muteState ? 'ON' : 'OFF');
 					me.speakerService.getCharacteristic(Characteristic.Volume).updateValue(volume);
+					if (me.volumeControl && me.volumeService) {
+						me.volumeService.getCharacteristic(Characteristic.On).updateValue(!muteState);
+						me.volumeService.getCharacteristic(Characteristic.Brightness).updateValue(volume);
+					}
+					me.log('Device: %s, get current Mute state: %s', me.host, muteState ? 'ON' : 'OFF');
 					me.log('Device: %s, get current Volume level: %s', me.host, volume);
 				}
+				me.currentPowerState = powerState;
+				me.currentChannelReference = channelReference;
+				me.currentMuteState = muteState;
+				me.currentVolume = volume;
 			}
 		});
 	}
@@ -368,115 +371,74 @@ class openwebIfTvDevice {
 
 	getPowerState(callback) {
 		var me = this;
-		request(me.url + '/api/statusinfo', function (error, response, data) {
-			if (error) {
-				me.log.debug('Device: %s, can not get current Power state. Might be due to a wrong settings in config, error: %s', me.host, error);
-				callback(error);
-			} else {
-				let json = JSON.parse(data);
-				let state = (json.inStandby == 'false');
-				me.log('Device: %s, get current Power state successful: %s', me.host, state ? 'ON' : 'STANDBY');
-				me.currentPowerState = state;
-				callback(null, state);
-			}
-		});
+		let state = me.currentPowerState
+		me.log('Device: %s, get current Power state successful: %s', me.host, state ? 'ON' : 'STANDBY');
+		me.currentPowerState = state;
+		callback(null, state);
 	}
 
 	setPowerState(state, callback) {
 		var me = this;
-		me.getPowerState(function (error, currentPowerState) {
-			if (error) {
-				me.log.debug('Device: %s, can not get current Power for new state. Might be due to a wrong settings in config, error: %s', me.host, error);
-				callback(error);
-			} else {
-				if (state !== currentPowerState) {
-					let newState = state ? '4' : '5';
-					request(me.url + '/api/powerstate?newstate=' + newState, function (error, response, data) {
-						if (error) {
-							me.log.debug('Device: %s, can not set new Power state. Might be due to a wrong settings in config, error: %s', me.host, error);
-							callback(error);
-						} else {
-							me.log('Device: %s, set new Power state successful: %s', me.host, state ? 'ON' : 'STANDBY');
-							me.currentPowerState = state;
-							callback(null, state);
-						}
-					});
+		if (state !== me.currentPowerState) {
+			let newState = state ? '4' : '5';
+			request(me.url + '/api/powerstate?newstate=' + newState, (error, response, data) => {
+				if (error) {
+					me.log.debug('Device: %s, can not set new Power state. Might be due to a wrong settings in config, error: %s', me.host, error);
+					callback(error);
+				} else {
+					me.log('Device: %s, set new Power state successful: %s', me.host, state ? 'ON' : 'STANDBY');
+					me.currentPowerState = state;
+					callback(null, state);
 				}
-			}
-		});
+			});
+		}
 	}
 
 	getMute(callback) {
 		var me = this;
-		request(me.url + '/api/statusinfo', function (error, response, data) {
-			if (error) {
-				me.log.debug('Device: %s, can not get current Mute state. Might be due to a wrong settings in config, error: %s', me.host, error);
-				callback(error);
-			} else {
-				let json = JSON.parse(data);
-				let state = (json.muted == true);
-				me.log('Device: %s, get current Mute state successful: %s', me.host, state ? 'ON' : 'OFF');
-				me.currentMuteState = state;
-				callback(null, state);
-			}
-		});
-	}
-
-	setMute(state, callback) {
-		var me = this;
-		me.getMute(function (error, currentMuteState) {
-			if (error) {
-				me.log.debug('Device: %s, can not get current Mute for new state. Might be due to a wrong settings in config, error: %s', me.host, error);
-				callback(error);
-			} else {
-				if (state !== currentMuteState) {
-					request(me.url + '/api/vol?set=mute', function (error, response, data) {
-						if (error) {
-							me.log.debug('Device: %s, can not set Mute. Might be due to a wrong settings in config, error: %s', me.host, error);
-							callback(error);
-						} else {
-							me.log('Device: %s, set Mute successful: %s', me.host, state ? 'ON' : 'OFF');
-							me.currentMuteState = state;
-							callback(null, state);
-						}
-					});
-				}
-			}
-		});
+		let state = me.currentPowerState ? me.currentMuteState : true;
+		me.log('Device: %s, get current Mute state successful: %s', me.host, state ? 'ON' : 'OFF');
+		callback(null, state);
 	}
 
 	getMuteSlider(callback) {
 		var me = this;
-		let state = !me.currentMuteState;
+		let state = me.currentPowerState ? !me.currentMuteState : false;
+		me.log('Device: %s, get current Mute state successful: %s', me.host, !state ? 'ON' : 'OFF');
 		callback(null, state);
+	}
+
+	setMute(state, callback) {
+		var me = this;
+		if (state !== me.currentMuteState) {
+			request(me.url + '/api/vol?set=mute', (error, response, data) => {
+				if (error) {
+					me.log.debug('Device: %s, can not set Mute. Might be due to a wrong settings in config, error: %s', me.host, error);
+					callback(error);
+				} else {
+					me.log('Device: %s, set Mute successful: %s', me.host, state ? 'ON' : 'OFF');
+					callback(null, state);
+				}
+			});
+		}
 	}
 
 	getVolume(callback) {
 		var me = this;
-		request(me.url + '/api/statusinfo', function (error, response, data) {
-			if (error) {
-				me.log.debug('Device: %s, can not get current Volume level. Might be due to a wrong settings in config, error: %s', me.host, error);
-				callback(error);
-			} else {
-				let json = JSON.parse(data);
-				let volume = parseInt(json.volume);
-				me.log('Device: %s, get current Volume level successful: %s', me.host, volume);
-				me.currentVolume = volume;
-				callback(null, volume);
-			}
-		});
+		let volume = me.currentVolume;
+		me.log('Device: %s, get current Volume level successful: %s', me.host, volume);
+		callback(null, volume);
 	}
 
 	setVolume(volume, callback) {
 		var me = this;
 		let targetVolume = parseInt(volume);
-		request(me.url + '/api/vol?set=set' + targetVolume, function (error, response, data) {
+		request(me.url + '/api/vol?set=set' + targetVolume, (error, response, data) => {
 			if (error) {
 				me.log.debug('Device: %s, can not set new Volume level. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
 			} else {
 				me.log('Device: %s, set new Volume level successful: %s', me.host, volume);
-				me.currentVolume = volume;
 				callback(null, volume);
 			}
 		});
@@ -484,57 +446,39 @@ class openwebIfTvDevice {
 
 	getChannel(callback) {
 		var me = this;
-		request(me.url + '/api/statusinfo', function (error, response, data) {
-			if (error) {
-				me.log.debug('Devive: %s, can not get current Channel. Might be due to a wrong settings in config, error: %s', me.host, error);
-				callback(error);
-			} else {
-				let json = JSON.parse(data);
-				let channelReference = json.currservice_serviceref;;
-				let channelName = json.currservice_station;
-				if (!me.connectionStatus || channelReference === undefined || channelReference === null) {
-					me.televisionService
-						.getCharacteristic(Characteristic.ActiveIdentifier)
-						.updateValue(0);
-					callback(null);
-				} else {
-					for (let i = 0; i < me.channelReferences.length; i++) {
-						if (channelReference === me.channelReferences[i]) {
-							me.televisionService
-								.getCharacteristic(Characteristic.ActiveIdentifier)
-								.updateValue(i);
-							me.log('Device: %s, get current Channel successful: %s %s', me.host, channelName, channelReference);
-							me.currentChannelReference = channelReference;
-						}
-					}
-					callback(null);
-				}
+		let channelReference = me.currentChannelReference;
+		let channelName = me.currentName;
+		if (!me.connectionStatus || channelReference === undefined || channelReference === null) {
+			me.televisionService
+				.getCharacteristic(Characteristic.ActiveIdentifier)
+				.updateValue(0);
+			callback(null);
+		} else {
+			let inputIdentifier = me.channelReferences.indexOf(channelReference);
+			if (channelReference === me.channelReferences[inputIdentifier]) {
+				me.televisionService
+					.getCharacteristic(Characteristic.ActiveIdentifier)
+					.updateValue(inputIdentifier);
+				me.log('Device: %s, get current Channel successful: %s %s', me.host, channelName, channelReference);
 			}
-		});
+			callback(null);
+		}
 	}
 
 	setChannel(inputIdentifier, callback) {
 		var me = this;
-		me.getChannel(function (error, currentChannelReference) {
-			if (error) {
-				me.log.debug('Devive: %s, can not get current Channel for new Channel. Might be due to a wrong settings in config, error: %s', me.host, error);
-				callback(error);
-			} else {
-				let channelReference = me.channelReferences[inputIdentifier];
-				if (channelReference !== currentChannelReference) {
-					request(me.url + '/api/zap?sRef=' + channelReference, function (error, response, data) {
-						if (error) {
-							me.log.debug('Device: %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', me.host, error);
-							callback(error);
-						} else {
-							me.log('Device: %s, set new Channel successful: %s', me.host, channelReference);
-							me.currentChannelReference = channelReference;
-							callback(null);
-						}
-					});
+		let channelReference = me.channelReferences[inputIdentifier];
+		if (channelReference !== me.currentChannelReference) {
+			request(me.url + '/api/zap?sRef=' + channelReference, (error, response, data) => {
+				if (error) {
+					me.log.debug('Device: %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', me.host, error);
+					callback(error);
+				} else {
+					me.log('Device: %s, set new Channel successful: %s', me.host, channelReference);
+					callback(null);
 				}
-			}
-		});
+			});
+		}
 	}
 
 	setPowerModeSelection(remoteKey, callback) {
@@ -552,7 +496,7 @@ class openwebIfTvDevice {
 				command = '174';
 				break;
 		}
-		request(me.url + '/api/remotecontrol?command=' + command, function (error, response, data) {
+		request(me.url + '/api/remotecontrol?command=' + command, (error, response, data) => {
 			if (error) {
 				me.log.debug('Device: %s can not setPowerModeSelection. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
@@ -575,7 +519,7 @@ class openwebIfTvDevice {
 				command = '114';
 				break;
 		}
-		request(me.url + '/api/remotecontrol?command=' + command, function (error, response, data) {
+		request(me.url + '/api/remotecontrol?command=' + command, (error, response, data) => {
 			if (error) {
 				me.log.debug('Device: %s can not setVolumeSelector. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
@@ -630,7 +574,7 @@ class openwebIfTvDevice {
 				command = this.switchInfoMenu ? '358' : '139';
 				break;
 		}
-		request(me.url + '/api/remotecontrol?command=' + command, function (error, response, data) {
+		request(me.url + '/api/remotecontrol?command=' + command, (error, response, data) => {
 			if (error) {
 				me.log.debug('Device: %s can not setRemoteKey. Might be due to a wrong settings in config, error: %s', me.host, error);
 				callback(error);
