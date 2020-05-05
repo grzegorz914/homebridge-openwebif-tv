@@ -1,5 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file.
+## 2.6.40 (05.05.2020)
+- fixes and performance inprovements
+- correted logging state
+
 ## 2.6.19 (01.05.2020)
 - fixes in realtime data read and write
 
