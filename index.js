@@ -213,7 +213,7 @@ class openwebIfTvDevice {
 						me.volumeService.getCharacteristic(Characteristic.Brightness).updateValue(volume);
 					}
 					me.log('Device: %s %s, get current Mute state: %s', me.host, me.name, muteState ? 'ON' : 'OFF');
-					me.log('Device: %s %s, get current Volume level: %s', me.host, me, name, volume);
+					me.log('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
 					me.currentMuteState = muteState;
 					me.currentVolume = volume;
 				}
@@ -482,105 +482,111 @@ class openwebIfTvDevice {
 
 	setPowerModeSelection(remoteKey, callback) {
 		var me = this;
-		let command = '500';
-		switch (remoteKey) {
-			case Characteristic.PowerModeSelection.SHOW:
-				if (me.currentInfoMenuState) {
+		if (me.currentPowerState) {
+			let command = '500';
+			switch (remoteKey) {
+				case Characteristic.PowerModeSelection.SHOW:
+					if (me.currentInfoMenuState) {
+						command = '174';
+					} else {
+						command = me.switchInfoMenu ? '139' : '358';
+					}
+					break;
+				case Characteristic.PowerModeSelection.HIDE:
 					command = '174';
-				} else {
-					command = me.switchInfoMenu ? '139' : '358';
-				}
-				break;
-			case Characteristic.PowerModeSelection.HIDE:
-				command = '174';
-				break;
-		}
-		request(me.url + '/api/remotecontrol?command=' + command, (error, response, data) => {
-			if (error) {
-				me.log.debug('Device: %s %s, can not setPowerModeSelection. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
-				callback(error);
-			} else {
-				me.log('Device: %s %s, setPowerModeSelection successful, remoteKey: %s, command: %s', me.host, me.name, remoteKey, command);
-				me.currentInfoMenuState = !me.currentInfoMenuState;
-				callback(null, remoteKey);
+					break;
 			}
-		});
+			request(me.url + '/api/remotecontrol?command=' + command, (error, response, data) => {
+				if (error) {
+					me.log.debug('Device: %s %s, can not setPowerModeSelection. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
+					callback(error);
+				} else {
+					me.log('Device: %s %s, setPowerModeSelection successful, remoteKey: %s, command: %s', me.host, me.name, remoteKey, command);
+					me.currentInfoMenuState = !me.currentInfoMenuState;
+					callback(null, remoteKey);
+				}
+			});
+		}
 	}
 
 	setVolumeSelector(remoteKey, callback) {
 		var me = this;
-		let command = '500';
-		switch (remoteKey) {
-			case Characteristic.VolumeSelector.INCREMENT:
-				command = '115';
-				break;
-			case Characteristic.VolumeSelector.DECREMENT:
-				command = '114';
-				break;
-		}
-		request(me.url + '/api/remotecontrol?command=' + command, (error, response, data) => {
-			if (error) {
-				me.log.debug('Device: %s %s, can not setVolumeSelector. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
-				callback(error);
-			} else {
-				me.log('Device: %s %s, setVolumeSelector successful, remoteKey: %s, command: %s', me.host, me.name, remoteKey, command);
-				callback(null, remoteKey);
+		if (me.currentPowerState) {
+			let command = '500';
+			switch (remoteKey) {
+				case Characteristic.VolumeSelector.INCREMENT:
+					command = '115';
+					break;
+				case Characteristic.VolumeSelector.DECREMENT:
+					command = '114';
+					break;
 			}
-		});
+			request(me.url + '/api/remotecontrol?command=' + command, (error, response, data) => {
+				if (error) {
+					me.log.debug('Device: %s %s, can not setVolumeSelector. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
+					callback(error);
+				} else {
+					me.log('Device: %s %s, setVolumeSelector successful, remoteKey: %s, command: %s', me.host, me.name, remoteKey, command);
+					callback(null, remoteKey);
+				}
+			});
+		}
 	}
 
 	setRemoteKey(remoteKey, callback) {
 		var me = this;
-		let command = '500';
-		switch (remoteKey) {
-			case Characteristic.RemoteKey.REWIND:
-				command = '168';
-				break;
-			case Characteristic.RemoteKey.FAST_FORWARD:
-				command = '159';
-				break;
-			case Characteristic.RemoteKey.NEXT_TRACK:
-				command = '407';
-				break;
-			case Characteristic.RemoteKey.PREVIOUS_TRACK:
-				command = '412';
-				break;
-			case Characteristic.RemoteKey.ARROW_UP:
-				command = '103';
-				break;
-			case Characteristic.RemoteKey.ARROW_DOWN:
-				command = '108';
-				break;
-			case Characteristic.RemoteKey.ARROW_LEFT:
-				command = '105';
-				break;
-			case Characteristic.RemoteKey.ARROW_RIGHT:
-				command = '106';
-				break;
-			case Characteristic.RemoteKey.SELECT:
-				command = '352';
-				break;
-			case Characteristic.RemoteKey.BACK:
-				command = '174';
-				break;
-			case Characteristic.RemoteKey.EXIT:
-				command = '174';
-				break;
-			case Characteristic.RemoteKey.PLAY_PAUSE:
-				command = '164';
-				break;
-			case Characteristic.RemoteKey.INFORMATION:
-				command = this.switchInfoMenu ? '358' : '139';
-				break;
-		}
-		request(me.url + '/api/remotecontrol?command=' + command, (error, response, data) => {
-			if (error) {
-				me.log.debug('Device: %s %s, can not setRemoteKey. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
-				callback(error);
-			} else {
-				me.log('Device: %s %s, setRemoteKey successful, remoteKey: %s, command: %s', me.host, me.name, remoteKey, command);
-				callback(null, remoteKey);
+		if (me.currentPowerState) {
+			let command = '500';
+			switch (remoteKey) {
+				case Characteristic.RemoteKey.REWIND:
+					command = '168';
+					break;
+				case Characteristic.RemoteKey.FAST_FORWARD:
+					command = '159';
+					break;
+				case Characteristic.RemoteKey.NEXT_TRACK:
+					command = '407';
+					break;
+				case Characteristic.RemoteKey.PREVIOUS_TRACK:
+					command = '412';
+					break;
+				case Characteristic.RemoteKey.ARROW_UP:
+					command = '103';
+					break;
+				case Characteristic.RemoteKey.ARROW_DOWN:
+					command = '108';
+					break;
+				case Characteristic.RemoteKey.ARROW_LEFT:
+					command = '105';
+					break;
+				case Characteristic.RemoteKey.ARROW_RIGHT:
+					command = '106';
+					break;
+				case Characteristic.RemoteKey.SELECT:
+					command = '352';
+					break;
+				case Characteristic.RemoteKey.BACK:
+					command = '174';
+					break;
+				case Characteristic.RemoteKey.EXIT:
+					command = '174';
+					break;
+				case Characteristic.RemoteKey.PLAY_PAUSE:
+					command = '164';
+					break;
+				case Characteristic.RemoteKey.INFORMATION:
+					command = this.switchInfoMenu ? '358' : '139';
+					break;
 			}
-		});
+			request(me.url + '/api/remotecontrol?command=' + command, (error, response, data) => {
+				if (error) {
+					me.log.debug('Device: %s %s, can not setRemoteKey. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
+					callback(error);
+				} else {
+					me.log('Device: %s %s, setRemoteKey successful, remoteKey: %s, command: %s', me.host, me.name, remoteKey, command);
+					callback(null, remoteKey);
+				}
+			});
+		}
 	}
 };
