@@ -80,7 +80,7 @@ class openwebIfTvDevice {
 		this.pass = device.pass;
 		this.volumeControl = device.volumeControl;
 		this.switchInfoMenu = device.switchInfoMenu;
-		this.bouquets = device.bouquets;
+		this.inputs = device.inputs;
 
 		//get Device info
 		this.manufacturer = device.manufacturer || 'openWebIf';
@@ -89,16 +89,16 @@ class openwebIfTvDevice {
 		this.firmwareRevision = device.firmwareRevision || 'FW0000001';
 
 		//setup variables
-		this.channelReferences = new Array();
+		this.inputReferences = new Array();
 		this.connectionStatus = false;
 		this.currentPowerState = false;
 		this.currentMuteState = false;
 		this.currentVolume = 0;
-		this.currentChannelReference = null;
-		this.currentChannelName = null;
+		this.currentInputReference = null;
+		this.currentInputName = null;
 		this.currentInfoMenuState = false;
 		this.prefDir = path.join(api.user.storagePath(), 'openwebifTv');
-		this.channelsFile = this.prefDir + '/' + 'channels_' + this.host.split('.').join('');
+		this.inputsFile = this.prefDir + '/' + 'channels_' + this.host.split('.').join('');
 		this.url = this.auth ? ('http://' + this.user + ':' + this.pass + '@' + this.host + ':' + this.port) : ('http://' + this.host + ':' + this.port);
 
 		//check if prefs directory ends with a /, if not then add it
@@ -144,11 +144,11 @@ class openwebIfTvDevice {
 			if (error) {
 				me.log.debug('Device: %s %s, get Channels list error: %s', me.host, me.name, error);
 			} else {
-				if (fs.existsSync(me.channelsFile) === false) {
+				if (fs.existsSync(me.inputsFile) === false) {
 					let json = JSON.parse(data);
 					let channels = json.services;
 					me.log.debug('Device: %s %s, get Channels list successful: %s', me.host, me.name, JSON.stringify(channels, null, 2));
-					fs.writeFile(me.channelsFile, JSON.stringify(channels), (error) => {
+					fs.writeFile(me.inputsFile, JSON.stringify(channels), (error) => {
 						if (error) {
 							me.log.debug('Device: %s %s, could not write Channels to the file, error: %s', me.host, me.name, error);
 						} else {
@@ -193,14 +193,14 @@ class openwebIfTvDevice {
 					me.log('Device: %s %s, get current Power state successful: %s', me.host, me.name, powerState ? 'ON' : 'STANDBY');
 					me.currentPowerState = powerState;
 				}
-				let channelReference = json.currservice_serviceref;
-				let channelName = json.currservice_station;
-				if (me.televisionService && powerState && (me.currentChannelReference !== channelReference)) {
-					if (me.channelReferences && me.channelReferences.length > 0) {
-						let inputIdentifier = me.channelReferences.indexOf(channelReference);
+				let inputReference = json.currservice_serviceref;
+				let inputName = json.currservice_station;
+				if (me.televisionService && powerState && (me.currentInputReference !== inputReference)) {
+					if (me.inputReferences && me.inputReferences.length > 0) {
+						let inputIdentifier = me.inputReferences.indexOf(inputReference);
 						me.televisionService.getCharacteristic(Characteristic.ActiveIdentifier).updateValue(inputIdentifier);
-						me.log('Device: %s %s, get current Channel successful: %s %s', me.host, me.name, channelName, channelReference);
-						me.currentChannelReference = channelReference;
+						me.log('Device: %s %s, get current Channel successful: %s %s', me.host, me.name, inputName, inputReference);
+						me.currentInputReference = inputReference;
 					}
 				}
 				let muteState = powerState ? (json.muted == true) : true;
@@ -236,8 +236,8 @@ class openwebIfTvDevice {
 			.on('set', this.setPower.bind(this));
 
 		this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
-			.on('get', this.getChannel.bind(this))
-			.on('set', this.setChannel.bind(this));
+			.on('get', this.getInput.bind(this))
+			.on('set', this.setInput.bind(this));
 
 		this.televisionService.getCharacteristic(Characteristic.RemoteKey)
 			.on('set', this.setRemoteKey.bind(this));
@@ -301,69 +301,68 @@ class openwebIfTvDevice {
 	//Prepare inputs services
 	prepareInputsService() {
 		this.log.debug('prepareInputsService');
-		if (this.bouquets === undefined || this.bouquets === null || this.bouquets.length <= 0) {
+		if (this.inputs === undefined || this.inputs === null || this.inputs.length <= 0) {
 			return;
 		}
 
-		if (Array.isArray(this.bouquets) === false) {
-			this.bouquets = [this.bouquets];
+		if (Array.isArray(this.inputs) === false) {
+			this.inputs = [this.inputs];
 		}
 
 		let savedNames = {};
 		try {
-			savedNames = JSON.parse(fs.readFileSync(this.channelsFile));
+			savedNames = JSON.parse(fs.readFileSync(this.inputsFile));
 		} catch (err) {
 			this.log.debug('Device: %s %s, channels file does not exist', this.host, this.name);
 		}
 
-		this.bouquets.forEach((bouquet, i) => {
+		this.inputs.forEach((input, i) => {
 
 			//get channel reference
-			let channelReference = null;
+			let inputReference = null;
 
-			if (bouquet.reference !== undefined) {
-				channelReference = bouquet.reference;
+			if (input.reference !== undefined) {
+				inputReference = input.reference;
 			} else {
-				channelReference = bouquet;
+				inputReference = input;
 			}
 
 			//get channel name		
-			let channelName = channelReference;
+			let inputName = inputReference;
 
-			if (savedNames && savedNames[channelReference]) {
-				channelName = savedNames[channelReference];
-			} else if (bouquet.name) {
-				channelName = bouquet.name;
+			if (savedNames && savedNames[inputReference]) {
+				inputName = savedNames[inputReference];
+			} else if (input.name) {
+				inputName = input.name;
 			}
 
 			//If reference not null or empty add the input
-			if (channelReference !== undefined && channelReference !== null || channelReference !== '') {
-				channelReference = channelReference.replace(/\s/g, ''); // remove all white spaces from the string
+			if (inputReference !== undefined && inputReference !== null || inputReference !== '') {
 
-				let tempInput = new Service.InputSource(channelReference, 'channel' + i);
-				tempInput
+				this.inputsService = new Service.InputSource(inputReference, 'channel' + i);
+				this.inputsService
 					.setCharacteristic(Characteristic.Identifier, i)
-					.setCharacteristic(Characteristic.ConfiguredName, channelName)
+					.setCharacteristic(Characteristic.ConfiguredName, inputName)
 					.setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
 					.setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.TV)
 					.setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN);
 
-				tempInput
+				this.inputsService
 					.getCharacteristic(Characteristic.ConfiguredName)
-					.on('set', (newChannelName, callback) => {
-						this.bouquets[channelReference] = newChannelName;
-						fs.writeFile(this.channelsFile, JSON.stringify(this.bouquets), (error) => {
+					.on('set', (newInputName, callback) => {
+						this.inputs[inputReference] = newInputName;
+						fs.writeFile(this.inputsFile, JSON.stringify(this.inputs), (error) => {
 							if (error) {
 								this.log.debug('Device: %s %s, can not write new Channel name, error: %s', this.host, this.name, error);
 							} else {
-								this.log('Device: %s %s, saved new Channel successful, name: %s, reference: %s', this.host, this.name, newChannelName, channelReference);
+								this.log('Device: %s %s, saved new Channel successful, name: %s, reference: %s', this.host, this.name, newInputName, inputReference);
 							}
 						});
-						callback(null, newChannelName)
+						callback(null, newInputName)
 					});
-				this.accessory.addService(tempInput);
-				this.televisionService.addLinkedService(tempInput);
-				this.channelReferences.push(channelReference);
+				this.accessory.addService(this.inputsService);
+				this.televisionService.addLinkedService(this.inputsService);
+				this.inputReferences.push(inputReference);
 			}
 		});
 	}
@@ -443,37 +442,37 @@ class openwebIfTvDevice {
 		});
 	}
 
-	getChannel(callback) {
+	getInput(callback) {
 		var me = this;
-		let channelReference = me.currentChannelReference;
-		let channelName = me.currentChannelName;
-		if (!me.connectionStatus || channelReference === undefined || channelReference === null) {
+		let inputReference = me.currentInputReference;
+		let inputName = me.currentInputName;
+		if (!me.connectionStatus || inputReference === undefined || inputReference === null) {
 			me.televisionService
 				.getCharacteristic(Characteristic.ActiveIdentifier)
 				.updateValue(0);
 			callback(null);
 		} else {
-			let inputIdentifier = me.channelReferences.indexOf(channelReference);
-			if (channelReference === me.channelReferences[inputIdentifier]) {
+			let inputIdentifier = me.inputReferences.indexOf(inputReference);
+			if (inputReference === me.inputReferences[inputIdentifier]) {
 				me.televisionService
 					.getCharacteristic(Characteristic.ActiveIdentifier)
 					.updateValue(inputIdentifier);
-				me.log.debug('Device: %s %s, get current Channel successful: %s %s', me.host, me.name, channelName, channelReference);
+				me.log.debug('Device: %s %s, get current Channel successful: %s %s', me.host, me.name, inputName, inputReference);
 			}
 			callback(null, inputIdentifier);
 		}
 	}
 
-	setChannel(inputIdentifier, callback) {
+	setInput(inputIdentifier, callback) {
 		var me = this;
-		let channelReference = me.channelReferences[inputIdentifier];
-		if (channelReference !== me.currentChannelReference) {
-			request(me.url + '/api/zap?sRef=' + channelReference, (error, response, data) => {
+		let inputReference = me.inputReferences[inputIdentifier];
+		if (inputReference !== me.currentInputReference) {
+			request(me.url + '/api/zap?sRef=' + inputReference, (error, response, data) => {
 				if (error) {
 					me.log.debug('Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', me.host, me.name, error);
 					callback(error);
 				} else {
-					me.log('Device: %s %s, set new Channel successful: %s', me.host, me.name, channelReference);
+					me.log('Device: %s %s, set new Channel successful: %s', me.host, me.name, inputReference);
 					callback(null, inputIdentifier);
 				}
 			});

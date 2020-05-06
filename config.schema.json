@@ -59,7 +59,7 @@
               "default": false,
               "required": false
             },
-            "bouquets": {
+            "inputs": {
               "title": "Channels",
               "type": "array",
               "items": {

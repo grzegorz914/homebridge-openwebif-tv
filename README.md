@@ -57,7 +57,7 @@ Homebridge plugin to control Sat Receivers basis on the OpenWebIf API. Tested wi
         "pass": "pass",
         "volumeControl": false,
         "switchInfoMenu": false,
-        "bouquets": [
+        "inputs": [
           {
             "name": "Das Erste HD",
             "reference": "1:0:19:283D:3FB:1:C00000:0:0:0:"

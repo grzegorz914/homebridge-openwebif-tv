@@ -1,5 +1,9 @@
 # Change Log
 All notable changes to this project will be documented in this file.
+## 2.6.45 (06.05.2020)
+- code cleanup and unification
+- please update Your config.json (replace 'bouquets' with 'inputs')
+
 ## 2.6.40 (05.05.2020)
 - fixes and performance inprovements
 - correted logging state
