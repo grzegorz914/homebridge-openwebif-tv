@@ -1,20 +1,24 @@
-'use strict';
+const hap = require("hap-nodejs");
+
+const Characteristic = hap.Characteristic;
+const CharacteristicEventTypes = hap.CharacteristicEventTypes;
+const Service = hap.Service;
+const Categories = hap.Accessory.Categories;
+const accessoryUuid = hap.uuid;
 
 const fs = require('fs');
 const mkdirp = require('mkdirp');
 const request = require('request');
 const path = require('path');
 
-let Accessory, Service, Characteristic, UUIDGen, Categories;
+const PLUGIN_NAME = 'homebridge-openwebif-tv';
+const PLATFORM_NAME = 'OpenWebIfTv';
+
+let Accessory;
 
 module.exports = homebridge => {
-	Service = homebridge.hap.Service;
-	Characteristic = homebridge.hap.Characteristic;
 	Accessory = homebridge.platformAccessory;
-	UUIDGen = homebridge.hap.uuid;
-	Categories = homebridge.hap.Accessory.Categories;
-
-	homebridge.registerPlatform('homebridge-openwebif-tv', 'OpenWebIfTv', openwebIfTvPlatform, true);
+	homebridge.registerPlatform(PLUGIN_NAME, PLATFORM_NAME, openwebIfTvPlatform, true);
 };
 
 class openwebIfTvPlatform {
@@ -59,7 +63,7 @@ class openwebIfTvPlatform {
 
 	removeAccessory(platformAccessory) {
 		this.log.debug('removeAccessory');
-		this.api.unregisterPlatformAccessories('homebridge-openwebif-tv', 'OpenWebIfTv', [platformAccessory]);
+		this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [platformAccessory]);
 	}
 }
 
@@ -84,7 +88,7 @@ class openwebIfTvDevice {
 
 		//get Device info
 		this.manufacturer = device.manufacturer || 'openWebIf';
-		this.modelName = device.modelName || 'homebridge-openwebif-tv';
+		this.modelName = device.modelName || PLUGIN_NAME;
 		this.serialNumber = device.serialNumber || 'SN0000001';
 		this.firmwareRevision = device.firmwareRevision || 'FW0000001';
 
@@ -224,7 +228,7 @@ class openwebIfTvDevice {
 	//Prepare TV service 
 	prepareTelevisionService() {
 		this.log.debug('prepareTelevisionService');
-		this.UUID = UUIDGen.generate(this.name)
+		this.UUID = accessoryUuid.generate(this.name)
 		this.accessory = new Accessory(this.name, this.UUID, Categories.TELEVISION);
 
 		this.televisionService = new Service.Television(this.name, 'televisionService');
@@ -261,7 +265,7 @@ class openwebIfTvDevice {
 		}
 
 		this.log.debug('Device: %s %s, publishExternalAccessories.', this.host, this.name);
-		this.api.publishExternalAccessories('homebridge-openwebif-tv', [this.accessory]);
+		this.api.publishExternalAccessories(PLUGIN_NAME, [this.accessory]);
 	}
 
 	//Prepare speaker service

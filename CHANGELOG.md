@@ -1,5 +1,8 @@
 # Change Log
 All notable changes to this project will be documented in this file.
+## 2.7.0 (06.05.2020) 
+- adapted to HAP-Node JS lib
+
 ## 2.6.45 (06.05.2020)
 - code cleanup and unification
 - please update Your config.json (replace 'bouquets' with 'inputs')
