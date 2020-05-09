@@ -187,42 +187,41 @@ class openwebIfTvDevice {
 	getDeviceState() {
 		var me = this;
 		axios.get(me.url + '/api/statusinfo').then(response => {
-			if (error) {
-				me.log.debug('Device: %s %s, getDeviceState error: %s', me.host, me.name, error);
-			} else {
-				let json = response.data;
-				let powerState = (json.inStandby == 'false');
-				if (me.televisionService && (powerState !== me.currentPowerState)) {
-					me.televisionService.getCharacteristic(Characteristic.Active).updateValue(powerState);
-					me.log('Device: %s %s, get current Power state successful: %s', me.host, me.name, powerState ? 'ON' : 'STANDBY');
-					me.currentPowerState = powerState;
-				}
-				let inputReference = json.currservice_serviceref;
-				let inputName = json.currservice_station;
-				if (me.televisionService && powerState && (me.currentInputReference !== inputReference)) {
-					if (me.inputReferences && me.inputReferences.length > 0) {
-						let inputIdentifier = me.inputReferences.indexOf(inputReference);
-						me.televisionService.getCharacteristic(Characteristic.ActiveIdentifier).updateValue(inputIdentifier);
-						me.log('Device: %s %s, get current Channel successful: %s %s', me.host, me.name, inputName, inputReference);
-						me.currentInputReference = inputReference;
-					}
-				}
-				let muteState = powerState ? (json.muted == true) : true;
-				let volume = parseInt(json.volume);
-				if (me.speakerService && powerState && (me.currentMuteState !== muteState || me.currentVolume !== volume)) {
-					me.speakerService.getCharacteristic(Characteristic.Mute).updateValue(muteState);
-					me.speakerService.getCharacteristic(Characteristic.Volume).updateValue(volume);
-					if (me.volumeControl && me.volumeService) {
-						me.volumeService.getCharacteristic(Characteristic.On).updateValue(!muteState);
-						me.volumeService.getCharacteristic(Characteristic.Brightness).updateValue(volume);
-					}
-					me.log('Device: %s %s, get current Mute state: %s', me.host, me.name, muteState ? 'ON' : 'OFF');
-					me.log('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
-					me.currentMuteState = muteState;
-					me.currentVolume = volume;
+			let json = response.data;
+			let powerState = (json.inStandby == 'false');
+			if (me.televisionService && (powerState !== me.currentPowerState)) {
+				me.televisionService.getCharacteristic(Characteristic.Active).updateValue(powerState);
+				me.log('Device: %s %s, get current Power state successful: %s', me.host, me.name, powerState ? 'ON' : 'STANDBY');
+				me.currentPowerState = powerState;
+			}
+			let inputReference = json.currservice_serviceref;
+			let inputName = json.currservice_station;
+			if (me.televisionService && powerState && (me.currentInputReference !== inputReference)) {
+				if (me.inputReferences && me.inputReferences.length > 0) {
+					let inputIdentifier = me.inputReferences.indexOf(inputReference);
+					me.televisionService.getCharacteristic(Characteristic.ActiveIdentifier).updateValue(inputIdentifier);
+					me.log('Device: %s %s, get current Channel successful: %s %s', me.host, me.name, inputName, inputReference);
+					me.currentInputReference = inputReference;
 				}
 			}
+			let muteState = powerState ? (json.muted == true) : true;
+			let volume = parseInt(json.volume);
+			if (me.speakerService && powerState && (me.currentMuteState !== muteState || me.currentVolume !== volume)) {
+				me.speakerService.getCharacteristic(Characteristic.Mute).updateValue(muteState);
+				me.speakerService.getCharacteristic(Characteristic.Volume).updateValue(volume);
+				if (me.volumeControl && me.volumeService) {
+					me.volumeService.getCharacteristic(Characteristic.On).updateValue(!muteState);
+					me.volumeService.getCharacteristic(Characteristic.Brightness).updateValue(volume);
+				}
+				me.log('Device: %s %s, get current Mute state: %s', me.host, me.name, muteState ? 'ON' : 'OFF');
+				me.log('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
+				me.currentMuteState = muteState;
+				me.currentVolume = volume;
+			}
 		}).catch(error => {
+			if (error) {
+				me.log.debug('Device: %s %s, getDeviceState error: %s', me.host, me.name, error);
+			}
 		});
 	}
 
