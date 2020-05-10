@@ -9,7 +9,7 @@ const path = require('path');
 const Characteristic = hap.Characteristic;
 const CharacteristicEventTypes = hap.CharacteristicEventTypes;
 const Service = hap.Service;
-const accessoryUuid = hap.uuid;
+const UUID = hap.uuid;
 
 const PLUGIN_NAME = 'homebridge-openwebif-tv';
 const PLATFORM_NAME = 'OpenWebIfTv';
@@ -146,8 +146,7 @@ class openwebIfTvDevice {
 		me.log.debug('Device: %s %s, requesting Device information.', me.host, me.name);
 		axios.get(me.url + '/api/getallservices').then(response => {
 			if (fs.existsSync(me.inputsFile) === false) {
-				let json = response.data;
-				let channels = json.services;
+				let channels = response.data.services;
 				me.log.debug('Device: %s %s, get Channels list successful: %s', me.host, me.name, JSON.stringify(channels, null, 2));
 				fs.writeFile(me.inputsFile, JSON.stringify(channels), (error) => {
 					if (error) {
@@ -166,16 +165,15 @@ class openwebIfTvDevice {
 		});
 
 		axios.get(me.url + '/api/deviceinfo').then(response => {
-			let json = response.data;
-			me.manufacturer = json.brand;
-			me.modelName = json.mname;
+			me.manufacturer = response.data.brand;
+			me.modelName = response.data.mname;
 			me.log('-------- %s --------', me.name);
-			me.log('Manufacturer: %s', json.brand);
-			me.log('Model: %s', json.mname);
-			me.log('Kernel: %s', json.kernelver);
-			me.log('Chipset: %s', json.chipset);
-			me.log('Webif version.: %s', json.webifver);
-			me.log('Firmware: %s', json.enigmaver);
+			me.log('Manufacturer: %s', response.data.brand);
+			me.log('Model: %s', response.data.mname);
+			me.log('Kernel: %s', response.data.kernelver);
+			me.log('Chipset: %s', response.data.chipset);
+			me.log('Webif version.: %s', response.data.webifver);
+			me.log('Firmware: %s', response.data.enigmaver);
 			me.log('----------------------------------');
 		}).catch(error => {
 			if (error) {
@@ -187,15 +185,14 @@ class openwebIfTvDevice {
 	getDeviceState() {
 		var me = this;
 		axios.get(me.url + '/api/statusinfo').then(response => {
-			let json = response.data;
-			let powerState = (json.inStandby == 'false');
+			let powerState = (response.data.inStandby == 'false');
 			if (me.televisionService && (powerState !== me.currentPowerState)) {
 				me.televisionService.getCharacteristic(Characteristic.Active).updateValue(powerState);
 				me.log('Device: %s %s, get current Power state successful: %s', me.host, me.name, powerState ? 'ON' : 'STANDBY');
 				me.currentPowerState = powerState;
 			}
-			let inputReference = json.currservice_serviceref;
-			let inputName = json.currservice_station;
+			let inputReference = response.data.currservice_serviceref;
+			let inputName = response.data.currservice_station;
 			if (me.televisionService && powerState && (me.currentInputReference !== inputReference)) {
 				if (me.inputReferences && me.inputReferences.length > 0) {
 					let inputIdentifier = me.inputReferences.indexOf(inputReference);
@@ -204,8 +201,8 @@ class openwebIfTvDevice {
 					me.currentInputReference = inputReference;
 				}
 			}
-			let muteState = powerState ? (json.muted == true) : true;
-			let volume = parseInt(json.volume);
+			let muteState = powerState ? (response.data.muted == true) : true;
+			let volume = parseInt(response.data.volume);
 			if (me.speakerService && powerState && (me.currentMuteState !== muteState || me.currentVolume !== volume)) {
 				me.speakerService.getCharacteristic(Characteristic.Mute).updateValue(muteState);
 				me.speakerService.getCharacteristic(Characteristic.Volume).updateValue(volume);
@@ -228,8 +225,8 @@ class openwebIfTvDevice {
 	//Prepare TV service 
 	prepareTelevisionService() {
 		this.log.debug('prepareTelevisionService');
-		this.UUID = accessoryUuid.generate(this.name)
-		this.accessory = new Accessory(this.name, this.UUID);
+		this.accessoryUUID = UUID.generate(this.name);
+		this.accessory = new Accessory(this.name, this.accessoryUUID);
 		this.accessory.category = 31;
 
 		this.televisionService = new Service.Television(this.name, 'televisionService');
