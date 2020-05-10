@@ -451,7 +451,7 @@ class openwebIfTvDevice {
 		var me = this;
 		let inputReference = me.currentInputReference;
 		let inputName = me.currentInputName;
-		if (!me.connectionStatus || inputReference === undefined || inputReference === null) {
+		if (!me.currentPowerState || inputReference === undefined || inputReference === null) {
 			me.televisionService
 				.getCharacteristic(Characteristic.ActiveIdentifier)
 				.updateValue(0);
