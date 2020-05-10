@@ -2,7 +2,6 @@
 
 const hap = require("hap-nodejs");
 const fs = require('fs');
-const mkdirp = require('mkdirp');
 const axios = require('axios');
 const path = require('path');
 
@@ -112,7 +111,11 @@ class openwebIfTvDevice {
 
 		//check if the directory exists, if not then create it
 		if (fs.existsSync(this.prefDir) === false) {
-			mkdirp(this.prefDir);
+			fs.mkdir(this.prefDir, { recursive: false }, (error) => {
+				if (error) {
+					this.log.debug('Device: %s %s, create directory: %s, error: %s', this.host, this.name, this.prefDir, error);
+				}
+			});
 		}
 
 		//Check net state
