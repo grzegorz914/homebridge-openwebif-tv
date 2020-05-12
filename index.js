@@ -66,7 +66,6 @@ class openwebIfTvPlatform {
 class openwebIfTvDevice {
 	constructor(log, device, api) {
 		this.log = log;
-		this.device = device;
 		this.api = api;
 		this.device = device;
 
