@@ -1,6 +1,6 @@
 # Change Log
 All notable changes to this project will be documented in this file.
-## 2.10.0 (10.05.2020) 
+## 2.9.10 (10.05.2020) 
 - code cleanup
 
 ## 2.9.0 (09.05.2020) 

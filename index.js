@@ -1,23 +1,20 @@
 'use strict';
 
-const hap = require("hap-nodejs");
 const fs = require('fs');
 const axios = require('axios');
 const path = require('path');
 
-const Characteristic = hap.Characteristic;
-const CharacteristicEventTypes = hap.CharacteristicEventTypes;
-const Service = hap.Service;
-const UUID = hap.uuid;
-
 const PLUGIN_NAME = 'homebridge-openwebif-tv';
 const PLATFORM_NAME = 'OpenWebIfTv';
 
-let Accessory;
+let Accessory, Characteristic, Service, UUID;
 
-module.exports = api => {
-	Accessory = api.platformAccessory;
-	api.registerPlatform(PLUGIN_NAME, PLATFORM_NAME, openwebIfTvPlatform, true);
+module.exports = homebridge => {
+	Accessory = homebridge.platformAccessory;
+	Characteristic = homebridge.hap.Characteristic;
+	Service = homebridge.hap.Service;
+	UUID = homebridge.hap.uuid;
+	homebridge.registerPlatform(PLUGIN_NAME, PLATFORM_NAME, openwebIfTvPlatform, true);
 };
 
 class openwebIfTvPlatform {
@@ -65,7 +62,6 @@ class openwebIfTvPlatform {
 		this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [platformAccessory]);
 	}
 }
-
 
 class openwebIfTvDevice {
 	constructor(log, device, api) {
@@ -144,12 +140,151 @@ class openwebIfTvDevice {
 		setTimeout(this.prepareTelevisionService.bind(this), 1000);
 	}
 
+	//Prepare TV service 
+	prepareTelevisionService() {
+		this.log.debug('prepareTelevisionService');
+		this.accessoryUUID = UUID.generate(this.name);
+		this.accessory = new Accessory(this.name, this.accessoryUUID);
+		this.accessory.category = 31;
+		this.accessory.getService(Service.AccessoryInformation)
+			.setCharacteristic(Characteristic.Manufacturer, this.manufacturer)
+			.setCharacteristic(Characteristic.Model, this.modelName)
+			.setCharacteristic(Characteristic.SerialNumber, this.serialNumber)
+			.setCharacteristic(Characteristic.FirmwareRevision, this.firmwareRevision);
+
+		this.televisionService = new Service.Television(this.name, 'televisionService');
+		this.televisionService.setCharacteristic(Characteristic.ConfiguredName, this.name);
+		this.televisionService.setCharacteristic(Characteristic.SleepDiscoveryMode, Characteristic.SleepDiscoveryMode.ALWAYS_DISCOVERABLE);
+
+		this.televisionService.getCharacteristic(Characteristic.Active)
+			.on('get', this.getPower.bind(this))
+			.on('set', this.setPower.bind(this));
+
+		this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
+			.on('get', this.getInput.bind(this))
+			.on('set', this.setInput.bind(this));
+
+		this.televisionService.getCharacteristic(Characteristic.RemoteKey)
+			.on('set', this.setRemoteKey.bind(this));
+
+		this.televisionService.getCharacteristic(Characteristic.PowerModeSelection)
+			.on('set', this.setPowerModeSelection.bind(this));
+
+		this.accessory.addService(this.televisionService);
+		this.prepareSpeakerService();
+		this.prepareInputsService();
+		if (this.volumeControl) {
+			this.prepareVolumeService();
+		}
+
+		this.log.debug('Device: %s %s, publishExternalAccessories.', this.host, this.name);
+		this.api.publishExternalAccessories(PLUGIN_NAME, [this.accessory]);
+	}
+
+	//Prepare speaker service
+	prepareSpeakerService() {
+		this.log.debug('prepareSpeakerService');
+		this.speakerService = new Service.TelevisionSpeaker(this.name + ' Speaker', 'speakerService');
+		this.speakerService
+			.setCharacteristic(Characteristic.Active, Characteristic.Active.ACTIVE)
+			.setCharacteristic(Characteristic.VolumeControlType, Characteristic.VolumeControlType.ABSOLUTE);
+		this.speakerService.getCharacteristic(Characteristic.VolumeSelector)
+			.on('set', this.setVolumeSelector.bind(this));
+		this.speakerService.getCharacteristic(Characteristic.Volume)
+			.on('get', this.getVolume.bind(this))
+			.on('set', this.setVolume.bind(this));
+		this.speakerService.getCharacteristic(Characteristic.Mute)
+			.on('get', this.getMute.bind(this))
+			.on('set', this.setMute.bind(this));
+
+		this.accessory.addService(this.speakerService);
+		this.televisionService.addLinkedService(this.speakerService);
+	}
+
+	//Prepare volume service
+	prepareVolumeService() {
+		this.log.debug('prepareVolumeService');
+		this.volumeService = new Service.Lightbulb(this.name + ' Volume', 'volumeService');
+		this.volumeService.getCharacteristic(Characteristic.On)
+			.on('get', this.getMuteSlider.bind(this));
+		this.volumeService.getCharacteristic(Characteristic.Brightness)
+			.on('get', this.getVolume.bind(this))
+			.on('set', this.setVolume.bind(this));
+
+		this.accessory.addService(this.volumeService);
+		this.televisionService.addLinkedService(this.volumeService);
+	}
+
+	//Prepare inputs services
+	prepareInputsService() {
+		this.log.debug('prepareInputsService');
+		if (this.inputs === undefined || this.inputs === null || this.inputs.length <= 0) {
+			this.log.debug('Inputs are not defined, please add it in config.json');
+			this.inputs = [{ 'name': 'No channels defined', 'reference': 'No channels defined' }];
+		}
+
+		if (Array.isArray(this.inputs) === false) {
+			this.inputs = [this.inputs];
+		}
+
+		let savedNames = {};
+		try {
+			savedNames = JSON.parse(fs.readFileSync(this.inputsFile));
+		} catch (error) {
+			this.log.debug('Device: %s %s, channels file does not exist', this.host, this.name);
+		}
+
+		this.inputs.forEach((input, i) => {
+
+			//get channel reference
+			let inputReference = null;
+
+			if (input.reference !== undefined) {
+				inputReference = input.reference;
+			}
+
+			//get channel name		
+			let inputName = inputReference;
+
+			if (savedNames && savedNames[inputReference]) {
+				inputName = savedNames[inputReference];
+			} else if (input.name) {
+				inputName = input.name;
+			}
+
+			this.inputsService = new Service.InputSource(inputReference, 'channel' + i);
+			this.inputsService
+				.setCharacteristic(Characteristic.Identifier, i)
+				.setCharacteristic(Characteristic.ConfiguredName, inputName)
+				.setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
+				.setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.TV)
+				.setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN);
+
+			this.inputsService
+				.getCharacteristic(Characteristic.ConfiguredName)
+				.on('set', (newInputName, callback) => {
+					this.inputs[inputReference] = newInputName;
+					fs.writeFile(this.inputsFile, JSON.stringify(this.inputs), (error) => {
+						if (error) {
+							this.log.debug('Device: %s %s, can not write new Channel name, error: %s', this.host, this.name, error);
+						} else {
+							this.log('Device: %s %s, saved new Channel successful, name: %s, reference: %s', this.host, this.name, newInputName, inputReference);
+						}
+					});
+					callback(null, newInputName)
+				});
+			this.accessory.addService(this.inputsService);
+			this.televisionService.addLinkedService(this.inputsService);
+			this.inputReferences.push(inputReference);
+		});
+	}
+
 	getDeviceInfo() {
 		var me = this;
 		me.log.debug('Device: %s %s, requesting Device information.', me.host, me.name);
 		axios.get(me.url + '/api/getallservices').then(response => {
+			let channels = response.data.services;
 			if (fs.existsSync(me.inputsFile) === false) {
-				let channels = response.data.services;
 				me.log.debug('Device: %s %s, get Channels list successful: %s', me.host, me.name, JSON.stringify(channels, null, 2));
 				fs.writeFile(me.inputsFile, JSON.stringify(channels), (error) => {
 					if (error) {
@@ -221,153 +356,6 @@ class openwebIfTvDevice {
 		}).catch(error => {
 			if (error) {
 				me.log.debug('Device: %s %s, getDeviceState error: %s', me.host, me.name, error);
-			}
-		});
-	}
-
-	//Prepare TV service 
-	prepareTelevisionService() {
-		this.log.debug('prepareTelevisionService');
-		this.accessoryUUID = UUID.generate(this.name);
-		this.accessory = new Accessory(this.name, this.accessoryUUID);
-		this.accessory.category = 31;
-
-		this.televisionService = new Service.Television(this.name, 'televisionService');
-		this.televisionService.setCharacteristic(Characteristic.ConfiguredName, this.name);
-		this.televisionService.setCharacteristic(Characteristic.SleepDiscoveryMode, Characteristic.SleepDiscoveryMode.ALWAYS_DISCOVERABLE);
-
-		this.televisionService.getCharacteristic(Characteristic.Active)
-			.on('get', this.getPower.bind(this))
-			.on('set', this.setPower.bind(this));
-
-		this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
-			.on('get', this.getInput.bind(this))
-			.on('set', this.setInput.bind(this));
-
-		this.televisionService.getCharacteristic(Characteristic.RemoteKey)
-			.on('set', this.setRemoteKey.bind(this));
-
-		this.televisionService.getCharacteristic(Characteristic.PowerModeSelection)
-			.on('set', this.setPowerModeSelection.bind(this));
-
-
-		this.accessory
-			.getService(Service.AccessoryInformation)
-			.setCharacteristic(Characteristic.Manufacturer, this.manufacturer)
-			.setCharacteristic(Characteristic.Model, this.modelName)
-			.setCharacteristic(Characteristic.SerialNumber, this.serialNumber)
-			.setCharacteristic(Characteristic.FirmwareRevision, this.firmwareRevision);
-
-		this.accessory.addService(this.televisionService);
-		this.prepareSpeakerService();
-		this.prepareInputsService();
-		if (this.volumeControl) {
-			this.prepareVolumeService();
-		}
-
-		this.log.debug('Device: %s %s, publishExternalAccessories.', this.host, this.name);
-		this.api.publishExternalAccessories(PLUGIN_NAME, [this.accessory]);
-	}
-
-	//Prepare speaker service
-	prepareSpeakerService() {
-		this.log.debug('prepareSpeakerService');
-		this.speakerService = new Service.TelevisionSpeaker(this.name + ' Speaker', 'speakerService');
-		this.speakerService
-			.setCharacteristic(Characteristic.Active, Characteristic.Active.ACTIVE)
-			.setCharacteristic(Characteristic.VolumeControlType, Characteristic.VolumeControlType.ABSOLUTE);
-		this.speakerService.getCharacteristic(Characteristic.VolumeSelector)
-			.on('set', this.setVolumeSelector.bind(this));
-		this.speakerService.getCharacteristic(Characteristic.Volume)
-			.on('get', this.getVolume.bind(this))
-			.on('set', this.setVolume.bind(this));
-		this.speakerService.getCharacteristic(Characteristic.Mute)
-			.on('get', this.getMute.bind(this))
-			.on('set', this.setMute.bind(this));
-
-		this.accessory.addService(this.speakerService);
-		this.televisionService.addLinkedService(this.speakerService);
-	}
-
-	//Prepare volume service
-	prepareVolumeService() {
-		this.log.debug('prepareVolumeService');
-		this.volumeService = new Service.Lightbulb(this.name + ' Volume', 'volumeService');
-		this.volumeService.getCharacteristic(Characteristic.On)
-			.on('get', this.getMuteSlider.bind(this));
-		this.volumeService.getCharacteristic(Characteristic.Brightness)
-			.on('get', this.getVolume.bind(this))
-			.on('set', this.setVolume.bind(this));
-
-		this.accessory.addService(this.volumeService);
-		this.televisionService.addLinkedService(this.volumeService);
-	}
-
-	//Prepare inputs services
-	prepareInputsService() {
-		this.log.debug('prepareInputsService');
-		if (this.inputs === undefined || this.inputs === null || this.inputs.length <= 0) {
-			return;
-		}
-
-		if (Array.isArray(this.inputs) === false) {
-			this.inputs = [this.inputs];
-		}
-
-		let savedNames = {};
-		try {
-			savedNames = JSON.parse(fs.readFileSync(this.inputsFile));
-		} catch (err) {
-			this.log.debug('Device: %s %s, channels file does not exist', this.host, this.name);
-		}
-
-		this.inputs.forEach((input, i) => {
-
-			//get channel reference
-			let inputReference = null;
-
-			if (input.reference !== undefined) {
-				inputReference = input.reference;
-			} else {
-				inputReference = input;
-			}
-
-			//get channel name		
-			let inputName = inputReference;
-
-			if (savedNames && savedNames[inputReference]) {
-				inputName = savedNames[inputReference];
-			} else if (input.name) {
-				inputName = input.name;
-			}
-
-			//If reference not null or empty add the input
-			if (inputReference !== undefined && inputReference !== null || inputReference !== '') {
-
-				this.inputsService = new Service.InputSource(inputReference, 'channel' + i);
-				this.inputsService
-					.setCharacteristic(Characteristic.Identifier, i)
-					.setCharacteristic(Characteristic.ConfiguredName, inputName)
-					.setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
-					.setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.TV)
-					.setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN);
-
-				this.inputsService
-					.getCharacteristic(Characteristic.ConfiguredName)
-					.on('set', (newInputName, callback) => {
-						this.inputs[inputReference] = newInputName;
-						fs.writeFile(this.inputsFile, JSON.stringify(this.inputs), (error) => {
-							if (error) {
-								this.log.debug('Device: %s %s, can not write new Channel name, error: %s', this.host, this.name, error);
-							} else {
-								this.log('Device: %s %s, saved new Channel successful, name: %s, reference: %s', this.host, this.name, newInputName, inputReference);
-							}
-						});
-						callback(null, newInputName)
-					});
-				this.accessory.addService(this.inputsService);
-				this.televisionService.addLinkedService(this.inputsService);
-				this.inputReferences.push(inputReference);
 			}
 		});
 	}
@@ -451,7 +439,7 @@ class openwebIfTvDevice {
 		var me = this;
 		let inputReference = me.currentInputReference;
 		let inputName = me.currentInputName;
-		if (!me.currentPowerState || inputReference === undefined || inputReference === null) {
+		if (!me.currentPowerState || inputReference === undefined || inputReference === null || inputReference === '') {
 			me.televisionService
 				.getCharacteristic(Characteristic.ActiveIdentifier)
 				.updateValue(0);
@@ -470,17 +458,19 @@ class openwebIfTvDevice {
 
 	setInput(inputIdentifier, callback) {
 		var me = this;
-		let inputReference = me.inputReferences[inputIdentifier];
-		if (inputReference !== me.currentInputReference) {
-			axios.get(me.url + '/api/zap?sRef=' + inputReference).then(response => {
-				me.log('Device: %s %s, set new Channel successful: %s', me.host, me.name, inputReference);
-				callback(null, inputIdentifier);
-			}).catch(error => {
-				if (error) {
-					me.log.debug('Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', me.host, me.name, error);
-					callback(error);
-				}
-			});
+		if (me.currentPowerState) {
+			let inputReference = me.inputReferences[inputIdentifier];
+			if (inputReference !== me.currentInputReference) {
+				axios.get(me.url + '/api/zap?sRef=' + inputReference).then(response => {
+					me.log('Device: %s %s, set new Channel successful: %s', me.host, me.name, inputReference);
+					callback(null, inputIdentifier);
+				}).catch(error => {
+					if (error) {
+						me.log.debug('Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', me.host, me.name, error);
+						callback(error);
+					}
+				});
+			}
 		}
 	}
 
