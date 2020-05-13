@@ -8,6 +8,7 @@
     "properties": {
       "devices": {
         "title": "Devices",
+        "buttonText": "Add device",
         "type": "array",
         "items": {
           "type": "object",
@@ -62,6 +63,7 @@
             },
             "inputs": {
               "title": "Channels",
+              "buttonText": "Add channel",
               "type": "array",
               "items": {
                 "type": "object",

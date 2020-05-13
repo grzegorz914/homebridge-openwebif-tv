@@ -88,6 +88,7 @@ class openwebIfTvDevice {
 
 		//setup variables
 		this.inputReferences = new Array();
+		this.inputNames = new Array();
 		this.connectionStatus = false;
 		this.currentPowerState = false;
 		this.currentMuteState = false;
@@ -251,7 +252,7 @@ class openwebIfTvDevice {
 				inputName = input.name;
 			}
 
-			this.inputsService = new Service.InputSource(inputReference, 'channel' + i);
+			this.inputsService = new Service.InputSource(inputReference, 'input' + i);
 			this.inputsService
 				.setCharacteristic(Characteristic.Identifier, i)
 				.setCharacteristic(Characteristic.ConfiguredName, inputName)
@@ -275,6 +276,7 @@ class openwebIfTvDevice {
 			this.accessory.addService(this.inputsService);
 			this.televisionService.addLinkedService(this.inputsService);
 			this.inputReferences.push(inputReference);
+			this.inputNames.push(inputName);
 		});
 	}
 
@@ -336,6 +338,7 @@ class openwebIfTvDevice {
 					me.televisionService.getCharacteristic(Characteristic.ActiveIdentifier).updateValue(inputIdentifier);
 					me.log('Device: %s %s, get current Channel successful: %s %s', me.host, me.name, inputName, inputReference);
 					me.currentInputReference = inputReference;
+					me.currentInputName = inputName;
 				}
 			}
 			let muteState = powerState ? (response.data.muted == true) : true;
@@ -457,20 +460,17 @@ class openwebIfTvDevice {
 
 	setInput(inputIdentifier, callback) {
 		var me = this;
-		if (me.currentPowerState) {
-			let inputReference = me.inputReferences[inputIdentifier];
-			if (inputReference !== me.currentInputReference) {
-				axios.get(me.url + '/api/zap?sRef=' + inputReference).then(response => {
-					me.log('Device: %s %s, set new Channel successful: %s', me.host, me.name, inputReference);
-					callback(null, inputIdentifier);
-				}).catch(error => {
-					if (error) {
-						me.log.debug('Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', me.host, me.name, error);
-						callback(error);
-					}
-				});
+		let inputReference = me.inputReferences[inputIdentifier];
+		let inputName = me.inputNames[inputIdentifier];
+		axios.get(me.url + '/api/zap?sRef=' + inputReference).then(response => {
+			me.log('Device: %s %s, set new Channel successful: %s %s', me.host, me.name, inputName, inputReference);
+			callback(null, inputIdentifier);
+		}).catch(error => {
+			if (error) {
+				me.log.debug('Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', me.host, me.name, error);
+				callback(error);
 			}
-		}
+		});
 	}
 
 	setPowerModeSelection(remoteKey, callback) {
