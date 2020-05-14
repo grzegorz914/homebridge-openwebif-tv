@@ -100,6 +100,17 @@ class openwebIfTvDevice {
 		this.inputsFile = this.prefDir + '/' + 'channels_' + this.host.split('.').join('');
 		this.url = this.auth ? ('http://' + this.user + ':' + this.pass + '@' + this.host + ':' + this.port) : ('http://' + this.host + ':' + this.port);
 
+		let defaultInputs = [
+			{
+				name: 'No channels configured',
+				reference: 'No references configured'
+			}
+		];
+
+		if (!Array.isArray(this.inputs) || this.inputs === undefined || this.inputs === null) {
+			this.inputs = defaultInputs;
+		}
+
 		//check if prefs directory ends with a /, if not then add it
 		if (this.prefDir.endsWith('/') === false) {
 			this.prefDir = this.prefDir + '/';
@@ -218,14 +229,6 @@ class openwebIfTvDevice {
 	//Prepare inputs services
 	prepareInputsService() {
 		this.log.debug('prepareInputsService');
-		if (this.inputs === undefined || this.inputs === null || this.inputs.length <= 0) {
-			this.log.debug('Inputs are not defined, please add it in config.json');
-			this.inputs = [{ 'name': 'No channels defined', 'reference': 'No channels defined' }];
-		}
-
-		if (Array.isArray(this.inputs) === false) {
-			this.inputs = [this.inputs];
-		}
 
 		let savedNames = {};
 		try {
@@ -237,14 +240,10 @@ class openwebIfTvDevice {
 		this.inputs.forEach((input, i) => {
 
 			//get channel reference
-			let inputReference = null;
-
-			if (input.reference !== undefined) {
-				inputReference = input.reference;
-			}
+			let inputReference = input.reference;
 
 			//get channel name		
-			let inputName = inputReference;
+			let inputName = input.name;
 
 			if (savedNames && savedNames[inputReference]) {
 				inputName = savedNames[inputReference];
@@ -306,13 +305,15 @@ class openwebIfTvDevice {
 		axios.get(me.url + '/api/deviceinfo').then(response => {
 			me.manufacturer = response.data.brand;
 			me.modelName = response.data.mname;
+			me.serialNumber = response.data.webifver;
+			me.firmwareRevision = response.data.enigmaver;
 			me.log('-------- %s --------', me.name);
-			me.log('Manufacturer: %s', response.data.brand);
-			me.log('Model: %s', response.data.mname);
+			me.log('Manufacturer: %s', me.manufacturer);
+			me.log('Model: %s', me.modelName);
 			me.log('Kernel: %s', response.data.kernelver);
 			me.log('Chipset: %s', response.data.chipset);
-			me.log('Webif version.: %s', response.data.webifver);
-			me.log('Firmware: %s', response.data.enigmaver);
+			me.log('Webif version.: %s', me.serialNumber);
+			me.log('Firmware: %s', me.firmwareRevision);
 			me.log('----------------------------------');
 		}).catch(error => {
 			if (error) {
