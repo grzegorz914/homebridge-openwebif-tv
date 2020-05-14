@@ -1,5 +1,8 @@
 # Change Log
 All notable changes to this project will be documented in this file.
+## 2.9.23 (14.05.2020) 
+- added descriptions in config.schema.json
+
 ## 2.9.22 (10.05.2020) 
 - prevent plugin from crash if no inputs are defined, now display in the list 'No channels configured'
 
