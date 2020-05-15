@@ -7,14 +7,15 @@ const path = require('path');
 const PLUGIN_NAME = 'homebridge-openwebif-tv';
 const PLATFORM_NAME = 'OpenWebIfTv';
 
-let Accessory, Characteristic, Service, UUID;
+let Accessory, Characteristic, Service, Categories, UUID;
 
-module.exports = homebridge => {
-	Accessory = homebridge.platformAccessory;
-	Characteristic = homebridge.hap.Characteristic;
-	Service = homebridge.hap.Service;
-	UUID = homebridge.hap.uuid;
-	homebridge.registerPlatform(PLUGIN_NAME, PLATFORM_NAME, openwebIfTvPlatform, true);
+module.exports = (api) => {
+	Accessory = api.platformAccessory;
+	Characteristic = api.hap.Characteristic;
+	Service = api.hap.Service;
+	Categories = api.hap.Categories;
+	UUID = api.hap.uuid;
+	api.registerPlatform(PLUGIN_NAME, PLATFORM_NAME, openwebIfTvPlatform, true);
 };
 
 class openwebIfTvPlatform {
@@ -156,7 +157,7 @@ class openwebIfTvDevice {
 		this.log.debug('prepareTelevisionService');
 		this.accessoryUUID = UUID.generate(this.name);
 		this.accessory = new Accessory(this.name, this.accessoryUUID);
-		this.accessory.category = 31;
+		this.accessory.category = Categories.TELEVISION;
 		this.accessory.getService(Service.AccessoryInformation)
 			.setCharacteristic(Characteristic.Manufacturer, this.manufacturer)
 			.setCharacteristic(Characteristic.Model, this.modelName)
