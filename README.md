@@ -39,6 +39,8 @@ Homebridge plugin to control Sat Receivers basis on the OpenWebIf API. Tested wi
 1. Use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) to configure the plugin (strongly recomended), or update your configuration file manually. See `sample-config.json` in this repository for a sample or add the bottom example to Your config.json file.
 2. If port `80` not working check which port is set for Your Sat Receiver.
 3. All `reference` and `name` from Your sat receiver are stored in `homebridge_directory/openwebifTv/channels_19216804`, if U want somthing changed in channel list please add Yours prefered channels to the config bouquets.
+4. If `volumeControl` is enabled, volume can be control using slider.
+5. If `switchInfoMenu` is enabled, `I` button change its behaviour in RC app between Menu and INFO.
 
 <p align="left">
   <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/master/graphics/ustawienia.png" height="150"></a>
