@@ -492,7 +492,7 @@ class openwebIfTvDevice {
 			axios.get(me.url + "/api/remotecontrol?command=" + command).then(response => {
 				me.log("Device: %s %s, setPowerModeSelection successful, remoteKey: %s, command: %s", me.host, me.name, remoteKey, command);
 				me.currentInfoMenuState = !me.currentInfoMenuState;
-				callback(null);
+				callback(null, remoteKey);
 			}).catch(error => {
 				if (error) {
 					me.log.debug("Device: %s %s, can not setPowerModeSelection. Might be due to a wrong settings in config, error: %s", me.host, me.name, error);
@@ -516,7 +516,7 @@ class openwebIfTvDevice {
 			}
 			axios.get(me.url + "/api/remotecontrol?command=" + command).then(response => {
 				me.log("Device: %s %s, setVolumeSelector successful, remoteKey: %s, command: %s", me.host, me.name, remoteKey, command);
-				callback(null);
+				callback(null, remoteKey);
 			}).catch(error => {
 				if (error) {
 					me.log.debug("Device: %s %s, can not setVolumeSelector. Might be due to a wrong settings in config, error: %s", me.host, me.name, error);
@@ -573,7 +573,7 @@ class openwebIfTvDevice {
 			}
 			axios.get(me.url + "/api/remotecontrol?command=" + command).then(response => {
 				me.log("Device: %s %s, setRemoteKey successful, remoteKey: %s, command: %s", me.host, me.name, remoteKey, command);
-				callback(null);
+				callback(null, remoteKey);
 			}).catch(error => {
 				if (error) {
 					me.log.debug("Device: %s %s, can not setRemoteKey. Might be due to a wrong settings in config, error: %s", me.host, me.name, error);
