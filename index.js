@@ -132,7 +132,9 @@ class openwebIfTvDevice {
 				if (!this.connectionStatus) {
 					this.log("Device: %s %s, state: Online", this.host, this.name);
 					this.connectionStatus = true;
-					this.connect();
+					this.getDeviceInfo();
+				} else {
+					this.getDeviceState();
 				}
 			}).catch(error => {
 				if (error) {
@@ -146,12 +148,6 @@ class openwebIfTvDevice {
 
 		//Delay to wait for device info before publish
 		setTimeout(this.prepareTelevisionService.bind(this), 1000);
-	}
-
-	connect() {
-		this.log("Device: %s %s, connected.", this.host, this.name);
-		this.getDeviceInfo();
-		this.getDeviceState();
 	}
 
 	//Prepare TV service 
@@ -469,17 +465,19 @@ class openwebIfTvDevice {
 
 	setInput(inputIdentifier, callback) {
 		var me = this;
-		let inputReference = me.inputReferences[inputIdentifier];
-		let inputName = me.inputNames[inputIdentifier];
-		axios.get(me.url + "/api/zap?sRef=" + inputReference).then(response => {
-			me.log("Device: %s %s, set new Channel successful: %s %s", me.host, me.name, inputName, inputReference);
-			callback(null);
-		}).catch(error => {
-			if (error) {
-				me.log.debug("Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.", me.host, me.name, error);
-				callback(error);
-			}
-		});
+		setTimeout(() => {
+			let inputReference = me.inputReferences[inputIdentifier];
+			let inputName = me.inputNames[inputIdentifier];
+			axios.get(me.url + "/api/zap?sRef=" + inputReference).then(response => {
+				me.log("Device: %s %s, set new Channel successful: %s %s", me.host, me.name, inputName, inputReference);
+				callback(null);
+			}).catch(error => {
+				if (error) {
+					me.log.debug("Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.", me.host, me.name, error);
+					callback(error);
+				}
+			});
+		}, 100);
 	}
 
 	setPowerModeSelection(remoteKey, callback) {

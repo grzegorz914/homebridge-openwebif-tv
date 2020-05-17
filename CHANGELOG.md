@@ -1,5 +1,8 @@
 # Change Log
 All notable changes to this project will be documented in this file.
+## 2.9.36 (17.05.2020)
+-fixed switch input if start with scene aor automation
+
 ## 2.9.23 (14.05.2020) 
 - added descriptions in config.schema.json
 
