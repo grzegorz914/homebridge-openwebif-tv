@@ -325,7 +325,7 @@ class openwebIfTvDevice {
 			let powerState = (response.data.inStandby == 'false');
 			if (me.televisionService && (powerState !== me.currentPowerState)) {
 				me.televisionService.updateCharacteristic(Characteristic.Active, powerState);
-				me.log('Device: %s %s, get current Power state successful: %s', me.host, me.name, powerState ? 'ON' : 'STANDBY');
+				me.log('Device: %s %s, get current Power state successful: %s', me.host, me.name, powerState ? 'ON' : 'OFF');
 				me.currentPowerState = powerState;
 			}
 			let inputReference = response.data.currservice_serviceref;
@@ -363,7 +363,7 @@ class openwebIfTvDevice {
 	getPower(callback) {
 		var me = this;
 		let state = me.currentPowerState
-		me.log.debug('Device: %s %s, get current Power state successful: %s', me.host, me.name, state ? 'ON' : 'STANDBY');
+		me.log.debug('Device: %s %s, get current Power state successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
 		me.currentPowerState = state;
 		callback(null, state);
 	}
@@ -373,7 +373,7 @@ class openwebIfTvDevice {
 		if (state !== me.currentPowerState) {
 			let newState = state ? '4' : '5';
 			axios.get(me.url + '/api/powerstate?newstate=' + newState).then(response => {
-				me.log('Device: %s %s, set new Power state successful: %s', me.host, me.name, state ? 'ON' : 'STANDBY');
+				me.log('Device: %s %s, set new Power state successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
 				me.currentPowerState = state;
 				callback(null);
 			}).catch(error => {
