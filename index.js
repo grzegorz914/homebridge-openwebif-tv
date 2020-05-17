@@ -132,7 +132,7 @@ class openwebIfTvDevice {
 				if (!this.connectionStatus) {
 					this.log("Device: %s %s, state: Online", this.host, this.name);
 					this.connectionStatus = true;
-					this.getDeviceInfo();
+					setTimeout(this.getDeviceInfo.bind(this), 500);
 				} else {
 					this.getDeviceState();
 				}
@@ -280,52 +280,47 @@ class openwebIfTvDevice {
 
 	getDeviceInfo() {
 		var me = this;
-		setTimeout(() => {
-			me.log.debug("Device: %s %s, requesting Device information.", me.host, me.name);
-			axios.get(me.url + "/api/getallservices").then(response => {
-				let channels = response.data.services;
-				if (fs.existsSync(me.inputsFile) === false) {
-					me.log.debug("Device: %s %s, get Channels list successful: %s", me.host, me.name, JSON.stringify(channels, null, 2));
-					fs.writeFile(me.inputsFile, JSON.stringify(channels), (error) => {
-						if (error) {
-							me.log.debug("Device: %s %s, could not write Channels to the file, error: %s", me.host, me.name, error);
-						} else {
-							me.log("Device: %s %s, saved Channels successful in: %s", me.host, me.name, me.prefDir);
-						}
-					});
-				} else {
-					me.log.debug("Device: %s %s, Channels file already exists, not saving", me.host, me.name);
-				}
-			}).catch(error => {
-				if (error) {
-					me.log.debug("Device: %s %s, get Channels list error: %s", me.host, me.name, error);
-				}
-			});
+		me.log.debug("Device: %s %s, requesting Device information.", me.host, me.name);
+		axios.get(me.url + "/api/getallservices").then(response => {
+			let channels = response.data.services;
+			if (fs.existsSync(me.inputsFile) === false) {
+				me.log.debug("Device: %s %s, get Channels list successful: %s", me.host, me.name, JSON.stringify(channels, null, 2));
+				fs.writeFile(me.inputsFile, JSON.stringify(channels), (error) => {
+					if (error) {
+						me.log.debug("Device: %s %s, could not write Channels to the file, error: %s", me.host, me.name, error);
+					} else {
+						me.log("Device: %s %s, saved Channels successful in: %s", me.host, me.name, me.prefDir);
+					}
+				});
+			} else {
+				me.log.debug("Device: %s %s, Channels file already exists, not saving", me.host, me.name);
+			}
+		}).catch(error => {
+			if (error) {
+				me.log.debug("Device: %s %s, get Channels list error: %s", me.host, me.name, error);
+			}
+		});
 
-			axios.get(me.url + "/api/deviceinfo").then(response => {
-				me.manufacturer = response.data.brand;
-				me.modelName = response.data.mname;
-				me.serialNumber = response.data.webifver;
-				me.firmwareRevision = response.data.enigmaver;
-				me.kernelVer = response.data.kernelver;
-				me.chipset = response.data.chipset;
-			}).catch(error => {
-				if (error) {
-					me.log.debug("Device: %s %s, getDeviceInfo eror: %s", me.host, me.name, error);
-				}
-			});
-
-			setTimeout(() => {
-				me.log("-------- %s --------", me.name);
-				me.log("Manufacturer: %s", me.manufacturer);
-				me.log("Model: %s", me.modelName);
-				me.log("Kernel: %s", me.kernelVer);
-				me.log("Chipset: %s", me.chipset);
-				me.log("Webif version: %s", me.serialNumber);
-				me.log("Firmware: %s", me.firmwareRevision);
-				me.log("----------------------------------");
-			}, 350);
-		}, 500);
+		axios.get(me.url + "/api/deviceinfo").then(response => {
+			me.manufacturer = response.data.brand;
+			me.modelName = response.data.mname;
+			me.serialNumber = response.data.webifver;
+			me.firmwareRevision = response.data.enigmaver;
+			me.kernelVer = response.data.kernelver;
+			me.chipset = response.data.chipset;
+			me.log("-------- %s --------", me.name);
+			me.log("Manufacturer: %s", me.manufacturer);
+			me.log("Model: %s", me.modelName);
+			me.log("Kernel: %s", me.kernelVer);
+			me.log("Chipset: %s", me.chipset);
+			me.log("Webif version: %s", me.serialNumber);
+			me.log("Firmware: %s", me.firmwareRevision);
+			me.log("----------------------------------");
+		}).catch(error => {
+			if (error) {
+				me.log.debug("Device: %s %s, getDeviceInfo eror: %s", me.host, me.name, error);
+			}
+		});
 	}
 
 	getDeviceState() {
