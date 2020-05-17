@@ -311,6 +311,8 @@ class openwebIfTvDevice {
 				me.modelName = response.data.mname;
 				me.serialNumber = response.data.webifver;
 				me.firmwareRevision = response.data.enigmaver;
+				me.kernelVer = response.data.kernelver;
+				me.chipset = response.data.chipset;
 			}).catch(error => {
 				if (error) {
 					me.log.debug("Device: %s %s, getDeviceInfo eror: %s", me.host, me.name, error);
@@ -321,8 +323,8 @@ class openwebIfTvDevice {
 				me.log("-------- %s --------", me.name);
 				me.log("Manufacturer: %s", me.manufacturer);
 				me.log("Model: %s", me.modelName);
-				me.log("Kernel: %s", response.data.kernelver);
-				me.log("Chipset: %s", response.data.chipset);
+				me.log("Kernel: %s", me.kernelVer);
+				me.log("Chipset: %s", me.chipset);
 				me.log("Webif version: %s", me.serialNumber);
 				me.log("Firmware: %s", me.firmwareRevision);
 				me.log("----------------------------------");
