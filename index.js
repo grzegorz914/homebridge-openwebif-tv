@@ -137,12 +137,10 @@ class openwebIfTvDevice {
 					this.getDeviceState();
 				}
 			}).catch(error => {
-				if (error) {
-					this.log.debug('Device: %s %s %s, state: Offline', this.host, this.name);
-					this.connectionStatus = false;
-					this.currentPowerState = false;
-					return;
-				}
+				this.log.debug('Device: %s %s %s, state: Offline', this.host, this.name);
+				this.connectionStatus = false;
+				this.currentPowerState = false;
+				return;
 			});
 		}.bind(this), 3000);
 
@@ -292,9 +290,7 @@ class openwebIfTvDevice {
 				}
 			});
 		}).catch(error => {
-			if (error) {
-				me.log.debug('Device: %s %s, get Channels list error: %s', me.host, me.name, error);
-			}
+			me.log.debug('Device: %s %s, get Channels list error: %s', me.host, me.name, error);
 		});
 
 		axios.get(me.url + '/api/deviceinfo').then(response => {
@@ -354,9 +350,7 @@ class openwebIfTvDevice {
 				me.currentVolume = volume;
 			}
 		}).catch(error => {
-			if (error) {
-				me.log.debug('Device: %s %s, getDeviceState error: %s', me.host, me.name, error);
-			}
+			me.log.debug('Device: %s %s, getDeviceState error: %s', me.host, me.name, error);
 		});
 	}
 
@@ -377,10 +371,8 @@ class openwebIfTvDevice {
 				me.currentPowerState = state;
 				callback(null);
 			}).catch(error => {
-				if (error) {
-					me.log.debug('Device: %s %s, can not set new Power state. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
-					callback(error);
-				}
+				me.log.debug('Device: %s %s, can not set new Power state. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
+				callback(error);
 			});
 		}
 	}
@@ -406,10 +398,8 @@ class openwebIfTvDevice {
 				me.log('Device: %s %s, set Mute successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
 				callback(null);
 			}).catch(error => {
-				if (error) {
-					me.log.debug('Device: %s %s, can not set Mute. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
-					callback(error);
-				}
+				me.log.debug('Device: %s %s, can not set Mute. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
+				callback(error);
 			});
 		}
 	}
@@ -428,10 +418,8 @@ class openwebIfTvDevice {
 			me.log('Device: %s %s, set new Volume level successful: %s', me.host, me.name, volume);
 			callback(null);
 		}).catch(error => {
-			if (error) {
-				me.log.debug('Device: %s %s, can not set new Volume level. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
-				callback(error);
-			}
+			me.log.debug('Device: %s %s, can not set new Volume level. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
+			callback(error);
 		});
 	}
 
@@ -463,10 +451,8 @@ class openwebIfTvDevice {
 				me.log('Device: %s %s, set new Channel successful: %s %s', me.host, me.name, inputName, inputReference);
 				callback(null);
 			}).catch(error => {
-				if (error) {
-					me.log.debug('Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', me.host, me.name, error);
-					callback(error);
-				}
+				me.log.debug('Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', me.host, me.name, error);
+				callback(error);
 			});
 		}, 100);
 	}
@@ -487,16 +473,9 @@ class openwebIfTvDevice {
 					command = '174';
 					break;
 			}
-			axios.get(me.url + '/api/remotecontrol?command=' + command).then(response => {
-				me.log('Device: %s %s, setPowerModeSelection successful, remoteKey: %s, command: %s', me.host, me.name, remoteKey, command);
-				me.currentInfoMenuState = !me.currentInfoMenuState;
-				callback(null);
-			}).catch(error => {
-				if (error) {
-					me.log.debug('Device: %s %s, can not setPowerModeSelection. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
-					callback(error);
-				}
-			});
+			me.sendRemoteCommand(command, callback);
+			me.log('Device: %s %s, setPowerModeSelection successful, remoteKey: %s', me.host, me.name, remoteKey);
+			me.currentInfoMenuState = !me.currentInfoMenuState;
 		}
 	}
 
@@ -512,15 +491,8 @@ class openwebIfTvDevice {
 					command = '114';
 					break;
 			}
-			axios.get(me.url + '/api/remotecontrol?command=' + command).then(response => {
-				me.log('Device: %s %s, setVolumeSelector successful, remoteKey: %s, command: %s', me.host, me.name, remoteKey, command);
-				callback(null);
-			}).catch(error => {
-				if (error) {
-					me.log.debug('Device: %s %s, can not setVolumeSelector. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
-					callback(error);
-				}
-			});
+			me.sendRemoteCommand(command, callback);
+			me.log('Device: %s %s, setVolumeSelector successful, remoteKey: %s', me.host, me.name, remoteKey);
 		}
 	}
 
@@ -569,14 +541,22 @@ class openwebIfTvDevice {
 					command = this.switchInfoMenu ? '358' : '139';
 					break;
 			}
+			me.sendRemoteCommand(command, callback);
+			me.log('Device: %s %s, setRemoteKey successful, remoteKey: %s', me.host, me.name, remoteKey);
+		}
+	}
+
+	sendRemoteCommand(command, callback) {
+		var me = this;
+		if (me.currentPowerState) {
 			axios.get(me.url + '/api/remotecontrol?command=' + command).then(response => {
-				me.log('Device: %s %s, setRemoteKey successful, remoteKey: %s, command: %s', me.host, me.name, remoteKey, command);
-				callback(null);
-			}).catch(error => {
-				if (error) {
-					me.log.debug('Device: %s %s, can not setRemoteKey. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
-					callback(error);
+				me.log('Device: %s %s, send RC command successful, command: %s', me.host, me.name, command);
+				if (callback !== null) {
+					callback();
 				}
+			}).catch(error => {
+				me.log.debug('Device: %s %s %s, can not send RC command. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
+				callback(error);
 			});
 		}
 	}
