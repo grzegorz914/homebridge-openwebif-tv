@@ -99,16 +99,16 @@ class openwebIfTvDevice {
 		this.currentInfoMenuState = false;
 		this.prefDir = path.join(api.user.storagePath(), 'openwebifTv');
 		this.inputsFile = this.prefDir + '/' + 'channels_' + this.host.split('.').join('');
+		this.customInputsFile = this.prefDir + '/' + 'customChannels_' + this.host.split('.').join('');
 		this.url = this.auth ? ('http://' + this.user + ':' + this.pass + '@' + this.host + ':' + this.port) : ('http://' + this.host + ':' + this.port);
 
-		let defaultInputs = [
-			{
-				name: 'No channels configured',
-				reference: 'No references configured'
-			}
-		];
-
 		if (!Array.isArray(this.inputs) || this.inputs === undefined || this.inputs === null) {
+			let defaultInputs = [
+				{
+					name: 'No channels configured',
+					reference: 'No references configured'
+				}
+			];
 			this.inputs = defaultInputs;
 		}
 
@@ -229,7 +229,7 @@ class openwebIfTvDevice {
 
 		let savedNames = {};
 		try {
-			savedNames = JSON.parse(fs.readFileSync(this.inputsFile));
+			savedNames = JSON.parse(fs.readFileSync(this.customInputsFile));
 		} catch (error) {
 			this.log.debug('Device: %s %s, channels file does not exist', this.host, this.name);
 		}
@@ -258,13 +258,13 @@ class openwebIfTvDevice {
 
 			this.inputsService
 				.getCharacteristic(Characteristic.ConfiguredName)
-				.on('set', (newInputName, callback) => {
-					this.inputs[inputReference] = newInputName;
-					fs.writeFile(this.inputsFile, JSON.stringify(this.inputs), (error) => {
+				.on('set', (name, callback) => {
+					savedNames[inputReference] = name;
+					fs.writeFile(this.customInputsFile, JSON.stringify(savedNames, null, 2), (error) => {
 						if (error) {
 							this.log.debug('Device: %s %s, can not write new Channel name, error: %s', this.host, this.name, error);
 						} else {
-							this.log('Device: %s %s, saved new Channel successful, name: %s, reference: %s', this.host, this.name, newInputName, inputReference);
+							this.log('Device: %s %s, saved new Channel successful, name: %s, reference: %s', this.host, this.name, name, inputReference);
 						}
 					});
 					callback(null)
@@ -280,9 +280,8 @@ class openwebIfTvDevice {
 		var me = this;
 		me.log.debug('Device: %s %s, requesting Device information.', me.host, me.name);
 		axios.get(me.url + '/api/getallservices').then(response => {
-			let channels = response.data.services;
-			me.log.debug('Device: %s %s, get Channels list successful: %s', me.host, me.name, JSON.stringify(channels, null, 2));
-			fs.writeFile(me.inputsFile, JSON.stringify(channels), (error) => {
+			let channels = JSON.stringify(response.data.services, null, 2);
+			fs.writeFile(me.inputsFile, channels, (error) => {
 				if (error) {
 					me.log.debug('Device: %s %s, could not write Channels to the file, error: %s', me.host, me.name, error);
 				} else {
