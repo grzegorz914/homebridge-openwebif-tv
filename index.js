@@ -27,12 +27,12 @@ class openwebIfTvPlatform {
 		}
 		this.log = log;
 		this.config = config;
+		this.api = api;
 		this.devices = config.devices || [];
 		this.accessories = [];
 
-		if (api) {
-			this.api = api;
-			if (api.version < 2.1) {
+		if (this.api) {
+			if (this.api.version < 2.1) {
 				throw new Error('Unexpected API version.');
 			}
 			this.api.on('didFinishLaunching', this.didFinishLaunching.bind(this));
@@ -224,22 +224,22 @@ class openwebIfTvDevice {
 		});
 	}
 
-
-
 	//Prepare TV service 
 	prepareTelevisionService() {
 		this.log.debug('prepareTelevisionService');
-		this.accessoryUUID = UUID.generate(this.name);
-		this.accessory = new Accessory(this.name, this.accessoryUUID);
+		const accessoryName = this.name;
+		const accessoryUUID = UUID.generate(accessoryName);
+		this.accessory = new Accessory(accessoryName, accessoryUUID);
 		this.accessory.category = Categories.TELEVISION;
+
 		this.accessory.getService(Service.AccessoryInformation)
 			.setCharacteristic(Characteristic.Manufacturer, this.manufacturer)
 			.setCharacteristic(Characteristic.Model, this.modelName)
 			.setCharacteristic(Characteristic.SerialNumber, this.serialNumber)
 			.setCharacteristic(Characteristic.FirmwareRevision, this.firmwareRevision);
 
-		this.televisionService = new Service.Television(this.name, 'televisionService');
-		this.televisionService.setCharacteristic(Characteristic.ConfiguredName, this.name);
+		this.televisionService = new Service.Television(accessoryName, 'televisionService');
+		this.televisionService.setCharacteristic(Characteristic.ConfiguredName, accessoryName);
 		this.televisionService.setCharacteristic(Characteristic.SleepDiscoveryMode, Characteristic.SleepDiscoveryMode.ALWAYS_DISCOVERABLE);
 
 		this.televisionService.getCharacteristic(Characteristic.Active)
@@ -263,7 +263,7 @@ class openwebIfTvDevice {
 			this.prepareVolumeService();
 		}
 
-		this.log.debug('Device: %s %s, publishExternalAccessories.', this.host, this.name);
+		this.log.debug('Device: %s %s, publishExternalAccessories.', this.host, accessoryName);
 		this.api.publishExternalAccessories(PLUGIN_NAME, [this.accessory]);
 	}
 
