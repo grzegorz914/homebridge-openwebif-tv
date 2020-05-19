@@ -146,7 +146,9 @@ class openwebIfTvDevice {
 
 		//Delay to wait for device info before publish
 		setTimeout(this.prepareTelevisionService.bind(this), 1500);
-	} getDeviceInfo() {
+	}
+
+	getDeviceInfo() {
 		var me = this;
 		me.log.debug('Device: %s %s, requesting config information.', me.host, me.name);
 		axios.get(me.url + '/api/getallservices').then(response => {
@@ -178,9 +180,7 @@ class openwebIfTvDevice {
 			me.log('Firmware: %s', me.firmwareRevision);
 			me.log('----------------------------------');
 		}).catch(error => {
-			if (error) {
-				me.log.debug('Device: %s %s, getDeviceInfo eror: %s', me.host, me.name, error);
-			}
+			me.log.debug('Device: %s %s, getDeviceInfo eror: %s', me.host, me.name, error);
 		});
 	}
 
@@ -203,7 +203,7 @@ class openwebIfTvDevice {
 				me.currentInputName = inputName;
 				me.currentInputReference = inputReference;
 			}
-			
+
 			let mute = (response.data.muted == true);
 			let muteState = powerState ? mute : true;
 			let volume = parseInt(response.data.volume);
@@ -430,7 +430,7 @@ class openwebIfTvDevice {
 		if (!me.currentPowerState || inputReference === undefined || inputReference === null || inputReference === '') {
 			me.televisionService
 				.updateCharacteristic(Characteristic.ActiveIdentifier, 0);
-			callback(null);
+			callback(null, 0);
 		} else {
 			let inputIdentifier = me.inputReferences.indexOf(inputReference);
 			if (inputReference === me.inputReferences[inputIdentifier]) {
@@ -464,6 +464,7 @@ class openwebIfTvDevice {
 			switch (remoteKey) {
 				case Characteristic.PowerModeSelection.SHOW:
 					command = me.currentInfoMenuState ? '174' : (me.switchInfoMenu ? '139' : '358');
+					me.currentInfoMenuState = !me.currentInfoMenuState;
 					break;
 				case Characteristic.PowerModeSelection.HIDE:
 					command = '174';
@@ -471,13 +472,11 @@ class openwebIfTvDevice {
 			}
 			axios.get(me.url + '/api/remotecontrol?command=' + command).then(response => {
 				me.log('Device: %s %s, setPowerModeSelection successful, command: %s', me.host, me.name, command);
-				if (callback !== null) {
-					callback();
-				}
+				callback(null);
 			}).catch(error => {
 				me.log.debug('Device: %s %s, can not setPowerModeSelection command. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
+				callback(error);
 			});
-			me.currentInfoMenuState = !me.currentInfoMenuState;
 		}
 	}
 
@@ -495,11 +494,10 @@ class openwebIfTvDevice {
 			}
 			axios.get(me.url + '/api/remotecontrol?command=' + command).then(response => {
 				me.log('Device: %s %s, setVolumeSelector successful, command: %s', me.host, me.name, command);
-				if (callback !== null) {
-					callback();
-				}
+				callback(null);
 			}).catch(error => {
 				me.log.debug('Device: %s %s, can not setVolumeSelector command. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
+				callback(error);
 			});
 		}
 	}
@@ -551,11 +549,10 @@ class openwebIfTvDevice {
 			}
 			axios.get(me.url + '/api/remotecontrol?command=' + command).then(response => {
 				me.log('Device: %s %s, setRemoteKey successful, command: %s', me.host, me.name, command);
-				if (callback !== null) {
-					callback();
-				}
+				callback(null);
 			}).catch(error => {
 				me.log.debug('Device: %s %s, can not setRemoteKey command. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
+				callback(error);
 			});
 		}
 	}
