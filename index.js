@@ -209,9 +209,6 @@ class openwebIfTvDevice {
 		if (me.televisionService) {
 			me.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
 		}
-		if (me.labelService) {
-			me.labelService.updateCharacteristic(Characteristic.ServiceLabelNamespace, inputEventName);
-		}
 
 		let mute = (response.data.muted == true);
 		let muteState = powerState ? mute : true;
@@ -448,6 +445,7 @@ class openwebIfTvDevice {
 					.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
 				me.log('Device: %s %s, get current Channel successful: %s (%s) %s', me.host, me.name, inputName, inputReference);
 			}
+			me.getInputEventName();
 			callback(null, inputIdentifier);
 		}
 	}
