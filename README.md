@@ -18,7 +18,7 @@ Homebridge plugin to control Sat Receivers basis on the OpenWebIf API. Tested wi
 1. Power ON/OFF short press tile in HomeKit app.
 2. RC/Media control is possible after You go to the RC app on iPhone/iPad.
 3. Speaker control is possible after You go to RC app on iPhone/iPad `Speaker Service`.
-4. Legacy volume control is possible throught extra `lightbulb` (slider) or using Siri `Volume Service`.
+4. Legacy volume and mute control is possible throught extra `lightbulb` (slider) or using Siri `Volume Service`.
 5. Inputs can be changed after loong press tile in HomeKit app and select from the list.
 6. Siri control.
 
@@ -39,7 +39,7 @@ Homebridge plugin to control Sat Receivers basis on the OpenWebIf API. Tested wi
 1. Use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) to configure the plugin (strongly recomended), or update your configuration file manually. See `sample-config.json` in this repository for a sample or add the bottom example to Your config.json file.
 2. If port `80` not working check which port is set for Your Sat Receiver.
 3. All `reference` and `name` from Your sat receiver are stored in `homebridge_directory/openwebifTv/channels_19216804`, if U want somthing changed in channel list please add Yours prefered channels to the config bouquets.
-4. If `volumeControl` is enabled, volume can be control using slider.
+4. If `volumeControl` is enabled, volume can be control using slider and mute ON/OFF if button press.
 5. If `switchInfoMenu` is enabled, `I` button change its behaviour in RC app between Menu and INFO.
 
 <p align="left">
