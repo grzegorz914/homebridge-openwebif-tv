@@ -14,13 +14,13 @@
           "type": "object",
           "properties": {
             "name": {
-              "title": "Name",
+              "title": "Device name",
               "type": "string",
               "default": "Sat Receiver",
               "required": true
             },
             "host": {
-              "title": "IP Address",
+              "title": "Address IP",
               "type": "string",
               "default": "192.160.1.10",
               "required": true,
@@ -50,7 +50,7 @@
               "required": false
             },
             "volumeControl": {
-              "title": "Slider volume control",
+              "title": "Volume control",
               "type": "boolean",
               "default": false,
               "required": false,
