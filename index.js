@@ -192,38 +192,46 @@ class openwebIfTvDevice {
 		var me = this;
 		let response = me.deviceStatusResponse;
 		let powerState = (response.data.inStandby === 'false');
-		me.log.debug('Device: %s %s, get current Power state successful: %s', me.host, me.name, powerState ? 'ON' : 'OFF');
-		me.currentPowerState = powerState;
 		if (me.televisionService) {
-			me.televisionService.updateCharacteristic(Characteristic.Active, powerState);
+			if (powerState && !me.currentPowerState) {
+				me.televisionService.updateCharacteristic(Characteristic.Active, true);
+				me.log.debug('Device: %s %s, get current Power state successful: %s', me.host, me.name);
+				me.currentPowerState = true;
+			} else {
+				if (!powerState && me.currentPowerState) {
+					me.televisionService.updateCharacteristic(Characteristic.Active, false);
+					me.log.debug('Device: %s %s, get current Power state successful: %s', me.host, me.name);
+					me.currentPowerState = false;
+				}
+			}
 		}
 
 		let inputName = response.data.currservice_station;
 		let inputEventName = response.data.currservice_name;
 		let inputReference = response.data.currservice_serviceref;
 		let inputIdentifier = me.inputReferences.indexOf(inputReference);
-		me.log.debug('Device: %s %s, get current Channel successful: %s (%s) %s', me.host, me.name, inputName, inputEventName, inputReference);
-		me.currentInputName = inputName;
-		me.currentInputEventName = inputEventName;
-		me.currentInputReference = inputReference;
-		if (me.televisionService) {
+		if (me.televisionService && inputReference !== me.currentInputReference) {
 			me.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
+			me.log.debug('Device: %s %s, get current Channel successful: %s (%s) %s', me.host, me.name, inputName, inputEventName, inputReference);
+			me.currentInputName = inputName;
+			me.currentInputEventName = inputEventName;
+			me.currentInputReference = inputReference;
 		}
 
 		let mute = (response.data.muted == true);
 		let muteState = powerState ? mute : true;
 		let volume = parseInt(response.data.volume);
-		me.log.debug('Device: %s %s, get current Mute state: %s', me.host, me.name, muteState ? 'ON' : 'OFF');
-		me.log.debug('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
-		me.currentMuteState = muteState;
-		me.currentVolume = volume;
-		if (me.speakerService) {
+		if (me.speakerService && (muteState !== me.currentMuteState || volume !== me.currentVolume)) {
 			me.speakerService.updateCharacteristic(Characteristic.Mute, muteState);
 			me.speakerService.updateCharacteristic(Characteristic.Volume, volume);
 			if (me.volumeControl && me.volumeService) {
 				me.volumeService.updateCharacteristic(Characteristic.On, !muteState);
 				me.volumeService.updateCharacteristic(Characteristic.Brightness, volume);
 			}
+			me.log.debug('Device: %s %s, get current Mute state: %s', me.host, me.name, muteState ? 'ON' : 'OFF');
+			me.log.debug('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
+			me.currentMuteState = muteState;
+			me.currentVolume = volume;
 		}
 	}
 
@@ -443,7 +451,7 @@ class openwebIfTvDevice {
 			if (inputReference === me.inputReferences[inputIdentifier]) {
 				me.televisionService
 					.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
-				me.log('Device: %s %s, get current Channel successful: %s (%s) %s', me.host, me.name, inputName, inputReference);
+				me.log('Device: %s %s, get current Channel successful: %s %s', me.host, me.name, inputName, inputReference);
 			}
 			me.getInputEventName();
 			callback(null, inputIdentifier);
@@ -465,11 +473,10 @@ class openwebIfTvDevice {
 		}, 250);
 	}
 
-	getInputEventName(callback) {
+	getInputEventName() {
 		var me = this;
 		let inputEventName = me.currentInputEventName;
 		me.log('Device: %s %s, get current Event successful: %s', me.host, me.name, inputEventName);
-		callback(null, inputEventName);
 	}
 
 	setPowerModeSelection(remoteKey, callback) {
