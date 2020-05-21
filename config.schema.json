@@ -67,6 +67,7 @@
               "title": "Channels",
               "buttonText": "Add channel",
               "type": "array",
+              "expandable": true,
               "items": {
                 "type": "object",
                 "properties": {
