@@ -195,16 +195,14 @@ class openwebIfTvDevice {
 		let response = me.deviceStatusResponse;
 		let powerState = (response.data.inStandby === 'false');
 		if (me.televisionService) {
-			if (powerState && !me.currentPowerState) {
+			if (powerState) {
 				me.televisionService.updateCharacteristic(Characteristic.Active, true);
-				me.log.debug('Device: %s %s, get current Power state successful: %s', me.host, me.name);
+				me.log.debug('Device: %s %s, get current Power state successful: %s', me.host, me.name, 'ON');
 				me.currentPowerState = true;
 			} else {
-				if (!powerState && me.currentPowerState) {
-					me.televisionService.updateCharacteristic(Characteristic.Active, false);
-					me.log.debug('Device: %s %s, get current Power state successful: %s', me.host, me.name);
-					me.currentPowerState = false;
-				}
+				me.televisionService.updateCharacteristic(Characteristic.Active, false);
+				me.log.debug('Device: %s %s, get current Power state successful: %s', me.host, me.name, 'OFF');
+				me.currentPowerState = false;
 			}
 		}
 
