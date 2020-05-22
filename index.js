@@ -440,20 +440,19 @@ class openwebIfTvDevice {
 		var me = this;
 		let inputName = me.currentInputName;
 		let inputReference = me.currentInputReference;
-		if (!me.currentPowerState || inputReference === undefined || inputReference === null || inputReference === '') {
+		let inputIdentifier = me.inputReferences.indexOf(inputReference);
+		if (inputReference === me.inputReferences[inputIdentifier]) {
+			me.televisionService
+				.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
+			me.log.info('Device: %s %s, get current Channel successful: %s %s', me.host, me.name, inputName, inputReference);
+			callback(null, inputIdentifier);
+		} else {
 			me.televisionService
 				.updateCharacteristic(Characteristic.ActiveIdentifier, 0);
+			me.log.debug('Device: %s %s, get current Channel default: %s %s', me.host, me.name, inputName, inputReference);
 			callback(null, 0);
-		} else {
-			let inputIdentifier = me.inputReferences.indexOf(inputReference);
-			if (inputReference === me.inputReferences[inputIdentifier]) {
-				me.televisionService
-					.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
-				me.log.info('Device: %s %s, get current Channel successful: %s %s', me.host, me.name, inputName, inputReference);
-			}
-			me.getInputEventName();
-			callback(null, inputIdentifier);
 		}
+		me.getInputEventName();
 	}
 
 	setInput(inputIdentifier, callback) {
