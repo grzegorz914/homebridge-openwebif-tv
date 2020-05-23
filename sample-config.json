@@ -25,7 +25,7 @@
           "auth": false,
           "user": "user",
           "pass": "pass",
-          "volumeControl": false,
+          "volumeControl": 0,
           "switchInfoMenu": false,
           "inputs": [
             {

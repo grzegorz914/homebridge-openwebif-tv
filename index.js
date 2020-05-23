@@ -99,6 +99,7 @@ class openwebIfTvDevice {
 		this.currentInputName = '';
 		this.currentInputEventName = '';
 		this.currentInputReference = '';
+		this.currentInputIdentifier = 0;
 		this.currentInfoMenuState = false;
 		this.prefDir = path.join(api.user.storagePath(), 'openwebifTv');
 		this.inputsFile = this.prefDir + '/' + 'channels_' + this.host.split('.').join('');
@@ -218,12 +219,13 @@ class openwebIfTvDevice {
 		me.currentInputName = inputName;
 		me.currentInputEventName = inputEventName;
 		me.currentInputReference = inputReference;
+		me.currentInputIdentifier = inputIdentifier;
 
 		let mute = (response.data.muted == true);
 		let muteState = powerState ? mute : true;
 		if (me.speakerService) {
 			me.speakerService.updateCharacteristic(Characteristic.Mute, muteState);
-			if (me.volumeControl) {
+			if (me.volumeService && me.volumeControl >= 1) {
 				me.volumeService.updateCharacteristic(Characteristic.On, !muteState);
 			}
 		}
@@ -233,8 +235,11 @@ class openwebIfTvDevice {
 		let volume = parseInt(response.data.volume);
 		if (me.speakerService) {
 			me.speakerService.updateCharacteristic(Characteristic.Volume, volume);
-			if (me.volumeControl) {
+			if (me.volumeService && me.volumeControl === 1) {
 				me.volumeService.updateCharacteristic(Characteristic.Brightnes, volume);
+			}
+			if (me.volumeService && me.volumeControl === 2) {
+				me.volumeService.updateCharacteristic(Characteristic.RotationSpeed, volume);
 			}
 		}
 		me.log.debug('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
@@ -276,7 +281,7 @@ class openwebIfTvDevice {
 		this.accessory.addService(this.televisionService);
 		this.prepareSpeakerService();
 		this.prepareInputsService();
-		if (this.volumeControl) {
+		if (this.volumeControl >= 1) {
 			this.prepareVolumeService();
 		}
 
@@ -307,16 +312,25 @@ class openwebIfTvDevice {
 	//Prepare volume service
 	prepareVolumeService() {
 		this.log.debug('prepareVolumeService');
-		this.volumeService = new Service.Lightbulb(this.name + ' Volume', 'volumeService');
+		if (this.volumeControl === 1) {
+			this.volumeService = new Service.Lightbulb(this.name + ' Volume', 'volumeService');
+			this.volumeService.getCharacteristic(Characteristic.Brightness)
+				.on('get', this.getVolume.bind(this))
+				.on('set', this.setVolume.bind(this));
+		} else {
+			if (this.volumeControl === 2) {
+				this.volumeService = new Service.Fan(this.name + ' Volume', 'volumeService');
+				this.volumeService.getCharacteristic(Characteristic.RotationSpeed)
+					.on('get', this.getVolume.bind(this))
+					.on('set', this.setVolume.bind(this));
+			}
+		}
 		this.volumeService.getCharacteristic(Characteristic.On)
 			.on('get', this.getMuteSlider.bind(this))
 			.on('set', (newValue, callback) => {
 				this.speakerService.setCharacteristic(Characteristic.Mute, !newValue);
 				callback(null);
 			});
-		this.volumeService.getCharacteristic(Characteristic.Brightness)
-			.on('get', this.getVolume.bind(this))
-			.on('set', this.setVolume.bind(this));
 
 		this.accessory.addService(this.volumeService);
 		this.televisionService.addLinkedService(this.volumeService);
@@ -446,26 +460,17 @@ class openwebIfTvDevice {
 		var me = this;
 		let inputName = me.currentInputName;
 		let inputReference = me.currentInputReference;
-		let inputIdentifier = me.inputReferences.indexOf(inputReference);
-		if (inputReference === me.inputReferences[inputIdentifier]) {
-			me.televisionService
-				.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
-			me.log.info('Device: %s %s, get current Channel successful: %s %s', me.host, me.name, inputName, inputReference);
-			callback(null, inputIdentifier);
-		} else {
-			me.televisionService
-				.updateCharacteristic(Characteristic.ActiveIdentifier, 0);
-			me.log.info('Device: %s %s, get current Channel default: %s %s', me.host, me.name, inputName, inputReference);
-			callback(null, 0);
-		}
+		let inputIdentifier = me.currentInputIdentifier;
+		me.log.info('Device: %s %s, get current Channel successful: %s %s', me.host, me.name, inputName, inputReference);
 		me.getInputEventName();
+		callback(null, inputIdentifier);
 	}
 
 	setInput(inputIdentifier, callback) {
 		var me = this;
 		setTimeout(() => {
-			let inputReference = me.inputReferences[inputIdentifier];
 			let inputName = me.inputNames[inputIdentifier];
+			let inputReference = me.inputReferences[inputIdentifier];
 			axios.get(me.url + '/api/zap?sRef=' + inputReference).then(response => {
 				me.log.info('Device: %s %s, set new Channel successful: %s %s', me.host, me.name, inputName, inputReference);
 				callback(null);
