@@ -235,10 +235,10 @@ class openwebIfTvDevice {
 		let volume = parseInt(response.data.volume);
 		if (me.speakerService) {
 			me.speakerService.updateCharacteristic(Characteristic.Volume, volume);
-			if (me.volumeService && me.volumeControl === 1) {
+			if (me.volumeService && me.volumeControl == 1) {
 				me.volumeService.updateCharacteristic(Characteristic.Brightnes, volume);
 			}
-			if (me.volumeService && me.volumeControl === 2) {
+			if (me.volumeService && me.volumeControl == 2) {
 				me.volumeService.updateCharacteristic(Characteristic.RotationSpeed, volume);
 			}
 		}
@@ -312,18 +312,17 @@ class openwebIfTvDevice {
 	//Prepare volume service
 	prepareVolumeService() {
 		this.log.debug('prepareVolumeService');
-		if (this.volumeControl === 1) {
+		if (this.volumeControl == 1) {
 			this.volumeService = new Service.Lightbulb(this.name + ' Volume', 'volumeService');
 			this.volumeService.getCharacteristic(Characteristic.Brightness)
 				.on('get', this.getVolume.bind(this))
 				.on('set', this.setVolume.bind(this));
-		} else {
-			if (this.volumeControl === 2) {
-				this.volumeService = new Service.Fan(this.name + ' Volume', 'volumeService');
-				this.volumeService.getCharacteristic(Characteristic.RotationSpeed)
-					.on('get', this.getVolume.bind(this))
-					.on('set', this.setVolume.bind(this));
-			}
+		}
+		if (this.volumeControl == 2) {
+			this.volumeService = new Service.Fan(this.name + ' Volume', 'volumeService');
+			this.volumeService.getCharacteristic(Characteristic.RotationSpeed)
+				.on('get', this.getVolume.bind(this))
+				.on('set', this.setVolume.bind(this));
 		}
 		this.volumeService.getCharacteristic(Characteristic.On)
 			.on('get', this.getMuteSlider.bind(this))
@@ -446,7 +445,10 @@ class openwebIfTvDevice {
 
 	setVolume(volume, callback) {
 		var me = this;
-		let targetVolume = parseInt(volume);
+		var targetVolume = parseInt(volume);
+		if (volume == 0 || volume == 100) {
+			targetVolume = me.currentVolume;
+		}
 		axios.get(me.url + '/api/vol?set=set' + targetVolume).then(response => {
 			me.log.info('Device: %s %s, set new Volume level successful: %s', me.host, me.name, volume);
 			callback(null);
