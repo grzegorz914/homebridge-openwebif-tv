@@ -96,9 +96,9 @@ class openwebIfTvDevice {
 		this.inputReferences = new Array();
 		this.currentMuteState = false;
 		this.currentVolume = 0;
-		this.currentInputName = null;
-		this.currentInputEventName = null;
-		this.currentInputReference = null;
+		this.currentInputName = '';
+		this.currentInputEventName = '';
+		this.currentInputReference = '';
 		this.currentInfoMenuState = false;
 		this.prefDir = path.join(api.user.storagePath(), 'openwebifTv');
 		this.inputsFile = this.prefDir + '/' + 'channels_' + this.host.split('.').join('');
@@ -134,6 +134,7 @@ class openwebIfTvDevice {
 		//Check net state
 		setInterval(function () {
 			axios.get(this.url + '/api/statusinfo').then(response => {
+				this.log.debug('Device %s %s, get device status data: %s', this.host, this.name, response.data);
 				this.deviceStatusResponse = response;
 				if (!this.connectionStatus) {
 					this.log.info('Device: %s %s, state: Online.', this.host, this.name);
@@ -212,27 +213,32 @@ class openwebIfTvDevice {
 		let inputIdentifier = me.inputReferences.indexOf(inputReference);
 		if (me.televisionService) {
 			me.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
-			me.log.debug('Device: %s %s, get current Channel successful: %s (%s) %s', me.host, me.name, inputName, inputEventName, inputReference);
-			me.currentInputName = inputName;
-			me.currentInputEventName = inputEventName;
-			me.currentInputReference = inputReference;
 		}
+		me.log.debug('Device: %s %s, get current Channel successful: %s (%s) %s', me.host, me.name, inputName, inputEventName, inputReference);
+		me.currentInputName = inputName;
+		me.currentInputEventName = inputEventName;
+		me.currentInputReference = inputReference;
 
 		let mute = (response.data.muted == true);
 		let muteState = powerState ? mute : true;
-		let volume = parseInt(response.data.volume);
 		if (me.speakerService) {
 			me.speakerService.updateCharacteristic(Characteristic.Mute, muteState);
-			me.speakerService.updateCharacteristic(Characteristic.Volume, volume);
-			if (me.volumeControl && me.volumeService) {
+			if (me.volumeControl) {
 				me.volumeService.updateCharacteristic(Characteristic.On, !muteState);
-				me.volumeService.updateCharacteristic(Characteristic.Brightness, volume);
 			}
-			me.log.debug('Device: %s %s, get current Mute state: %s', me.host, me.name, muteState ? 'ON' : 'OFF');
-			me.log.debug('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
-			me.currentMuteState = muteState;
-			me.currentVolume = volume;
 		}
+		me.log.debug('Device: %s %s, get current Mute state: %s', me.host, me.name, muteState ? 'ON' : 'OFF');
+		me.currentMuteState = muteState;
+
+		let volume = parseInt(response.data.volume);
+		if (me.speakerService) {
+			me.speakerService.updateCharacteristic(Characteristic.Volume, volume);
+			if (me.volumeControl) {
+				me.volumeService.updateCharacteristic(Characteristic.Brightnes, volume);
+			}
+		}
+		me.log.debug('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
+		me.currentVolume = volume;
 	}
 
 	//Prepare TV service 
@@ -449,7 +455,7 @@ class openwebIfTvDevice {
 		} else {
 			me.televisionService
 				.updateCharacteristic(Characteristic.ActiveIdentifier, 0);
-			me.log.debug('Device: %s %s, get current Channel default: %s %s', me.host, me.name, inputName, inputReference);
+			me.log.info('Device: %s %s, get current Channel default: %s %s', me.host, me.name, inputName, inputReference);
 			callback(null, 0);
 		}
 		me.getInputEventName();
