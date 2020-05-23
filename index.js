@@ -88,12 +88,12 @@ class openwebIfTvDevice {
 		this.firmwareRevision = config.firmwareRevision || 'FW0000001';
 
 		//setup variables
-		this.inputNames = new Array();
-		this.inputEventNames = new Array();
-		this.inputReferences = new Array();
 		this.connectionStatus = false;
 		this.deviceStatusResponse = null;
 		this.currentPowerState = false;
+		this.inputNames = new Array();
+		this.inputEventNames = new Array();
+		this.inputReferences = new Array();
 		this.currentMuteState = false;
 		this.currentVolume = 0;
 		this.currentInputName = null;
@@ -136,14 +136,14 @@ class openwebIfTvDevice {
 			axios.get(this.url + '/api/statusinfo').then(response => {
 				this.deviceStatusResponse = response;
 				if (!this.connectionStatus) {
-					this.log.info('Device: %s %s, state: Online', this.host, this.name);
+					this.log.info('Device: %s %s, state: Online.', this.host, this.name);
 					this.connectionStatus = true;
 					setTimeout(this.getDeviceInfo.bind(this), 750);
 				} else {
 					this.getDeviceState();
 				}
 			}).catch(error => {
-				this.log.debug('Device: %s %s, state: Offline', this.host, this.name);
+				this.log.debug('Device: %s %s, state: Offline.', this.host, this.name);
 				this.connectionStatus = false;
 				this.currentPowerState = false;
 				return;
@@ -163,7 +163,7 @@ class openwebIfTvDevice {
 				if (error) {
 					me.log.error('Device: %s %s, could not write Channels to the file, error: %s', me.host, me.name, error);
 				} else {
-					me.log.debug('Device: %s %s, saved Channels successful in: %s', me.host, me.name, me.prefDir);
+					me.log.debug('Device: %s %s, saved Channels successful in: %s %s', me.host, me.name, me.prefDir, channels);
 				}
 			});
 		}).catch(error => {
