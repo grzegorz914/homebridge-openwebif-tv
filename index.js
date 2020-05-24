@@ -196,23 +196,17 @@ class openwebIfTvDevice {
 		var me = this;
 		let response = me.deviceStatusResponse;
 		let powerState = (response.data.inStandby === 'false');
-		if (me.televisionService) {
-			if (powerState) {
-				me.televisionService.updateCharacteristic(Characteristic.Active, true);
-				me.log.debug('Device: %s %s, get current Power state successful: %s', me.host, me.name, 'ON');
-				me.currentPowerState = true;
-			} else {
-				me.televisionService.updateCharacteristic(Characteristic.Active, false);
-				me.log.debug('Device: %s %s, get current Power state successful: %s', me.host, me.name, 'OFF');
-				me.currentPowerState = false;
-			}
+		if (me.televisionService && (powerState !== me.currentPowerState)) {
+			me.televisionService.updateCharacteristic(Characteristic.Active, powerState);
 		}
+		me.log.debug('Device: %s %s, get current Power state successful: %s', me.host, me.name, powerState ? 'ON' : 'OFF');
+		me.currentPowerState = powerState;
 
 		let inputName = response.data.currservice_station;
 		let inputEventName = response.data.currservice_name;
 		let inputReference = response.data.currservice_serviceref;
 		let inputIdentifier = me.inputReferences.indexOf(inputReference);
-		if (me.televisionService) {
+		if (me.televisionService && (inputReference !== me.currentInputReference)) {
 			me.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
 		}
 		me.log.debug('Device: %s %s, get current Channel successful: %s (%s) %s', me.host, me.name, inputName, inputEventName, inputReference);
@@ -223,7 +217,7 @@ class openwebIfTvDevice {
 
 		let mute = (response.data.muted == true);
 		let muteState = powerState ? mute : true;
-		if (me.speakerService) {
+		if (me.speakerService && (muteState !== me.currentMuteState)) {
 			me.speakerService.updateCharacteristic(Characteristic.Mute, muteState);
 			if (me.volumeService && me.volumeControl >= 1) {
 				me.volumeService.updateCharacteristic(Characteristic.On, !muteState);
@@ -233,7 +227,7 @@ class openwebIfTvDevice {
 		me.currentMuteState = muteState;
 
 		let volume = parseInt(response.data.volume);
-		if (me.speakerService) {
+		if (me.speakerService && (volume !== me.currentVolume)) {
 			me.speakerService.updateCharacteristic(Characteristic.Volume, volume);
 			if (me.volumeService && me.volumeControl == 1) {
 				me.volumeService.updateCharacteristic(Characteristic.Brightness, volume);
@@ -316,13 +310,19 @@ class openwebIfTvDevice {
 			this.volumeService = new Service.Lightbulb(this.name + ' Volume', 'volumeService');
 			this.volumeService.getCharacteristic(Characteristic.Brightness)
 				.on('get', this.getVolume.bind(this))
-				.on('set', this.setVolume.bind(this));
+				.on('set', (volume, callback) => {
+					this.speakerService.setCharacteristic(Characteristic.Volume, volume);
+					callback(null);
+				});
 		}
 		if (this.volumeControl == 2) {
 			this.volumeService = new Service.Fan(this.name + ' Volume', 'volumeService');
 			this.volumeService.getCharacteristic(Characteristic.RotationSpeed)
 				.on('get', this.getVolume.bind(this))
-				.on('set', this.setVolume.bind(this));
+				.on('set', (volume, callback) => {
+					this.speakerService.setCharacteristic(Characteristic.Volume, volume);
+					callback(null);
+				});
 		}
 		this.volumeService.getCharacteristic(Characteristic.On)
 			.on('get', (callback) => {
@@ -424,6 +424,7 @@ class openwebIfTvDevice {
 		if (me.currentPowerState && state !== me.currentMuteState) {
 			axios.get(me.url + '/api/vol?set=mute').then(response => {
 				me.log.info('Device: %s %s, set Mute successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
+				me.currentMuteState = state;
 				callback(null);
 			}).catch(error => {
 				me.log.error('Device: %s %s, can not set Mute. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
@@ -446,6 +447,7 @@ class openwebIfTvDevice {
 		}
 		axios.get(me.url + '/api/vol?set=set' + volume).then(response => {
 			me.log.info('Device: %s %s, set new Volume level successful: %s', me.host, me.name, volume);
+			me.currentVolume = volume;
 			callback(null);
 		}).catch(error => {
 			me.log.error('Device: %s %s, can not set new Volume level. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
@@ -470,6 +472,7 @@ class openwebIfTvDevice {
 			let inputReference = me.inputReferences[inputIdentifier];
 			axios.get(me.url + '/api/zap?sRef=' + inputReference).then(response => {
 				me.log.info('Device: %s %s, set new Channel successful: %s %s', me.host, me.name, inputName, inputReference);
+				me.currentInputReference = inputReference;
 				callback(null);
 			}).catch(error => {
 				me.log.error('Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', me.host, me.name, error);
