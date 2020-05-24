@@ -150,7 +150,7 @@ class openwebIfTvDevice {
 				this.currentPowerState = false;
 				return;
 			});
-		}.bind(this), 2000);
+		}.bind(this), 2500);
 
 		//Delay to wait for device info before publish
 		setTimeout(this.prepareTelevisionService.bind(this), 1500);
@@ -325,9 +325,12 @@ class openwebIfTvDevice {
 				.on('set', this.setVolume.bind(this));
 		}
 		this.volumeService.getCharacteristic(Characteristic.On)
-			.on('get', this.getMuteSlider.bind(this))
-			.on('set', (newValue, callback) => {
-				this.speakerService.setCharacteristic(Characteristic.Mute, !newValue);
+			.on('get', (callback) => {
+				let state = !this.currentMuteState;
+				callback(null, state);
+			})
+			.on('set', (state, callback) => {
+				this.speakerService.setCharacteristic(Characteristic.Mute, !state);
 				callback(null);
 			});
 
@@ -356,7 +359,7 @@ class openwebIfTvDevice {
 
 			if (savedNames && savedNames[inputReference]) {
 				inputName = savedNames[inputReference];
-			} else if (input.name) {
+			} else {
 				inputName = input.name;
 			}
 
@@ -416,16 +419,9 @@ class openwebIfTvDevice {
 		callback(null, state);
 	}
 
-	getMuteSlider(callback) {
-		var me = this;
-		let state = me.currentPowerState ? !me.currentMuteState : false;
-		me.log.debug('Device: %s %s, get current Mute state successful: %s', me.host, me.name, !state ? 'ON' : 'OFF');
-		callback(null, state);
-	}
-
 	setMute(state, callback) {
 		var me = this;
-		if (me.currentPowerState) {
+		if (me.currentPowerState && state !== me.currentMuteState) {
 			axios.get(me.url + '/api/vol?set=mute').then(response => {
 				me.log.info('Device: %s %s, set Mute successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
 				callback(null);
@@ -445,11 +441,10 @@ class openwebIfTvDevice {
 
 	setVolume(volume, callback) {
 		var me = this;
-		var targetVolume = parseInt(volume);
 		if (volume == 0 || volume == 100) {
-			targetVolume = me.currentVolume;
+			volume = me.currentVolume;
 		}
-		axios.get(me.url + '/api/vol?set=set' + targetVolume).then(response => {
+		axios.get(me.url + '/api/vol?set=set' + volume).then(response => {
 			me.log.info('Device: %s %s, set new Volume level successful: %s', me.host, me.name, volume);
 			callback(null);
 		}).catch(error => {
