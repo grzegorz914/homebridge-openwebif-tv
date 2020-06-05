@@ -22,45 +22,36 @@ class openwebIfTvPlatform {
 	constructor(log, config, api) {
 		// only load if configured
 		if (!config || !Array.isArray(config.devices)) {
-			log('No configuration found for homebridge-openwebif-tv');
+			log('No configuration found for %s', PLUGIN_NAME);
 			return;
 		}
 		this.log = log;
 		this.config = config;
 		this.api = api;
-		this.devices = config.devices || [];
+		this.devices = config.devices;
 		this.accessories = [];
 
-		if (this.api) {
-			if (this.api.version < 2.1) {
-				throw new Error('Unexpected API version.');
+		this.api.on('didFinishLaunching', () => {
+			this.log.debug('didFinishLaunching');
+			for (let i = 0, len = this.devices.length; i < len; i++) {
+				let deviceName = this.devices[i];
+				if (!deviceName.name) {
+					this.log.warn('Device Name Missing')
+				} else {
+					this.accessories.push(new openwebIfTvDevice(this.log, deviceName, this.api));
+				}
 			}
-			this.api.on('didFinishLaunching', this.didFinishLaunching.bind(this));
-		}
+		});
 	}
 
-	didFinishLaunching() {
-		this.log.debug('didFinishLaunching');
-		for (let i = 0, len = this.devices.length; i < len; i++) {
-			let deviceName = this.devices[i];
-			if (!deviceName.name) {
-				this.log.warn('Device Name Missing')
-			} else {
-				this.accessories.push(new openwebIfTvDevice(this.log, deviceName, this.api));
-			}
-		}
-	}
-
-	configureAccessory(platformAccessory) {
+	configureAccessory(accessory) {
 		this.log.debug('configureAccessory');
-		if (this.accessories) {
-			this.accessories.push(platformAccessory);
-		}
+		this.accessories.push(accessory);
 	}
 
-	removeAccessory(platformAccessory) {
+	removeAccessory(accessory) {
 		this.log.debug('removeAccessory');
-		this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [platformAccessory]);
+		this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
 	}
 }
 
@@ -194,8 +185,9 @@ class openwebIfTvDevice {
 		var me = this;
 		let response = me.deviceStatusInfo;
 		let powerState = (response.data.inStandby === 'false');
+		let state = powerState ? 1 : 0;
 		if (me.televisionService && (powerState !== me.currentPowerState)) {
-			me.televisionService.updateCharacteristic(Characteristic.Active, powerState);
+			me.televisionService.updateCharacteristic(Characteristic.Active, state);
 		}
 		me.log.debug('Device: %s %s, get current Power state successful: %s', me.host, me.name, powerState ? 'ON' : 'OFF');
 		me.currentPowerState = powerState;
