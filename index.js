@@ -192,6 +192,7 @@ class openwebIfTvDevice {
 		me.log.debug('Device: %s %s, get current Power state successful: %s', me.host, me.name, powerState ? 'ON' : 'OFF');
 		me.currentPowerState = powerState;
 
+               if (powerState) {
 		let inputName = response.data.currservice_station;
 		let inputEventName = response.data.currservice_name;
 		let inputReference = response.data.currservice_serviceref;
@@ -225,6 +226,7 @@ class openwebIfTvDevice {
 			me.currentMuteState = muteState;
 			me.currentVolume = volume;
 		}
+           }
 	}
 
 	//Prepare TV service 
