@@ -192,41 +192,41 @@ class openwebIfTvDevice {
 		me.log.debug('Device: %s %s, get current Power state successful: %s', me.host, me.name, powerState ? 'ON' : 'OFF');
 		me.currentPowerState = powerState;
 
-               if (powerState) {
-		let inputName = response.data.currservice_station;
-		let inputEventName = response.data.currservice_name;
-		let inputReference = response.data.currservice_serviceref;
-		let inputIdentifier = me.inputReferences.indexOf(inputReference);
-		if (me.televisionService && (inputReference !== me.currentInputReference)) {
-			me.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
-		}
-		me.log.debug('Device: %s %s, get current Channel successful: %s (%s) %s', me.host, me.name, inputName, inputEventName, inputReference);
-		me.currentInputName = inputName;
-		me.currentInputEventName = inputEventName;
-		me.currentInputReference = inputReference;
-		me.currentInputIdentifier = inputIdentifier;
+		if (powerState) {
+			let inputName = response.data.currservice_station;
+			let inputEventName = response.data.currservice_name;
+			let inputReference = response.data.currservice_serviceref;
+			let inputIdentifier = me.inputReferences.indexOf(inputReference);
+			if (me.televisionService && (inputReference !== me.currentInputReference)) {
+				me.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
+			}
+			me.log.debug('Device: %s %s, get current Channel successful: %s (%s) %s', me.host, me.name, inputName, inputEventName, inputReference);
+			me.currentInputName = inputName;
+			me.currentInputEventName = inputEventName;
+			me.currentInputReference = inputReference;
+			me.currentInputIdentifier = inputIdentifier;
 
-		let mute = (response.data.muted == true);
-		let muteState = powerState ? mute : true;
-		let volume = response.data.volume;
-		if (me.speakerService) {
-			me.speakerService.updateCharacteristic(Characteristic.Mute, muteState);
-			me.speakerService.updateCharacteristic(Characteristic.Volume, volume);
-			if (me.volumeService && me.volumeControl >= 1) {
-				me.volumeService.updateCharacteristic(Characteristic.On, !muteState);
+			let mute = (response.data.muted == true);
+			let muteState = powerState ? mute : true;
+			let volume = response.data.volume;
+			if (me.speakerService) {
+				me.speakerService.updateCharacteristic(Characteristic.Mute, muteState);
+				me.speakerService.updateCharacteristic(Characteristic.Volume, volume);
+				if (me.volumeService && me.volumeControl >= 1) {
+					me.volumeService.updateCharacteristic(Characteristic.On, !muteState);
+				}
+				if (me.volumeService && me.volumeControl == 1) {
+					me.volumeService.updateCharacteristic(Characteristic.Brightness, volume);
+				}
+				if (me.volumeService && me.volumeControl == 2) {
+					me.volumeService.updateCharacteristic(Characteristic.RotationSpeed, volume);
+				}
 			}
-			if (me.volumeService && me.volumeControl == 1) {
-				me.volumeService.updateCharacteristic(Characteristic.Brightness, volume);
-			}
-			if (me.volumeService && me.volumeControl == 2) {
-				me.volumeService.updateCharacteristic(Characteristic.RotationSpeed, volume);
-			}
-		    }
-		     me.log.debug('Device: %s %s, get current Mute state: %s', me.host, me.name, muteState ? 'ON' : 'OFF');
-	             me.log.debug('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
-		     me.currentMuteState = muteState;
-		     me.currentVolume = volume;
-           }
+			me.log.debug('Device: %s %s, get current Mute state: %s', me.host, me.name, muteState ? 'ON' : 'OFF');
+			me.log.debug('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
+			me.currentMuteState = muteState;
+			me.currentVolume = volume;
+		}
 	}
 
 	//Prepare TV service 
@@ -382,7 +382,7 @@ class openwebIfTvDevice {
 
 	getPower(callback) {
 		var me = this;
-		let state = me.currentPowerState;
+		let state = me.currentPowerState ? 1 : 0;
 		me.log.info('Device: %s %s, get current Power state successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
 		callback(null, state);
 	}
