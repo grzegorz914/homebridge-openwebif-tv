@@ -221,11 +221,11 @@ class openwebIfTvDevice {
 			if (me.volumeService && me.volumeControl == 2) {
 				me.volumeService.updateCharacteristic(Characteristic.RotationSpeed, volume);
 			}
-			me.log.debug('Device: %s %s, get current Mute state: %s', me.host, me.name, muteState ? 'ON' : 'OFF');
-			me.log.debug('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
-			me.currentMuteState = muteState;
-			me.currentVolume = volume;
-		}
+		    }
+		     me.log.debug('Device: %s %s, get current Mute state: %s', me.host, me.name, muteState ? 'ON' : 'OFF');
+	             me.log.debug('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
+		     me.currentMuteState = muteState;
+		     me.currentVolume = volume;
            }
 	}
 
