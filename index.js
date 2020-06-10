@@ -179,6 +179,7 @@ class openwebIfTvDevice {
 		}).catch(error => {
 			me.log.error('Device: %s %s, getDeviceInfo eror: %s', me.host, me.name, error);
 		});
+		me.getDeviceState();
 	}
 
 	getDeviceState() {
