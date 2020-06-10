@@ -185,9 +185,8 @@ class openwebIfTvDevice {
 		var me = this;
 		let response = me.deviceStatusInfo;
 		let powerState = (response.data.inStandby === 'false');
-		let state = powerState ? 1 : 0;
 		if (me.televisionService && (powerState !== me.currentPowerState)) {
-			me.televisionService.updateCharacteristic(Characteristic.Active, state);
+			me.televisionService.updateCharacteristic(Characteristic.Active, powerState ? 1 : 0);
 		}
 		me.log.debug('Device: %s %s, get current Power state successful: %s', me.host, me.name, powerState ? 'ON' : 'OFF');
 		me.currentPowerState = powerState;
@@ -207,13 +206,12 @@ class openwebIfTvDevice {
 			me.currentInputIdentifier = inputIdentifier;
 
 			let mute = (response.data.muted == true);
-			let muteState = powerState ? mute : true;
 			let volume = response.data.volume;
 			if (me.speakerService) {
-				me.speakerService.updateCharacteristic(Characteristic.Mute, muteState);
+				me.speakerService.updateCharacteristic(Characteristic.Mute, mute);
 				me.speakerService.updateCharacteristic(Characteristic.Volume, volume);
 				if (me.volumeService && me.volumeControl >= 1) {
-					me.volumeService.updateCharacteristic(Characteristic.On, !muteState);
+					me.volumeService.updateCharacteristic(Characteristic.On, !mute);
 				}
 				if (me.volumeService && me.volumeControl == 1) {
 					me.volumeService.updateCharacteristic(Characteristic.Brightness, volume);
@@ -222,10 +220,12 @@ class openwebIfTvDevice {
 					me.volumeService.updateCharacteristic(Characteristic.RotationSpeed, volume);
 				}
 			}
-			me.log.debug('Device: %s %s, get current Mute state: %s', me.host, me.name, muteState ? 'ON' : 'OFF');
+			me.log.debug('Device: %s %s, get current Mute state: %s', me.host, me.name, mute ? 'ON' : 'OFF');
 			me.log.debug('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
 			me.currentMuteState = muteState;
 			me.currentVolume = volume;
+		} else {
+			me.currentMuteState = true;
 		}
 	}
 
