@@ -223,7 +223,7 @@ class openwebIfTvDevice {
 			}
 			me.log.debug('Device: %s %s, get current Mute state: %s', me.host, me.name, mute ? 'ON' : 'OFF');
 			me.log.debug('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
-			me.currentMuteState = muteState;
+			me.currentMuteState = mute;
 			me.currentVolume = volume;
 		} else {
 			me.currentMuteState = true;
