@@ -126,12 +126,9 @@ class openwebIfTvDevice {
 			axios.get(this.url + '/api/statusinfo').then(response => {
 				this.log.debug('Device %s %s, get device status data: %s', this.host, this.name, response.data);
 				this.deviceStatusInfo = response;
-				if (!this.connectionStatus) {
-					this.log.info('Device: %s %s, state: Online.', this.host, this.name);
-					this.connectionStatus = true;
-					setTimeout(this.getDeviceInfo.bind(this), 750);
-				} else {
-					this.getDeviceState();
+				this.currentPowerState = (response.data.inStandby === 'false');
+				if (this.connectionStatus) {
+					this.updateDeviceState();
 				}
 			}).catch(error => {
 				this.log.debug('Device: %s %s, state: Offline.', this.host, this.name);
@@ -141,8 +138,7 @@ class openwebIfTvDevice {
 			});
 		}.bind(this), 3000);
 
-		//Delay to wait for device info before publish
-		setTimeout(this.prepareTelevisionService.bind(this), 1500);
+		this.prepareTelevisionService();
 	}
 
 	getDeviceInfo() {
@@ -179,10 +175,9 @@ class openwebIfTvDevice {
 		}).catch(error => {
 			me.log.error('Device: %s %s, getDeviceInfo eror: %s', me.host, me.name, error);
 		});
-		me.getDeviceState();
 	}
 
-	getDeviceState() {
+	updateDeviceState() {
 		var me = this;
 		let response = me.deviceStatusInfo;
 		let powerState = (response.data.inStandby === 'false');
@@ -190,7 +185,6 @@ class openwebIfTvDevice {
 			me.televisionService.updateCharacteristic(Characteristic.Active, powerState ? 1 : 0);
 		}
 		me.log.debug('Device: %s %s, get current Power state successful: %s', me.host, me.name, powerState ? 'ON' : 'OFF');
-		me.currentPowerState = powerState;
 
 		let inputName = response.data.currservice_station;
 		let inputEventName = response.data.currservice_name;
@@ -200,10 +194,6 @@ class openwebIfTvDevice {
 			me.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
 		}
 		me.log.debug('Device: %s %s, get current Channel successful: %s (%s) %s', me.host, me.name, inputName, inputEventName, inputReference);
-		me.currentInputName = inputName;
-		me.currentInputEventName = inputEventName;
-		me.currentInputReference = inputReference;
-		me.currentInputIdentifier = inputIdentifier;
 
 		let mute = powerState ? (response.data.muted == true) : true;
 		let volume = response.data.volume;
@@ -222,8 +212,6 @@ class openwebIfTvDevice {
 		}
 		me.log.debug('Device: %s %s, get current Mute state: %s', me.host, me.name, mute ? 'ON' : 'OFF');
 		me.log.debug('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
-		me.currentMuteState = mute;
-		me.currentVolume = volume;
 	}
 
 	//Prepare TV service 
@@ -263,6 +251,12 @@ class openwebIfTvDevice {
 		this.prepareInputsService();
 		if (this.volumeControl >= 1) {
 			this.prepareVolumeService();
+		}
+
+		if (!this.connectionStatus) {
+			this.log.info('Device: %s %s, state: Online.', this.host, this.name);
+			this.connectionStatus = true;
+			this.getDeviceInfo();
 		}
 
 		this.log.debug('Device: %s %s, publishExternalAccessories.', this.host, accessoryName);
@@ -400,9 +394,13 @@ class openwebIfTvDevice {
 
 	getMute(callback) {
 		var me = this;
-		let state = me.currentMuteState;
-		me.log.info('Device: %s %s, get current Mute state successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
-		callback(null, state);
+		axios.get(this.url + '/api/statusinfo').then(response => {
+			let state = me.currentPowerState ? (response.data.muted == true) : true;
+			me.log.info('Device: %s %s, get current Mute state successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
+			callback(null, state);
+		}).catch(error => {
+			me.log.error('Device: %s %s, get current Mute state error: %s', me.host, me.name, error);
+		});
 	}
 
 	setMute(state, callback) {
@@ -421,9 +419,13 @@ class openwebIfTvDevice {
 
 	getVolume(callback) {
 		var me = this;
-		let volume = me.currentVolume;
-		me.log.info('Device: %s %s, get current Volume level successful: %s', me.host, me.name, volume);
-		callback(null, volume);
+		axios.get(this.url + '/api/statusinfo').then(response => {
+			let volume = response.data.volume;
+			me.log.info('Device: %s %s, get current Volume level successful: %s', me.host, me.name, volume);
+			callback(null, volume);
+		}).catch(error => {
+			me.log.error('Device: %s %s, get current Volume error: %s', me.host, me.name, error);
+		});
 	}
 
 	setVolume(volume, callback) {
@@ -443,12 +445,16 @@ class openwebIfTvDevice {
 
 	getInput(callback) {
 		var me = this;
-		let inputName = me.currentInputName;
-		let inputReference = me.currentInputReference;
-		let inputIdentifier = me.inputReferences.indexOf(inputReference);
-		me.log.info('Device: %s %s, get current Channel successful: %s %s', me.host, me.name, inputName, inputReference);
-		me.getInputEventName();
-		callback(null, inputIdentifier);
+		axios.get(this.url + '/api/statusinfo').then(response => {
+			let inputName = response.data.currservice_station;
+			let inputReference = response.data.currservice_serviceref;
+			let inputIdentifier = me.inputReferences.indexOf(inputReference);
+			me.log.info('Device: %s %s, get current Channel successful: %s %s', me.host, me.name, inputName, inputReference);
+			me.getInputEventName();
+			callback(null, inputIdentifier);
+		}).catch(error => {
+			me.log.error('Device: %s %s, get current Channel error: %s', me.host, me.name, error);
+		});
 	}
 
 	setInput(inputIdentifier, callback) {
@@ -468,8 +474,12 @@ class openwebIfTvDevice {
 
 	getInputEventName() {
 		var me = this;
-		let inputEventName = me.currentInputEventName;
-		me.log.info('Device: %s %s, get current Event successful: %s', me.host, me.name, inputEventName);
+		axios.get(this.url + '/api/statusinfo').then(response => {
+			let inputEventName = response.data.currservice_name;
+			me.log.info('Device: %s %s, get current Event successful: %s', me.host, me.name, inputEventName);
+		}).catch(error => {
+			me.log.error('Device: %s %s, get current Event error: %s', me.host, me.name, error);
+		});
 	}
 
 	setPowerModeSelection(state, callback) {
