@@ -171,7 +171,6 @@ class openwebIfTvDevice {
 		var me = this;
 		me.log.debug('Device: %s %s, requesting Device information.', me.host, me.name);
 		axios.get(this.url + '/api/statusinfo').then(response => {
-			let response = me.deviceStatusInfo;
 			let powerState = (response.data.inStandby === 'false');
 			if (me.televisionService && (powerState !== me.currentPowerState)) {
 				me.televisionService.updateCharacteristic(Characteristic.Active, powerState ? 1 : 0);
