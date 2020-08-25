@@ -135,6 +135,7 @@ class openwebIfTvDevice {
 		var me = this;
 		me.log.debug('Device: %s %s, requesting config information.', me.host, me.name);
 		axios.get(me.url + '/api/getallservices').then(response => {
+			this.log.info('Device: %s %s, state: Online.', me.host, me.name);
 			let channels = JSON.stringify(response.data.services, null, 2);
 			fs.writeFile(me.inputsFile, channels, (error) => {
 				if (error) {
@@ -162,8 +163,12 @@ class openwebIfTvDevice {
 			me.log('Webif version: %s', me.serialNumber);
 			me.log('Firmware: %s', me.firmwareRevision);
 			me.log('----------------------------------');
+			me.updateDeviceState();
+			me.connectionStatus = true;
 		}).catch(error => {
-			me.log.error('Device: %s %s, getDeviceInfo eror: %s', me.host, me.name, error);
+			me.log.error('Device: %s %s, getDeviceInfo eror: %s, state: Offline', me.host, me.name, error);
+			me.connectionStatus = false;
+			return;
 		});
 	}
 
@@ -176,6 +181,7 @@ class openwebIfTvDevice {
 				me.televisionService.updateCharacteristic(Characteristic.Active, powerState ? 1 : 0);
 			}
 			me.log.debug('Device: %s %s, get current Power state successful: %s', me.host, me.name, powerState ? 'ON' : 'OFF');
+			me.currentPowerState = powerState;
 
 			let inputName = response.data.currservice_station;
 			let inputEventName = response.data.currservice_name;
@@ -185,6 +191,7 @@ class openwebIfTvDevice {
 				me.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
 			}
 			me.log.debug('Device: %s %s, get current Channel successful: %s (%s) %s', me.host, me.name, inputName, inputEventName, inputReference);
+			me.currentInputReference = inputReference;
 
 			let mute = powerState ? (response.data.muted == true) : true;
 			let volume = response.data.volume;
@@ -203,6 +210,8 @@ class openwebIfTvDevice {
 			}
 			me.log.debug('Device: %s %s, get current Mute state: %s', me.host, me.name, mute ? 'ON' : 'OFF');
 			me.log.debug('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
+			me.currentMuteState = mute;
+			me.currentVolume = volume;
 		}).catch(error => {
 			me.log.error('Device: %s %s, update Device state error: %s', me.host, me.name, error);
 		});
@@ -248,8 +257,6 @@ class openwebIfTvDevice {
 		}
 
 		if (!this.connectionStatus) {
-			this.log.info('Device: %s %s, state: Online.', this.host, this.name);
-			this.connectionStatus = true;
 			this.getDeviceInfo();
 		}
 
