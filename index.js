@@ -131,92 +131,6 @@ class openwebIfTvDevice {
 		this.prepareTelevisionService();
 	}
 
-	getDeviceInfo() {
-		var me = this;
-		me.log.debug('Device: %s %s, requesting config information.', me.host, me.name);
-		axios.get(me.url + '/api/getallservices').then(response => {
-			this.log.info('Device: %s %s, state: Online.', me.host, me.name);
-			let channels = JSON.stringify(response.data.services, null, 2);
-			fs.writeFile(me.inputsFile, channels, (error) => {
-				if (error) {
-					me.log.error('Device: %s %s, could not write Channels to the file, error: %s', me.host, me.name, error);
-				} else {
-					me.log.debug('Device: %s %s, saved Channels successful in: %s %s', me.host, me.name, me.prefDir, channels);
-				}
-			});
-		}).catch(error => {
-			me.log.error('Device: %s %s, get Channels list error: %s', me.host, me.name, error);
-		});
-
-		axios.get(me.url + '/api/deviceinfo').then(response => {
-			me.manufacturer = response.data.brand;
-			me.modelName = response.data.mname;
-			me.serialNumber = response.data.webifver;
-			me.firmwareRevision = response.data.enigmaver;
-			me.kernelVer = response.data.kernelver;
-			me.chipset = response.data.chipset;
-			me.log('-------- %s --------', me.name);
-			me.log('Manufacturer: %s', me.manufacturer);
-			me.log('Model: %s', me.modelName);
-			me.log('Kernel: %s', me.kernelVer);
-			me.log('Chipset: %s', me.chipset);
-			me.log('Webif version: %s', me.serialNumber);
-			me.log('Firmware: %s', me.firmwareRevision);
-			me.log('----------------------------------');
-			me.updateDeviceState();
-			me.connectionStatus = true;
-		}).catch(error => {
-			me.log.error('Device: %s %s, getDeviceInfo eror: %s, state: Offline', me.host, me.name, error);
-			me.connectionStatus = false;
-			return;
-		});
-	}
-
-	updateDeviceState() {
-		var me = this;
-		me.log.debug('Device: %s %s, requesting Device information.', me.host, me.name);
-		axios.get(this.url + '/api/statusinfo').then(response => {
-			let powerState = (response.data.inStandby === 'false');
-			if (me.televisionService && (powerState !== me.currentPowerState)) {
-				me.televisionService.updateCharacteristic(Characteristic.Active, powerState ? 1 : 0);
-			}
-			me.log.debug('Device: %s %s, get current Power state successful: %s', me.host, me.name, powerState ? 'ON' : 'OFF');
-			me.currentPowerState = powerState;
-
-			let inputName = response.data.currservice_station;
-			let inputEventName = response.data.currservice_name;
-			let inputReference = response.data.currservice_serviceref;
-			let inputIdentifier = me.inputReferences.indexOf(inputReference);
-			if (me.televisionService && (inputReference !== me.currentInputReference)) {
-				me.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
-			}
-			me.log.debug('Device: %s %s, get current Channel successful: %s (%s) %s', me.host, me.name, inputName, inputEventName, inputReference);
-			me.currentInputReference = inputReference;
-
-			let mute = powerState ? (response.data.muted == true) : true;
-			let volume = response.data.volume;
-			if (me.speakerService) {
-				me.speakerService.updateCharacteristic(Characteristic.Mute, mute);
-				me.speakerService.updateCharacteristic(Characteristic.Volume, volume);
-				if (me.volumeService && me.volumeControl >= 1) {
-					me.volumeService.updateCharacteristic(Characteristic.On, !mute);
-				}
-				if (me.volumeService && me.volumeControl == 1) {
-					me.volumeService.updateCharacteristic(Characteristic.Brightness, volume);
-				}
-				if (me.volumeService && me.volumeControl == 2) {
-					me.volumeService.updateCharacteristic(Characteristic.RotationSpeed, volume);
-				}
-			}
-			me.log.debug('Device: %s %s, get current Mute state: %s', me.host, me.name, mute ? 'ON' : 'OFF');
-			me.log.debug('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
-			me.currentMuteState = mute;
-			me.currentVolume = volume;
-		}).catch(error => {
-			me.log.error('Device: %s %s, update Device state error: %s', me.host, me.name, error);
-		});
-	}
-
 	//Prepare TV service 
 	prepareTelevisionService() {
 		this.log.debug('prepareTelevisionService');
@@ -369,6 +283,92 @@ class openwebIfTvDevice {
 			this.televisionService.addLinkedService(this.inputsService);
 			this.inputNames.push(inputName);
 			this.inputReferences.push(inputReference);
+		});
+	}
+
+	getDeviceInfo() {
+		var me = this;
+		me.log.debug('Device: %s %s, requesting config information.', me.host, me.name);
+		axios.get(me.url + '/api/getallservices').then(response => {
+			this.log.info('Device: %s %s, state: Online.', me.host, me.name);
+			let channels = JSON.stringify(response.data.services, null, 2);
+			fs.writeFile(me.inputsFile, channels, (error) => {
+				if (error) {
+					me.log.error('Device: %s %s, could not write Channels to the file, error: %s', me.host, me.name, error);
+				} else {
+					me.log.debug('Device: %s %s, saved Channels successful in: %s %s', me.host, me.name, me.prefDir, channels);
+				}
+			});
+		}).catch(error => {
+			me.log.error('Device: %s %s, get Channels list error: %s', me.host, me.name, error);
+		});
+
+		axios.get(me.url + '/api/deviceinfo').then(response => {
+			me.manufacturer = response.data.brand;
+			me.modelName = response.data.mname;
+			me.serialNumber = response.data.webifver;
+			me.firmwareRevision = response.data.enigmaver;
+			me.kernelVer = response.data.kernelver;
+			me.chipset = response.data.chipset;
+			me.log('-------- %s --------', me.name);
+			me.log('Manufacturer: %s', me.manufacturer);
+			me.log('Model: %s', me.modelName);
+			me.log('Kernel: %s', me.kernelVer);
+			me.log('Chipset: %s', me.chipset);
+			me.log('Webif version: %s', me.serialNumber);
+			me.log('Firmware: %s', me.firmwareRevision);
+			me.log('----------------------------------');
+			me.updateDeviceState();
+			me.connectionStatus = true;
+		}).catch(error => {
+			me.log.error('Device: %s %s, getDeviceInfo eror: %s, state: Offline', me.host, me.name, error);
+			me.connectionStatus = false;
+			return;
+		});
+	}
+
+	updateDeviceState() {
+		var me = this;
+		me.log.debug('Device: %s %s, requesting Device information.', me.host, me.name);
+		axios.get(this.url + '/api/statusinfo').then(response => {
+			let powerState = (response.data.inStandby === 'false');
+			if (me.televisionService && (powerState !== me.currentPowerState)) {
+				me.televisionService.updateCharacteristic(Characteristic.Active, powerState ? 1 : 0);
+			}
+			me.log.debug('Device: %s %s, get current Power state successful: %s', me.host, me.name, powerState ? 'ON' : 'OFF');
+			me.currentPowerState = powerState;
+
+			let inputName = response.data.currservice_station;
+			let inputEventName = response.data.currservice_name;
+			let inputReference = response.data.currservice_serviceref;
+			let inputIdentifier = me.inputReferences.indexOf(inputReference);
+			if (me.televisionService && (inputReference !== me.currentInputReference)) {
+				me.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
+			}
+			me.log.debug('Device: %s %s, get current Channel successful: %s (%s) %s', me.host, me.name, inputName, inputEventName, inputReference);
+			me.currentInputReference = inputReference;
+
+			let mute = powerState ? (response.data.muted == true) : true;
+			let volume = response.data.volume;
+			if (me.speakerService) {
+				me.speakerService.updateCharacteristic(Characteristic.Mute, mute);
+				me.speakerService.updateCharacteristic(Characteristic.Volume, volume);
+				if (me.volumeService && me.volumeControl >= 1) {
+					me.volumeService.updateCharacteristic(Characteristic.On, !mute);
+				}
+				if (me.volumeService && me.volumeControl == 1) {
+					me.volumeService.updateCharacteristic(Characteristic.Brightness, volume);
+				}
+				if (me.volumeService && me.volumeControl == 2) {
+					me.volumeService.updateCharacteristic(Characteristic.RotationSpeed, volume);
+				}
+			}
+			me.log.debug('Device: %s %s, get current Mute state: %s', me.host, me.name, mute ? 'ON' : 'OFF');
+			me.log.debug('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
+			me.currentMuteState = mute;
+			me.currentVolume = volume;
+		}).catch(error => {
+			me.log.error('Device: %s %s, update Device state error: %s', me.host, me.name, error);
 		});
 	}
 
