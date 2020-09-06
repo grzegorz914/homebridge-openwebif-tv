@@ -168,11 +168,12 @@ class openwebIfTvDevice {
 			.on('set', this.setPowerModeSelection.bind(this));
 
 		this.accessory.addService(this.televisionService);
+
 		this.prepareSpeakerService();
-		this.prepareInputsService();
 		if (this.volumeControl >= 1) {
 			this.prepareVolumeService();
 		}
+		this.prepareInputsService();
 
 		this.checkDeviceInfo = true;
 
@@ -281,10 +282,11 @@ class openwebIfTvDevice {
 					});
 					callback(null)
 				});
+			this.inputReferences.push(inputReference);
+			this.inputNames.push(inputName);
+
 			this.accessory.addService(this.inputsService);
 			this.televisionService.addLinkedService(this.inputsService);
-			this.inputNames.push(inputName);
-			this.inputReferences.push(inputReference);
 		});
 	}
 
@@ -307,12 +309,12 @@ class openwebIfTvDevice {
 
 		axios.get(me.url + '/api/deviceinfo').then(response => {
 			me.manufacturer = response.data.brand;
-                        if (typeof response.data.mname !== 'undefined' && value) {
-                                me.modelName = response.data.mname;
-                        }else{
-                                me.modelName = response.data.model;
-                        };
-  			me.serialNumber = response.data.webifver;
+			if (typeof response.data.mname !== 'undefined' && value) {
+				me.modelName = response.data.mname;
+			} else {
+				me.modelName = response.data.model;
+			};
+			me.serialNumber = response.data.webifver;
 			me.firmwareRevision = response.data.enigmaver;
 			me.kernelVer = response.data.kernelver;
 			me.chipset = response.data.chipset;
