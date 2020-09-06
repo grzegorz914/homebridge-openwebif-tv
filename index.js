@@ -309,7 +309,7 @@ class openwebIfTvDevice {
 
 		axios.get(me.url + '/api/deviceinfo').then(response => {
 			me.manufacturer = response.data.brand;
-			if (typeof response.data.mname !== 'undefined' && value) {
+			if (typeof response.data.mname !== 'undefined') {
 				me.modelName = response.data.mname;
 			} else {
 				me.modelName = response.data.model;
