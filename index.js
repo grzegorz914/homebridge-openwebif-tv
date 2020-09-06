@@ -292,7 +292,6 @@ class openwebIfTvDevice {
 		var me = this;
 		me.log.debug('Device: %s %s, requesting config information.', me.host, me.name);
 		axios.get(me.url + '/api/getallservices').then(response => {
-			me.log.info('Device: %s %s, state: Online.', me.host, me.name);
 			let channels = JSON.stringify(response.data.services, null, 2);
 			fs.writeFile(me.inputsFile, channels, (error) => {
 				if (error) {
@@ -306,23 +305,24 @@ class openwebIfTvDevice {
 		});
 
 		axios.get(me.url + '/api/deviceinfo').then(response => {
-			me.manufacturer = response.data.brand;
+			me.log.info('Device: %s %s, state: Online.', me.host, me.name);
+			let manufacturer = response.data.brand;
 			if (typeof response.data.mname !== 'undefined') {
-				me.modelName = response.data.mname;
+				var modelName = response.data.mname;
 			} else {
-				me.modelName = response.data.model;
+				modelName = response.data.model;
 			};
-			me.serialNumber = response.data.webifver;
-			me.firmwareRevision = response.data.enigmaver;
-			me.kernelVer = response.data.kernelver;
-			me.chipset = response.data.chipset;
+			let serialNumber = response.data.webifver;
+			let firmwareRevision = response.data.enigmaver;
+			let kernelVer = response.data.kernelver;
+			let chipset = response.data.chipset;
 			me.log('-------- %s --------', me.name);
-			me.log('Manufacturer: %s', me.manufacturer);
-			me.log('Model: %s', me.modelName);
-			me.log('Kernel: %s', me.kernelVer);
-			me.log('Chipset: %s', me.chipset);
-			me.log('Webif version: %s', me.serialNumber);
-			me.log('Firmware: %s', me.firmwareRevision);
+			me.log('Manufacturer: %s', manufacturer);
+			me.log('Model: %s', modelName);
+			me.log('Kernel: %s', kernelVer);
+			me.log('Chipset: %s', chipset);
+			me.log('Webif version: %s', serialNumber);
+			me.log('Firmware: %s', firmwareRevision);
 			me.log('----------------------------------');
 			me.checkDeviceInfo = true;
 			me.checkDeviceState = true;
