@@ -74,7 +74,7 @@ class openwebIfTvDevice {
 
 		//get config info
 		this.manufacturer = config.manufacturer || 'Manufacturer';
-		this.modelName = config.modelName || 'Model';
+		this.modelName = config.modelName || 'Model Name';
 		this.serialNumber = config.serialNumber || 'Serial Number';
 		this.firmwareRevision = config.firmwareRevision || 'Firmware Revision';
 
