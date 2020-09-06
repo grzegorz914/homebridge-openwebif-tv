@@ -84,7 +84,11 @@
               "name": "RTL UHD",
               "reference": "1:0:1F:307A:3F5:1:C00000:0:0:0:"
             }
-          ]
+          ],
+          "manufacturer": "Manufacturer",
+          "modelName": "Model",
+          "serialNumber": "Serial Number",
+          "firmwareRevision": "Firmware Revision"
         }
       ]
     }

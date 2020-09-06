@@ -119,7 +119,11 @@ Due to HomeKit app limitation max. services for 1 accessory is 100. Over this va
             "name": "RTL UHD",
             "reference": "1:0:1F:307A:3F5:1:C00000:0:0:0:"
           }
-        ]
+        ],
+          "manufacturer": "VU+",
+          "modelName": "Ultimo 4K",
+          "serialNumber": "Serial Number",
+          "firmwareRevision": "Firmware Revision"
       }
     ]
   }

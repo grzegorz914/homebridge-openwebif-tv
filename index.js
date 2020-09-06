@@ -73,10 +73,10 @@ class openwebIfTvDevice {
 		this.inputs = config.inputs;
 
 		//get config info
-		this.manufacturer = config.manufacturer || 'openWebIf';
-		this.modelName = config.modelName || PLUGIN_NAME;
-		this.serialNumber = config.serialNumber || 'SN0000001';
-		this.firmwareRevision = config.firmwareRevision || 'FW0000001';
+		this.manufacturer = config.manufacturer || 'Manufacturer';
+		this.modelName = config.modelName || 'Model';
+		this.serialNumber = config.serialNumber || 'Serial Number';
+		this.firmwareRevision = config.firmwareRevision || 'Firmware Revision';
 
 		//setup variables
 		this.checkDeviceInfo = false;
