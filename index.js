@@ -1,7 +1,8 @@
 'use strict';
 
+const axios = require('axios').default;
 const fs = require('fs');
-const axios = require('axios');
+const fsPromises = require('fs').promises;
 const path = require('path');
 
 const PLUGIN_NAME = 'homebridge-openwebif-tv';
@@ -288,34 +289,30 @@ class openwebIfTvDevice {
 		});
 	}
 
-	getDeviceInfo() {
+	async getDeviceInfo() {
 		var me = this;
 		me.log.debug('Device: %s %s, requesting config information.', me.host, me.name);
-		axios.get(me.url + '/api/getallservices').then(response => {
-			let channels = JSON.stringify(response.data.services, null, 2);
-			fs.writeFile(me.inputsFile, channels, (error) => {
-				if (error) {
-					me.log.error('Device: %s %s, could not write Channels to the file, error: %s', me.host, me.name, error);
-				} else {
-					me.log.debug('Device: %s %s, saved Channels successful in: %s %s', me.host, me.name, me.prefDir, channels);
-				}
-			});
-		}).catch(error => {
-			me.log.error('Device: %s %s, get Channels list error: %s', me.host, me.name, error);
-		});
-
-		axios.get(me.url + '/api/deviceinfo').then(response => {
+		try {
+			const [response, response1] = await axios.all([axios.get(me.url + '/api/getallservices'), axios.get(me.url + '/api/deviceinfo')]);
 			me.log.info('Device: %s %s, state: Online.', me.host, me.name);
-			let manufacturer = response.data.brand;
-			if (typeof response.data.mname !== 'undefined') {
-				var modelName = response.data.mname;
-			} else {
-				modelName = response.data.model;
+			let channels = JSON.stringify(response.data.services, null, 2);
+			try {
+				await fsPromises.writeFile(me.inputsFile, channels);
+				me.log.debug('Device: %s %s, saved Channels successful in: %s %s', me.host, me.name, me.prefDir, channels);
+			} catch (error) {
+				me.log.error('Device: %s %s, could not write Channels to the file, error: %s', me.host, me.name, error);
 			};
-			let serialNumber = response.data.webifver;
-			let firmwareRevision = response.data.enigmaver;
-			let kernelVer = response.data.kernelver;
-			let chipset = response.data.chipset;
+
+			let manufacturer = response1.data.brand;
+			if (typeof response1.data.mname !== 'undefined') {
+				var modelName = response1.data.mname;
+			} else {
+				modelName = response1.data.model;
+			};
+			let serialNumber = response1.data.webifver;
+			let firmwareRevision = response1.data.enigmaver;
+			let kernelVer = response1.data.kernelver;
+			let chipset = response1.data.chipset;
 			me.log('-------- %s --------', me.name);
 			me.log('Manufacturer: %s', manufacturer);
 			me.log('Model: %s', modelName);
@@ -326,17 +323,18 @@ class openwebIfTvDevice {
 			me.log('----------------------------------');
 			me.checkDeviceInfo = true;
 			me.checkDeviceState = true;
-		}).catch(error => {
+		} catch (error) {
 			me.log.error('Device: %s %s, getDeviceInfo eror: %s, state: Offline', me.host, me.name, error);
 			me.checkDeviceInfo = false;
 			me.checkDeviceState = false;
-		});
+		};
 	}
 
-	updateDeviceState() {
+	async updateDeviceState() {
 		var me = this;
 		me.log.debug('Device: %s %s, requesting Device information.', me.host, me.name);
-		axios.get(this.url + '/api/statusinfo').then(response => {
+		try {
+			const response = await axios.get(me.url + '/api/statusinfo');
 			let powerState = (response.data.inStandby === 'false');
 			if (me.televisionService && (powerState !== me.currentPowerState)) {
 				me.televisionService.updateCharacteristic(Characteristic.Active, powerState ? 1 : 0);
@@ -373,9 +371,9 @@ class openwebIfTvDevice {
 			me.log.debug('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
 			me.currentMuteState = mute;
 			me.currentVolume = volume;
-		}).catch(error => {
+		} catch (error) {
 			me.log.error('Device: %s %s, update Device state error: %s, state: Offline', me.host, me.name, error);
-		});
+		};
 	}
 
 	getPower(callback) {
