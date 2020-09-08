@@ -47,6 +47,7 @@ Due to HomeKit app limitation max. services for 1 accessory is 100. Over this va
 3. All `reference` and `name` from Your sat receiver are stored in `homebridge_directory/openwebifTv/channels_19216804`, if U want somthing changed in channel list please add Yours prefered channels to the config bouquets.
 4. In `volumeControl` You can select what a additional volume control mode You want to use (None, Slider, Fan).
 5. If `switchInfoMenu` is enabled, `I` button change its behaviour in RC app between Menu and INFO.
+6. `manufacturer`, `model`, `serialNumber`, `firmwareRevision` - optional branding data displayed in Home.app
 
 <p align="left">
   <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/master/graphics/ustawienia.png" height="150"></a>

@@ -37,7 +37,7 @@
               "title": "Authentication",
               "type": "boolean",
               "default": false,
-              "required": false
+              "required": true
             },
             "user": {
               "title": "User",
@@ -75,7 +75,7 @@
                   ]
                 }
               ],
-              "required": true
+              "required": false
             },
             "switchInfoMenu": {
               "title": "Switch Info/Menu",
