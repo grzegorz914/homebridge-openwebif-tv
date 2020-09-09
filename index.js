@@ -376,122 +376,129 @@ class openwebIfTvDevice {
 		};
 	}
 
-	getPower(callback) {
+	async getPower(callback) {
 		var me = this;
-		axios.get(this.url + '/api/statusinfo').then(response => {
+		try {
+			const response = await axios.get(this.url + '/api/statusinfo');
 			let state = (response.data.inStandby === 'false');
 			me.log.info('Device: %s %s, get current Power state successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
 			callback(null, state);
-		}).catch(error => {
+		} catch (error) {
 			me.log.error('Device: %s %s, get current Power state error: %s', me.host, me.name, error);
-		});
+		};
 	}
 
-	setPower(state, callback) {
+	async setPower(state, callback) {
 		var me = this;
 		let newState = state ? '4' : '5';
 		if ((state && !me.currentPowerState) || (!state && me.currentPowerState)) {
-			axios.get(me.url + '/api/powerstate?newstate=' + newState).then(result => {
+			try {
+				const response = await axios.get(me.url + '/api/powerstate?newstate=' + newState);
 				me.log.info('Device: %s %s, set new Power state successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
 				callback(null);
-			}).catch(error => {
+			} catch (error) {
 				me.log.error('Device: %s %s, can not set new Power state. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
 				callback(error);
-			});
+			};
 		}
 	}
 
-	getMute(callback) {
+	async getMute(callback) {
 		var me = this;
-		axios.get(this.url + '/api/statusinfo').then(response => {
+		try {
+			const response = await axios.get(this.url + '/api/statusinfo');
 			let state = me.currentPowerState ? (response.data.muted == true) : true;
 			me.log.info('Device: %s %s, get current Mute state successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
 			callback(null, state);
-		}).catch(error => {
+		} catch (error) {
 			me.log.error('Device: %s %s, get current Mute state error: %s', me.host, me.name, error);
-		});
+		};
 	}
 
-	setMute(state, callback) {
+	async setMute(state, callback) {
 		var me = this;
 		let muteState = me.currentMuteState;
 		if (me.currentPowerState && state !== muteState) {
-			axios.get(me.url + '/api/vol?set=mute').then(result => {
+			try {
+				const response = await axios.get(me.url + '/api/vol?set=mute');
 				me.log.info('Device: %s %s, set Mute successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
 				callback(null);
-			}).catch(error => {
+			} catch (error) {
 				me.log.error('Device: %s %s, can not set Mute. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
 				callback(error);
-			});
+			};
 		}
 	}
 
-	getVolume(callback) {
+	async getVolume(callback) {
 		var me = this;
-		axios.get(this.url + '/api/statusinfo').then(response => {
+		try {
+			const response = await axios.get(this.url + '/api/statusinfo');
 			let volume = response.data.volume;
 			me.log.info('Device: %s %s, get current Volume level successful: %s', me.host, me.name, volume);
 			callback(null, volume);
-		}).catch(error => {
+		} catch (error) {
 			me.log.error('Device: %s %s, get current Volume error: %s', me.host, me.name, error);
-		});
+		};
 	}
 
-	setVolume(volume, callback) {
+	async setVolume(volume, callback) {
 		var me = this;
 		let currentVolume = me.currentVolume;
 		if (volume == 0 || volume == 100) {
 			volume = currentVolume;
 		}
-		axios.get(me.url + '/api/vol?set=set' + volume).then(result => {
+		try {
+			const response = await axios.get(me.url + '/api/vol?set=set' + volume);
 			me.log.info('Device: %s %s, set new Volume level successful: %s', me.host, me.name, volume);
 			callback(null);
-		}).catch(error => {
+		} catch (error) {
 			me.log.error('Device: %s %s, can not set new Volume level. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
 			callback(error);
-		});
+		};
 	}
 
-	getInput(callback) {
+	async getInput(callback) {
 		var me = this;
-		axios.get(this.url + '/api/statusinfo').then(response => {
+		try {
+			const response = await axios.get(this.url + '/api/statusinfo');
 			let inputName = response.data.currservice_station;
 			let inputReference = response.data.currservice_serviceref;
 			let inputIdentifier = me.inputReferences.indexOf(inputReference);
 			me.log.info('Device: %s %s, get current Channel successful: %s %s', me.host, me.name, inputName, inputReference);
 			me.getInputEventName();
 			callback(null, inputIdentifier);
-		}).catch(error => {
+		} catch (error) {
 			me.log.error('Device: %s %s, get current Channel error: %s', me.host, me.name, error);
-		});
+		};
 	}
 
-	setInput(inputIdentifier, callback) {
+	async setInput(inputIdentifier, callback) {
 		var me = this;
 		let inputName = me.inputNames[inputIdentifier];
 		let inputReference = me.inputReferences[inputIdentifier];
-		setTimeout(() => {
-			axios.get(me.url + '/api/zap?sRef=' + inputReference).then(result => {
-				me.log.info('Device: %s %s, set new Channel successful: %s %s', me.host, me.name, inputName, inputReference);
-				callback(null);
-			}).catch(error => {
-				me.log.error('Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', me.host, me.name, error);
-				callback(error);
-			});
-		}, 250);
+		try {
+			const response = await axios.get(me.url + '/api/zap?sRef=' + inputReference);
+			me.log.info('Device: %s %s, set new Channel successful: %s %s', me.host, me.name, inputName, inputReference);
+			callback(null);
+		} catch (error) {
+			me.log.error('Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', me.host, me.name, error);
+			callback(error);
+		};
 	}
 
-	getInputEventName() {
+	async getInputEventName() {
 		var me = this;
-		axios.get(this.url + '/api/statusinfo').then(response => {
+		try {
+			const response = await axios.get(this.url + '/api/statusinfo');
 			let inputEventName = response.data.currservice_name;
 			me.log.info('Device: %s %s, get current Event successful: %s', me.host, me.name, inputEventName);
-		}).catch(error => {
+		} catch (error) {
 			me.log.error('Device: %s %s, get current Event error: %s', me.host, me.name, error);
-		});
+		};
 	}
 
-	setPowerModeSelection(state, callback) {
+	async setPowerModeSelection(state, callback) {
 		var me = this;
 		let command = null;
 		if (me.currentPowerState) {
@@ -504,17 +511,18 @@ class openwebIfTvDevice {
 					command = '174';
 					break;
 			}
-			axios.get(me.url + '/api/remotecontrol?command=' + command).then(result => {
+			try {
+				const response = await axios.get(me.url + '/api/remotecontrol?command=' + command);
 				me.log.info('Device: %s %s, setPowerModeSelection successful, command: %s', me.host, me.name, command);
 				callback(null);
-			}).catch(error => {
+			} catch (error) {
 				me.log.error('Device: %s %s, can not setPowerModeSelection command. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
 				callback(error);
-			});
+			};
 		}
 	}
 
-	setVolumeSelector(state, callback) {
+	async setVolumeSelector(state, callback) {
 		var me = this;
 		let command = null;
 		if (me.currentPowerState) {
@@ -526,17 +534,18 @@ class openwebIfTvDevice {
 					command = '114';
 					break;
 			}
-			axios.get(me.url + '/api/remotecontrol?command=' + command).then(result => {
+			try {
+				const response = await axios.get(me.url + '/api/remotecontrol?command=' + command);
 				me.log.info('Device: %s %s, setVolumeSelector successful, command: %s', me.host, me.name, command);
 				callback(null);
-			}).catch(error => {
+			} catch (error) {
 				me.log.error('Device: %s %s, can not setVolumeSelector command. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
 				callback(error);
-			});
+			};
 		}
 	}
 
-	setRemoteKey(remoteKey, callback) {
+	async setRemoteKey(remoteKey, callback) {
 		var me = this;
 		let command = null;
 		if (me.currentPowerState) {
@@ -581,13 +590,14 @@ class openwebIfTvDevice {
 					command = me.switchInfoMenu ? '358' : '139';
 					break;
 			}
-			axios.get(me.url + '/api/remotecontrol?command=' + command).then(result => {
+			try {
+				const response = await axios.get(me.url + '/api/remotecontrol?command=' + command);
 				me.log.info('Device: %s %s, setRemoteKey successful, command: %s', me.host, me.name, command);
 				callback(null);
-			}).catch(error => {
+			} catch (error) {
 				me.log.error('Device: %s %s, can not setRemoteKey command. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
 				callback(error);
-			});
+			};
 		}
 	}
 };
