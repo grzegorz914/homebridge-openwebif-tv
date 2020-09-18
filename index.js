@@ -125,7 +125,7 @@ class openwebIfTvDevice {
 
 		//update device state
 		setInterval(function () {
-			if (!this.checkDeviceInfo) {
+			if (this.checkDeviceInfo) {
 				this.getDeviceInfo();
 			}
 			if (this.checkDeviceState) {
@@ -133,6 +133,7 @@ class openwebIfTvDevice {
 			}
 		}.bind(this), 3000);
 
+		this.getDeviceInfo();
 		this.prepareTelevisionService();
 	}
 
@@ -141,8 +142,8 @@ class openwebIfTvDevice {
 		this.log.debug('prepareTelevisionService');
 		const accessoryName = this.name;
 		const accessoryUUID = UUID.generate(accessoryName);
-		this.accessory = new Accessory(accessoryName, accessoryUUID);
-		this.accessory.category = Categories.TV_SET_TOP_BOX;
+		const accessoryCategory = Categories.TV_SET_TOP_BOX;
+		this.accessory = new Accessory(accessoryName, accessoryUUID, accessoryCategory);
 
 		this.accessory.getService(Service.AccessoryInformation)
 			.setCharacteristic(Characteristic.Manufacturer, this.manufacturer)
@@ -321,12 +322,10 @@ class openwebIfTvDevice {
 			me.log('Webif version: %s', serialNumber);
 			me.log('Firmware: %s', firmwareRevision);
 			me.log('----------------------------------');
-			me.checkDeviceInfo = true;
-			me.checkDeviceState = true;
+			me.updateDeviceState();
 		} catch (error) {
 			me.log.error('Device: %s %s, getDeviceInfo eror: %s, state: Offline', me.host, me.name, error);
-			me.checkDeviceInfo = false;
-			me.checkDeviceState = false;
+			me.checkDeviceInfo = true;
 		};
 	}
 
@@ -371,6 +370,7 @@ class openwebIfTvDevice {
 			me.log.debug('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
 			me.currentMuteState = mute;
 			me.currentVolume = volume;
+			me.checkDeviceState = true;
 		} catch (error) {
 			me.log.error('Device: %s %s, update Device state error: %s, state: Offline', me.host, me.name, error);
 		};
@@ -514,12 +514,11 @@ class openwebIfTvDevice {
 			try {
 				const response = await axios.get(me.url + '/api/remotecontrol?command=' + command);
 				me.log.info('Device: %s %s, setPowerModeSelection successful, command: %s', me.host, me.name, command);
-				callback(null);
 			} catch (error) {
 				me.log.error('Device: %s %s, can not setPowerModeSelection command. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
-				callback(error);
 			};
 		}
+		callback(null);
 	}
 
 	async setVolumeSelector(state, callback) {
@@ -537,12 +536,11 @@ class openwebIfTvDevice {
 			try {
 				const response = await axios.get(me.url + '/api/remotecontrol?command=' + command);
 				me.log.info('Device: %s %s, setVolumeSelector successful, command: %s', me.host, me.name, command);
-				callback(null);
 			} catch (error) {
 				me.log.error('Device: %s %s, can not setVolumeSelector command. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
-				callback(error);
 			};
 		}
+		callback(null);
 	}
 
 	async setRemoteKey(remoteKey, callback) {
@@ -593,11 +591,10 @@ class openwebIfTvDevice {
 			try {
 				const response = await axios.get(me.url + '/api/remotecontrol?command=' + command);
 				me.log.info('Device: %s %s, setRemoteKey successful, command: %s', me.host, me.name, command);
-				callback(null);
 			} catch (error) {
 				me.log.error('Device: %s %s, can not setRemoteKey command. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
-				callback(error);
 			};
 		}
+		callback(null);
 	}
 };
