@@ -89,6 +89,7 @@ class openwebIfTvDevice {
 		this.currentInputName = '';
 		this.currentInputEventName = '';
 		this.currentInputReference = '';
+		this.currentInputIdentifier = 0;
 		this.currentInfoMenuState = false;
 		this.prefDir = path.join(api.user.storagePath(), 'openwebifTv');
 		this.inputsFile = this.prefDir + '/' + 'channels_' + this.host.split('.').join('');
@@ -363,12 +364,16 @@ class openwebIfTvDevice {
 			let inputName = response.data.currservice_station;
 			let inputEventName = response.data.currservice_name;
 			let inputReference = response.data.currservice_serviceref;
-			let inputIdentifier = me.inputReferences.indexOf(inputReference);
+			let inputIdentifier = 0;
+			if (me.inputReferences.indexOf(inputReference) >= 0) {
+				inputIdentifier = me.inputReferences.indexOf(inputReference);
+			}
 			if (me.televisionService && (inputReference !== me.currentInputReference)) {
 				me.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
 			}
 			me.log.debug('Device: %s %s, get current Channel successful: %s (%s) %s', me.host, me.name, inputName, inputEventName, inputReference);
 			me.currentInputReference = inputReference;
+			me.currentInputIdentifier = inputIdentifier;
 
 			let mute = powerState ? (response.data.muted == true) : true;
 			let volume = response.data.volume;
@@ -483,7 +488,10 @@ class openwebIfTvDevice {
 			const response = await axios.get(this.url + '/api/statusinfo');
 			let inputName = response.data.currservice_station;
 			let inputReference = response.data.currservice_serviceref;
-			let inputIdentifier = me.inputReferences.indexOf(inputReference);
+			let inputIdentifier = 0;
+			if (me.inputReferences.indexOf(inputReference) >= 0) {
+				inputIdentifier = me.inputReferences.indexOf(inputReference);
+			}
 			me.log.info('Device: %s %s, get current Channel successful: %s %s', me.host, me.name, inputName, inputReference);
 			me.getInputEventName();
 			callback(null, inputIdentifier);
