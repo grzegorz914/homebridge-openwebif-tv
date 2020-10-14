@@ -277,16 +277,14 @@ class openwebIfTvDevice {
 
 			if (savedNames && savedNames[inputReference]) {
 				inputName = savedNames[inputReference];
-			} else {
-				inputName = input.name;
-			}
+			};
 
 			this.inputsService = new Service.InputSource(inputReference, 'input' + i);
 			this.inputsService
 				.setCharacteristic(Characteristic.Identifier, i)
 				.setCharacteristic(Characteristic.ConfiguredName, inputName)
 				.setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
-				.setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.TV)
+				//.setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.TV)
 				.setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN);
 
 			this.inputsService
