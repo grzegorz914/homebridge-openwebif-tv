@@ -67,6 +67,7 @@ class openwebIfTvDevice {
 		this.auth = config.auth;
 		this.user = config.user;
 		this.pass = config.pass;
+		this.refreshInterval = config.refreshInterval || 5;
 		this.volumeControl = config.volumeControl;
 		this.switchInfoMenu = config.switchInfoMenu;
 		this.inputs = config.inputs;
@@ -130,7 +131,7 @@ class openwebIfTvDevice {
 			if (this.checkDeviceState) {
 				this.updateDeviceState();
 			}
-		}.bind(this), 3000);
+		}.bind(this), this.refreshInterval * 1000);
 
 		this.prepareAccessory();
 	}
@@ -500,9 +501,9 @@ class openwebIfTvDevice {
 
 	async setInput(inputIdentifier, callback) {
 		var me = this;
-		let inputName = me.inputNames[inputIdentifier];
-		let inputReference = me.inputReferences[inputIdentifier];
 		try {
+			let inputName = me.inputNames[inputIdentifier];
+			let inputReference = me.inputReferences[inputIdentifier];
 			const response = await axios.get(me.url + '/api/zap?sRef=' + inputReference);
 			me.log.info('Device: %s %s, set new Channel successful: %s %s', me.host, me.name, inputName, inputReference);
 			callback(null);

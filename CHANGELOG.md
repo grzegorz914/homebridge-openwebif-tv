@@ -4,7 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [034.0] - (09.09.2020)
+## [3.5.0] - (17.11.2020)
+## Changs
+- added possibility to set custom data refresh inteval
+
+## [3.4.0] - (09.09.2020)
 ## Changs
 - added await/async function 
 

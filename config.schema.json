@@ -55,6 +55,13 @@
                 "functionBody": "return model.devices[arrayIndices].auth === true;"
               }
             },
+            "refreshInterval": {
+              "title": "Refresh interval (sec)",
+              "type": "integer",
+              "default": 5,
+              "maximum": 3600,
+              "required": true
+            },
             "volumeControl": {
               "title": "Volume control mode",
               "type": "integer",
@@ -154,6 +161,7 @@
         "devices[].name",
         "devices[].host",
         "devices[].port",
+        "devices[].refreshInterval",
         {
           "key": "devices[]",
           "type": "section",
