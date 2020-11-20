@@ -526,9 +526,9 @@ class openwebIfTvDevice {
 
 	async setPowerModeSelection(state, callback) {
 		var me = this;
-		let command = null;
 		if (me.currentPowerState) {
 			try {
+				let command;
 				switch (state) {
 					case Characteristic.PowerModeSelection.SHOW:
 						command = me.currentInfoMenuState ? '174' : (me.switchInfoMenu ? '139' : '358');
@@ -549,9 +549,9 @@ class openwebIfTvDevice {
 
 	async setVolumeSelector(state, callback) {
 		var me = this;
-		let command = null;
 		if (me.currentPowerState) {
 			try {
+				let command;
 				switch (state) {
 					case Characteristic.VolumeSelector.INCREMENT:
 						command = '115';
@@ -571,9 +571,9 @@ class openwebIfTvDevice {
 
 	async setRemoteKey(remoteKey, callback) {
 		var me = this;
-		let command = null;
 		if (me.currentPowerState) {
 			try {
+				let command;
 				switch (remoteKey) {
 					case Characteristic.RemoteKey.REWIND:
 						command = '168';
