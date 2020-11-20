@@ -413,17 +413,17 @@ class openwebIfTvDevice {
 
 	async setPower(state, callback) {
 		var me = this;
-		let newState = state ? '4' : '5';
 		if ((state && !me.currentPowerState) || (!state && me.currentPowerState)) {
 			try {
+				let newState = state ? '4' : '5';
 				const response = await axios.get(me.url + '/api/powerstate?newstate=' + newState);
 				me.log.info('Device: %s %s, set new Power state successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
-				callback(null);
 			} catch (error) {
 				me.log.error('Device: %s %s, can not set new Power state. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
 				callback(error);
 			};
 		}
+		callback(null);
 	}
 
 	async getMute(callback) {
@@ -445,12 +445,12 @@ class openwebIfTvDevice {
 			try {
 				const response = await axios.get(me.url + '/api/vol?set=mute');
 				me.log.info('Device: %s %s, set Mute successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
-				callback(null);
 			} catch (error) {
 				me.log.error('Device: %s %s, can not set Mute. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
 				callback(error);
 			};
 		}
+		callback(null);
 	}
 
 	async getVolume(callback) {
@@ -528,16 +528,16 @@ class openwebIfTvDevice {
 		var me = this;
 		let command = null;
 		if (me.currentPowerState) {
-			switch (state) {
-				case Characteristic.PowerModeSelection.SHOW:
-					command = me.currentInfoMenuState ? '174' : (me.switchInfoMenu ? '139' : '358');
-					me.currentInfoMenuState = !me.currentInfoMenuState;
-					break;
-				case Characteristic.PowerModeSelection.HIDE:
-					command = '174';
-					break;
-			}
 			try {
+				switch (state) {
+					case Characteristic.PowerModeSelection.SHOW:
+						command = me.currentInfoMenuState ? '174' : (me.switchInfoMenu ? '139' : '358');
+						me.currentInfoMenuState = !me.currentInfoMenuState;
+						break;
+					case Characteristic.PowerModeSelection.HIDE:
+						command = '174';
+						break;
+				}
 				const response = await axios.get(me.url + '/api/remotecontrol?command=' + command);
 				me.log.info('Device: %s %s, setPowerModeSelection successful, command: %s', me.host, me.name, command);
 			} catch (error) {
@@ -551,15 +551,15 @@ class openwebIfTvDevice {
 		var me = this;
 		let command = null;
 		if (me.currentPowerState) {
-			switch (state) {
-				case Characteristic.VolumeSelector.INCREMENT:
-					command = '115';
-					break;
-				case Characteristic.VolumeSelector.DECREMENT:
-					command = '114';
-					break;
-			}
 			try {
+				switch (state) {
+					case Characteristic.VolumeSelector.INCREMENT:
+						command = '115';
+						break;
+					case Characteristic.VolumeSelector.DECREMENT:
+						command = '114';
+						break;
+				}
 				const response = await axios.get(me.url + '/api/remotecontrol?command=' + command);
 				me.log.info('Device: %s %s, setVolumeSelector successful, command: %s', me.host, me.name, command);
 			} catch (error) {
@@ -573,48 +573,48 @@ class openwebIfTvDevice {
 		var me = this;
 		let command = null;
 		if (me.currentPowerState) {
-			switch (remoteKey) {
-				case Characteristic.RemoteKey.REWIND:
-					command = '168';
-					break;
-				case Characteristic.RemoteKey.FAST_FORWARD:
-					command = '159';
-					break;
-				case Characteristic.RemoteKey.NEXT_TRACK:
-					command = '407';
-					break;
-				case Characteristic.RemoteKey.PREVIOUS_TRACK:
-					command = '412';
-					break;
-				case Characteristic.RemoteKey.ARROW_UP:
-					command = '103';
-					break;
-				case Characteristic.RemoteKey.ARROW_DOWN:
-					command = '108';
-					break;
-				case Characteristic.RemoteKey.ARROW_LEFT:
-					command = '105';
-					break;
-				case Characteristic.RemoteKey.ARROW_RIGHT:
-					command = '106';
-					break;
-				case Characteristic.RemoteKey.SELECT:
-					command = '352';
-					break;
-				case Characteristic.RemoteKey.BACK:
-					command = '174';
-					break;
-				case Characteristic.RemoteKey.EXIT:
-					command = '174';
-					break;
-				case Characteristic.RemoteKey.PLAY_PAUSE:
-					command = '164';
-					break;
-				case Characteristic.RemoteKey.INFORMATION:
-					command = me.switchInfoMenu ? '358' : '139';
-					break;
-			}
 			try {
+				switch (remoteKey) {
+					case Characteristic.RemoteKey.REWIND:
+						command = '168';
+						break;
+					case Characteristic.RemoteKey.FAST_FORWARD:
+						command = '159';
+						break;
+					case Characteristic.RemoteKey.NEXT_TRACK:
+						command = '407';
+						break;
+					case Characteristic.RemoteKey.PREVIOUS_TRACK:
+						command = '412';
+						break;
+					case Characteristic.RemoteKey.ARROW_UP:
+						command = '103';
+						break;
+					case Characteristic.RemoteKey.ARROW_DOWN:
+						command = '108';
+						break;
+					case Characteristic.RemoteKey.ARROW_LEFT:
+						command = '105';
+						break;
+					case Characteristic.RemoteKey.ARROW_RIGHT:
+						command = '106';
+						break;
+					case Characteristic.RemoteKey.SELECT:
+						command = '352';
+						break;
+					case Characteristic.RemoteKey.BACK:
+						command = '174';
+						break;
+					case Characteristic.RemoteKey.EXIT:
+						command = '174';
+						break;
+					case Characteristic.RemoteKey.PLAY_PAUSE:
+						command = '164';
+						break;
+					case Characteristic.RemoteKey.INFORMATION:
+						command = me.switchInfoMenu ? '358' : '139';
+						break;
+				}
 				const response = await axios.get(me.url + '/api/remotecontrol?command=' + command);
 				me.log.info('Device: %s %s, setRemoteKey successful, command: %s', me.host, me.name, command);
 			} catch (error) {
