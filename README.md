@@ -14,6 +14,22 @@ Homebridge plugin to control Sat Receivers basis on the OpenWebIf API. Tested wi
 
 </span>
 
+## Package
+1. [Homebridge](https://github.com/homebridge/homebridge)
+2. [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x)
+
+## Installation
+1. Follow the step-by-step instructions on the [Homebridge Wiki](https://github.com/homebridge/homebridge/wiki) for how to install Homebridge.
+2. Follow the step-by-step instructions on the [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) for how to install Homebridge Config UI X.
+3. Install homebridge-openwebif-tv using: `npm install -g homebridge-openwebif-tv` or search for `OpenWebIf TV` in Config UI X.
+
+## HomeKit pairing
+1. Each accessories needs to be manually paired. 
+2. Open the Home <img src='https://user-images.githubusercontent.com/3979615/78010622-4ea1d380-738e-11ea-8a17-e6a465eeec35.png' height='16.42px'> app on your device. 
+3. Tap the Home tab, then tap <img src='https://user-images.githubusercontent.com/3979615/78010869-9aed1380-738e-11ea-9644-9f46b3633026.png' height='16.42px'>. 
+4. Tap *Add Accessory*, and select *I Don't Have a Code or Cannot Scan*. 
+5. Enter the Homebridge PIN, this can be found under the QR code in Homebridge UI or your Homebridge logs, alternatively you can select *Use Camera* and scan the QR code again.
+
 ## Info
 1. Power ON/OFF short press tile in HomeKit app.
 2. RC/Media control is possible after you go to the RC app on iPhone/iPad.
@@ -28,18 +44,6 @@ Homebridge plugin to control Sat Receivers basis on the OpenWebIf API. Tested wi
   <p align="left">
   <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/master/graphics/inputs.png" height="300"></a>  <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/master/graphics/RC.png" height="300"></a>  <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/master/graphics/rc1.png" height="300"></a>
 </p>
-
-## Limitations
-Due to HomeKit app limitation max. services for 1 accessory is 100. Over this value HomeKit app will no response. As services in this accessory are, (1.information service, 2.speaker service, 3.lightbulb service, 4.television service and inputs service 5-100(where every input = 1 service)). If all services are enabled possible inputs to use is 96.
-
-## Package
-1. [Homebridge](https://github.com/homebridge/homebridge)
-2. [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x)
-
-## Installation
-1. Follow the step-by-step instructions on the [Homebridge Wiki](https://github.com/homebridge/homebridge/wiki) for how to install Homebridge.
-2. Follow the step-by-step instructions on the [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) for how to install Homebridge Config UI X.
-3. Install homebridge-openwebif-tv using: `npm install -g homebridge-openwebif-tv` or search for `OpenWebIf TV` in Config UI X.
 
 ## Configuration
 1. Use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) to configure the plugin (strongly recomended), or update your configuration file manually. See `sample-config.json` in this repository for a sample or add the bottom example to Your config.json file.
@@ -199,6 +203,8 @@ Sort of channel in HomeKit app is alpahabetically but U can sort the channels as
                     "reference": "1:0:1:3DD0:640:13E:820000:0:0:0:"
                 }
 ```
+## Limitations
+Due to HomeKit app limitation max. services for 1 accessory is 100. Over this value HomeKit app will no response. As services in this accessory are, (1.information service, 2.speaker service, 3.lightbulb service, 4.television service and inputs service 5-100(where every input = 1 service)). If all services are enabled possible inputs to use is 96.
 
 ## Whats new:
 https://github.com/grzegorz914/homebridge-openwebif-tv/blob/master/CHANGELOG.md
