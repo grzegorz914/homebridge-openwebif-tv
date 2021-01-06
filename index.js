@@ -402,7 +402,7 @@ class openwebIfTvDevice {
 	async getPower(callback) {
 		var me = this;
 		try {
-			const response = await axios.get(this.url + '/api/statusinfo');
+			const response = await axios.get(me.url + '/api/statusinfo');
 			let state = (response.data.inStandby === 'false');
 			me.log.info('Device: %s %s, get current Power state successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
 			callback(null, state);
@@ -484,7 +484,7 @@ class openwebIfTvDevice {
 	async getInput(callback) {
 		var me = this;
 		try {
-			const response = await axios.get(this.url + '/api/statusinfo');
+			const response = await axios.get(me.url + '/api/statusinfo');
 			let inputName = response.data.currservice_station;
 			let inputReference = response.data.currservice_serviceref;
 			let inputIdentifier = 0;
