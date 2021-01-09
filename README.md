@@ -23,6 +23,9 @@ Homebridge plugin to control Sat Receivers basis on the OpenWebIf API. Tested wi
 2. Follow the step-by-step instructions on the [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) for how to install Homebridge Config UI X.
 3. Install homebridge-openwebif-tv using: `npm install -g homebridge-openwebif-tv` or search for `OpenWebIf TV` in Config UI X.
 
+## Know issues
+1. If use with Hoobs possible config incompatibilty.
+
 ## HomeKit pairing
 1. Each accessories needs to be manually paired. 
 2. Open the Home <img src='https://user-images.githubusercontent.com/3979615/78010622-4ea1d380-738e-11ea-8a17-e6a465eeec35.png' height='16.42px'> app on your device. 
@@ -204,7 +207,7 @@ Sort of channel in HomeKit app is alpahabetically but U can sort the channels as
                 }
 ```
 ## Limitations
-Due to HomeKit app limitation max. services for 1 accessory is 100. Over this value HomeKit app will no response. As services in this accessory are, (1.information service, 2.speaker service, 3.lightbulb service, 4.television service and inputs service 5-100(where every input = 1 service)). If all services are enabled possible inputs to use is 96.
+1. Due to HomeKit app limitation max. services for 1 accessory is 100. Over this value HomeKit app will no response. As services in this accessory are, (1.information service, 2.speaker service, 3.lightbulb service, 4.television service and inputs service 5-100(where every input = 1 service)). If all services are enabled possible inputs to use is 96.
 
 ## Whats new:
 https://github.com/grzegorz914/homebridge-openwebif-tv/blob/master/CHANGELOG.md
