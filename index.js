@@ -413,7 +413,7 @@ class openwebIfTvDevice {
 
 	async setPower(state, callback) {
 		var me = this;
-		if ((state && !me.currentPowerState) || (!state && me.currentPowerState)) {
+		if (state != me.currentPowerState) {
 			try {
 				let newState = state ? '4' : '5';
 				const response = await axios.get(me.url + '/api/powerstate?newstate=' + newState);
@@ -440,8 +440,7 @@ class openwebIfTvDevice {
 
 	async setMute(state, callback) {
 		var me = this;
-		let muteState = me.currentMuteState;
-		if (me.currentPowerState && state !== muteState) {
+		if (me.currentPowerState && state !== me.currentMuteState) {
 			try {
 				const response = await axios.get(me.url + '/api/vol?set=mute');
 				me.log.info('Device: %s %s, set Mute successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
