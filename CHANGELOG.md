@@ -4,31 +4,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [3.5.6] - (19.01.2021)
-## Changs
+## Changes
 - some improvements and fixes
 
 ## [3.5.5] - (01.01.2021)
-## Changs
+## Changes
 - bump dependiencies
 
 ## [3.5.2] - (20.11.2020)
-## Changs
+## Changes
 - fixed slow response on RC control
 
 ## [3.5.0] - (17.11.2020)
-## Changs
+## Changes
 - added possibility to set custom data refresh inteval
 
 ## [3.4.0] - (09.09.2020)
-## Changs
+## Changes
 - added await/async function 
 
 ## [3.3.0] - (08.09.2020)
-## Changs
+## Changes
 - added async/await function to read deviceInfo and updateStatus
 
 ## [3.1.0] - (06.09.2020)
-## Changs
+## Changes
 - completely reconfigured layout of config schema
 
 ## [3.0.4] - (25.08.2020)

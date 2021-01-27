@@ -420,7 +420,6 @@ class openwebIfTvDevice {
 				me.log.info('Device: %s %s, set new Power state successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
 			} catch (error) {
 				me.log.error('Device: %s %s, can not set new Power state. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
-				callback(error);
 			};
 		}
 		callback(null);
@@ -446,7 +445,6 @@ class openwebIfTvDevice {
 				me.log.info('Device: %s %s, set Mute successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
 			} catch (error) {
 				me.log.error('Device: %s %s, can not set Mute. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
-				callback(error);
 			};
 		}
 		callback(null);
@@ -476,7 +474,6 @@ class openwebIfTvDevice {
 			callback(null);
 		} catch (error) {
 			me.log.error('Device: %s %s, can not set new Volume level. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
-			callback(error);
 		};
 	}
 
@@ -508,7 +505,6 @@ class openwebIfTvDevice {
 			callback(null);
 		} catch (error) {
 			me.log.error('Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', me.host, me.name, error);
-			callback(error);
 		};
 	}
 
