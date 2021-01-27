@@ -502,10 +502,10 @@ class openwebIfTvDevice {
 			let inputReference = me.inputReferences[inputIdentifier];
 			const response = await axios.get(me.url + '/api/zap?sRef=' + inputReference);
 			me.log.info('Device: %s %s, set new Channel successful: %s %s', me.host, me.name, inputName, inputReference);
-			callback(null);
 		} catch (error) {
 			me.log.error('Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', me.host, me.name, error);
 		};
+		callback(null);
 	}
 
 	async getInputEventName() {
