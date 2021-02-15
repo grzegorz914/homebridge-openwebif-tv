@@ -56,11 +56,19 @@
               }
             },
             "refreshInterval": {
-              "title": "Refresh interval (sec)",
-              "type": "integer",
-              "default": 5,
-              "maximum": 3600,
-              "required": true
+							"title": "Refresh interval (sec)",
+							"type": "integer",
+							"default": 5,
+							"minimum": 0,
+							"maximum": 3600,
+							"required": true
+						},
+            "disableLogInfo": {
+              "title": "Disable log info",
+              "type": "boolean",
+              "default": false,
+              "required": false,
+              "description": "This disable log info, all values and state will not be displayed in Homebridge log console."
             },
             "volumeControl": {
               "title": "Volume control mode",
@@ -161,7 +169,6 @@
         "devices[].name",
         "devices[].host",
         "devices[].port",
-        "devices[].refreshInterval",
         {
           "key": "devices[]",
           "type": "section",
@@ -172,6 +179,8 @@
             "devices[].auth",
             "devices[].user",
             "devices[].pass",
+            "devices[].disableLogInfo",
+            "devices[].refreshInterval",
             "devices[].switchInfoMenu",
             "devices[].volumeControl"
           ]

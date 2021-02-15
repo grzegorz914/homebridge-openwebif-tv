@@ -26,6 +26,7 @@
           "user": "user",
           "pass": "pass",
           "refreshInterval": 5,
+          "disableLogInfo": false,
           "volumeControl": 0,
           "switchInfoMenu": false,
           "inputs": [
