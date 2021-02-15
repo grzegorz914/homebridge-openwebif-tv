@@ -137,50 +137,52 @@ class openwebIfTvDevice {
 
 	async getDeviceInfo() {
 		var me = this;
-		me.log.debug('Device: %s %s, requesting config information.', me.host, me.name);
-		try {
-			const [response, response1] = await axios.all([axios.get(me.url + '/api/getallservices'), axios.get(me.url + '/api/deviceinfo')]);
-			if (!me.disableLogInfo) {
-				me.log('Device: %s %s, state: Online.', me.host, me.name);
-			}
-			let channels = JSON.stringify(response.data.services, null, 2);
+		if (!this.checkDeviceInfo) {
+			me.log.debug('Device: %s %s, requesting config information.', me.host, me.name);
 			try {
-				await fsPromises.writeFile(me.inputsFile, channels);
-				me.log.debug('Device: %s %s, saved Channels successful in: %s %s', me.host, me.name, me.prefDir, channels);
+				const [response, response1] = await axios.all([axios.get(me.url + '/api/getallservices'), axios.get(me.url + '/api/deviceinfo')]);
+				if (!me.disableLogInfo) {
+					me.log('Device: %s %s, state: Online.', me.host, me.name);
+				}
+				let channels = JSON.stringify(response.data.services, null, 2);
+				try {
+					await fsPromises.writeFile(me.inputsFile, channels);
+					me.log.debug('Device: %s %s, saved Channels successful in: %s %s', me.host, me.name, me.prefDir, channels);
+				} catch (error) {
+					me.log.error('Device: %s %s, could not write Channels to the file, error: %s', me.host, me.name, error);
+				};
+
+				let manufacturer = response1.data.brand;
+				if (typeof response1.data.mname !== 'undefined') {
+					var modelName = response1.data.mname;
+				} else {
+					modelName = response1.data.model;
+				};
+				let serialNumber = response1.data.webifver;
+				let firmwareRevision = response1.data.imagever;
+				let kernelVer = response1.data.kernelver;
+				let chipset = response1.data.chipset;
+				me.log('-------- %s --------', me.name);
+				me.log('Manufacturer: %s', manufacturer);
+				me.log('Model: %s', modelName);
+				me.log('Kernel: %s', kernelVer);
+				me.log('Chipset: %s', chipset);
+				me.log('Webif version: %s', serialNumber);
+				me.log('Firmware: %s', firmwareRevision);
+				me.log('----------------------------------');
+
+				me.manufacturer = manufacturer;
+				me.modelName = modelName;
+				me.serialNumber = serialNumber;
+				me.firmwareRevision = firmwareRevision;
+
+				me.checkDeviceInfo = true;
+				me.updateDeviceState();
 			} catch (error) {
-				me.log.error('Device: %s %s, could not write Channels to the file, error: %s', me.host, me.name, error);
+				me.log.error('Device: %s %s, getDeviceInfo eror: %s, state: Offline', me.host, me.name, error);
+				me.checkDeviceInfo = false;
 			};
-
-			let manufacturer = response1.data.brand;
-			if (typeof response1.data.mname !== 'undefined') {
-				var modelName = response1.data.mname;
-			} else {
-				modelName = response1.data.model;
-			};
-			let serialNumber = response1.data.webifver;
-			let firmwareRevision = response1.data.imagever;
-			let kernelVer = response1.data.kernelver;
-			let chipset = response1.data.chipset;
-			me.log('-------- %s --------', me.name);
-			me.log('Manufacturer: %s', manufacturer);
-			me.log('Model: %s', modelName);
-			me.log('Kernel: %s', kernelVer);
-			me.log('Chipset: %s', chipset);
-			me.log('Webif version: %s', serialNumber);
-			me.log('Firmware: %s', firmwareRevision);
-			me.log('----------------------------------');
-
-			me.manufacturer = manufacturer;
-			me.modelName = modelName;
-			me.serialNumber = serialNumber;
-			me.firmwareRevision = firmwareRevision;
-
-			me.checkDeviceInfo = true;
-			me.updateDeviceState();
-		} catch (error) {
-			me.log.error('Device: %s %s, getDeviceInfo eror: %s, state: Offline', me.host, me.name, error);
-			me.checkDeviceInfo = false;
-		};
+		}
 	}
 
 	async updateDeviceState() {
@@ -233,7 +235,7 @@ class openwebIfTvDevice {
 			if (me.startPrepareAccessory) {
 				me.prepareAccessory();
 			}
-			me.checkDeviceState = true;
+			me.checkDeviceState = false;
 		} catch (error) {
 			me.log.error('Device: %s %s, update Device state error: %s, state: Offline', me.host, me.name, error);
 			me.checkDeviceState = false;
