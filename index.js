@@ -127,12 +127,14 @@ class openwebIfTvDevice {
 
 		//Check device state
 		setInterval(function () {
-			if (!this.checkDeviceInfo) {
+			if (this.checkDeviceInfo) {
 				this.getDeviceInfo();
-			} else if (this.checkDeviceInfo && this.checkDeviceState) {
+			} else if (!this.checkDeviceInfo && this.checkDeviceState) {
 				this.updateDeviceState();
 			}
 		}.bind(this), this.refreshInterval * 1000);
+
+		this.getDeviceInfo()
 	}
 
 	async getDeviceInfo() {
@@ -176,10 +178,10 @@ class openwebIfTvDevice {
 				me.serialNumber = serialNumber;
 				me.firmwareRevision = firmwareRevision;
 
-				me.checkDeviceInfo = true;
+				me.checkDeviceInfo = false;
 				me.updateDeviceState();
 			} catch (error) {
-				me.log.error('Device: %s %s, getDeviceInfo eror: %s, state: Offline', me.host, me.name, error);
+				me.log.error('Device: %s %s, Device Info eror: %s, state: Offline, trying to reconnect', me.host, me.name, error);
 				me.checkDeviceInfo = false;
 			};
 		}
@@ -230,16 +232,16 @@ class openwebIfTvDevice {
 			me.log.debug('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
 			me.currentMuteState = mute;
 			me.currentVolume = volume;
+			me.checkDeviceState = true;
 
 			//start prepare accessory
 			if (me.startPrepareAccessory) {
 				me.prepareAccessory();
 			}
-			me.checkDeviceState = false;
 		} catch (error) {
 			me.log.error('Device: %s %s, update Device state error: %s, state: Offline', me.host, me.name, error);
 			me.checkDeviceState = false;
-			me.checkDeviceInfo = false;
+			me.checkDeviceInfo = true;
 		};
 	}
 
@@ -253,8 +255,6 @@ class openwebIfTvDevice {
 
 		//Prepare information service
 		this.log.debug('prepareInformationService');
-		this.getDeviceInfo();
-
 		const manufacturer = this.manufacturer;
 		const modelName = this.modelName;
 		const serialNumber = this.serialNumber;
@@ -348,7 +348,6 @@ class openwebIfTvDevice {
 
 		//Prepare inputs services
 		this.log.debug('prepareInputsService');
-
 		let savedNames = {};
 		try {
 			savedNames = JSON.parse(fs.readFileSync(this.customInputsFile));
