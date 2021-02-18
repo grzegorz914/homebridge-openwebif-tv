@@ -56,13 +56,13 @@
               }
             },
             "refreshInterval": {
-							"title": "Refresh interval (sec)",
-							"type": "integer",
-							"default": 5,
-							"minimum": 0,
-							"maximum": 300,
-							"required": true
-						},
+              "title": "Refresh interval (sec)",
+              "type": "integer",
+              "default": 5,
+              "minimum": 0,
+              "maximum": 300,
+              "required": true
+            },
             "disableLogInfo": {
               "title": "Disable log info",
               "type": "boolean",
@@ -172,13 +172,22 @@
         {
           "key": "devices[]",
           "type": "section",
-          "title": "Advanced Settings",
+          "title": "Authorization",
           "expandable": true,
           "expanded": false,
           "items": [
             "devices[].auth",
             "devices[].user",
-            "devices[].pass",
+            "devices[].pass"
+          ]
+        },
+        {
+          "key": "devices[]",
+          "type": "section",
+          "title": "Advanced Settings",
+          "expandable": true,
+          "expanded": false,
+          "items": [
             "devices[].disableLogInfo",
             "devices[].refreshInterval",
             "devices[].switchInfoMenu",

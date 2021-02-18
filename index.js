@@ -199,39 +199,40 @@ class openwebIfTvDevice {
 			me.log.debug('Device: %s %s, get current Power state successful: %s', me.host, me.name, powerState ? 'ON' : 'OFF');
 			me.currentPowerState = powerState;
 
-			let inputName = response.data.currservice_station;
-			let inputEventName = response.data.currservice_name;
-			let inputReference = response.data.currservice_serviceref;
-			let inputIdentifier = 0;
-			if (me.inputReferences.indexOf(inputReference) >= 0) {
-				inputIdentifier = me.inputReferences.indexOf(inputReference);
-			}
-			if (me.televisionService && (inputReference !== me.currentInputReference)) {
-				me.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
-			}
-			me.log.debug('Device: %s %s, get current Channel successful: %s (%s) %s', me.host, me.name, inputName, inputEventName, inputReference);
-			me.currentInputReference = inputReference;
-			me.currentInputIdentifier = inputIdentifier;
+			if (powerState) {
+				let inputName = response.data.currservice_station;
+				let inputEventName = response.data.currservice_name;
+				let inputReference = response.data.currservice_serviceref;
+				let inputIdentifier = 0;
+				if (me.inputReferences.indexOf(inputReference) >= 0) {
+					inputIdentifier = me.inputReferences.indexOf(inputReference);
+				}
+				if (me.televisionService && (inputReference !== me.currentInputReference)) {
+					me.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
+				}
+				me.log.debug('Device: %s %s, get current Channel successful: %s (%s) %s', me.host, me.name, inputName, inputEventName, inputReference);
+				me.currentInputReference = inputReference;
+				me.currentInputIdentifier = inputIdentifier;
 
-			let mute = powerState ? (response.data.muted == true) : true;
-			let volume = response.data.volume;
-			if (me.speakerService) {
-				me.speakerService.updateCharacteristic(Characteristic.Mute, mute);
-				me.speakerService.updateCharacteristic(Characteristic.Volume, volume);
-				if (me.volumeService && me.volumeControl >= 1) {
-					me.volumeService.updateCharacteristic(Characteristic.On, !mute);
+				let mute = powerState ? (response.data.muted == true) : true;
+				let volume = response.data.volume;
+				if (me.speakerService) {
+					me.speakerService.updateCharacteristic(Characteristic.Mute, mute);
+					me.speakerService.updateCharacteristic(Characteristic.Volume, volume);
+					if (me.volumeService && me.volumeControl == 1) {
+						me.volumeService.updateCharacteristic(Characteristic.Brightness, volume);
+						me.volumeService.updateCharacteristic(Characteristic.On, !mute);
+					}
+					if (me.volumeServiceFan && me.volumeControl == 2) {
+						me.volumeServiceFan.updateCharacteristic(Characteristic.RotationSpeed, volume);
+						me.volumeServiceFan.updateCharacteristic(Characteristic.On, !mute);
+					}
 				}
-				if (me.volumeService && me.volumeControl == 1) {
-					me.volumeService.updateCharacteristic(Characteristic.Brightness, volume);
-				}
-				if (me.volumeService && me.volumeControl == 2) {
-					me.volumeService.updateCharacteristic(Characteristic.RotationSpeed, volume);
-				}
+				me.log.debug('Device: %s %s, get current Mute state: %s', me.host, me.name, mute ? 'ON' : 'OFF');
+				me.log.debug('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
+				me.currentMuteState = mute;
+				me.currentVolume = volume;
 			}
-			me.log.debug('Device: %s %s, get current Mute state: %s', me.host, me.name, mute ? 'ON' : 'OFF');
-			me.log.debug('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
-			me.currentMuteState = mute;
-			me.currentVolume = volume;
 			me.checkDeviceState = true;
 
 			//start prepare accessory
@@ -278,18 +279,141 @@ class openwebIfTvDevice {
 		this.televisionService.setCharacteristic(Characteristic.SleepDiscoveryMode, Characteristic.SleepDiscoveryMode.ALWAYS_DISCOVERABLE);
 
 		this.televisionService.getCharacteristic(Characteristic.Active)
-			.on('get', this.getPower.bind(this))
-			.on('set', this.setPower.bind(this));
+			.onGet(async () => {
+				try {
+					const response = await axios.get(this.url + '/api/statusinfo');
+					let state = (response.data.inStandby === 'false');
+					if (!this.disableLogInfo) {
+						this.log('Device: %s %s, get current Power state successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
+					}
+					return state;
+				} catch (error) {
+					this.log.error('Device: %s %s, get current Power state error: %s', this.host, accessoryName, error);
+					return 0;
+				};
+			})
+			.onSet(async (state) => {
+				if (state != this.currentPowerState) {
+					try {
+						let newState = state ? '4' : '5';
+						const response = await axios.get(this.url + '/api/powerstate?newstate=' + newState);
+						if (!this.disableLogInfo) {
+							this.log('Device: %s %s, set new Power state successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
+						}
+					} catch (error) {
+						this.log.error('Device: %s %s, can not set new Power state. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
+					};
+				}
+			});
 
 		this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
-			.on('get', this.getInput.bind(this))
-			.on('set', this.setInput.bind(this));
+			.onGet(async () => {
+				try {
+					const response = await axios.get(this.url + '/api/statusinfo');
+					let inputName = response.data.currservice_station;
+					let inputReference = response.data.currservice_serviceref;
+					let inputIdentifier = 0;
+					if (this.inputReferences.indexOf(inputReference) !== -1) {
+						inputIdentifier = this.inputReferences.indexOf(inputReference);
+					}
+					if (!this.disableLogInfo) {
+						this.log('Device: %s %s, get current Channel successful: %s %s', this.host, accessoryName, inputName, inputReference);
+					}
+					let inputEventName = response.data.currservice_name;
+					if (!this.disableLogInfo) {
+						this.log('Device: %s %s, get current Event successful: %s', this.host, accessoryName, inputEventName);
+					}
+					return inputIdentifier;
+				} catch (error) {
+					this.log.error('Device: %s %s, get current Channel error: %s', this.host, accessoryName, error);
+					return 0;
+				};
+			})
+			.onSet(async (inputIdentifier) => {
+				try {
+					let inputName = this.inputNames[inputIdentifier];
+					let inputReference = this.inputReferences[inputIdentifier];
+					const response = await axios.get(this.url + '/api/zap?sRef=' + inputReference);
+					if (!this.disableLogInfo) {
+						this.log('Device: %s %s, set new Channel successful: %s %s', this.host, accessoryName, inputName, inputReference);
+					}
+				} catch (error) {
+					this.log.error('Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', this.host, accessoryName, error);
+				};
+			});
 
 		this.televisionService.getCharacteristic(Characteristic.RemoteKey)
-			.on('set', this.setRemoteKey.bind(this));
-
+			.onSet(async (command) => {
+				try {
+					switch (command) {
+						case Characteristic.RemoteKey.REWIND:
+							command = '168';
+							break;
+						case Characteristic.RemoteKey.FAST_FORWARD:
+							command = '159';
+							break;
+						case Characteristic.RemoteKey.NEXT_TRACK:
+							command = '407';
+							break;
+						case Characteristic.RemoteKey.PREVIOUS_TRACK:
+							command = '412';
+							break;
+						case Characteristic.RemoteKey.ARROW_UP:
+							command = '103';
+							break;
+						case Characteristic.RemoteKey.ARROW_DOWN:
+							command = '108';
+							break;
+						case Characteristic.RemoteKey.ARROW_LEFT:
+							command = '105';
+							break;
+						case Characteristic.RemoteKey.ARROW_RIGHT:
+							command = '106';
+							break;
+						case Characteristic.RemoteKey.SELECT:
+							command = '352';
+							break;
+						case Characteristic.RemoteKey.BACK:
+							command = '174';
+							break;
+						case Characteristic.RemoteKey.EXIT:
+							command = '174';
+							break;
+						case Characteristic.RemoteKey.PLAY_PAUSE:
+							command = '164';
+							break;
+						case Characteristic.RemoteKey.INFORMATION:
+							command = this.switchInfoMenu ? '358' : '139';
+							break;
+					}
+					const response = await axios.get(this.url + '/api/remotecontrol?command=' + command);
+					if (!this.disableLogInfo) {
+						this.log('Device: %s %s, setRemoteKey successful, command: %s', this.host, accessoryName, command);
+					}
+				} catch (error) {
+					this.log.error('Device: %s %s, can not setRemoteKey command. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
+				};
+			});
 		this.televisionService.getCharacteristic(Characteristic.PowerModeSelection)
-			.on('set', this.setPowerModeSelection.bind(this));
+			.onSet(async (command) => {
+				try {
+					switch (command) {
+						case Characteristic.PowerModeSelection.SHOW:
+							command = this.currentInfoMenuState ? '174' : (this.switchInfoMenu ? '139' : '358');
+							this.currentInfoMenuState = !this.currentInfoMenuState;
+							break;
+						case Characteristic.PowerModeSelection.HIDE:
+							command = '174';
+							break;
+					}
+					const response = await axios.get(this.url + '/api/remotecontrol?command=' + command);
+					if (!this.disableLogInfo) {
+						this.log('Device: %s %s, setPowerModeSelection successful, command: %s', this.host, accessoryName, command);
+					}
+				} catch (error) {
+					this.log.error('Device: %s %s, can not setPowerModeSelection command. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
+				};
+			});
 
 		accessory.addService(this.televisionService);
 
@@ -300,13 +424,78 @@ class openwebIfTvDevice {
 			.setCharacteristic(Characteristic.Active, Characteristic.Active.ACTIVE)
 			.setCharacteristic(Characteristic.VolumeControlType, Characteristic.VolumeControlType.ABSOLUTE);
 		this.speakerService.getCharacteristic(Characteristic.VolumeSelector)
-			.on('set', this.setVolumeSelector.bind(this));
+			.onSet(async (command) => {
+				try {
+					switch (command) {
+						case Characteristic.VolumeSelector.INCREMENT:
+							command = '115';
+							break;
+						case Characteristic.VolumeSelector.DECREMENT:
+							command = '114';
+							break;
+					}
+					const response = await axios.get(this.url + '/api/remotecontrol?command=' + command);
+					if (!this.disableLogInfo) {
+						this.log('Device: %s %s, setVolumeSelector successful, command: %s', this.host, accessoryName, command);
+					}
+				} catch (error) {
+					this.log.error('Device: %s %s, can not setVolumeSelector command. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
+				};
+			});
 		this.speakerService.getCharacteristic(Characteristic.Volume)
-			.on('get', this.getVolume.bind(this))
-			.on('set', this.setVolume.bind(this));
+			.onGet(async () => {
+				try {
+					const response = await axios.get(this.url + '/api/statusinfo');
+					let volume = response.data.volume;
+					if (!this.disableLogInfo) {
+						this.log('Device: %s %s, get current Volume level successful: %s', this.host, accessoryName, volume);
+					}
+					return volume;
+				} catch (error) {
+					this.log.error('Device: %s %s, get current Volume error: %s', this.host, accessoryName, error);
+					return 0;
+				};
+			})
+			.onSet(async (volume) => {
+				try {
+					let currentVolume = this.currentVolume;
+					if (volume == 0 || volume == 100) {
+						volume = currentVolume;
+					}
+					const response = await axios.get(this.url + '/api/vol?set=set' + volume);
+					if (!this.disableLogInfo) {
+						this.log('Device: %s %s, set new Volume level successful: %s', this.host, accessoryName, volume);
+					}
+				} catch (error) {
+					this.log.error('Device: %s %s, can not set new Volume level. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
+				};
+			});
 		this.speakerService.getCharacteristic(Characteristic.Mute)
-			.on('get', this.getMute.bind(this))
-			.on('set', this.setMute.bind(this));
+			.onGet(async () => {
+				try {
+					const response = await axios.get(this.url + '/api/statusinfo');
+					let state = this.currentPowerState ? (response.data.muted == true) : true;
+					if (!this.disableLogInfo) {
+						this.log('Device: %s %s, get current Mute state successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
+					}
+					return state;
+				} catch (error) {
+					this.log.error('Device: %s %s, get current Mute state error: %s', this.host, accessoryName, error);
+					return true;
+				};
+			})
+			.onSet(async (state) => {
+				if (state !== this.currentMuteState) {
+					try {
+						const response = await axios.get(this.url + '/api/vol?set=mute');
+						if (!this.disableLogInfo) {
+							this.log('Device: %s %s, set Mute successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
+						}
+					} catch (error) {
+						this.log.error('Device: %s %s, can not set Mute. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
+					};
+				}
+			});
 
 		accessory.addService(this.speakerService);
 		this.televisionService.addLinkedService(this.speakerService);
@@ -317,33 +506,49 @@ class openwebIfTvDevice {
 			if (this.volumeControl == 1) {
 				this.volumeService = new Service.Lightbulb(accessoryName + ' Volume', 'volumeService');
 				this.volumeService.getCharacteristic(Characteristic.Brightness)
-					.on('get', this.getVolume.bind(this))
+					.on('get', (callback) => {
+						let volume = this.currentVolume;
+						callback(null, volume);
+					})
 					.on('set', (volume, callback) => {
 						this.speakerService.setCharacteristic(Characteristic.Volume, volume);
 						callback(null);
 					});
+				this.volumeService.getCharacteristic(Characteristic.On)
+					.on('get', (callback) => {
+						let state = this.currentPowerState ? this.currentMuteState : true;
+						callback(null, !state);
+					})
+					.on('set', (state, callback) => {
+						this.speakerService.setCharacteristic(Characteristic.Mute, !state);
+						callback(null);
+					});
+				accessory.addService(this.volumeService);
+				this.volumeService.addLinkedService(this.volumeService);
 			}
 			if (this.volumeControl == 2) {
-				this.volumeService = new Service.Fan(accessoryName + ' Volume', 'volumeService');
-				this.volumeService.getCharacteristic(Characteristic.RotationSpeed)
-					.on('get', this.getVolume.bind(this))
+				this.volumeServiceFan = new Service.Fan(accessoryName + ' Volume', 'volumeServiceFan');
+				this.volumeServiceFan.getCharacteristic(Characteristic.RotationSpeed)
+					.on('get', (callback) => {
+						let volume = this.currentVolume;
+						callback(null, volume);
+					})
 					.on('set', (volume, callback) => {
 						this.speakerService.setCharacteristic(Characteristic.Volume, volume);
 						callback(null);
 					});
+				this.volumeServiceFan.getCharacteristic(Characteristic.On)
+					.on('get', (callback) => {
+						let state = this.currentPowerState ? this.currentMuteState : true;
+						callback(null, !state);
+					})
+					.on('set', (state, callback) => {
+						this.speakerService.setCharacteristic(Characteristic.Mute, !state);
+						callback(null);
+					});
+				accessory.addService(this.volumeServiceFan);
+				this.televisionService.addLinkedService(this.volumeServiceFan);
 			}
-			this.volumeService.getCharacteristic(Characteristic.On)
-				.on('get', (callback) => {
-					let state = !this.currentMuteState;
-					callback(null, state);
-				})
-				.on('set', (state, callback) => {
-					this.speakerService.setCharacteristic(Characteristic.Mute, !state);
-					callback(null);
-				});
-
-			accessory.addService(this.volumeService);
-			this.televisionService.addLinkedService(this.volumeService);
 		}
 
 		//Prepare inputs services
@@ -377,19 +582,18 @@ class openwebIfTvDevice {
 
 			this.inputsService
 				.getCharacteristic(Characteristic.ConfiguredName)
-				.on('set', (name, callback) => {
-					savedNames[inputReference] = name;
-					fs.writeFile(this.customInputsFile, JSON.stringify(savedNames, null, 2), (error) => {
-						if (error) {
-							this.log.error('Device: %s %s, can not write new Channel name, error: %s', this.host, accessoryName, error);
-						} else {
-							if (!this.disableLogInfo) {
-								this.log('Device: %s %s, saved new Channel successful, name: %s, reference: %s', this.host, accessoryName, name, inputReference);
-							}
+				.onSet(async (name) => {
+					try {
+						savedNames[inputReference] = name;
+						await fsPromises.writeFile(this.customInputsFile, JSON.stringify(savedNames, null, 2));
+						if (!this.disableLogInfo) {
+							this.log('Device: %s %s, saved new Input successful, name: %s reference: %s', this.host, accessoryName, name, inputReference);
 						}
-					});
-					callback(null)
+					} catch (error) {
+						this.log.error('Device: %s %s, can not write new Input name, error: %s', this.host, accessoryName, error);
+					}
 				});
+
 			this.inputReferences.push(inputReference);
 			this.inputNames.push(inputName);
 
@@ -400,249 +604,5 @@ class openwebIfTvDevice {
 		this.startPrepareAccessory = false;
 		this.log.debug('Device: %s %s, publishExternalAccessories.', this.host, accessoryName);
 		this.api.publishExternalAccessories(PLUGIN_NAME, [accessory]);
-	}
-
-	async getPower(callback) {
-		var me = this;
-		try {
-			const response = await axios.get(me.url + '/api/statusinfo');
-			let state = (response.data.inStandby === 'false');
-			if (!me.disableLogInfo) {
-				this.log('Device: %s %s, get current Power state successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
-			}
-			callback(null, state);
-		} catch (error) {
-			me.log.error('Device: %s %s, get current Power state error: %s', me.host, me.name, error);
-		};
-	}
-
-	async setPower(state, callback) {
-		var me = this;
-		if (state != me.currentPowerState) {
-			try {
-				let newState = state ? '4' : '5';
-				const response = await axios.get(me.url + '/api/powerstate?newstate=' + newState);
-				if (!me.disableLogInfo) {
-					this.log('Device: %s %s, set new Power state successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
-				}
-			} catch (error) {
-				me.log.error('Device: %s %s, can not set new Power state. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
-			};
-		}
-		callback(null);
-	}
-
-	async getMute(callback) {
-		var me = this;
-		try {
-			const response = await axios.get(this.url + '/api/statusinfo');
-			let state = me.currentPowerState ? (response.data.muted == true) : true;
-			if (!me.disableLogInfo) {
-				me.log('Device: %s %s, get current Mute state successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
-			}
-			callback(null, state);
-		} catch (error) {
-			me.log.error('Device: %s %s, get current Mute state error: %s', me.host, me.name, error);
-		};
-	}
-
-	async setMute(state, callback) {
-		var me = this;
-		if (me.currentPowerState && state !== me.currentMuteState) {
-			try {
-				const response = await axios.get(me.url + '/api/vol?set=mute');
-				if (!me.disableLogInfo) {
-					me.log('Device: %s %s, set Mute successful: %s', me.host, me.name, state ? 'ON' : 'OFF');
-				}
-			} catch (error) {
-				me.log.error('Device: %s %s, can not set Mute. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
-			};
-		}
-		callback(null);
-	}
-
-	async getVolume(callback) {
-		var me = this;
-		try {
-			const response = await axios.get(this.url + '/api/statusinfo');
-			let volume = response.data.volume;
-			if (!me.disableLogInfo) {
-				me.log('Device: %s %s, get current Volume level successful: %s', me.host, me.name, volume);
-			}
-			callback(null, volume);
-		} catch (error) {
-			me.log.error('Device: %s %s, get current Volume error: %s', me.host, me.name, error);
-		};
-	}
-
-	async setVolume(volume, callback) {
-		var me = this;
-		let currentVolume = me.currentVolume;
-		if (volume == 0 || volume == 100) {
-			volume = currentVolume;
-		}
-		try {
-			const response = await axios.get(me.url + '/api/vol?set=set' + volume);
-			if (!me.disableLogInfo) {
-				me.log('Device: %s %s, set new Volume level successful: %s', me.host, me.name, volume);
-			}
-			callback(null);
-		} catch (error) {
-			me.log.error('Device: %s %s, can not set new Volume level. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
-		};
-	}
-
-	async getInput(callback) {
-		var me = this;
-		try {
-			const response = await axios.get(me.url + '/api/statusinfo');
-			let inputName = response.data.currservice_station;
-			let inputReference = response.data.currservice_serviceref;
-			let inputIdentifier = 0;
-			if (me.inputReferences.indexOf(inputReference) >= 0) {
-				inputIdentifier = me.inputReferences.indexOf(inputReference);
-			}
-			if (!me.disableLogInfo) {
-				me.log('Device: %s %s, get current Channel successful: %s %s', me.host, me.name, inputName, inputReference);
-			}
-			me.getInputEventName();
-			callback(null, inputIdentifier);
-		} catch (error) {
-			me.log.error('Device: %s %s, get current Channel error: %s', me.host, me.name, error);
-		};
-	}
-
-	async setInput(inputIdentifier, callback) {
-		var me = this;
-		try {
-			let inputName = me.inputNames[inputIdentifier];
-			let inputReference = me.inputReferences[inputIdentifier];
-			const response = await axios.get(me.url + '/api/zap?sRef=' + inputReference);
-			if (!me.disableLogInfo) {
-				me.log('Device: %s %s, set new Channel successful: %s %s', me.host, me.name, inputName, inputReference);
-			}
-		} catch (error) {
-			me.log.error('Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', me.host, me.name, error);
-		};
-		callback(null);
-	}
-
-	async getInputEventName() {
-		var me = this;
-		try {
-			const response = await axios.get(this.url + '/api/statusinfo');
-			let inputEventName = response.data.currservice_name;
-			if (!me.disableLogInfo) {
-				me.log('Device: %s %s, get current Event successful: %s', me.host, me.name, inputEventName);
-			}
-		} catch (error) {
-			me.log.error('Device: %s %s, get current Event error: %s', me.host, me.name, error);
-		};
-	}
-
-	async setPowerModeSelection(state, callback) {
-		var me = this;
-		if (me.currentPowerState) {
-			try {
-				let command;
-				switch (state) {
-					case Characteristic.PowerModeSelection.SHOW:
-						command = me.currentInfoMenuState ? '174' : (me.switchInfoMenu ? '139' : '358');
-						me.currentInfoMenuState = !me.currentInfoMenuState;
-						break;
-					case Characteristic.PowerModeSelection.HIDE:
-						command = '174';
-						break;
-				}
-				const response = await axios.get(me.url + '/api/remotecontrol?command=' + command);
-				if (!me.disableLogInfo) {
-					me.log('Device: %s %s, setPowerModeSelection successful, command: %s', me.host, me.name, command);
-				}
-			} catch (error) {
-				me.log.error('Device: %s %s, can not setPowerModeSelection command. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
-			};
-		}
-		callback(null);
-	}
-
-	async setVolumeSelector(state, callback) {
-		var me = this;
-		if (me.currentPowerState) {
-			try {
-				let command;
-				switch (state) {
-					case Characteristic.VolumeSelector.INCREMENT:
-						command = '115';
-						break;
-					case Characteristic.VolumeSelector.DECREMENT:
-						command = '114';
-						break;
-				}
-				const response = await axios.get(me.url + '/api/remotecontrol?command=' + command);
-				if (!me.disableLogInfo) {
-					me.log('Device: %s %s, setVolumeSelector successful, command: %s', me.host, me.name, command);
-				}
-			} catch (error) {
-				me.log.error('Device: %s %s, can not setVolumeSelector command. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
-			};
-		}
-		callback(null);
-	}
-
-	async setRemoteKey(remoteKey, callback) {
-		var me = this;
-		if (me.currentPowerState) {
-			try {
-				let command;
-				switch (remoteKey) {
-					case Characteristic.RemoteKey.REWIND:
-						command = '168';
-						break;
-					case Characteristic.RemoteKey.FAST_FORWARD:
-						command = '159';
-						break;
-					case Characteristic.RemoteKey.NEXT_TRACK:
-						command = '407';
-						break;
-					case Characteristic.RemoteKey.PREVIOUS_TRACK:
-						command = '412';
-						break;
-					case Characteristic.RemoteKey.ARROW_UP:
-						command = '103';
-						break;
-					case Characteristic.RemoteKey.ARROW_DOWN:
-						command = '108';
-						break;
-					case Characteristic.RemoteKey.ARROW_LEFT:
-						command = '105';
-						break;
-					case Characteristic.RemoteKey.ARROW_RIGHT:
-						command = '106';
-						break;
-					case Characteristic.RemoteKey.SELECT:
-						command = '352';
-						break;
-					case Characteristic.RemoteKey.BACK:
-						command = '174';
-						break;
-					case Characteristic.RemoteKey.EXIT:
-						command = '174';
-						break;
-					case Characteristic.RemoteKey.PLAY_PAUSE:
-						command = '164';
-						break;
-					case Characteristic.RemoteKey.INFORMATION:
-						command = me.switchInfoMenu ? '358' : '139';
-						break;
-				}
-				const response = await axios.get(me.url + '/api/remotecontrol?command=' + command);
-				if (!me.disableLogInfo) {
-					me.log('Device: %s %s, setRemoteKey successful, command: %s', me.host, me.name, command);
-				}
-			} catch (error) {
-				me.log.error('Device: %s %s, can not setRemoteKey command. Might be due to a wrong settings in config, error: %s', me.host, me.name, error);
-			};
-		}
-		callback(null);
 	}
 };
