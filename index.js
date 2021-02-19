@@ -33,7 +33,7 @@ class openwebIfTvPlatform {
 
 		this.api.on('didFinishLaunching', () => {
 			this.log.debug('didFinishLaunching');
-			for (let i = 0, len = this.devices.length; i < len; i++) {
+			for (let i = 0; i < this.devices.length; i++) {
 				let deviceName = this.devices[i];
 				if (!deviceName.name) {
 					this.log.warn('Device Name Missing')
@@ -80,7 +80,7 @@ class openwebIfTvDevice {
 		this.firmwareRevision = config.firmwareRevision || 'Firmware Revision';
 
 		//setup variables
-		this.checkDeviceInfo = false;
+		this.checkDeviceInfo = true;
 		this.checkDeviceState = false;
 		this.startPrepareAccessory = true;
 		this.currentPowerState = false;
@@ -133,58 +133,50 @@ class openwebIfTvDevice {
 				this.updateDeviceState();
 			}
 		}.bind(this), this.refreshInterval * 1000);
-
-		this.getDeviceInfo()
 	}
 
 	async getDeviceInfo() {
 		var me = this;
-		if (!this.checkDeviceInfo) {
-			me.log.debug('Device: %s %s, requesting config information.', me.host, me.name);
-			try {
-				const [response, response1] = await axios.all([axios.get(me.url + '/api/getallservices'), axios.get(me.url + '/api/deviceinfo')]);
-				if (!me.disableLogInfo) {
-					me.log('Device: %s %s, state: Online.', me.host, me.name);
-				}
-				let channels = JSON.stringify(response.data.services, null, 2);
-				try {
-					await fsPromises.writeFile(me.inputsFile, channels);
-					me.log.debug('Device: %s %s, saved Channels successful in: %s %s', me.host, me.name, me.prefDir, channels);
-				} catch (error) {
-					me.log.error('Device: %s %s, could not write Channels to the file, error: %s', me.host, me.name, error);
-				};
+		me.log.debug('Device: %s %s, requesting config information.', me.host, me.name);
+		try {
+			const [response, response1] = await axios.all([axios.get(me.url + '/api/getallservices'), axios.get(me.url + '/api/deviceinfo')]);
+			if (!me.disableLogInfo) {
+				me.log('Device: %s %s, state: Online.', me.host, me.name);
+			}
+			let channels = JSON.stringify(response.data.services, null, 2);
+			const writeFile = await fsPromises.writeFile(me.inputsFile, channels);
+			me.log.debug('Device: %s %s, saved Channels successful in: %s %s', me.host, me.name, me.prefDir, channels);
 
-				let manufacturer = response1.data.brand;
-				if (typeof response1.data.mname !== 'undefined') {
-					var modelName = response1.data.mname;
-				} else {
-					modelName = response1.data.model;
-				};
-				let serialNumber = response1.data.webifver;
-				let firmwareRevision = response1.data.imagever;
-				let kernelVer = response1.data.kernelver;
-				let chipset = response1.data.chipset;
-				me.log('-------- %s --------', me.name);
-				me.log('Manufacturer: %s', manufacturer);
-				me.log('Model: %s', modelName);
-				me.log('Kernel: %s', kernelVer);
-				me.log('Chipset: %s', chipset);
-				me.log('Webif version: %s', serialNumber);
-				me.log('Firmware: %s', firmwareRevision);
-				me.log('----------------------------------');
-
-				me.manufacturer = manufacturer;
-				me.modelName = modelName;
-				me.serialNumber = serialNumber;
-				me.firmwareRevision = firmwareRevision;
-
-				me.checkDeviceInfo = false;
-				me.updateDeviceState();
-			} catch (error) {
-				me.log.error('Device: %s %s, Device Info eror: %s, state: Offline, trying to reconnect', me.host, me.name, error);
-				me.checkDeviceInfo = false;
+			let manufacturer = response1.data.brand;
+			if (typeof response1.data.mname !== 'undefined') {
+				var modelName = response1.data.mname;
+			} else {
+				modelName = response1.data.model;
 			};
-		}
+			let serialNumber = response1.data.webifver;
+			let firmwareRevision = response1.data.imagever;
+			let kernelVer = response1.data.kernelver;
+			let chipset = response1.data.chipset;
+			me.log('-------- %s --------', me.name);
+			me.log('Manufacturer: %s', manufacturer);
+			me.log('Model: %s', modelName);
+			me.log('Kernel: %s', kernelVer);
+			me.log('Chipset: %s', chipset);
+			me.log('Webif version: %s', serialNumber);
+			me.log('Firmware: %s', firmwareRevision);
+			me.log('----------------------------------');
+
+			me.manufacturer = manufacturer;
+			me.modelName = modelName;
+			me.serialNumber = serialNumber;
+			me.firmwareRevision = firmwareRevision;
+
+			me.checkDeviceInfo = false;
+			me.updateDeviceState();
+		} catch (error) {
+			me.log.error('Device: %s %s, Device Info eror: %s, state: Offline, trying to reconnect', me.host, me.name, error);
+			me.checkDeviceInfo = true;
+		};
 	}
 
 	async updateDeviceState() {
@@ -310,9 +302,9 @@ class openwebIfTvDevice {
 			.onGet(async () => {
 				try {
 					const response = await axios.get(this.url + '/api/statusinfo');
+					let inputIdentifier = 0;
 					let inputName = response.data.currservice_station;
 					let inputReference = response.data.currservice_serviceref;
-					let inputIdentifier = 0;
 					if (this.inputReferences.indexOf(inputReference) !== -1) {
 						inputIdentifier = this.inputReferences.indexOf(inputReference);
 					}
@@ -560,17 +552,24 @@ class openwebIfTvDevice {
 			this.log.debug('Device: %s %s, channels file does not exist', this.host, accessoryName);
 		}
 
-		this.inputs.forEach((input, i) => {
+		let inputs = this.inputs;
+		let inputsLength = inputs.length;
+		if (inputsLength > 94) {
+			inputsLength = 94
+		}
 
-			//get channel reference
-			let inputReference = input.reference;
+		for (let i = 0; i < inputsLength; i++) {
 
-			//get channel name		
-			let inputName = input.name;
+			//get input reference
+			let inputReference = inputs[i].reference;
 
+			//get input name		
+			let inputName = inputs[i].name;
 			if (savedNames && savedNames[inputReference]) {
 				inputName = savedNames[inputReference];
-			};
+			} else {
+				inputName = inputs[i].name;
+			}
 
 			this.inputsService = new Service.InputSource(inputReference, 'input' + i);
 			this.inputsService
@@ -578,7 +577,8 @@ class openwebIfTvDevice {
 				.setCharacteristic(Characteristic.ConfiguredName, inputName)
 				.setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
 				//.setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.TV)
-				.setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN);
+				.setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN)
+				.setCharacteristic(Characteristic.TargetVisibilityState, Characteristic.TargetVisibilityState.SHOWN);
 
 			this.inputsService
 				.getCharacteristic(Characteristic.ConfiguredName)
@@ -599,7 +599,7 @@ class openwebIfTvDevice {
 
 			accessory.addService(this.inputsService);
 			this.televisionService.addLinkedService(this.inputsService);
-		});
+		};
 
 		this.startPrepareAccessory = false;
 		this.log.debug('Device: %s %s, publishExternalAccessories.', this.host, accessoryName);
