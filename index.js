@@ -80,14 +80,14 @@ class openwebIfTvDevice {
 		this.firmwareRevision = config.firmwareRevision || 'Firmware Revision';
 
 		//setup variables
+		this.inputNames = new Array();
+		this.inputEventNames = new Array();
+		this.inputReferences = new Array();
 		this.checkDeviceInfo = true;
 		this.checkDeviceState = false;
 		this.startPrepareAccessory = true;
 		this.currentPowerState = false;
-		this.inputNames = new Array();
-		this.inputEventNames = new Array();
-		this.inputReferences = new Array();
-		this.currentMuteState = false;
+		this.currentMuteState = true;
 		this.currentVolume = 0;
 		this.currentInputName = '';
 		this.currentInputEventName = '';
@@ -184,14 +184,14 @@ class openwebIfTvDevice {
 		me.log.debug('Device: %s %s, requesting Device information.', me.host, me.name);
 		try {
 			const response = await axios.get(me.url + '/api/statusinfo');
-			let powerState = (response.data.inStandby === 'false');
-			if (me.televisionService && (powerState !== me.currentPowerState)) {
-				me.televisionService.updateCharacteristic(Characteristic.Active, powerState ? 1 : 0);
-			}
-			me.log.debug('Device: %s %s, get current Power state successful: %s', me.host, me.name, powerState ? 'ON' : 'OFF');
-			me.currentPowerState = powerState;
+			if (response.data !== undefined) {
+				let powerState = (response.data.inStandby === 'false');
+				if (me.televisionService && (powerState !== me.currentPowerState)) {
+					me.televisionService.updateCharacteristic(Characteristic.Active, powerState ? 1 : 0);
+				}
+				me.log.debug('Device: %s %s, get current Power state successful: %s', me.host, me.name, powerState ? 'ON' : 'OFF');
+				me.currentPowerState = powerState;
 
-			if (powerState) {
 				let inputName = response.data.currservice_station;
 				let inputEventName = response.data.currservice_name;
 				let inputReference = response.data.currservice_serviceref;
@@ -206,7 +206,7 @@ class openwebIfTvDevice {
 				me.currentInputReference = inputReference;
 				me.currentInputIdentifier = inputIdentifier;
 
-				let mute = powerState ? (response.data.muted == true) : true;
+				let mute = powerState ? (response.data.muted === true) : true;
 				let volume = response.data.volume;
 				if (me.speakerService) {
 					me.speakerService.updateCharacteristic(Characteristic.Mute, mute);
@@ -224,8 +224,8 @@ class openwebIfTvDevice {
 				me.log.debug('Device: %s %s, get current Volume level: %s', me.host, me.name, volume);
 				me.currentMuteState = mute;
 				me.currentVolume = volume;
+				me.checkDeviceState = true;
 			}
-			me.checkDeviceState = true;
 
 			//start prepare accessory
 			if (me.startPrepareAccessory) {
@@ -450,9 +450,8 @@ class openwebIfTvDevice {
 			})
 			.onSet(async (volume) => {
 				try {
-					let currentVolume = this.currentVolume;
 					if (volume == 0 || volume == 100) {
-						volume = currentVolume;
+						volume = this.currentVolume;
 					}
 					const response = await axios.get(this.url + '/api/vol?set=set' + volume);
 					if (!this.disableLogInfo) {
@@ -466,7 +465,7 @@ class openwebIfTvDevice {
 			.onGet(async () => {
 				try {
 					const response = await axios.get(this.url + '/api/statusinfo');
-					let state = this.currentPowerState ? (response.data.muted == true) : true;
+					let state = this.currentPowerState ? (response.data.muted === true) : true;
 					if (!this.disableLogInfo) {
 						this.log('Device: %s %s, get current Mute state successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
 					}
@@ -508,7 +507,7 @@ class openwebIfTvDevice {
 					});
 				this.volumeService.getCharacteristic(Characteristic.On)
 					.on('get', (callback) => {
-						let state = this.currentPowerState ? this.currentMuteState : true;
+						let state = !this.currentMuteState;
 						callback(null, !state);
 					})
 					.on('set', (state, callback) => {
@@ -531,7 +530,7 @@ class openwebIfTvDevice {
 					});
 				this.volumeServiceFan.getCharacteristic(Characteristic.On)
 					.on('get', (callback) => {
-						let state = this.currentPowerState ? this.currentMuteState : true;
+						let state = !this.currentMuteState;
 						callback(null, !state);
 					})
 					.on('set', (state, callback) => {
