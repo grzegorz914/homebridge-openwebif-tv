@@ -87,7 +87,7 @@ class openwebIfTvDevice {
 		this.checkDeviceState = false;
 		this.startPrepareAccessory = true;
 		this.currentPowerState = false;
-		this.currentMuteState = true;
+		this.currentMuteState = false;
 		this.currentVolume = 0;
 		this.currentInputName = '';
 		this.currentInputEventName = '';
@@ -497,22 +497,20 @@ class openwebIfTvDevice {
 			if (this.volumeControl == 1) {
 				this.volumeService = new Service.Lightbulb(accessoryName + ' Volume', 'volumeService');
 				this.volumeService.getCharacteristic(Characteristic.Brightness)
-					.on('get', (callback) => {
+					.onGet(async () => {
 						let volume = this.currentVolume;
-						callback(null, volume);
+						return volume;
 					})
-					.on('set', (volume, callback) => {
+					.onSet(async (volume) => {
 						this.speakerService.setCharacteristic(Characteristic.Volume, volume);
-						callback(null);
 					});
 				this.volumeService.getCharacteristic(Characteristic.On)
-					.on('get', (callback) => {
+					.onGet(async () => {
 						let state = !this.currentMuteState;
-						callback(null, !state);
+						return state;
 					})
-					.on('set', (state, callback) => {
+					.onSet(async (state) => {
 						this.speakerService.setCharacteristic(Characteristic.Mute, !state);
-						callback(null);
 					});
 				accessory.addService(this.volumeService);
 				this.volumeService.addLinkedService(this.volumeService);
@@ -520,22 +518,20 @@ class openwebIfTvDevice {
 			if (this.volumeControl == 2) {
 				this.volumeServiceFan = new Service.Fan(accessoryName + ' Volume', 'volumeServiceFan');
 				this.volumeServiceFan.getCharacteristic(Characteristic.RotationSpeed)
-					.on('get', (callback) => {
+					.onGet(async () => {
 						let volume = this.currentVolume;
-						callback(null, volume);
+						return volume;
 					})
-					.on('set', (volume, callback) => {
+					.onSet(async (volume) => {
 						this.speakerService.setCharacteristic(Characteristic.Volume, volume);
-						callback(null);
 					});
 				this.volumeServiceFan.getCharacteristic(Characteristic.On)
-					.on('get', (callback) => {
+					.onGet(async () => {
 						let state = !this.currentMuteState;
-						callback(null, !state);
+						return state;
 					})
-					.on('set', (state, callback) => {
+					.onSet(async (state) => {
 						this.speakerService.setCharacteristic(Characteristic.Mute, !state);
-						callback(null);
 					});
 				accessory.addService(this.volumeServiceFan);
 				this.televisionService.addLinkedService(this.volumeServiceFan);
