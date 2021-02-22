@@ -95,34 +95,39 @@ class openwebIfTvDevice {
 		this.currentInputIdentifier = 0;
 		this.currentInfoMenuState = false;
 		this.prefDir = path.join(api.user.storagePath(), 'openwebifTv');
-		this.inputsFile = this.prefDir + '/' + 'channels_' + this.host.split('.').join('');
-		this.customInputsFile = this.prefDir + '/' + 'customChannels_' + this.host.split('.').join('');
+		this.inputsFile = this.prefDir + '/' + 'inputs_' + this.host.split('.').join('');
+		this.customInputsFile = this.prefDir + '/' + 'customInputs_' + this.host.split('.').join('');
+		this.devInfoFile = this.prefDir + '/' + 'devInfo_' + this.host.split('.').join('');
 		this.url = this.auth ? ('http://' + this.user + ':' + this.pass + '@' + this.host + ':' + this.port) : ('http://' + this.host + ':' + this.port);
 
 		if (!Array.isArray(this.inputs) || this.inputs === undefined || this.inputs === null) {
-			let defaultInputs = [
+			this.inputs = [
 				{
-					name: 'No channels configured',
-					reference: 'No references configured'
+					'name': 'No channels configured',
+					'reference': 'No references configured'
 				}
 			];
-			this.inputs = defaultInputs;
 		}
 
 		//check if prefs directory ends with a /, if not then add it
 		if (this.prefDir.endsWith('/') === false) {
 			this.prefDir = this.prefDir + '/';
 		}
-
 		//check if the directory exists, if not then create it
 		if (fs.existsSync(this.prefDir) === false) {
-			fs.mkdir(this.prefDir, { recursive: false }, (error) => {
-				if (error) {
-					this.log.error('Device: %s %s, create directory: %s, error: %s', this.host, this.name, this.prefDir, error);
-				} else {
-					this.log.debug('Device: %s %s, create directory successful: %s', this.host, this.name, this.prefDir);
-				}
-			});
+			fsPromises.mkdir(this.prefDir);
+		}
+		//check if the files exists, if not then create it
+		if (fs.existsSync(this.inputsFile) === false) {
+			fsPromises.writeFile(this.inputsFile, '{}');
+		}
+		//check if the files exists, if not then create it
+		if (fs.existsSync(this.customInputsFile) === false) {
+			fsPromises.writeFile(this.customInputsFile, '{}');
+		}
+		//check if the files exists, if not then create it
+		if (fs.existsSync(this.devInfoFile) === false) {
+			fsPromises.writeFile(this.devInfoFile, '{}');
 		}
 
 		//Check device state
@@ -144,19 +149,26 @@ class openwebIfTvDevice {
 				me.log('Device: %s %s, state: Online.', me.host, me.name);
 			}
 			let channels = JSON.stringify(response.data.services, null, 2);
-			const writeFile = await fsPromises.writeFile(me.inputsFile, channels);
-			me.log.debug('Device: %s %s, saved Channels successful in: %s %s', me.host, me.name, me.prefDir, channels);
+			await fsPromises.writeFile(me.inputsFile, channels);
+			me.log.debug('Device: %s %s, saved Channels successful.', me.host, me.name);
 
-			let manufacturer = response1.data.brand;
-			if (typeof response1.data.mname !== 'undefined') {
-				var modelName = response1.data.mname;
-			} else {
-				modelName = response1.data.model;
-			};
-			let serialNumber = response1.data.webifver;
-			let firmwareRevision = response1.data.imagever;
-			let kernelVer = response1.data.kernelver;
-			let chipset = response1.data.chipset;
+			var manufacturer = response1.data.brand;
+			var modelName = response1.data.mname;
+			var serialNumber = response1.data.webifver;
+			var firmwareRevision = response1.data.imagever;
+			var kernelVer = response1.data.kernelver;
+			var chipset = response1.data.chipset;
+
+			me.manufacturer = manufacturer;
+			me.modelName = modelName;
+			me.serialNumber = serialNumber;
+			me.firmwareRevision = firmwareRevision;
+
+			me.saveData = { 'Manufacturer': manufacturer, 'Model': modelName, 'Serial': serialNumber, 'Firmware': firmwareRevision, 'Kernel': kernelVer, 'Chipset': chipset };
+			let data = JSON.stringify(me.saveData, null, 2);
+			await fsPromises.writeFile(me.devInfoFile, data);
+			me.log.debug('Device: %s %s, saved devInfoFile successful.', me.host, me.name);
+
 			me.log('-------- %s --------', me.name);
 			me.log('Manufacturer: %s', manufacturer);
 			me.log('Model: %s', modelName);
@@ -165,11 +177,6 @@ class openwebIfTvDevice {
 			me.log('Webif version: %s', serialNumber);
 			me.log('Firmware: %s', firmwareRevision);
 			me.log('----------------------------------');
-
-			me.manufacturer = manufacturer;
-			me.modelName = modelName;
-			me.serialNumber = serialNumber;
-			me.firmwareRevision = firmwareRevision;
 
 			me.checkDeviceInfo = false;
 			me.updateDeviceState();
@@ -248,10 +255,26 @@ class openwebIfTvDevice {
 
 		//Prepare information service
 		this.log.debug('prepareInformationService');
+		try {
+			var readData = JSON.parse(fs.readFileSync(this.devInfoFile));
+		} catch (error) {
+			this.log.debug('Device: %s %s, readData failed, error: %s', this.host, accessoryName, error)
+		}
+
+		if (readData && readData.Model !== undefined) {
+			readData = readData;
+		} else {
+			if (this.saveData !== undefined) {
+				readData = this.saveData;
+			} else {
+				readData = { 'Model': 'Model name', 'Serial': 'Serial number', 'Firmware': 'Firmware' };
+			}
+		}
+
 		const manufacturer = this.manufacturer;
-		const modelName = this.modelName;
-		const serialNumber = this.serialNumber;
-		const firmwareRevision = this.firmwareRevision;
+		const modelName = readData.Model;
+		const serialNumber = readData.Serial;
+		const firmwareRevision = readData.Firmware;
 
 		accessory.removeService(accessory.getService(Service.AccessoryInformation));
 		const informationService = new Service.AccessoryInformation();
