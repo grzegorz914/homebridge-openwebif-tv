@@ -145,15 +145,17 @@ class openwebIfTvDevice {
 		me.log.debug('Device: %s %s, requesting config information.', me.host, me.name);
 		try {
 			const [response, response1] = await axios.all([axios.get(me.url + '/api/getallservices'), axios.get(me.url + '/api/deviceinfo')]);
-			if (!me.disableLogInfo) {
-				me.log('Device: %s %s, state: Online.', me.host, me.name);
-			}
+
 			let channels = JSON.stringify(response.data.services, null, 2);
-			await fsPromises.writeFile(me.inputsFile, channels);
+			const writeChannelsFile = await fsPromises.writeFile(me.inputsFile, channels);
 			me.log.debug('Device: %s %s, saved Channels successful.', me.host, me.name);
 
+			let devInfo = JSON.stringify(response1.data, null, 2);
+			const writeDevInfoFile = await fsPromises.writeFile(me.devInfoFile, devInfo);
+			me.log.debug('Device: %s %s, saved Device Info successful.', me.host, me.name);
+
 			var manufacturer = response1.data.brand;
-			var modelName = response1.data.mname;
+			var modelName = response1.data.model;
 			var serialNumber = response1.data.webifver;
 			var firmwareRevision = response1.data.imagever;
 			var kernelVer = response1.data.kernelver;
@@ -164,11 +166,9 @@ class openwebIfTvDevice {
 			me.serialNumber = serialNumber;
 			me.firmwareRevision = firmwareRevision;
 
-			me.saveData = { 'Manufacturer': manufacturer, 'Model': modelName, 'Serial': serialNumber, 'Firmware': firmwareRevision, 'Kernel': kernelVer, 'Chipset': chipset };
-			let data = JSON.stringify(me.saveData, null, 2);
-			await fsPromises.writeFile(me.devInfoFile, data);
-			me.log.debug('Device: %s %s, saved devInfoFile successful.', me.host, me.name);
-
+			if (!me.disableLogInfo) {
+				me.log('Device: %s %s, state: Online.', me.host, me.name);
+			}
 			me.log('-------- %s --------', me.name);
 			me.log('Manufacturer: %s', manufacturer);
 			me.log('Model: %s', modelName);
@@ -256,25 +256,22 @@ class openwebIfTvDevice {
 		//Prepare information service
 		this.log.debug('prepareInformationService');
 		try {
-			var readData = JSON.parse(fs.readFileSync(this.devInfoFile));
+			const response = fsPromises.readFile(this.devInfoFile);
+			var devInfo = JSON.parse(response);
 		} catch (error) {
-			this.log.debug('Device: %s %s, readData failed, error: %s', this.host, accessoryName, error)
+			this.log.debug('Device: %s %s, read devInfo failed, error: %s', this.host, accessoryName, error)
 		}
 
-		if (readData && readData.Model !== undefined) {
-			readData = readData;
+		if (devInfo !== undefined) {
+			devInfo = devInfo;
 		} else {
-			if (this.saveData !== undefined) {
-				readData = this.saveData;
-			} else {
-				readData = { 'Manufacturer': 'Manufacturer', 'Model': 'Model name', 'Serial': 'Serial number', 'Firmware': 'Firmware' };
-			}
+			devInfo = { 'brand': 'Manufacturer', 'model': 'Model name', 'webifver': 'Serial number', 'imagever': 'Firmware' };
 		}
 
-		const manufacturer = readData.Manufacturer;
-		const modelName = readData.Model;
-		const serialNumber = readData.Serial;
-		const firmwareRevision = readData.Firmware;
+		const manufacturer = devInfo.brand;
+		const modelName = devInfo.model;
+		const serialNumber = devInfo.webifver;
+		const firmwareRevision = devInfo.imagever;
 
 		accessory.removeService(accessory.getService(Service.AccessoryInformation));
 		const informationService = new Service.AccessoryInformation();
