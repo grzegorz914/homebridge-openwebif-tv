@@ -253,9 +253,9 @@ class openwebIfTvDevice {
 
 		//Prepare information service
 		this.log.debug('prepareInformationService');
+		let devInfo = {};
 		try {
-			const response = fs.readFileSync(this.devInfoFile);
-			var devInfo = JSON.parse(response);
+			devInfo = fs.readFileSync(JSON.parse(this.devInfoFile));
 		} catch (error) {
 			this.log.debug('Device: %s %s, read devInfo failed, error: %s', this.host, accessoryName, error)
 		}
