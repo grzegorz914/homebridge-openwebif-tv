@@ -229,8 +229,8 @@ class openwebIfTvDevice {
 				this.log.debug('Device: %s %s, get current Volume level: %s', this.host, this.name, volume);
 				this.currentMuteState = mute;
 				this.currentVolume = volume;
-				this.checkDeviceState = true;
 			}
+			this.checkDeviceState = true;
 
 			//start prepare accessory
 			if (this.startPrepareAccessory) {
