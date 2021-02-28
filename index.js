@@ -250,7 +250,7 @@ class openwebIfTvDevice {
 		this.log.debug('prepareInformationService');
 		let devInfo = {};
 		try {
-			devInfo = fs.readFileSync(JSON.parse(this.devInfoFile));
+			devInfo = JSON.parse(fs.readFileSync(this.devInfoFile));
 		} catch (error) {
 			this.log.debug('Device: %s %s, read devInfo failed, error: %s', this.host, accessoryName, error)
 		}
@@ -271,7 +271,6 @@ class openwebIfTvDevice {
 			.setCharacteristic(Characteristic.Model, modelName)
 			.setCharacteristic(Characteristic.SerialNumber, serialNumber)
 			.setCharacteristic(Characteristic.FirmwareRevision, firmwareRevision);
-
 		accessory.addService(informationService);
 
 		//Prepare television service
