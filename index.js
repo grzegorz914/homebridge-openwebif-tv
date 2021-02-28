@@ -200,10 +200,7 @@ class openwebIfTvDevice {
 				const inputName = response.data.currservice_station;
 				const inputEventName = response.data.currservice_name;
 				const inputReference = response.data.currservice_serviceref;
-				let inputIdentifier = this.inputReferences.indexOf(inputReference);
-				if (inputIdentifier === -1) {
-					inputIdentifier = 0;
-				}
+				const inputIdentifier = (this.inputReferences.indexOf(inputReference) >= 0) ? this.inputReferences.indexOf(inputReference) : 0;
 				if (this.televisionService && (inputReference !== this.currentInputReference)) {
 					this.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
 				}
@@ -320,10 +317,7 @@ class openwebIfTvDevice {
 					const response = await axios.get(this.url + '/api/statusinfo');
 					const inputName = response.data.currservice_station;
 					const inputReference = response.data.currservice_serviceref;
-					let inputIdentifier = this.inputReferences.indexOf(inputReference);
-					if (inputIdentifier === -1) {
-						inputIdentifier = 0;
-					}
+					const inputIdentifier = (this.inputReferences.indexOf(inputReference) >= 0) ? this.inputReferences.indexOf(inputReference) : 0;
 					if (!this.disableLogInfo) {
 						this.log('Device: %s %s, get current Channel successful: %s %s', this.host, accessoryName, inputName, inputReference);
 					}
