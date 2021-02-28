@@ -189,44 +189,42 @@ class openwebIfTvDevice {
 		this.log.debug('Device: %s %s, requesting Device information.', this.host, this.name);
 		try {
 			const response = await axios.get(this.url + '/api/statusinfo');
-			if (response.data !== undefined) {
-				const powerState = (response.data.inStandby === 'false');
-				if (this.televisionService && (powerState !== this.currentPowerState)) {
-					this.televisionService.updateCharacteristic(Characteristic.Active, powerState ? 1 : 0);
-				}
-				this.log.debug('Device: %s %s, get current Power state successful: %s', this.host, this.name, powerState ? 'ON' : 'OFF');
-				this.currentPowerState = powerState;
-
-				const inputName = response.data.currservice_station;
-				const inputEventName = response.data.currservice_name;
-				const inputReference = response.data.currservice_serviceref;
-				const inputIdentifier = (this.inputReferences.indexOf(inputReference) >= 0) ? this.inputReferences.indexOf(inputReference) : 0;
-				if (this.televisionService && (inputReference !== this.currentInputReference)) {
-					this.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
-				}
-				this.log.debug('Device: %s %s, get current Channel successful: %s (%s) %s', this.host, this.name, inputName, inputEventName, inputReference);
-				this.currentInputReference = inputReference;
-				this.currentInputIdentifier = inputIdentifier;
-
-				const mute = powerState ? (response.data.muted === true) : true;
-				const volume = response.data.volume;
-				if (this.speakerService) {
-					this.speakerService.updateCharacteristic(Characteristic.Mute, mute);
-					this.speakerService.updateCharacteristic(Characteristic.Volume, volume);
-					if (this.volumeService && this.volumeControl == 1) {
-						this.volumeService.updateCharacteristic(Characteristic.Brightness, volume);
-						this.volumeService.updateCharacteristic(Characteristic.On, !mute);
-					}
-					if (this.volumeServiceFan && this.volumeControl == 2) {
-						this.volumeServiceFan.updateCharacteristic(Characteristic.RotationSpeed, volume);
-						this.volumeServiceFan.updateCharacteristic(Characteristic.On, !mute);
-					}
-				}
-				this.log.debug('Device: %s %s, get current Mute state: %s', this.host, this.name, mute ? 'ON' : 'OFF');
-				this.log.debug('Device: %s %s, get current Volume level: %s', this.host, this.name, volume);
-				this.currentMuteState = mute;
-				this.currentVolume = volume;
+			const powerState = (response.data.inStandby === 'false');
+			if (this.televisionService && (powerState !== this.currentPowerState)) {
+				this.televisionService.updateCharacteristic(Characteristic.Active, powerState ? 1 : 0);
 			}
+			this.log.debug('Device: %s %s, get current Power state successful: %s', this.host, this.name, powerState ? 'ON' : 'OFF');
+			this.currentPowerState = powerState;
+
+			const inputName = response.data.currservice_station;
+			const inputEventName = response.data.currservice_name;
+			const inputReference = response.data.currservice_serviceref;
+			const inputIdentifier = (this.inputReferences.indexOf(inputReference) >= 0) ? this.inputReferences.indexOf(inputReference) : 0;
+			if (this.televisionService && (inputReference !== this.currentInputReference)) {
+				this.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
+			}
+			this.log.debug('Device: %s %s, get current Channel successful: %s (%s) %s', this.host, this.name, inputName, inputEventName, inputReference);
+			this.currentInputReference = inputReference;
+			this.currentInputIdentifier = inputIdentifier;
+
+			const mute = powerState ? (response.data.muted === true) : true;
+			const volume = response.data.volume;
+			if (this.speakerService) {
+				this.speakerService.updateCharacteristic(Characteristic.Mute, mute);
+				this.speakerService.updateCharacteristic(Characteristic.Volume, volume);
+				if (this.volumeService && this.volumeControl == 1) {
+					this.volumeService.updateCharacteristic(Characteristic.Brightness, volume);
+					this.volumeService.updateCharacteristic(Characteristic.On, !mute);
+				}
+				if (this.volumeServiceFan && this.volumeControl == 2) {
+					this.volumeServiceFan.updateCharacteristic(Characteristic.RotationSpeed, volume);
+					this.volumeServiceFan.updateCharacteristic(Characteristic.On, !mute);
+				}
+			}
+			this.log.debug('Device: %s %s, get current Mute state: %s', this.host, this.name, mute ? 'ON' : 'OFF');
+			this.log.debug('Device: %s %s, get current Volume level: %s', this.host, this.name, volume);
+			this.currentMuteState = mute;
+			this.currentVolume = volume;
 			this.checkDeviceState = true;
 
 			//start prepare accessory
