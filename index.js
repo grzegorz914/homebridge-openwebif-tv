@@ -254,7 +254,6 @@ class openwebIfTvDevice {
 		} catch (error) {
 			this.log.debug('Device: %s %s, read devInfo failed, error: %s', this.host, accessoryName, error)
 		}
-
 		if (devInfo === undefined) {
 			devInfo = { 'brand': 'Manufacturer', 'model': 'Model name', 'webifver': 'Serial number', 'imagever': 'Firmware' };
 		}
