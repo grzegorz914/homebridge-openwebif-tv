@@ -72,6 +72,7 @@ class openwebIfTvDevice {
 		this.volumeControl = config.volumeControl || 0;
 		this.switchInfoMenu = config.switchInfoMenu;
 		this.inputs = config.inputs || [];
+		this.inputsButton = config.inputsButton || [];
 
 		//get config info
 		this.manufacturer = config.manufacturer || 'Manufacturer';
@@ -239,14 +240,11 @@ class openwebIfTvDevice {
 
 		//Prepare information service
 		this.log.debug('prepareInformationService');
-		let devInfo = {};
+		let devInfo = { 'brand': 'Manufacturer', 'model': 'Model name', 'webifver': 'Serial number', 'imagever': 'Firmware' };
 		try {
 			devInfo = JSON.parse(fs.readFileSync(this.devInfoFile));
 		} catch (error) {
 			this.log.debug('Device: %s %s, read devInfo failed, error: %s', this.host, accessoryName, error)
-		}
-		if (devInfo === undefined) {
-			devInfo = { 'brand': 'Manufacturer', 'model': 'Model name', 'webifver': 'Serial number', 'imagever': 'Firmware' };
 		}
 
 		const manufacturer = devInfo.brand;
@@ -593,6 +591,38 @@ class openwebIfTvDevice {
 				accessory.addService(this.inputsService);
 				this.televisionService.addLinkedService(this.inputsService);
 			};
+		}
+
+		//Prepare inputs button services
+		if (this.inputsButton.length > 0) {
+			this.log.debug('prepareInputsButtonService');
+			for (let i = 0; i < this.inputsButton.length; i++) {
+				this.inputsButtonService = new Service.Switch(accessoryName + ' ' + this.inputsButton[i].name, 'inputsButtonService' + i);
+				this.inputsButtonService.getCharacteristic(Characteristic.On)
+					.onGet(async () => {
+						const state = false;
+						if (!this.disableLogInfo) {
+							this.log('Device: %s %s, get current state successful: %s', this.host, accessoryName, state);
+						}
+						return state;
+					})
+					.onSet(async (state) => {
+						if (state) {
+							try {
+								const inputName = this.inputsButton[i].name;
+								const inputReference = this.inputsButton[i].reference;
+								const response = await axios.get(this.url + '/api/zap?sRef=' + inputReference);
+								if (!this.disableLogInfo) {
+									this.log('Device: %s %s, set new Channel successful: %s %s', this.host, accessoryName, inputName, inputReference);
+								}
+								this.inputsButtonService.setCharacteristic(Characteristic.On, !state);
+							} catch (error) {
+								this.log.error('Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', this.host, accessoryName, error);
+							};
+						}
+					});
+				accessory.addService(this.inputsButtonService);
+			}
 		}
 
 		this.startPrepareAccessory = false;

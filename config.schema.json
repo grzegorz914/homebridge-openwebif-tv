@@ -113,12 +113,32 @@
                 "type": "object",
                 "properties": {
                   "name": {
-                    "title": "Channel name",
+                    "title": "Name",
                     "type": "string",
                     "required": true
                   },
                   "reference": {
-                    "title": "Channel reference",
+                    "title": "Reference",
+                    "type": "string",
+                    "required": true
+                  }
+                }
+              }
+            },
+            "inputsButton": {
+              "title": "Channels button",
+              "buttonText": "Add channel button",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "title": "Name",
+                    "type": "string",
+                    "required": true
+                  },
+                  "reference": {
+                    "title": "Reference",
                     "type": "string",
                     "required": true
                   }
@@ -207,6 +227,25 @@
               "items": [
                 "devices[].inputs[].name",
                 "devices[].inputs[].reference"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "devices[]",
+          "type": "section",
+          "title": "Channels button",
+          "expandable": true,
+          "expanded": false,
+          "items": [
+            {
+              "key": "devices[].inputsButton",
+              "type": "array",
+              "orderable": false,
+              "buttonText": "Add channel button",
+              "items": [
+                "devices[].inputsButton[].name",
+                "devices[].inputsButton[].reference"
               ]
             }
           ]
