@@ -607,7 +607,7 @@ class openwebIfTvDevice {
 						return state;
 					})
 					.onSet(async (state) => {
-						if (state) {
+						if (state && this.currentPowerState) {
 							try {
 								const inputName = this.inputsButton[i].name;
 								const inputReference = this.inputsButton[i].reference;
@@ -615,13 +615,20 @@ class openwebIfTvDevice {
 								if (!this.disableLogInfo) {
 									this.log('Device: %s %s, set new Channel successful: %s %s', this.host, accessoryName, inputName, inputReference);
 								}
-								this.inputsButtonService.setCharacteristic(Characteristic.On, !state);
+								setTimeout(() => {
+									this.inputsButtonService.getCharacteristic(Characteristic.On).updateValue(false);
+								}, 350);
 							} catch (error) {
 								this.log.error('Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', this.host, accessoryName, error);
 							};
+						} else {
+							setTimeout(() => {
+								this.inputsButtonService.getCharacteristic(Characteristic.On).updateValue(false);
+							}, 350);
 						}
 					});
 				accessory.addService(this.inputsButtonService);
+				this.televisionService.addLinkedService(this.inputsButtonService);
 			}
 		}
 
