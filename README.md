@@ -41,7 +41,7 @@ Homebridge plugin for Sat Receivers basis on the OpenWebIf API. Tested with Drea
 2. RC/Media control is possible after you go to the RC app on iPhone/iPad.
 3. Speaker control is possible after you go to RC app on iPhone/iPad `Speaker Service`.
 4. Legacy volume and mute control is possible throught extra `lightbulb` (slider) or using Siri `Volume Service`.
-5. Inputs can be changed after loong press tile in HomeKit app and select from the list.
+5. Inputs can be changed after loong press tile in HomeKit app and select from the list or create separate tile in the Inputs button section.
 6. Siri control.
 
 <p align="left">
@@ -59,7 +59,7 @@ Homebridge plugin for Sat Receivers basis on the OpenWebIf API. Tested with Drea
 5. In `volumeControl` You can select what a additional volume control mode You want to use (None, Slider, Fan).
 6. If `disableLogInfo` is enabled, disable log info, all values and state will not be displayed in Homebridge log console.
 7. If `switchInfoMenu` is enabled, `I` button change its behaviour in RC app between Menu and INFO.
-8. In `inputs` configure Ypur channels (this will be displayed as TV Services list inside main accessory).
+8. In `inputs` configure channels (this will be displayed as TV Services list inside main accessory).
 9. In `inputsButton` configure channels button (this will be displayed as separate tile inside main accessory or direct in HomeKit main screen).
 8. `manufacturer`, `model`, `serialNumber`, `firmwareRevision` - optional branding data displayed in Home.app
 
