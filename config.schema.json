@@ -73,7 +73,6 @@
             "volumeControl": {
               "title": "Volume control mode",
               "type": "integer",
-              "default": 0,
               "maximum": 2,
               "description": "Here select what a volume control mode You want to use. If select *None* only hardware buttons in RC app can be used to control volume.",
               "oneOf": [
@@ -115,13 +114,11 @@
                   "name": {
                     "title": "Channel name",
                     "type": "string",
-                    "default": "TVN 24",
                     "required": true
                   },
                   "reference": {
                     "title": "Channel reference",
                     "type": "string",
-                    "default": "1:0:1:3DD2:640:13E:820000:0:0:0:",
                     "required": true
                   }
                 }

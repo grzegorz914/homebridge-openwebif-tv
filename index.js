@@ -69,9 +69,9 @@ class openwebIfTvDevice {
 		this.pass = config.pass;
 		this.refreshInterval = config.refreshInterval || 5;
 		this.disableLogInfo = config.disableLogInfo;
-		this.volumeControl = config.volumeControl;
+		this.volumeControl = config.volumeControl || 0;
 		this.switchInfoMenu = config.switchInfoMenu;
-		this.inputs = config.inputs;
+		this.inputs = config.inputs || [];
 
 		//get config info
 		this.manufacturer = config.manufacturer || 'Manufacturer';
@@ -99,15 +99,6 @@ class openwebIfTvDevice {
 		this.customInputsFile = this.prefDir + '/' + 'customInputs_' + this.host.split('.').join('');
 		this.devInfoFile = this.prefDir + '/' + 'devInfo_' + this.host.split('.').join('');
 		this.url = this.auth ? ('http://' + this.user + ':' + this.pass + '@' + this.host + ':' + this.port) : ('http://' + this.host + ':' + this.port);
-
-		if (!Array.isArray(this.inputs) || this.inputs === undefined || this.inputs === null) {
-			this.inputs = [
-				{
-					'name': 'No channels configured',
-					'reference': 'No references configured'
-				}
-			];
-		}
 
 		//check if prefs directory ends with a /, if not then add it
 		if (this.prefDir.endsWith('/') === false) {
@@ -545,62 +536,64 @@ class openwebIfTvDevice {
 		}
 
 		//Prepare inputs services
-		this.log.debug('prepareInputsService');
-		let savedNames = {};
-		try {
-			savedNames = JSON.parse(fs.readFileSync(this.customInputsFile));
-		} catch (error) {
-			this.log.debug('Device: %s %s, channels file does not exist', this.host, accessoryName);
-		}
-
-		const inputs = this.inputs;
-		let inputsLength = inputs.length;
-		if (inputsLength > 94) {
-			inputsLength = 94
-		}
-
-		for (let i = 0; i < inputsLength; i++) {
-
-			//get input reference
-			const inputReference = inputs[i].reference;
-
-			//get input name		
-			let inputName = inputs[i].name;
-			if (savedNames && savedNames[inputReference]) {
-				inputName = savedNames[inputReference];
-			} else {
-				inputName = inputs[i].name;
+		if (this.inputs.length > 0) {
+			this.log.debug('prepareInputsService');
+			let savedNames = {};
+			try {
+				savedNames = JSON.parse(fs.readFileSync(this.customInputsFile));
+			} catch (error) {
+				this.log.debug('Device: %s %s, channels file does not exist', this.host, accessoryName);
 			}
 
-			this.inputsService = new Service.InputSource(inputReference, 'input' + i);
-			this.inputsService
-				.setCharacteristic(Characteristic.Identifier, i)
-				.setCharacteristic(Characteristic.ConfiguredName, inputName)
-				.setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
-				//.setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.TV)
-				.setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN)
-				.setCharacteristic(Characteristic.TargetVisibilityState, Characteristic.TargetVisibilityState.SHOWN);
+			const inputs = this.inputs;
+			let inputsLength = inputs.length;
+			if (inputsLength > 94) {
+				inputsLength = 94
+			}
 
-			this.inputsService
-				.getCharacteristic(Characteristic.ConfiguredName)
-				.onSet(async (name) => {
-					try {
-						savedNames[inputReference] = name;
-						await fsPromises.writeFile(this.customInputsFile, JSON.stringify(savedNames, null, 2));
-						if (!this.disableLogInfo) {
-							this.log('Device: %s %s, saved new Input successful, name: %s reference: %s', this.host, accessoryName, name, inputReference);
+			for (let i = 0; i < inputsLength; i++) {
+
+				//get input reference
+				const inputReference = inputs[i].reference;
+
+				//get input name		
+				let inputName = inputs[i].name;
+				if (savedNames && savedNames[inputReference]) {
+					inputName = savedNames[inputReference];
+				} else {
+					inputName = inputs[i].name;
+				}
+
+				this.inputsService = new Service.InputSource(inputReference, 'input' + i);
+				this.inputsService
+					.setCharacteristic(Characteristic.Identifier, i)
+					.setCharacteristic(Characteristic.ConfiguredName, inputName)
+					.setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
+					//.setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.TV)
+					.setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN)
+					.setCharacteristic(Characteristic.TargetVisibilityState, Characteristic.TargetVisibilityState.SHOWN);
+
+				this.inputsService
+					.getCharacteristic(Characteristic.ConfiguredName)
+					.onSet(async (name) => {
+						try {
+							savedNames[inputReference] = name;
+							await fsPromises.writeFile(this.customInputsFile, JSON.stringify(savedNames, null, 2));
+							if (!this.disableLogInfo) {
+								this.log('Device: %s %s, saved new Input successful, name: %s reference: %s', this.host, accessoryName, name, inputReference);
+							}
+						} catch (error) {
+							this.log.error('Device: %s %s, can not write new Input name, error: %s', this.host, accessoryName, error);
 						}
-					} catch (error) {
-						this.log.error('Device: %s %s, can not write new Input name, error: %s', this.host, accessoryName, error);
-					}
-				});
+					});
 
-			this.inputReferences.push(inputReference);
-			this.inputNames.push(inputName);
+				this.inputReferences.push(inputReference);
+				this.inputNames.push(inputName);
 
-			accessory.addService(this.inputsService);
-			this.televisionService.addLinkedService(this.inputsService);
-		};
+				accessory.addService(this.inputsService);
+				this.televisionService.addLinkedService(this.inputsService);
+			};
+		}
 
 		this.startPrepareAccessory = false;
 		this.log.debug('Device: %s %s, publishExternalAccessories.', this.host, accessoryName);
