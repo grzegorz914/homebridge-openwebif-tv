@@ -201,12 +201,12 @@ class openwebIfTvDevice {
 			this.currentInputReference = inputReference;
 			this.currentInputIdentifier = inputIdentifier;
 
-			const mute = powerState ? (response.data.muted === true) : true;
 			const volume = response.data.volume;
+			const mute = powerState ? (response.data.muted === true) : true;
 			if (this.speakerService) {
 				this.speakerService
-					.updateCharacteristic(Characteristic.Mute, mute)
-					.updateCharacteristic(Characteristic.Volume, volume);
+					.updateCharacteristic(Characteristic.Volume, volume)
+					.updateCharacteristic(Characteristic.Mute, mute);
 				if (this.volumeService && this.volumeControl == 1) {
 					this.volumeService
 						.updateCharacteristic(Characteristic.Brightness, volume)
