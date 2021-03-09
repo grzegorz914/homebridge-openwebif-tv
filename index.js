@@ -81,9 +81,8 @@ class openwebIfTvDevice {
 		this.firmwareRevision = config.firmwareRevision || 'Firmware Revision';
 
 		//setup variables
-		this.inputNames = new Array();
-		this.inputEventNames = new Array();
-		this.inputReferences = new Array();
+		this.inputsName = new Array();
+		this.inputsReference = new Array();
 		this.checkDeviceInfo = true;
 		this.checkDeviceState = false;
 		this.startPrepareAccessory = true;
@@ -192,8 +191,8 @@ class openwebIfTvDevice {
 			const inputName = response.data.currservice_station;
 			const inputEventName = response.data.currservice_name;
 			const inputReference = response.data.currservice_serviceref;
-			const inputIdentifier = (this.inputReferences.indexOf(inputReference) >= 0) ? this.inputReferences.indexOf(inputReference) : 0;
-			if (this.televisionService && (inputReference !== this.currentInputReference)) {
+			const inputIdentifier = (this.inputsReference.indexOf(inputReference) > 0) ? this.inputsReference.indexOf(inputReference) : 0;
+			if (this.televisionService) {
 				this.televisionService
 					.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
 			}
@@ -307,7 +306,7 @@ class openwebIfTvDevice {
 					const response = await axios.get(this.url + '/api/statusinfo');
 					const inputName = response.data.currservice_station;
 					const inputReference = response.data.currservice_serviceref;
-					const inputIdentifier = (this.inputReferences.indexOf(inputReference) >= 0) ? this.inputReferences.indexOf(inputReference) : 0;
+					const inputIdentifier = (this.inputsReference.indexOf(inputReference) > 0) ? this.inputsReference.indexOf(inputReference) : 0;
 					if (!this.disableLogInfo) {
 						this.log('Device: %s %s, get current Channel successful: %s %s', this.host, accessoryName, inputName, inputReference);
 					}
@@ -323,8 +322,8 @@ class openwebIfTvDevice {
 			})
 			.onSet(async (inputIdentifier) => {
 				try {
-					const inputName = this.inputNames[inputIdentifier];
-					const inputReference = this.inputReferences[inputIdentifier];
+					const inputName = this.inputsName[inputIdentifier];
+					const inputReference = this.inputsReference[inputIdentifier];
 					const response = await axios.get(this.url + '/api/zap?sRef=' + inputReference);
 					if (!this.disableLogInfo) {
 						this.log('Device: %s %s, set new Channel successful: %s %s', this.host, accessoryName, inputName, inputReference);
@@ -541,6 +540,8 @@ class openwebIfTvDevice {
 		//Prepare inputs services
 		if (this.inputs.length > 0) {
 			this.log.debug('prepareInputsService');
+			this.inputsService = new Array();
+
 			let savedNames = {};
 			try {
 				savedNames = JSON.parse(fs.readFileSync(this.customInputsFile));
@@ -567,8 +568,8 @@ class openwebIfTvDevice {
 					inputName = inputs[i].name;
 				}
 
-				this.inputsService = new Service.InputSource(inputReference, 'input' + i);
-				this.inputsService
+				const inputService = new Service.InputSource(inputReference, 'input' + i);
+				inputService
 					.setCharacteristic(Characteristic.Identifier, i)
 					.setCharacteristic(Characteristic.ConfiguredName, inputName)
 					.setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
@@ -576,7 +577,7 @@ class openwebIfTvDevice {
 					.setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN)
 					.setCharacteristic(Characteristic.TargetVisibilityState, Characteristic.TargetVisibilityState.SHOWN);
 
-				this.inputsService
+				inputService
 					.getCharacteristic(Characteristic.ConfiguredName)
 					.onSet(async (name) => {
 						try {
@@ -590,20 +591,22 @@ class openwebIfTvDevice {
 						}
 					});
 
-				this.inputReferences.push(inputReference);
-				this.inputNames.push(inputName);
+				this.inputsReference.push(inputReference);
+				this.inputsName.push(inputName);
 
-				accessory.addService(this.inputsService);
-				this.televisionService.addLinkedService(this.inputsService);
+				this.inputsService.push(inputService);
+				accessory.addService(this.inputsService[i]);
+				this.televisionService.addLinkedService(this.inputsService[i]);
 			};
 		}
 
 		//Prepare inputs button services
 		if (this.inputsButton.length > 0) {
 			this.log.debug('prepareInputsButtonService');
+			this.buttonsService = new Array();
 			for (let i = 0; i < this.inputsButton.length; i++) {
-				this.inputsButtonService = new Service.Switch(accessoryName + ' ' + this.inputsButton[i].name, 'inputsButtonService' + i);
-				this.inputsButtonService.getCharacteristic(Characteristic.On)
+				const inputButtonService = new Service.Switch(accessoryName + ' ' + this.inputsButton[i].name, 'inputsButtonService' + i);
+				inputButtonService.getCharacteristic(Characteristic.On)
 					.onGet(async () => {
 						const state = false;
 						if (!this.disableLogInfo) {
@@ -621,19 +624,20 @@ class openwebIfTvDevice {
 									this.log('Device: %s %s, set new Channel successful: %s %s', this.host, accessoryName, inputName, inputReference);
 								}
 								setTimeout(() => {
-									this.inputsButtonService.getCharacteristic(Characteristic.On).updateValue(false);
+									inputButtonService.getCharacteristic(Characteristic.On).updateValue(false);
 								}, 350);
 							} catch (error) {
 								this.log.error('Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', this.host, accessoryName, error);
 							};
 						} else {
 							setTimeout(() => {
-								this.inputsButtonService.getCharacteristic(Characteristic.On).updateValue(false);
+								inputButtonService.getCharacteristic(Characteristic.On).updateValue(false);
 							}, 350);
 						}
 					});
-				accessory.addService(this.inputsButtonService);
-				this.televisionService.addLinkedService(this.inputsButtonService);
+				this.buttonsService.push(inputButtonService)
+				accessory.addService(this.buttonsService[i]);
+				this.televisionService.addLinkedService(this.buttonsService[i]);
 			}
 		}
 
