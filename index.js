@@ -132,9 +132,10 @@ class openwebIfTvDevice {
 	}
 
 	async getDeviceInfo() {
-		this.log.debug('Device: %s %s, requesting config information.', this.host, this.name);
+		this.log.debug('Device: %s %s, requesting Device Info.', this.host, this.name);
 		try {
 			const [response, response1] = await axios.all([axios.get(this.url + '/api/getallservices'), axios.get(this.url + '/api/deviceinfo')]);
+			this.log.debug('Device: %s %s, debug response: %s, response1: %s', this.host, this.name, response.data, response1.data);
 
 			const channels = JSON.stringify(response.data.services, null, 2);
 			const writeChannelsFile = await fsPromises.writeFile(this.inputsFile, channels);
@@ -177,15 +178,15 @@ class openwebIfTvDevice {
 	}
 
 	async updateDeviceState() {
-		this.log.debug('Device: %s %s, requesting Device information.', this.host, this.name);
+		this.log.debug('Device: %s %s, requesting Device state.', this.host, this.name);
 		try {
 			const response = await axios.get(this.url + '/api/statusinfo');
+			this.log.debug('Device: %s %s, debug response: %s', this.host, this.name, response.data);
 			const powerState = (response.data.inStandby === 'false');
 			if (this.televisionService && (powerState !== this.currentPowerState)) {
 				this.televisionService
 					.updateCharacteristic(Characteristic.Active, powerState ? 1 : 0);
 			}
-			this.log.debug('Device: %s %s, get current Power state successful: %s', this.host, this.name, powerState ? 'ON' : 'OFF');
 			this.currentPowerState = powerState;
 
 			const inputName = response.data.currservice_station;
@@ -196,7 +197,6 @@ class openwebIfTvDevice {
 				this.televisionService
 					.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
 			}
-			this.log.debug('Device: %s %s, get current Channel successful: %s (%s) %s', this.host, this.name, inputName, inputEventName, inputReference);
 			this.currentInputReference = inputReference;
 			this.currentInputIdentifier = inputIdentifier;
 
@@ -217,8 +217,6 @@ class openwebIfTvDevice {
 						.updateCharacteristic(Characteristic.On, !mute);
 				}
 			}
-			this.log.debug('Device: %s %s, get current Mute state: %s', this.host, this.name, mute ? 'ON' : 'OFF');
-			this.log.debug('Device: %s %s, get current Volume level: %s', this.host, this.name, volume);
 			this.currentMuteState = mute;
 			this.currentVolume = volume;
 			this.checkDeviceState = true;
@@ -247,8 +245,9 @@ class openwebIfTvDevice {
 		let devInfo = { 'brand': 'Manufacturer', 'model': 'Model name', 'webifver': 'Serial number', 'imagever': 'Firmware' };
 		try {
 			devInfo = JSON.parse(fs.readFileSync(this.devInfoFile));
+			this.log.debug('Device: %s %s, read devInfo: %s', this.host, accessoryName, devInfo)
 		} catch (error) {
-			this.log.debug('Device: %s %s, read devInfo failed, error: %s', this.host, accessoryName, error)
+			this.log.error('Device: %s %s, read devInfo failed, error: %s', this.host, accessoryName, error)
 		}
 
 		const manufacturer = devInfo.brand;
@@ -545,8 +544,9 @@ class openwebIfTvDevice {
 			let savedNames = {};
 			try {
 				savedNames = JSON.parse(fs.readFileSync(this.customInputsFile));
+				this.log.debug('Device: %s %s, read devInfo: %s', this.host, accessoryName, savedNames)
 			} catch (error) {
-				this.log.debug('Device: %s %s, channels file does not exist', this.host, accessoryName);
+				this.log.error('Device: %s %s, channels file does not exist', this.host, accessoryName);
 			}
 
 			const inputs = this.inputs;
@@ -583,6 +583,7 @@ class openwebIfTvDevice {
 						try {
 							savedNames[inputReference] = name;
 							await fsPromises.writeFile(this.customInputsFile, JSON.stringify(savedNames, null, 2));
+							this.log.debug('Device: %s %s, saved new Input successful, savedNames: %s', this.host, accessoryName, JSON.stringify(savedNames, null, 2));
 							if (!this.disableLogInfo) {
 								this.log('Device: %s %s, saved new Input successful, name: %s reference: %s', this.host, accessoryName, name, inputReference);
 							}
