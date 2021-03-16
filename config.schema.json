@@ -106,8 +106,8 @@
               "description": "This toggle behaviour for *I* button in RC app and *PowerModeSelection* in settings."
             },
             "inputs": {
-              "title": "Channels",
-              "buttonText": "Add channel",
+              "title": "Inputs",
+              "buttonText": "Add input",
               "type": "array",
               "items": {
                 "type": "object",
@@ -115,19 +115,21 @@
                   "name": {
                     "title": "Name",
                     "type": "string",
+                    "description": "Here set Your own name.",
                     "required": true
                   },
                   "reference": {
                     "title": "Reference",
                     "type": "string",
+                    "description": "Here set the reference.",
                     "required": true
                   }
                 }
               }
             },
-            "inputsButton": {
-              "title": "Channels button",
-              "buttonText": "Add channel button",
+            "buttons": {
+              "title": "Buttons",
+              "buttonText": "Add button",
               "type": "array",
               "items": {
                 "type": "object",
@@ -135,11 +137,13 @@
                   "name": {
                     "title": "Name",
                     "type": "string",
-                    "required": true
+                    "description": "Here set Your own name.",
+                    "required": false
                   },
                   "reference": {
                     "title": "Reference",
                     "type": "string",
+                    "description": "Here set the reference.",
                     "required": true
                   }
                 }
@@ -190,6 +194,44 @@
         {
           "key": "devices[]",
           "type": "section",
+          "title": "Inputs",
+          "expandable": true,
+          "expanded": false,
+          "items": [
+            {
+              "key": "devices[].inputs",
+              "type": "array",
+              "orderable": false,
+              "buttonText": "Add input",
+              "items": [
+                "devices[].inputs[].name",
+                "devices[].inputs[].reference"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "devices[]",
+          "type": "section",
+          "title": "Buttons",
+          "expandable": true,
+          "expanded": false,
+          "items": [
+            {
+              "key": "devices[].buttons",
+              "type": "array",
+              "orderable": false,
+              "buttonText": "Add button",
+              "items": [
+                "devices[].buttons[].name",
+                "devices[].buttons[].reference"
+              ]
+            }
+          ]
+        },
+        {
+          "key": "devices[]",
+          "type": "section",
           "title": "Authorization",
           "expandable": true,
           "expanded": false,
@@ -210,44 +252,6 @@
             "devices[].refreshInterval",
             "devices[].switchInfoMenu",
             "devices[].volumeControl"
-          ]
-        },
-        {
-          "key": "devices[]",
-          "type": "section",
-          "title": "Channels",
-          "expandable": true,
-          "expanded": false,
-          "items": [
-            {
-              "key": "devices[].inputs",
-              "type": "array",
-              "orderable": false,
-              "buttonText": "Add channel",
-              "items": [
-                "devices[].inputs[].name",
-                "devices[].inputs[].reference"
-              ]
-            }
-          ]
-        },
-        {
-          "key": "devices[]",
-          "type": "section",
-          "title": "Channels button",
-          "expandable": true,
-          "expanded": false,
-          "items": [
-            {
-              "key": "devices[].inputsButton",
-              "type": "array",
-              "orderable": false,
-              "buttonText": "Add channel button",
-              "items": [
-                "devices[].inputsButton[].name",
-                "devices[].inputsButton[].reference"
-              ]
-            }
           ]
         },
         {
