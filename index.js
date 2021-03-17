@@ -81,6 +81,8 @@ class openwebIfTvDevice {
 		this.firmwareRevision = config.firmwareRevision || 'Firmware Revision';
 
 		//setup variables
+		this.inputsLength = this.inputs.length;
+		this.buttonsLength = this.buttons.length;
 		this.inputsName = new Array();
 		this.inputsReference = new Array();
 		this.checkDeviceInfo = true;
@@ -97,6 +99,7 @@ class openwebIfTvDevice {
 		this.prefDir = path.join(api.user.storagePath(), 'openwebifTv');
 		this.inputsFile = this.prefDir + '/' + 'inputs_' + this.host.split('.').join('');
 		this.customInputsFile = this.prefDir + '/' + 'customInputs_' + this.host.split('.').join('');
+		this.targetVisibilityInputsFile = this.prefDir + '/' + 'targetVisibilityInputs_' + this.host.split('.').join('');
 		this.devInfoFile = this.prefDir + '/' + 'devInfo_' + this.host.split('.').join('');
 		this.url = this.auth ? ('http://' + this.user + ':' + this.pass + '@' + this.host + ':' + this.port) : ('http://' + this.host + ':' + this.port);
 
@@ -115,6 +118,10 @@ class openwebIfTvDevice {
 		//check if the files exists, if not then create it
 		if (fs.existsSync(this.customInputsFile) === false) {
 			fsPromises.writeFile(this.customInputsFile, '{}');
+		}
+		//check if the files exists, if not then create it
+		if (fs.existsSync(this.targetVisibilityInputsFile) === false) {
+			fsPromises.writeFile(this.targetVisibilityInputsFile, '{}');
 		}
 		//check if the files exists, if not then create it
 		if (fs.existsSync(this.devInfoFile) === false) {
@@ -535,36 +542,44 @@ class openwebIfTvDevice {
 		}
 
 		//Prepare inputs services
-		if (this.inputs.length > 0) {
+		if (this.inputsLength > 0) {
 			this.log.debug('prepareInputsService');
 			this.inputsService = new Array();
+			const inputs = this.inputs;
 
 			let savedNames = {};
 			try {
 				savedNames = JSON.parse(fs.readFileSync(this.customInputsFile));
 				this.log.debug('Device: %s %s, read devInfo: %s', this.host, accessoryName, savedNames)
 			} catch (error) {
-				this.log.error('Device: %s %s, channels file does not exist', this.host, accessoryName);
+				this.log.debug('Device: %s %s, read saved Inputs names error: %s', this.host, accessoryName)
 			}
 
-			const inputs = this.inputs;
-			let inputsLength = inputs.length;
-			if (inputsLength > 94) {
-				inputsLength = 94
+			let savedTargetVisibility = {};
+			try {
+				savedTargetVisibility = JSON.parse(fs.readFileSync(this.targetVisibilityInputsFile));
+				this.log.debug('Device: %s %s, read savedTargetVisibility: %s', this.host, accessoryName, savedTargetVisibility)
+			} catch (error) {
+				this.log.debug('Device: %s %s, read savedTargetVisibility error: %s', this.host, accessoryName)
 			}
 
+			//check possible inputs count
+			let inputsLength = this.inputsLength;
+			if (inputsLength > 97) {
+				inputsLength = 97;
+				this.log('Inputs count reduced to: %s, because excedded maximum of services', inputsLength)
+			}
 			for (let i = 0; i < inputsLength; i++) {
 
 				//get input reference
 				const inputReference = inputs[i].reference;
 
 				//get input name		
-				let inputName = inputs[i].name;
-				if (savedNames && savedNames[inputReference]) {
-					inputName = savedNames[inputReference];
-				} else {
-					inputName = (inputs[i].name !== undefined) ? inputs[i].name : inputs[i].reference;;
-				}
+				const inputName = (savedNames[inputReference] !== undefined) ? savedNames[inputReference] : (inputs[i].name !== undefined) ? inputs[i].name : inputs[i].reference;
+
+				//get visibility state
+				const targetVisibility = (savedTargetVisibility[inputReference] !== undefined) ? savedTargetVisibility[inputReference] : 0;
+				const currentVisibility = targetVisibility;
 
 				const inputService = new Service.InputSource(inputReference, 'input' + i);
 				inputService
@@ -572,8 +587,8 @@ class openwebIfTvDevice {
 					.setCharacteristic(Characteristic.ConfiguredName, inputName)
 					.setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
 					//.setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.TV)
-					.setCharacteristic(Characteristic.CurrentVisibilityState, Characteristic.CurrentVisibilityState.SHOWN)
-					.setCharacteristic(Characteristic.TargetVisibilityState, Characteristic.TargetVisibilityState.SHOWN);
+					.setCharacteristic(Characteristic.CurrentVisibilityState, currentVisibility)
+					.setCharacteristic(Characteristic.TargetVisibilityState, targetVisibility);
 
 				inputService
 					.getCharacteristic(Characteristic.ConfiguredName)
@@ -590,6 +605,21 @@ class openwebIfTvDevice {
 						}
 					});
 
+				inputService
+					.getCharacteristic(Characteristic.TargetVisibilityState)
+					.onSet(async (state) => {
+						savedTargetVisibility[inputReference] = state;
+						try {
+							await fsPromises.writeFile(this.targetVisibilityInputsFile, JSON.stringify(savedTargetVisibility, null, 2));
+							this.log.debug('Device: %s %s, Input: %s, saved target visibility state: %s', this.host, accessoryName, inputName, JSON.stringify(savedTargetVisibility, null, 2));
+							if (!this.disableLogInfo) {
+								this.log('Device: %s %s, Input: %s, saved target visibility state: %s', this.host, accessoryName, inputName, state ? 'HIDEN' : 'SHOWN');
+							}
+						} catch (error) {
+							this.log.error('Device: %s %s, Input: %s, saved target visibility state error: %s', this.host, accessoryName, error);
+						}
+					});
+
 				this.inputsReference.push(inputReference);
 				this.inputsName.push(inputName);
 
@@ -600,15 +630,23 @@ class openwebIfTvDevice {
 		}
 
 		//Prepare inputs button services
-		if (this.buttons.length > 0) {
+		if (this.buttonsLength > 0) {
 			this.log.debug('prepareInputsButtonService');
 			this.buttonsService = new Array();
 			this.buttonsName = new Array();
 			this.buttonsReference = new Array();
-			for (let i = 0; i < this.buttons.length; i++) {
+			const buttons = this.buttons;
+
+			//check possible buttons count
+			let buttonsLength = this.buttonsLength;
+			if ((this.inputsLength + buttonsLength) > 97) {
+				buttonsLength = 97 - this.inputsLength;
+				this.log('Buttons count reduced to: %s, because excedded maximum of services', buttonsLength)
+			}
+			for (let i = 0; i < buttonsLength; i++) {
 				const buttonName = (buttons[i].name !== undefined) ? buttons[i].name : buttons[i].reference;
-				const buttonReference = this.buttons[i].reference;
-				const buttonService = new Service.Switch(accessoryName + ' ' + this.buttons[i].name, 'buttonService' + i);
+				const buttonReference = buttons[i].reference;
+				const buttonService = new Service.Switch(accessoryName + ' ' + buttonName, 'buttonService' + i);
 				buttonService.getCharacteristic(Characteristic.On)
 					.onGet(async () => {
 						const state = false;

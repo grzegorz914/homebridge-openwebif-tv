@@ -96,7 +96,7 @@ Homebridge plugin for Sat Receivers basis on the OpenWebIf API. Tested with Drea
             "reference": "1:0:19:EF10:421:1:C00000:0:0:0:"
           }
         ],
-        "inputsButton": [
+        "buttons": [
           {
             "name": "Das Erste HD",
             "reference": "1:0:19:283D:3FB:1:C00000:0:0:0:"
@@ -108,7 +108,7 @@ Homebridge plugin for Sat Receivers basis on the OpenWebIf API. Tested with Drea
           {
             "name": "RTL HD",
             "reference": "1:0:19:EF10:421:1:C00000:0:0:0:"
-          }
+          },
         ],
           "manufacturer": "Manufacturer",
           "modelName": "Model",
