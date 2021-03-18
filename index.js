@@ -81,10 +81,9 @@ class openwebIfTvDevice {
 		this.firmwareRevision = config.firmwareRevision || 'Firmware Revision';
 
 		//setup variables
-		this.inputsLength = this.inputs.length;
-		this.buttonsLength = this.buttons.length;
 		this.inputsName = new Array();
 		this.inputsReference = new Array();
+		this.inputsType = new Array();
 		this.checkDeviceInfo = true;
 		this.checkDeviceState = false;
 		this.startPrepareAccessory = true;
@@ -96,6 +95,8 @@ class openwebIfTvDevice {
 		this.currentInputReference = '';
 		this.currentInputIdentifier = 0;
 		this.currentInfoMenuState = false;
+		this.inputsLength = this.inputs.length;
+		this.buttonsLength = this.buttons.length;
 		this.prefDir = path.join(api.user.storagePath(), 'openwebifTv');
 		this.inputsFile = this.prefDir + '/' + 'inputs_' + this.host.split('.').join('');
 		this.customInputsFile = this.prefDir + '/' + 'customInputs_' + this.host.split('.').join('');
@@ -547,26 +548,16 @@ class openwebIfTvDevice {
 			this.inputsService = new Array();
 			const inputs = this.inputs;
 
-			let savedNames = {};
-			try {
-				savedNames = JSON.parse(fs.readFileSync(this.customInputsFile));
-				this.log.debug('Device: %s %s, read devInfo: %s', this.host, accessoryName, savedNames)
-			} catch (error) {
-				this.log.debug('Device: %s %s, read saved Inputs names error: %s', this.host, accessoryName)
-			}
+			const savedNames = (fs.readFileSync(this.customInputsFile) !== undefined) ? JSON.parse(fs.readFileSync(this.customInputsFile)) : {};
+			this.log.debug('Device: %s %s, read savedNames: %s', this.host, accessoryName, savedNames)
 
-			let savedTargetVisibility = {};
-			try {
-				savedTargetVisibility = JSON.parse(fs.readFileSync(this.targetVisibilityInputsFile));
-				this.log.debug('Device: %s %s, read savedTargetVisibility: %s', this.host, accessoryName, savedTargetVisibility)
-			} catch (error) {
-				this.log.debug('Device: %s %s, read savedTargetVisibility error: %s', this.host, accessoryName)
-			}
+			const savedTargetVisibility = (fs.readFileSync(this.targetVisibilityInputsFile) !== undefined) ? JSON.parse(fs.readFileSync(this.targetVisibilityInputsFile)) : {};
+			this.log.debug('Device: %s %s, read savedTargetVisibility: %s', this.host, accessoryName, savedTargetVisibility)
 
 			//check possible inputs count
 			let inputsLength = this.inputsLength;
-			if (inputsLength > 97) {
-				inputsLength = 97;
+			if (inputsLength > 96) {
+				inputsLength = 96;
 				this.log('Inputs count reduced to: %s, because excedded maximum of services', inputsLength)
 			}
 			for (let i = 0; i < inputsLength; i++) {
@@ -577,7 +568,13 @@ class openwebIfTvDevice {
 				//get input name		
 				const inputName = (savedNames[inputReference] !== undefined) ? savedNames[inputReference] : (inputs[i].name !== undefined) ? inputs[i].name : inputs[i].reference;
 
-				//get visibility state
+				//get input type
+				const inputType = 3;
+
+				//get input configured
+				const isConfigured = 1;
+
+				//get input visibility state
 				const targetVisibility = (savedTargetVisibility[inputReference] !== undefined) ? savedTargetVisibility[inputReference] : 0;
 				const currentVisibility = targetVisibility;
 
@@ -585,8 +582,8 @@ class openwebIfTvDevice {
 				inputService
 					.setCharacteristic(Characteristic.Identifier, i)
 					.setCharacteristic(Characteristic.ConfiguredName, inputName)
-					.setCharacteristic(Characteristic.IsConfigured, Characteristic.IsConfigured.CONFIGURED)
-					//.setCharacteristic(Characteristic.InputSourceType, Characteristic.InputSourceType.TV)
+					.setCharacteristic(Characteristic.IsConfigured, isConfigured)
+					.setCharacteristic(Characteristic.InputSourceType, inputType)
 					.setCharacteristic(Characteristic.CurrentVisibilityState, currentVisibility)
 					.setCharacteristic(Characteristic.TargetVisibilityState, targetVisibility);
 
@@ -594,27 +591,37 @@ class openwebIfTvDevice {
 					.getCharacteristic(Characteristic.ConfiguredName)
 					.onSet(async (name) => {
 						try {
-							savedNames[inputReference] = name;
-							await fsPromises.writeFile(this.customInputsFile, JSON.stringify(savedNames, null, 2));
-							this.log.debug('Device: %s %s, saved new Input successful, savedNames: %s', this.host, accessoryName, JSON.stringify(savedNames, null, 2));
+							let newName = savedNames;
+							newName[inputReference] = name;
+							await fsPromises.writeFile(this.customInputsFile, JSON.stringify(newName, null, 2));
+							this.log.debug('Device: %s %s, saved new Input successful, savedNames: %s', this.host, accessoryName, JSON.stringify(newName, null, 2));
 							if (!this.disableLogInfo) {
-								this.log('Device: %s %s, saved new Input successful, name: %s reference: %s', this.host, accessoryName, name, inputReference);
+								this.log('Device: %s %s, new Input name saved successful, name: %s reference: %s', this.host, accessoryName, name, inputReference);
 							}
 						} catch (error) {
-							this.log.error('Device: %s %s, can not write new Input name, error: %s', this.host, accessoryName, error);
+							this.log.error('Device: %s %s, new Input name saved failed, error: %s', this.host, accessoryName, error);
 						}
 					});
 
 				inputService
 					.getCharacteristic(Characteristic.TargetVisibilityState)
+					.onGet(async () => {
+						const state = targetVisibility;
+						if (!this.disableLogInfo) {
+							this.log('Device: %s %s, Input: %s, get target visibility state: %s', this.host, accessoryName, inputName, state ? 'HIDEN' : 'SHOWN');
+						}
+						return state;
+					})
 					.onSet(async (state) => {
-						savedTargetVisibility[inputReference] = state;
 						try {
-							await fsPromises.writeFile(this.targetVisibilityInputsFile, JSON.stringify(savedTargetVisibility, null, 2));
-							this.log.debug('Device: %s %s, Input: %s, saved target visibility state: %s', this.host, accessoryName, inputName, JSON.stringify(savedTargetVisibility, null, 2));
+							let newState = savedTargetVisibility;
+							newState[inputReference] = state;
+							await fsPromises.writeFile(this.targetVisibilityInputsFile, JSON.stringify(newState, null, 2));
+							this.log.debug('Device: %s %s, Input: %s, saved target visibility state: %s', this.host, accessoryName, inputName, JSON.stringify(newState, null, 2));
 							if (!this.disableLogInfo) {
 								this.log('Device: %s %s, Input: %s, saved target visibility state: %s', this.host, accessoryName, inputName, state ? 'HIDEN' : 'SHOWN');
 							}
+							inputService.setCharacteristic(Characteristic.CurrentVisibilityState, state);
 						} catch (error) {
 							this.log.error('Device: %s %s, Input: %s, saved target visibility state error: %s', this.host, accessoryName, error);
 						}
@@ -622,6 +629,7 @@ class openwebIfTvDevice {
 
 				this.inputsReference.push(inputReference);
 				this.inputsName.push(inputName);
+				this.inputsType.push(inputType);
 
 				this.inputsService.push(inputService);
 				accessory.addService(this.inputsService[i]);
