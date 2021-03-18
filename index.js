@@ -195,7 +195,7 @@ class openwebIfTvDevice {
 			this.currentPowerState = powerState;
 
 			const inputReference = response.data.currservice_serviceref;
-			const inputIdentifier = (this.inputsReference.indexOf(inputReference) > 0) ? this.inputsReference.indexOf(inputReference) : 0;
+			const inputIdentifier = (this.inputs.indexOf(inputReference) >= 0) ? this.inputs.indexOf(inputReference) : 0;
 			if (this.televisionService) {
 				this.televisionService
 					.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
@@ -308,7 +308,7 @@ class openwebIfTvDevice {
 					const response = await axios.get(this.url + '/api/statusinfo');
 					const inputName = response.data.currservice_station;
 					const inputReference = response.data.currservice_serviceref;
-					const inputIdentifier = (this.inputsReference.indexOf(inputReference) > 0) ? this.inputsReference.indexOf(inputReference) : 0;
+					const inputIdentifier = (this.inputs.indexOf(inputReference) >= 0) ? this.inputs.indexOf(inputReference) : 0;
 					if (!this.disableLogInfo) {
 						this.log('Device: %s %s, get current Channel successful: %s %s', this.host, accessoryName, inputName, inputReference);
 					}
@@ -324,8 +324,8 @@ class openwebIfTvDevice {
 			})
 			.onSet(async (inputIdentifier) => {
 				try {
-					const inputName = this.inputsName[inputIdentifier];
-					const inputReference = this.inputsReference[inputIdentifier];
+					const inputName = this.inputs[inputIdentifier].name;
+					const inputReference = this.inputs[inputIdentifier].reference;
 					const response = await axios.get(this.url + '/api/zap?sRef=' + inputReference);
 					if (!this.disableLogInfo) {
 						this.log('Device: %s %s, set new Channel successful: %s %s', this.host, accessoryName, inputName, inputReference);
