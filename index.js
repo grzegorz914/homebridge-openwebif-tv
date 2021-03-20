@@ -94,6 +94,7 @@ class openwebIfTvDevice {
 		this.currentInputEventName = '';
 		this.currentInputReference = '';
 		this.currentInputIdentifier = 0;
+		this.startInputIdentifier = 0;
 		this.currentInfoMenuState = false;
 		this.inputsLength = this.inputs.length;
 		this.buttonsLength = this.buttons.length;
@@ -191,11 +192,21 @@ class openwebIfTvDevice {
 			const response = await axios.get(this.url + '/api/statusinfo');
 			this.log.debug('Device: %s %s, debug response: %s', this.host, this.name, response.data);
 			const powerState = (response.data.inStandby === 'false');
-			if (this.televisionService && (powerState !== this.currentPowerState)) {
+			if (this.televisionService && powerState) {
 				this.televisionService
-					.updateCharacteristic(Characteristic.Active, powerState ? 1 : 0);
+					.updateCharacteristic(Characteristic.Active, true);
+				if (!this.currentPowerState) {
+					this.currentPowerState = true;
+					this.televisionService
+						.setCharacteristic(Characteristic.ActiveIdentifier, this.startInputIdentifier);
+				}
+				this.currentPowerState = true;
 			}
-			this.currentPowerState = powerState;
+			if (this.televisionService && !powerState) {
+				this.televisionService
+					.updateCharacteristic(Characteristic.Active, false);
+				this.currentPowerState = false;
+			}
 
 			const inputReference = response.data.currservice_serviceref;
 			const inputIdentifier = (this.inputsReference.indexOf(inputReference) >= 0) ? this.inputsReference.indexOf(inputReference) : 0;
@@ -328,11 +339,15 @@ class openwebIfTvDevice {
 			.onSet(async (inputIdentifier) => {
 				try {
 					const inputName = this.inputsName[inputIdentifier];
-					const inputReference = this.inputsReference[inputIdentifier];
-					const response = await axios.get(this.url + '/api/zap?sRef=' + inputReference);
-					if (!this.disableLogInfo) {
-						this.log('Device: %s %s, set new Channel successful: %s %s', this.host, accessoryName, inputName, inputReference);
+					const inputReference = (this.inputsReference[inputIdentifier] !== undefined) ? this.inputsReference[inputIdentifier] : 0;
+					if (this.currentPowerState) {
+						const response = await axios.get(this.url + '/api/zap?sRef=' + inputReference);
+						if (!this.disableLogInfo) {
+							this.log('Device: %s %s, set new Channel successful: %s %s', this.host, accessoryName, inputName, inputReference);
+						}
 					}
+					this.currentInputReference = inputReference;
+					this.startInputIdentifier = inputIdentifier;
 				} catch (error) {
 					this.log.error('Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', this.host, accessoryName, error);
 				};
