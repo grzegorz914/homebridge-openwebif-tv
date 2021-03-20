@@ -138,10 +138,16 @@ class openwebIfTvDevice {
 		setInterval(function () {
 			if (this.checkDeviceInfo) {
 				this.getDeviceInfo();
-			} else if (!this.checkDeviceInfo && this.checkDeviceState) {
+			}
+			if (!this.checkDeviceInfo && this.checkDeviceState) {
 				this.updateDeviceState();
 			}
 		}.bind(this), this.refreshInterval * 1000);
+
+		//start prepare accessory
+		if (this.startPrepareAccessory) {
+			this.prepareAccessory();
+		}
 	}
 
 	async getDeviceInfo() {
@@ -240,12 +246,8 @@ class openwebIfTvDevice {
 			}
 			this.currentMuteState = mute;
 			this.currentVolume = volume;
-			this.checkDeviceState = true;
 
-			//start prepare accessory
-			if (this.startPrepareAccessory) {
-				this.prepareAccessory();
-			}
+			this.checkDeviceState = true;
 		} catch (error) {
 			this.log.error('Device: %s %s, update Device state error: %s, state: Offline', this.host, this.name, error);
 			this.checkDeviceState = false;
@@ -295,29 +297,27 @@ class openwebIfTvDevice {
 		this.televisionService.getCharacteristic(Characteristic.Active)
 			.onGet(async () => {
 				try {
-					const response = await axios.get(this.url + '/api/statusinfo');
-					const state = (response.data.inStandby === 'false');
+					const state = this.currentPowerState;
 					if (!this.disableLogInfo) {
 						this.log('Device: %s %s, get current Power state successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
 					}
 					return state;
 				} catch (error) {
 					this.log.error('Device: %s %s, get current Power state error: %s', this.host, accessoryName, error);
-					return 0;
 				};
 			})
 			.onSet(async (state) => {
-				if (state != this.currentPowerState) {
-					try {
+				try {
+					if (state !== this.currentPowerState) {
 						const newState = state ? '4' : '5';
 						const response = await axios.get(this.url + '/api/powerstate?newstate=' + newState);
 						if (!this.disableLogInfo) {
 							this.log('Device: %s %s, set new Power state successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
 						}
-					} catch (error) {
-						this.log.error('Device: %s %s, can not set new Power state. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
-					};
-				}
+					}
+				} catch (error) {
+					this.log.error('Device: %s %s, can not set new Power state. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
+				};
 			});
 
 		this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
