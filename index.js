@@ -511,8 +511,8 @@ class openwebIfTvDevice {
 				}
 			});
 
-		accessory.addService(this.speakerService);
 		this.televisionService.addLinkedService(this.speakerService);
+		accessory.addService(this.speakerService);
 
 		//Prepare volume service
 		if (this.volumeControl >= 1) {
@@ -536,7 +536,6 @@ class openwebIfTvDevice {
 						this.speakerService.setCharacteristic(Characteristic.Mute, !state);
 					});
 				accessory.addService(this.volumeService);
-				this.volumeService.addLinkedService(this.volumeService);
 			}
 			if (this.volumeControl == 2) {
 				this.volumeServiceFan = new Service.Fan(accessoryName + ' Volume', 'volumeServiceFan');
@@ -557,7 +556,6 @@ class openwebIfTvDevice {
 						this.speakerService.setCharacteristic(Characteristic.Mute, !state);
 					});
 				accessory.addService(this.volumeServiceFan);
-				this.televisionService.addLinkedService(this.volumeServiceFan);
 			}
 		}
 
@@ -650,8 +648,8 @@ class openwebIfTvDevice {
 				this.inputsType.push(inputType);
 
 				this.inputsService.push(inputService);
-				accessory.addService(this.inputsService[i]);
 				this.televisionService.addLinkedService(this.inputsService[i]);
+				accessory.addService(this.inputsService[i]);
 			};
 		}
 
@@ -708,7 +706,6 @@ class openwebIfTvDevice {
 
 				this.buttonsService.push(buttonService)
 				accessory.addService(this.buttonsService[i]);
-				this.televisionService.addLinkedService(this.buttonsService[i]);
 			}
 		}
 
