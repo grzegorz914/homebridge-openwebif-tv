@@ -699,9 +699,9 @@ class openwebIfTvDevice {
 			this.buttonsService.push(buttonService)
 			accessory.addService(this.buttonsService[i]);
 		}
-	}
 
 		this.startPrepareAccessory = false;
-this.log.debug('Device: %s %s, publishExternalAccessories.', this.host, accessoryName);
-this.api.publishExternalAccessories(PLUGIN_NAME, [accessory]);
+		this.log.debug('Device: %s %s, publishExternalAccessories.', this.host, accessoryName);
+		this.api.publishExternalAccessories(PLUGIN_NAME, [accessory]);
+	}
 };
