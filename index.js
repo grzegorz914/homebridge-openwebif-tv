@@ -36,7 +36,7 @@ class openwebIfTvPlatform {
 			this.log.debug('didFinishLaunching');
 			for (let i = 0; i < this.devices.length; i++) {
 				const device = this.devices[i];
-				if (!deviceName.name) {
+				if (!device.name) {
 					this.log.warn('Device Name Missing')
 				} else {
 					new openwebIfTvDevice(this.log, device, this.api);
