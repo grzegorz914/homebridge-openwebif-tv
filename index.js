@@ -267,13 +267,8 @@ class openwebIfTvDevice {
 
 		//Prepare information service
 		this.log.debug('prepareInformationService');
-		let devInfo = { 'brand': 'Manufacturer', 'model': 'Model name', 'webifver': 'Serial number', 'imagever': 'Firmware' };
-		try {
-			devInfo = JSON.parse(fs.readFileSync(this.devInfoFile));
-			this.log.debug('Device: %s %s, read devInfo: %s', this.host, accessoryName, devInfo)
-		} catch (error) {
-			this.log.error('Device: %s %s, read devInfo failed, error: %s', this.host, accessoryName, error)
-		}
+		const devInfo = ((fs.readFileSync(this.devInfoFile)).length > 0) ? JSON.parse(fs.readFileSync(this.devInfoFile)) : { 'brand': 'Manufacturer', 'model': 'Model name', 'webifver': 'Serial number', 'imagever': 'Firmware' };
+		this.log.debug('Device: %s %s, read devInfo: %s', this.host, accessoryName, devInfo);
 
 		const manufacturer = devInfo.brand;
 		const modelName = devInfo.model;
