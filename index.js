@@ -207,11 +207,6 @@ class openwebIfTvDevice {
 			if (this.televisionService && powerState) {
 				this.televisionService
 					.updateCharacteristic(Characteristic.Active, true);
-				if (!this.currentPowerState) {
-					this.currentPowerState = true;
-					this.televisionService
-						.setCharacteristic(Characteristic.ActiveIdentifier, this.startInputIdentifier);
-				}
 				this.currentPowerState = true;
 			}
 			if (this.televisionService && !powerState) {
@@ -220,34 +215,36 @@ class openwebIfTvDevice {
 				this.currentPowerState = false;
 			}
 
-			const inputReference = response.data.currservice_serviceref;
-			const inputIdentifier = (this.inputsReference.indexOf(inputReference) >= 0) ? this.inputsReference.indexOf(inputReference) : 0;
-			if (this.televisionService) {
-				this.televisionService
-					.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
-			}
-			this.currentInputReference = inputReference;
-			this.currentInputIdentifier = inputIdentifier;
+			if (this.currentPowerState) {
+				const inputReference = response.data.currservice_serviceref;
+				const inputIdentifier = (this.inputsReference.indexOf(inputReference) >= 0) ? this.inputsReference.indexOf(inputReference) : 0;
+				if (this.televisionService) {
+					this.televisionService
+						.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
+				}
 
-			const volume = response.data.volume;
-			const mute = powerState ? (response.data.muted === true) : true;
-			if (this.speakerService) {
-				this.speakerService
-					.updateCharacteristic(Characteristic.Volume, volume)
-					.updateCharacteristic(Characteristic.Mute, mute);
-				if (this.volumeService && this.volumeControl == 1) {
-					this.volumeService
-						.updateCharacteristic(Characteristic.Brightness, volume)
-						.updateCharacteristic(Characteristic.On, !mute);
+				const volume = response.data.volume;
+				const mute = powerState ? (response.data.muted === true) : true;
+				if (this.speakerService) {
+					this.speakerService
+						.updateCharacteristic(Characteristic.Volume, volume)
+						.updateCharacteristic(Characteristic.Mute, mute);
+					if (this.volumeService && this.volumeControl == 1) {
+						this.volumeService
+							.updateCharacteristic(Characteristic.Brightness, volume)
+							.updateCharacteristic(Characteristic.On, !mute);
+					}
+					if (this.volumeServiceFan && this.volumeControl == 2) {
+						this.volumeServiceFan
+							.updateCharacteristic(Characteristic.RotationSpeed, volume)
+							.updateCharacteristic(Characteristic.On, !mute);
+					}
 				}
-				if (this.volumeServiceFan && this.volumeControl == 2) {
-					this.volumeServiceFan
-						.updateCharacteristic(Characteristic.RotationSpeed, volume)
-						.updateCharacteristic(Characteristic.On, !mute);
-				}
+				this.currentInputReference = inputReference;
+				this.currentInputIdentifier = inputIdentifier;
+				this.currentVolume = volume;
+				this.currentMuteState = mute;
 			}
-			this.currentMuteState = mute;
-			this.currentVolume = volume;
 
 			this.checkDeviceState = true;
 		} catch (error) {
@@ -526,7 +523,7 @@ class openwebIfTvDevice {
 					});
 				this.volumeService.getCharacteristic(Characteristic.On)
 					.onGet(async () => {
-						const state = !this.currentMuteState;
+						const state = this.currentPowerState ? !this.currentMuteState : false;
 						return state;
 					})
 					.onSet(async (state) => {
@@ -546,7 +543,7 @@ class openwebIfTvDevice {
 					});
 				this.volumeServiceFan.getCharacteristic(Characteristic.On)
 					.onGet(async () => {
-						const state = !this.currentMuteState;
+						const state = this.currentPowerState ? !this.currentMuteState : false;
 						return state;
 					})
 					.onSet(async (state) => {
