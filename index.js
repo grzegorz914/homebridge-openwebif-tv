@@ -90,7 +90,7 @@ class openwebIfTvDevice {
 		this.inputsType = new Array();
 		this.buttonsReference = new Array();
 		this.buttonsName = new Array();
-		this.checkDeviceInfo = true;
+		this.checkDeviceInfo = false;
 		this.checkDeviceState = false;
 		this.startPrepareAccessory = true;
 		this.currentPowerState = false;
@@ -155,23 +155,20 @@ class openwebIfTvDevice {
 	async getDeviceInfo() {
 		this.log.debug('Device: %s %s, requesting Device Info.', this.host, this.name);
 		try {
-			const [response, response1] = await axios.all([axios.get(this.url + '/api/getallservices'), axios.get(this.url + '/api/deviceinfo')]);
+			const [response, response1] = await axios.all([axios.get(this.url + '/api/deviceinfo'), axios.get(this.url + '/api/getallservices')]);
 			this.log.debug('Device: %s %s, debug response: %s, response1: %s', this.host, this.name, response.data, response1.data);
+			const result = (response.status === 200) ? response : { 'data': { 'brand': this.modelName, 'model': this.modelName, 'webifver': this.serialNumber, 'imagever': this.firmwareRevision, 'kernel': 'undefined', 'chipset': 'undefined' } };
 
-			const channels = JSON.stringify(response.data.services, null, 2);
+			const channels = JSON.stringify(response1.data.services, null, 2);
 			const writeChannelsFile = await fsPromises.writeFile(this.inputsFile, channels);
 			this.log.debug('Device: %s %s, saved Channels successful.', this.host, this.name);
 
-			const devInfo = JSON.stringify(response1.data, null, 2);
-			const writeDevInfoFile = await fsPromises.writeFile(this.devInfoFile, devInfo);
-			this.log.debug('Device: %s %s, saved Device Info successful.', this.host, this.name);
-
-			const manufacturer = response1.data.brand;
-			const modelName = response1.data.model;
-			const serialNumber = response1.data.webifver;
-			const firmwareRevision = response1.data.imagever;
-			const kernelVer = response1.data.kernelver;
-			const chipset = response1.data.chipset;
+			const manufacturer = result.data.brand;
+			const modelName = result.data.model;
+			const serialNumber = result.data.webifver;
+			const firmwareRevision = result.data.imagever;
+			const kernelVer = result.data.kernelver;
+			const chipset = result.data.chipset;
 
 			this.manufacturer = manufacturer;
 			this.modelName = modelName;
@@ -255,7 +252,7 @@ class openwebIfTvDevice {
 	}
 
 	//Prepare accessory
-	prepareAccessory() {
+	async prepareAccessory() {
 		this.log.debug('prepareAccessory');
 		const accessoryName = this.name;
 		const accessoryUUID = UUID.generate(accessoryName);
@@ -264,23 +261,32 @@ class openwebIfTvDevice {
 
 		//Prepare information service
 		this.log.debug('prepareInformationService');
-		const devInfo = ((fs.readFileSync(this.devInfoFile)).length > 0) ? JSON.parse(fs.readFileSync(this.devInfoFile)) : { 'brand': 'Manufacturer', 'model': 'Model name', 'webifver': 'Serial number', 'imagever': 'Firmware' };
-		this.log.debug('Device: %s %s, read devInfo: %s', this.host, accessoryName, devInfo);
+		try {
+			const response = await axios.get(this.url + '/api/deviceinfo');
+			this.log.debug('Device: %s %s, debug response: %s', this.host, this.name, response.data);
+			const result = (response.status === 200) ? response : { 'data': { 'brand': this.modelName, 'model': this.modelName, 'webifver': this.serialNumber, 'imagever': this.firmwareRevision } };
+			const devInfo = JSON.stringify(response.data, null, 2);
+			const write = await fsPromises.writeFile(this.devInfoFile, devInfo);
+			this.log.debug('Device: %s %s, saved Device Info successful: %s', this.host, this.name, devInfo);
 
-		const manufacturer = devInfo.brand;
-		const modelName = devInfo.model;
-		const serialNumber = devInfo.webifver;
-		const firmwareRevision = devInfo.imagever;
+			const manufacturer = result.data.brand;
+			const modelName = result.data.model;
+			const serialNumber = result.data.webifver;
+			const firmwareRevision = result.data.imagever;
 
-		accessory.removeService(accessory.getService(Service.AccessoryInformation));
-		const informationService = new Service.AccessoryInformation();
-		informationService
-			.setCharacteristic(Characteristic.Name, accessoryName)
-			.setCharacteristic(Characteristic.Manufacturer, manufacturer)
-			.setCharacteristic(Characteristic.Model, modelName)
-			.setCharacteristic(Characteristic.SerialNumber, serialNumber)
-			.setCharacteristic(Characteristic.FirmwareRevision, firmwareRevision);
-		accessory.addService(informationService);
+			accessory.removeService(accessory.getService(Service.AccessoryInformation));
+			const informationService = new Service.AccessoryInformation();
+			informationService
+				.setCharacteristic(Characteristic.Name, accessoryName)
+				.setCharacteristic(Characteristic.Manufacturer, manufacturer)
+				.setCharacteristic(Characteristic.Model, modelName)
+				.setCharacteristic(Characteristic.SerialNumber, serialNumber)
+				.setCharacteristic(Characteristic.FirmwareRevision, firmwareRevision);
+			accessory.addService(informationService);
+		} catch (error) {
+			this.log.error('Device: %s %s, prepareInformationService error: %s', this.host, accessoryName, error);
+			this.checkDeviceInfo = true;
+		};
 
 		//Prepare television service
 		this.log.debug('prepareTelevisionService');
@@ -692,6 +698,7 @@ class openwebIfTvDevice {
 		}
 
 		this.startPrepareAccessory = false;
+		this.checkDeviceInfo = true;
 		this.log.debug('Device: %s %s, publishExternalAccessories.', this.host, accessoryName);
 		this.api.publishExternalAccessories(PLUGIN_NAME, [accessory]);
 	}
