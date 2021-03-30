@@ -157,7 +157,7 @@ class openwebIfTvDevice {
 		try {
 			const [response, response1] = await axios.all([axios.get(this.url + '/api/deviceinfo'), axios.get(this.url + '/api/getallservices')]);
 			this.log.debug('Device: %s %s, debug response: %s, response1: %s', this.host, this.name, response.data, response1.data);
-			const result = (response.status === 200) ? response : { 'data': { 'brand': this.modelName, 'model': this.modelName, 'webifver': this.serialNumber, 'imagever': this.firmwareRevision, 'kernel': 'undefined', 'chipset': 'undefined' } };
+			const result = (response.status === 200 && response.data.brand !== undefined) ? response : { 'data': { 'brand': this.modelName, 'model': this.modelName, 'webifver': this.serialNumber, 'imagever': this.firmwareRevision, 'kernel': 'undefined', 'chipset': 'undefined' } };
 
 			const channels = JSON.stringify(response1.data.services, null, 2);
 			const writeChannelsFile = await fsPromises.writeFile(this.inputsFile, channels);
@@ -264,7 +264,7 @@ class openwebIfTvDevice {
 		try {
 			const response = await axios.get(this.url + '/api/deviceinfo');
 			this.log.debug('Device: %s %s, debug response: %s', this.host, this.name, response.data);
-			const result = (response.status === 200) ? response : { 'data': { 'brand': this.modelName, 'model': this.modelName, 'webifver': this.serialNumber, 'imagever': this.firmwareRevision } };
+			const result = (response.status === 200 && response.data.brand !== undefined) ? response : { 'data': { 'brand': this.modelName, 'model': this.modelName, 'webifver': this.serialNumber, 'imagever': this.firmwareRevision } };
 			const devInfo = JSON.stringify(response.data, null, 2);
 			const write = await fsPromises.writeFile(this.devInfoFile, devInfo);
 			this.log.debug('Device: %s %s, saved Device Info successful: %s', this.host, this.name, devInfo);
