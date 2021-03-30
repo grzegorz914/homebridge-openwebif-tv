@@ -92,7 +92,6 @@ class openwebIfTvDevice {
 		this.buttonsName = new Array();
 		this.checkDeviceInfo = false;
 		this.checkDeviceState = false;
-		this.startPrepareAccessory = true;
 		this.currentPowerState = false;
 		this.currentMuteState = false;
 		this.currentVolume = 0;
@@ -101,6 +100,7 @@ class openwebIfTvDevice {
 		this.currentInputReference = '';
 		this.currentInputIdentifier = 0;
 		this.startInputIdentifier = 0;
+		this.setStartInput = false;
 		this.currentInfoMenuState = false;
 		this.inputsLength = this.inputs.length;
 		this.buttonsLength = this.buttons.length;
@@ -147,9 +147,7 @@ class openwebIfTvDevice {
 		}.bind(this), this.refreshInterval * 1000);
 
 		//start prepare accessory
-		if (this.startPrepareAccessory) {
-			this.prepareAccessory();
-		}
+		this.prepareAccessory();
 	}
 
 	async getDeviceInfo() {
@@ -204,6 +202,12 @@ class openwebIfTvDevice {
 			if (this.televisionService && powerState) {
 				this.televisionService
 					.updateCharacteristic(Characteristic.Active, true);
+				if (!this.currentPowerState && this.setStartInput) {
+					this.currentPowerState = true;
+					this.setStartInput = false;
+					this.televisionService
+						.setCharacteristic(Characteristic.ActiveIdentifier, this.startInputIdentifier);
+				}
 				this.currentPowerState = true;
 			}
 			if (this.televisionService && !powerState) {
@@ -352,6 +356,7 @@ class openwebIfTvDevice {
 					}
 					this.currentInputReference = inputReference;
 					this.startInputIdentifier = inputIdentifier;
+					this.setStartInput = true;
 				} catch (error) {
 					this.log.error('Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', this.host, accessoryName, error);
 				};
@@ -697,7 +702,6 @@ class openwebIfTvDevice {
 			accessory.addService(this.buttonsService[i]);
 		}
 
-		this.startPrepareAccessory = false;
 		this.checkDeviceInfo = true;
 		this.log.debug('Device: %s %s, publishExternalAccessories.', this.host, accessoryName);
 		this.api.publishExternalAccessories(PLUGIN_NAME, [accessory]);
