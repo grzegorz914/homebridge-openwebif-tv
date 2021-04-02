@@ -90,7 +90,6 @@ class openwebIfTvDevice {
 		this.inputsType = new Array();
 		this.buttonsReference = new Array();
 		this.buttonsName = new Array();
-		this.devInfo = {};
 		this.checkDeviceInfo = false;
 		this.checkDeviceState = false;
 		this.currentPowerState = false;
@@ -159,11 +158,11 @@ class openwebIfTvDevice {
 			const result = (response.status === 200 && response.data.brand !== undefined) ? response : { 'data': { 'brand': this.manufacturer, 'model': this.modelName, 'webifver': this.serialNumber, 'imagever': this.firmwareRevision, 'kernel': 'undefined', 'chipset': 'undefined' } };
 
 			const devInfo = JSON.stringify(response.data, null, 2);
-			const write = await fsPromises.writeFile(this.devInfoFile, devInfo);
+			const writeDevInfo = await fsPromises.writeFile(this.devInfoFile, devInfo);
 			this.log.debug('Device: %s %s, saved device info successful: %s', this.host, this.name, devInfo);
 
 			const channels = JSON.stringify(response1.data.services, null, 2);
-			const writeChannelsFile = await fsPromises.writeFile(this.inputsFile, channels);
+			const writeChannels = await fsPromises.writeFile(this.inputsFile, channels);
 			this.log.debug('Device: %s %s, saved channels successful.', this.host, this.name);
 
 			const manufacturer = result.data.brand;
@@ -189,8 +188,6 @@ class openwebIfTvDevice {
 			this.log('Webif version: %s', serialNumber);
 			this.log('Firmware: %s', firmwareRevision);
 			this.log('----------------------------------');
-
-			this.devInfo = response;
 
 			this.checkDeviceInfo = false;
 			this.updateDeviceState();
@@ -276,22 +273,27 @@ class openwebIfTvDevice {
 
 		//Prepare information service
 		this.log.debug('prepareInformationService');
-		const result = (this.devInfo.status === 200 && this.devInfo.data.brand !== undefined) ? this.devInfo : { 'data': { 'brand': this.manufacturer, 'model': this.modelName, 'webifver': this.serialNumber, 'imagever': this.firmwareRevision } };
+		try {
+			const readDevInfo = await fsPromises.readFile(this.devInfoFile);
+			const devInfo = (JSON.parse(readDevInfo).brand !== undefined) ? JSON.parse(readDevInfo) : { 'brand': this.manufacturer, 'model': this.modelName, 'webifver': this.serialNumber, 'imagever': this.firmwareRevision };
+			this.log.debug('Device: %s %s, read devInfo: %s', this.host, accessoryName, devInfo)
 
-		const manufacturer = result.data.brand;
-		const modelName = result.data.model;
-		const serialNumber = result.data.webifver;
-		const firmwareRevision = result.data.imagever;
+			const manufacturer = devInfo.brand;
+			const modelName = devInfo.model;
+			const serialNumber = devInfo.webifver;
+			const firmwareRevision = devInfo.imagever;
 
-		accessory.removeService(accessory.getService(Service.AccessoryInformation));
-		const informationService = new Service.AccessoryInformation();
-		informationService
-			.setCharacteristic(Characteristic.Name, accessoryName)
-			.setCharacteristic(Characteristic.Manufacturer, manufacturer)
-			.setCharacteristic(Characteristic.Model, modelName)
-			.setCharacteristic(Characteristic.SerialNumber, serialNumber)
-			.setCharacteristic(Characteristic.FirmwareRevision, firmwareRevision);
-		accessory.addService(informationService);
+			accessory.removeService(accessory.getService(Service.AccessoryInformation));
+			const informationService = new Service.AccessoryInformation(accessoryName);
+			informationService
+				.setCharacteristic(Characteristic.Manufacturer, manufacturer)
+				.setCharacteristic(Characteristic.Model, modelName)
+				.setCharacteristic(Characteristic.SerialNumber, serialNumber)
+				.setCharacteristic(Characteristic.FirmwareRevision, firmwareRevision);
+			accessory.addService(informationService);
+		} catch (error) {
+			this.log.error('Device: %s %s, prepareInformationService error: %s', this.host, accessoryName, error);
+		};
 
 		//Prepare television service
 		this.log.debug('prepareTelevisionService');
