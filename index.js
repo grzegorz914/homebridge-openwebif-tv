@@ -239,12 +239,12 @@ class openwebIfTvDevice {
 				this.speakerService
 					.updateCharacteristic(Characteristic.Volume, volume)
 					.updateCharacteristic(Characteristic.Mute, mute);
-				if (this.volumeService && this.volumeControl == 1) {
+				if (this.volumeService && this.volumeControl === 1) {
 					this.volumeService
 						.updateCharacteristic(Characteristic.Brightness, volume)
 						.updateCharacteristic(Characteristic.On, !mute);
 				}
-				if (this.volumeServiceFan && this.volumeControl == 2) {
+				if (this.volumeServiceFan && this.volumeControl === 2) {
 					this.volumeServiceFan
 						.updateCharacteristic(Characteristic.RotationSpeed, volume)
 						.updateCharacteristic(Characteristic.On, !mute);
