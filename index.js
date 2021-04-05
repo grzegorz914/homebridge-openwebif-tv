@@ -209,7 +209,7 @@ class openwebIfTvDevice {
 			const inputName = response.data.currservice_station;
 			const inputEventName = response.data.currservice_name;
 			const inputReference = response.data.currservice_serviceref;
-			const inputIdentifier = (this.inputsReference.indexOf(inputReference) >= 0) ? this.inputsReference.indexOf(inputReference) : 0;
+			const inputIdentifier = this.setStartInput ? this.setStartInputIdentifier : (this.inputsReference.indexOf(inputReference) >= 0) ? this.inputsReference.indexOf(inputReference) : 0;
 			const volume = response.data.volume;
 			const mute = powerState ? (response.data.muted === true) : true;
 
@@ -217,22 +217,22 @@ class openwebIfTvDevice {
 				if (powerState) {
 					this.televisionService
 						.updateCharacteristic(Characteristic.Active, true)
-						.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
-
+					this.currentPowerState = true;
 				}
 
 				if (!powerState) {
 					this.televisionService
 						.updateCharacteristic(Characteristic.Active, false);
+					this.currentPowerState = false;
 				}
 
-				if (this.setStartInput) {
-					this.televisionService
-						.setCharacteristic(Characteristic.ActiveIdentifier, this.setStartInputIdentifier);
-					if (this.setStartInputIdentifier === inputIdentifier) {
-						this.setStartInput = false;
-					}
-				}
+				this.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
+				this.setStatrtInput = (this.setStatrtInput && this.setStartInputIdentifier === inputIdentifier) ? false : true;
+
+				this.currentInputName = inputName;
+				this.currentInputEventName = inputEventName;
+				this.currentInputReference = inputReference;
+				this.currentInputIdentifier = inputIdentifier;
 			}
 
 			if (this.speakerService) {
@@ -249,15 +249,9 @@ class openwebIfTvDevice {
 						.updateCharacteristic(Characteristic.RotationSpeed, volume)
 						.updateCharacteristic(Characteristic.On, !mute);
 				}
+				this.currentVolume = volume;
+				this.currentMuteState = mute;
 			}
-
-			this.currentPowerState = powerState;
-			this.currentInputName = inputName;
-			this.currentInputEventName = inputEventName;
-			this.currentInputReference = inputReference;
-			this.currentInputIdentifier = inputIdentifier;
-			this.currentVolume = volume;
-			this.currentMuteState = mute;
 		} catch (error) {
 			this.log.error('Device: %s %s, update device state error: %s', this.host, this.name, error);
 			this.currentPowerState = false;
