@@ -36,9 +36,11 @@ class openwebIfTvPlatform {
 			this.log.debug('didFinishLaunching');
 			for (let i = 0; i < this.devices.length; i++) {
 				const device = this.devices[i];
-				if (!device.name) {
+				const deviceName = device.name;
+				if (!deviceName) {
 					this.log.warn('Device Name Missing')
 				} else {
+					this.log.info('Adding new accessory:', deviceName);
 					new openwebIfTvDevice(this.log, device, this.api);
 				}
 			}
@@ -192,7 +194,7 @@ class openwebIfTvDevice {
 			this.checkDeviceInfo = false;
 			this.checkDeviceState = true;
 		} catch (error) {
-			this.log.error('Device: %s %s, get device info eror: %s, device offline, trying to reconnect', this.host, this.name, error);
+			this.log.debug('Device: %s %s, get device info eror: %s, device offline, trying to reconnect', this.host, this.name, error);
 			this.currentPowerState = false;
 			this.checkDeviceInfo = true;
 			this.checkDeviceState = false;
@@ -289,7 +291,7 @@ class openwebIfTvDevice {
 				.setCharacteristic(Characteristic.FirmwareRevision, firmwareRevision);
 			accessory.addService(informationService);
 		} catch (error) {
-			this.log.error('Device: %s %s, prepareInformationService error: %s', this.host, accessoryName, error);
+			this.log.debug('Device: %s %s, prepareInformationService error: %s', this.host, accessoryName, error);
 		};
 
 		//Prepare television service
