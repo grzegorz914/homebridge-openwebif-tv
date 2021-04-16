@@ -195,9 +195,7 @@ class openwebIfTvDevice {
 			this.checkDeviceState = true;
 		} catch (error) {
 			this.log.debug('Device: %s %s, get device info eror: %s, device offline, trying to reconnect', this.host, this.name, error);
-			this.currentPowerState = false;
 			this.checkDeviceInfo = true;
-			this.checkDeviceState = false;
 		};
 	}
 
@@ -255,10 +253,7 @@ class openwebIfTvDevice {
 				this.currentMuteState = mute;
 			}
 		} catch (error) {
-			this.log.error('Device: %s %s, update device state error: %s', this.host, this.name, error);
-			this.currentPowerState = false;
-			this.checkDeviceState = false;
-			this.checkDeviceInfo = true;
+			this.log.debug('Device: %s %s, update device state error: %s', this.host, this.name, error);
 		};
 	}
 
