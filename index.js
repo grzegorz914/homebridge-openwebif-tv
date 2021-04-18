@@ -209,7 +209,8 @@ class openwebIfTvDevice {
 			const inputName = response.data.currservice_station;
 			const inputEventName = response.data.currservice_name;
 			const inputReference = response.data.currservice_serviceref;
-			const inputIdentifier = this.setStartInput ? this.setStartInputIdentifier : (this.inputsReference.indexOf(inputReference) >= 0) ? this.inputsReference.indexOf(inputReference) : 0;
+			const currentInputIdentifier = (this.inputsReference.indexOf(inputReference) >= 0) ? this.inputsReference.indexOf(inputReference) : 0;
+			const inputIdentifier = this.setStartInput ? this.setStartInputIdentifier : currentInputIdentifier;
 			const volume = response.data.volume;
 			const mute = powerState ? (response.data.muted === true) : true;
 
@@ -226,8 +227,9 @@ class openwebIfTvDevice {
 					this.currentPowerState = false;
 				}
 
-				this.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
-				this.setStatrtInput = (this.setStatrtInput && this.setStartInputIdentifier === inputIdentifier) ? false : true;
+				const setUpdateCharacteristic = this.setStartInput ? this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier) :
+					this.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
+				this.setStartInput = (currentInputIdentifier === inputIdentifier) ? false : true;
 
 				this.currentInputName = inputName;
 				this.currentInputEventName = inputEventName;
