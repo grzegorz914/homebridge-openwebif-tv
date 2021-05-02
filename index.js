@@ -229,7 +229,9 @@ class openwebIfTvDevice {
 
 				const setUpdateCharacteristic = this.setStartInput ? this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier) :
 					this.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
-				this.setStartInput = (currentInputIdentifier === inputIdentifier) ? false : true;
+				setTimeout(() => {
+					this.setStartInput = (currentInputIdentifier === inputIdentifier) ? false : true;
+				}, 500);;
 
 				this.currentInputName = inputName;
 				this.currentInputEventName = inputEventName;
