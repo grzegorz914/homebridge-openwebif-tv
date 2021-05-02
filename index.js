@@ -352,7 +352,7 @@ class openwebIfTvDevice {
 					if (!this.disableLogInfo) {
 						this.log('Device: %s %s, set new Channel successful: %s %s', this.host, accessoryName, inputName, inputReference);
 					}
-					this.setStartInputIdentifier = this.currentPowerState ? this.currentInputIdentifier : inputIdentifier;
+					this.setStartInputIdentifier = inputIdentifier;
 					this.setStartInput = this.currentPowerState ? false : true;
 				} catch (error) {
 					this.log.error('Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', this.host, accessoryName, error);
