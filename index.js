@@ -229,9 +229,7 @@ class openwebIfTvDevice {
 
 				const setUpdateCharacteristic = this.setStartInput ? this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier) :
 					this.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
-				setTimeout(() => {
-					this.setStartInput = (currentInputIdentifier === inputIdentifier) ? false : true;
-				}, 500);;
+				this.setStartInput = (currentInputIdentifier === inputIdentifier) ? false : true;
 
 				this.currentInputName = inputName;
 				this.currentInputEventName = inputEventName;
@@ -570,7 +568,7 @@ class openwebIfTvDevice {
 		this.log.debug('Device: %s %s, read savedTargetVisibility: %s', this.host, accessoryName, savedTargetVisibility);
 
 		//check possible inputs count
-		const inputsLength = (inputs.length > 96) ? 96 : inputs.length;
+		const inputsLength = (this.inputsLength > 96) ? 96 : this.inputsLength;
 		for (let i = 0; i < inputsLength; i++) {
 
 			//get input reference
@@ -652,10 +650,15 @@ class openwebIfTvDevice {
 		const buttons = this.buttons;
 
 		//check possible buttons count
-		const buttonsLength = ((inputs.length + buttons.length) > 96) ? 96 - inputs.length : buttons.length;
+		const buttonsLength = ((this.inputsLength + this.buttonsLength) > 96) ? 96 - this.inputsLength : this.buttonsLength;
 		for (let i = 0; i < buttonsLength; i++) {
+
+			//get button reference
 			const buttonReference = buttons[i].reference;
+
+			//get button name
 			const buttonName = (buttons[i].name !== undefined) ? buttons[i].name : buttons[i].reference;
+
 			const buttonService = new Service.Switch(accessoryName + ' ' + buttonName, 'buttonService' + i);
 			buttonService.getCharacteristic(Characteristic.On)
 				.onGet(async () => {
@@ -675,19 +678,19 @@ class openwebIfTvDevice {
 							setTimeout(() => {
 								buttonService
 									.updateCharacteristic(Characteristic.On, false);
-							}, 350);
+							}, 250);
 						} catch (error) {
 							this.log.error('Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', this.host, accessoryName, error);
 							setTimeout(() => {
 								buttonService
 									.updateCharacteristic(Characteristic.On, false);
-							}, 50);
+							}, 250);
 						};
 					} else {
 						setTimeout(() => {
 							buttonService
 								.updateCharacteristic(Characteristic.On, false);
-						}, 350);
+						}, 250);
 					}
 				});
 			this.buttonsReference.push(buttonReference);
