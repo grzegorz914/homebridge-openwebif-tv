@@ -34,7 +34,7 @@
               "required": true
             },
             "auth": {
-              "title": "Authentication",
+              "title": "Authorization",
               "type": "boolean",
               "default": false,
               "required": true
@@ -42,18 +42,12 @@
             "user": {
               "title": "User",
               "type": "string",
-              "required": false,
-              "condition": {
-                "functionBody": "return model.devices[arrayIndices].auth === true;"
-              }
+              "required": false
             },
             "pass": {
               "title": "Password",
               "type": "string",
-              "required": false,
-              "condition": {
-                "functionBody": "return model.devices[arrayIndices].auth === true;"
-              }
+              "required": false
             },
             "refreshInterval": {
               "title": "Refresh interval (sec)",
@@ -191,7 +185,7 @@
         "devices[].name",
         "devices[].host",
         "devices[].port",
-        "devices[].volumeControl",
+        "devices[].auth",
         {
           "key": "devices[]",
           "type": "section",
@@ -237,10 +231,12 @@
           "expandable": true,
           "expanded": false,
           "items": [
-            "devices[].auth",
             "devices[].user",
             "devices[].pass"
-          ]
+          ],
+          "condition": {
+            "functionBody": "return model.devices[arrayIndices].auth === true;"
+          }
         },
         {
           "key": "devices[]",
@@ -250,8 +246,9 @@
           "expanded": false,
           "items": [
             "devices[].disableLogInfo",
+            "devices[].switchInfoMenu",
             "devices[].refreshInterval",
-            "devices[].switchInfoMenu"
+            "devices[].volumeControl"
           ]
         },
         {
