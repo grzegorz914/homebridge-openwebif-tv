@@ -106,8 +106,7 @@ class openwebIfTvDevice {
 		this.currentInputIdentifier = 0;
 		this.setStartInputIdentifier = 0;
 		this.currentInfoMenuState = false;
-		this.inputsLength = this.inputs.length;
-		this.buttonsLength = this.buttons.length;
+
 		this.prefDir = path.join(api.user.storagePath(), 'openwebifTv');
 		this.inputsFile = this.prefDir + '/' + 'inputs_' + this.host.split('.').join('');
 		this.inputsNamesFile = this.prefDir + '/' + 'inputsNames_' + this.host.split('.').join('');
