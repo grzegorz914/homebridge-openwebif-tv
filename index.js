@@ -87,7 +87,6 @@ class openwebIfTvDevice {
 		//setup variables
 		this.checkDeviceInfo = true;
 		this.checkDeviceState = false;
-		this.startPrepareAccessory = true;
 
 		this.inputsService = new Array();
 		this.inputsReference = new Array();
