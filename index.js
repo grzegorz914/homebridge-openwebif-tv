@@ -85,6 +85,10 @@ class openwebIfTvDevice {
 		this.firmwareRevision = config.firmwareRevision || 'Firmware Revision';
 
 		//setup variables
+		this.checkDeviceInfo = true;
+		this.checkDeviceState = false;
+		this.startPrepareAccessory = true;
+
 		this.inputsService = new Array();
 		this.inputsReference = new Array();
 		this.inputsName = new Array();
@@ -92,8 +96,6 @@ class openwebIfTvDevice {
 		this.inputsType = new Array();
 		this.buttonsReference = new Array();
 		this.buttonsName = new Array();
-		this.checkDeviceInfo = false;
-		this.checkDeviceState = false;
 		this.setStartInput = false;
 		this.currentPowerState = false;
 		this.currentMuteState = false;
@@ -108,7 +110,7 @@ class openwebIfTvDevice {
 		this.buttonsLength = this.buttons.length;
 		this.prefDir = path.join(api.user.storagePath(), 'openwebifTv');
 		this.inputsFile = this.prefDir + '/' + 'inputs_' + this.host.split('.').join('');
-		this.customInputsFile = this.prefDir + '/' + 'customInputs_' + this.host.split('.').join('');
+		this.inputsNamesFile = this.prefDir + '/' + 'inputsNames_' + this.host.split('.').join('');
 		this.targetVisibilityInputsFile = this.prefDir + '/' + 'targetVisibilityInputs_' + this.host.split('.').join('');
 		this.devInfoFile = this.prefDir + '/' + 'devInfo_' + this.host.split('.').join('');
 		this.url = this.auth ? ('http://' + this.user + ':' + this.pass + '@' + this.host + ':' + this.port) : ('http://' + this.host + ':' + this.port);
@@ -126,8 +128,8 @@ class openwebIfTvDevice {
 			fsPromises.writeFile(this.inputsFile, '');
 		}
 		//check if the files exists, if not then create it
-		if (fs.existsSync(this.customInputsFile) === false) {
-			fsPromises.writeFile(this.customInputsFile, '');
+		if (fs.existsSync(this.inputsNamesFile) === false) {
+			fsPromises.writeFile(this.inputsNamesFile, '');
 		}
 		//check if the files exists, if not then create it
 		if (fs.existsSync(this.targetVisibilityInputsFile) === false) {
@@ -192,9 +194,10 @@ class openwebIfTvDevice {
 			this.firmwareRevision = firmwareRevision;
 
 			this.checkDeviceInfo = false;
-			this.checkDeviceState = true;
+			const updateDeviceState = !this.checkDeviceState ? this.updateDeviceState() : false;
 		} catch (error) {
 			this.log.debug('Device: %s %s, get device info eror: %s, device offline, trying to reconnect', this.host, this.name, error);
+			this.checkDeviceState = false;
 			this.checkDeviceInfo = true;
 		};
 	}
@@ -254,8 +257,16 @@ class openwebIfTvDevice {
 				this.currentVolume = volume;
 				this.currentMuteState = mute;
 			}
+			this.checkDeviceState = true;
+
+			//start prepare accessory
+			if (this.startPrepareAccessory) {
+				this.prepareAccessory();
+			}
 		} catch (error) {
 			this.log.debug('Device: %s %s, update device state error: %s', this.host, this.name, error);
+			this.checkDeviceState = false;
+			this.checkDeviceInfo = true;
 		};
 	}
 
@@ -559,23 +570,24 @@ class openwebIfTvDevice {
 
 		//Prepare inputs services
 		this.log.debug('prepareInputsService');
-		const inputs = this.inputs;
 
-		const savedNames = ((fs.readFileSync(this.customInputsFile)).length > 0) ? JSON.parse(fs.readFileSync(this.customInputsFile)) : {};
-		this.log.debug('Device: %s %s, read savedNames: %s', this.host, accessoryName, savedNames)
+		const savedInputsNames = ((fs.readFileSync(this.inputsNamesFile)).length > 0) ? JSON.parse(fs.readFileSync(this.inputsNamesFile)) : {};
+		this.log.debug('Device: %s %s, read savedInputsNames: %s', this.host, accessoryName, savedInputsNames)
 
 		const savedTargetVisibility = ((fs.readFileSync(this.targetVisibilityInputsFile)).length > 0) ? JSON.parse(fs.readFileSync(this.targetVisibilityInputsFile)) : {};
 		this.log.debug('Device: %s %s, read savedTargetVisibility: %s', this.host, accessoryName, savedTargetVisibility);
 
-		//check possible inputs count
-		const inputsLength = (this.inputsLength > 96) ? 96 : this.inputsLength;
-		for (let i = 0; i < inputsLength; i++) {
+		//check available inputs and possible inputs count (max 96)
+		const inputs = this.inputs;
+		const inputsCount = inputs.length;
+		const maxInputsCount = (inputsCount > 96) ? 96 : inputsCount;
+		for (let i = 0; i < maxInputsCount; i++) {
 
 			//get input reference
 			const inputReference = inputs[i].reference;
 
 			//get input name		
-			const inputName = (savedNames[inputReference] !== undefined) ? savedNames[inputReference] : (inputs[i].name !== undefined) ? inputs[i].name : inputs[i].reference;
+			const inputName = (savedInputsNames[inputReference] !== undefined) ? savedInputsNames[inputReference] : (inputs[i].name !== undefined) ? inputs[i].name : inputs[i].reference;
 
 			//get input type
 			const inputType = 3;
@@ -600,10 +612,10 @@ class openwebIfTvDevice {
 				.getCharacteristic(Characteristic.ConfiguredName)
 				.onSet(async (name) => {
 					try {
-						let newName = savedNames;
+						let newName = savedInputsNames;
 						newName[inputReference] = name;
-						await fsPromises.writeFile(this.customInputsFile, JSON.stringify(newName, null, 2));
-						this.log.debug('Device: %s %s, saved new Input successful, savedNames: %s', this.host, accessoryName, JSON.stringify(newName, null, 2));
+						await fsPromises.writeFile(this.inputsNamesFile, JSON.stringify(newName, null, 2));
+						this.log.debug('Device: %s %s, saved new Input successful, savedInputsNames: %s', this.host, accessoryName, JSON.stringify(newName, null, 2));
 						if (!this.disableLogInfo) {
 							this.log('Device: %s %s, new Input name saved successful, name: %s reference: %s', this.host, accessoryName, name, inputReference);
 						}
@@ -647,11 +659,12 @@ class openwebIfTvDevice {
 
 		//Prepare inputs button services
 		this.log.debug('prepareInputsButtonService');
-		const buttons = this.buttons;
 
-		//check possible buttons count
-		const buttonsLength = ((this.inputsLength + this.buttonsLength) > 96) ? 96 - this.inputsLength : this.buttonsLength;
-		for (let i = 0; i < buttonsLength; i++) {
+		//check available buttons and possible buttons count (max 96 - inputsCount)
+		const buttons = this.buttons;
+		const buttonsCount = buttons.length;
+		const maxButtonsCount = ((inputsCount + buttonsCount) > 96) ? 96 - inputsCount : buttonsCount;
+		for (let i = 0; i < maxButtonsCount; i++) {
 
 			//get button reference
 			const buttonReference = buttons[i].reference;
@@ -700,6 +713,7 @@ class openwebIfTvDevice {
 			accessory.addService(this.buttonsService[i]);
 		}
 
+		this.startPrepareAccessory = false;
 		this.log.debug('Device: %s %s, publishExternalAccessories.', this.host, accessoryName);
 		this.api.publishExternalAccessories(PLUGIN_NAME, [accessory]);
 	}
