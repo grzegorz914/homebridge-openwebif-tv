@@ -149,9 +149,6 @@ class openwebIfTvDevice {
 				this.updateDeviceState();
 			}
 		}.bind(this), this.refreshInterval * 1000);
-
-		this.getDeviceInfo();
-		this.prepareAccessory();
 	}
 
 	async getDeviceInfo() {
