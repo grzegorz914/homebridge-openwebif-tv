@@ -230,8 +230,8 @@ class openwebIfTvDevice {
 			const inputName = response.data.currservice_station;
 			const inputEventName = response.data.currservice_name;
 			const inputReference = response.data.currservice_serviceref;
-			const inputIdentifier = (this.inputsReference.indexOf(inputReference) >= 0) ? this.inputsReference.indexOf(inputReference) : 0;
-			const inputIdentifier = this.setStartInput ? this.setStartInputIdentifier : inputIdentifier;
+			const currentInputIdentifier = (this.inputsReference.indexOf(inputReference) >= 0) ? this.inputsReference.indexOf(inputReference) : 0;
+			const inputIdentifier = this.setStartInput ? this.setStartInputIdentifier : currentInputIdentifier;
 			const volume = response.data.volume;
 			const mute = (response.data.muted === true);
 
