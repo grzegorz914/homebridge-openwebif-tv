@@ -98,12 +98,13 @@ class openwebIfTvDevice {
 		this.buttonsName = new Array();
 
 		this.powerState = false;
-		this.muteState = false;
 		this.volume = 0;
+		this.muteState = false;
 		this.infoMenuState = false;
 
 		this.setStartInput = false;
 		this.setStartInputIdentifier = 0;
+
 		this.inputName = '';
 		this.inputEventName = '';
 		this.inputReference = '';
@@ -233,7 +234,7 @@ class openwebIfTvDevice {
 			const currentInputIdentifier = (this.inputsReference.indexOf(inputReference) >= 0) ? this.inputsReference.indexOf(inputReference) : 0;
 			const inputIdentifier = this.setStartInput ? this.setStartInputIdentifier : currentInputIdentifier;
 			const volume = response.data.volume;
-			const mute = (response.data.muted === true);
+			const muteState = powerState ? (response.data.muted === true) : true;
 
 			if (this.televisionService) {
 				if (powerState) {
@@ -261,19 +262,19 @@ class openwebIfTvDevice {
 			if (this.speakerService) {
 				this.speakerService
 					.updateCharacteristic(Characteristic.Volume, volume)
-					.updateCharacteristic(Characteristic.Mute, mute);
+					.updateCharacteristic(Characteristic.Mute, muteState);
 				if (this.volumeService && this.volumeControl === 1) {
 					this.volumeService
 						.updateCharacteristic(Characteristic.Brightness, volume)
-						.updateCharacteristic(Characteristic.On, !mute);
+						.updateCharacteristic(Characteristic.On, !muteState);
 				}
 				if (this.volumeServiceFan && this.volumeControl === 2) {
 					this.volumeServiceFan
 						.updateCharacteristic(Characteristic.RotationSpeed, volume)
-						.updateCharacteristic(Characteristic.On, !mute);
+						.updateCharacteristic(Characteristic.On, !muteState);
 				}
 				this.volume = volume;
-				this.muteState = powerState ? this.muteState : true;
+				this.muteState = this.muteState;
 			}
 			this.checkDeviceState = true;
 		} catch (error) {
