@@ -685,7 +685,7 @@ class openwebIfTvDevice {
 		//check available buttons and possible buttons count (max 94 - inputsCount)
 		const buttons = this.buttons;
 		const buttonsCount = buttons.length;
-		const maxButtonsCount = ((inputsCount + buttonsCount) < 94) ? 94 - inputsCount : 0;
+		const maxButtonsCount = ((inputsCount + buttonsCount) < 94) ? buttonsCount : 94 - inputsCount;
 		for (let i = 0; i < maxButtonsCount; i++) {
 
 			//get button reference
