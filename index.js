@@ -8,14 +8,14 @@ const path = require('path');
 const PLUGIN_NAME = 'homebridge-openwebif-tv';
 const PLATFORM_NAME = 'OpenWebIfTv';
 
-let Accessory, Characteristic, Service, Categories, UUID;
+let Accessory, Characteristic, Service, Categories, AccessoryUUID;
 
 module.exports = (api) => {
 	Accessory = api.platformAccessory;
 	Characteristic = api.hap.Characteristic;
 	Service = api.hap.Service;
 	Categories = api.hap.Categories;
-	UUID = api.hap.uuid;
+	AccessoryUUID = api.hap.uuid;
 	api.registerPlatform(PLUGIN_NAME, PLATFORM_NAME, openwebIfTvPlatform, true);
 };
 
@@ -118,27 +118,27 @@ class openwebIfTvDevice {
 		this.url = this.auth ? ('http://' + this.user + ':' + this.pass + '@' + this.host + ':' + this.port) : ('http://' + this.host + ':' + this.port);
 
 		//check if prefs directory ends with a /, if not then add it
-		if (this.prefDir.endsWith('/') === false) {
+		if (this.prefDir.endsWith('/') == false) {
 			this.prefDir = this.prefDir + '/';
 		}
 		//check if the directory exists, if not then create it
-		if (fs.existsSync(this.prefDir) === false) {
+		if (fs.existsSync(this.prefDir) == false) {
 			fsPromises.mkdir(this.prefDir);
 		}
 		//check if the files exists, if not then create it
-		if (fs.existsSync(this.inputsFile) === false) {
+		if (fs.existsSync(this.inputsFile) == false) {
 			fsPromises.writeFile(this.inputsFile, '');
 		}
 		//check if the files exists, if not then create it
-		if (fs.existsSync(this.inputsNamesFile) === false) {
+		if (fs.existsSync(this.inputsNamesFile) == false) {
 			fsPromises.writeFile(this.inputsNamesFile, '');
 		}
 		//check if the files exists, if not then create it
-		if (fs.existsSync(this.targetVisibilityInputsFile) === false) {
+		if (fs.existsSync(this.targetVisibilityInputsFile) == false) {
 			fsPromises.writeFile(this.targetVisibilityInputsFile, '');
 		}
 		//check if the files exists, if not then create it
-		if (fs.existsSync(this.devInfoFile) === false) {
+		if (fs.existsSync(this.devInfoFile) == false) {
 			fsPromises.writeFile(this.devInfoFile, '');
 		}
 
@@ -160,7 +160,7 @@ class openwebIfTvDevice {
 		try {
 			const [response, response1] = await axios.all([axios.get(this.url + '/api/deviceinfo'), axios.get(this.url + '/api/getallservices')]);
 			this.log.debug('Device: %s %s, debug response: %s, response1: %s', this.host, this.name, response.data, response1.data);
-			const result = (response.data.brand !== undefined) ? response : {
+			const result = (response.data.brand != undefined) ? response : {
 				'data': {
 					'brand': this.manufacturer,
 					'model': this.modelName,
@@ -170,7 +170,7 @@ class openwebIfTvDevice {
 					'chipset': 'undefined'
 				}
 			};
-			const obj = (result.data.brand !== undefined) ? {
+			const obj = (result.data.brand != undefined) ? {
 				'data': {
 					'brand': result.data.brand,
 					'model': result.data.model,
@@ -227,14 +227,14 @@ class openwebIfTvDevice {
 			const response = await axios.get(this.url + '/api/statusinfo');
 			this.log.debug('Device: %s %s, debug response: %s', this.host, this.name, response.data);
 
-			const powerState = (response.data.inStandby === 'false');
+			const powerState = (response.data.inStandby == 'false');
 			const inputName = response.data.currservice_station;
 			const inputEventName = response.data.currservice_name;
 			const inputReference = response.data.currservice_serviceref;
 			const currentInputIdentifier = (this.inputsReference.indexOf(inputReference) >= 0) ? this.inputsReference.indexOf(inputReference) : 0;
 			const inputIdentifier = this.setStartInput ? this.setStartInputIdentifier : currentInputIdentifier;
 			const volume = response.data.volume;
-			const muteState = powerState ? (response.data.muted === true) : true;
+			const muteState = powerState ? (response.data.muted == true) : true;
 
 			if (this.televisionService) {
 				if (powerState) {
@@ -251,7 +251,7 @@ class openwebIfTvDevice {
 
 				const setUpdateCharacteristic = this.setStartInput ? this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier) :
 					this.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
-				this.setStartInput = (inputIdentifier === inputIdentifier) ? false : true;
+				this.setStartInput = (inputIdentifier == inputIdentifier) ? false : true;
 
 				this.inputName = inputName;
 				this.inputEventName = inputEventName;
@@ -263,12 +263,12 @@ class openwebIfTvDevice {
 				this.speakerService
 					.updateCharacteristic(Characteristic.Volume, volume)
 					.updateCharacteristic(Characteristic.Mute, muteState);
-				if (this.volumeService && this.volumeControl === 1) {
+				if (this.volumeService && this.volumeControl == 1) {
 					this.volumeService
 						.updateCharacteristic(Characteristic.Brightness, volume)
 						.updateCharacteristic(Characteristic.On, !muteState);
 				}
-				if (this.volumeServiceFan && this.volumeControl === 2) {
+				if (this.volumeServiceFan && this.volumeControl == 2) {
 					this.volumeServiceFan
 						.updateCharacteristic(Characteristic.RotationSpeed, volume)
 						.updateCharacteristic(Characteristic.On, !muteState);
@@ -288,7 +288,7 @@ class openwebIfTvDevice {
 	async prepareAccessory() {
 		this.log.debug('prepareAccessory');
 		const accessoryName = this.name;
-		const accessoryUUID = UUID.generate(accessoryName);
+		const accessoryUUID = AccessoryUUID.generate(accessoryName);
 		const accessoryCategory = Categories.TV_SET_TOP_BOX;
 		const accessory = new Accessory(accessoryName, accessoryUUID, accessoryCategory);
 
@@ -296,7 +296,7 @@ class openwebIfTvDevice {
 		this.log.debug('prepareInformationService');
 		try {
 			const readDevInfo = await fsPromises.readFile(this.devInfoFile);
-			const devInfo = (readDevInfo !== undefined) ? JSON.parse(readDevInfo) : {
+			const devInfo = (readDevInfo != undefined) ? JSON.parse(readDevInfo) : {
 				'data': {
 					'brand': this.manufacturer,
 					'model': this.modelName,
@@ -345,7 +345,7 @@ class openwebIfTvDevice {
 			})
 			.onSet(async (state) => {
 				try {
-					if (state !== this.powerState) {
+					if (state != this.powerState) {
 						const newState = state ? '4' : '5';
 						const response = await axios.get(this.url + '/api/powerstate?newstate=' + newState);
 						if (!this.disableLogInfo) {
@@ -379,7 +379,7 @@ class openwebIfTvDevice {
 			.onSet(async (inputIdentifier) => {
 				try {
 					const inputName = this.inputsName[inputIdentifier];
-					const inputReference = (this.inputsReference[inputIdentifier] !== undefined) ? this.inputsReference[inputIdentifier] : 0;
+					const inputReference = (this.inputsReference[inputIdentifier] != undefined) ? this.inputsReference[inputIdentifier] : 0;
 					const response = await axios.get(this.url + '/api/zap?sRef=' + inputReference);
 					if (!this.disableLogInfo) {
 						this.log('Device: %s %s, set new Channel successful: %s %s', this.host, accessoryName, inputName, inputReference);
@@ -531,7 +531,7 @@ class openwebIfTvDevice {
 				};
 			})
 			.onSet(async (state) => {
-				if (state !== this.muteState) {
+				if (state != this.muteState) {
 					try {
 						const response = await axios.get(this.url + '/api/vol?set=mute');
 						if (!this.disableLogInfo) {
@@ -610,7 +610,7 @@ class openwebIfTvDevice {
 			const inputReference = inputs[i].reference;
 
 			//get input name		
-			const inputName = (savedInputsNames[inputReference] !== undefined) ? savedInputsNames[inputReference] : (inputs[i].name !== undefined) ? inputs[i].name : inputs[i].reference;
+			const inputName = (savedInputsNames[inputReference] != undefined) ? savedInputsNames[inputReference] : (inputs[i].name != undefined) ? inputs[i].name : inputs[i].reference;
 
 			//get input type
 			const inputType = 3;
@@ -619,7 +619,7 @@ class openwebIfTvDevice {
 			const isConfigured = 1;
 
 			//get input visibility state
-			const targetVisibility = (savedTargetVisibility[inputReference] !== undefined) ? savedTargetVisibility[inputReference] : 0;
+			const targetVisibility = (savedTargetVisibility[inputReference] != undefined) ? savedTargetVisibility[inputReference] : 0;
 			const currentVisibility = targetVisibility;
 
 			const inputService = new Service.InputSource(inputReference, 'input' + i);
@@ -693,7 +693,7 @@ class openwebIfTvDevice {
 			const buttonReference = buttons[i].reference;
 
 			//get button name
-			const buttonName = (buttons[i].name !== undefined) ? buttons[i].name : buttons[i].reference;
+			const buttonName = (buttons[i].name != undefined) ? buttons[i].name : buttons[i].reference;
 
 			const buttonService = new Service.Switch(accessoryName + ' ' + buttonName, 'buttonService' + i);
 			buttonService.getCharacteristic(Characteristic.On)
