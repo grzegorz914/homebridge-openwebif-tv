@@ -54,7 +54,7 @@ Homebridge plugin for Sat Receivers basis on the OpenWebIf API. Tested with Drea
 ## Configuration
 1. Use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) to configure the plugin (strongly recomended), or update your configuration file manually. See `sample-config.json` in this repository for a sample or add the bottom example to Your config.json file.
 2. If port `80` not working check which port is set for Your Sat Receiver.
-3. All `reference` and `name` from Your sat receiver are stored in `homebridge_directory/openwebifTv/channels_19216804`, if U want somthing changed in channel list please add Yours prefered channels to the config bouquets.
+3. All `reference` and `name` from Your sat receiver are stored in `homebridge_directory/openwebifTv/inputs_xxxx`, if U want somthing changed in channel list please add Yours prefered channels to the config bouquets.
 4. In `refreshInterval` set the data refresh time in seconds, default 5sec.
 5. In `volumeControl` You can select what a additional volume control mode You want to use (None, Slider, Fan).
 6. If `disableLogInfo` is enabled, disable log info, all values and state will not be displayed in Homebridge log console.
