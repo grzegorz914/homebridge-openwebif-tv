@@ -553,7 +553,7 @@ class openwebIfTvDevice {
 		if (this.volumeControl >= 1) {
 			this.log.debug('prepareVolumeService');
 			if (this.volumeControl == 1) {
-				this.volumeService = new Service.Lightbulb(accessoryName, 'Volume');
+				this.volumeService = new Service.Lightbulb(accessoryName + ' Volume', 'Volume');
 				this.volumeService.getCharacteristic(Characteristic.Brightness)
 					.onGet(async () => {
 						const volume = this.volume;
@@ -570,11 +570,10 @@ class openwebIfTvDevice {
 					.onSet(async (state) => {
 						this.speakerService.setCharacteristic(Characteristic.Mute, !state);
 					});
-				this.televisionService.addLinkedService(this.volumeService);
 				accessory.addService(this.volumeService);
 			}
 			if (this.volumeControl == 2) {
-				this.volumeServiceFan = new Service.Fan(accessoryName, 'Volume');
+				this.volumeServiceFan = new Service.Fan(accessoryName + ' Volume', 'Volume');
 				this.volumeServiceFan.getCharacteristic(Characteristic.RotationSpeed)
 					.onGet(async () => {
 						const volume = this.volume;
@@ -591,7 +590,6 @@ class openwebIfTvDevice {
 					.onSet(async (state) => {
 						this.speakerService.setCharacteristic(Characteristic.Mute, !state);
 					});
-				this.televisionService.addLinkedService(this.volumeServiceFan);
 				accessory.addService(this.volumeServiceFan);
 			}
 		}
@@ -725,7 +723,7 @@ class openwebIfTvDevice {
 			//get button name
 			const buttonName = (buttons[i].name != undefined) ? buttons[i].name : buttons[i].reference;
 
-			const buttonService = new Service.Switch(accessoryName, 'Button ' + i);
+			const buttonService = new Service.Switch(accessoryName + ' ' + buttonName, 'Button ' + i);
 			buttonService.getCharacteristic(Characteristic.On)
 				.onGet(async () => {
 					const state = false;
@@ -763,7 +761,6 @@ class openwebIfTvDevice {
 			this.buttonsName.push(buttonName);
 
 			this.buttonsService.push(buttonService)
-			this.televisionService.addLinkedService(this.buttonsService[i]);
 			accessory.addService(this.buttonsService[i]);
 		}
 
