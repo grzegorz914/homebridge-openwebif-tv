@@ -610,10 +610,10 @@ class openwebIfTvDevice {
 		for (let i = 0; i < maxInputsCount; i++) {
 
 			//get input reference
-			const inputReference = (inputs[i].reference != undefined) ? inputs[i].reference : '0';
+			const inputReference = (inputs[i].reference != undefined) ? inputs[i].reference : undefined;
 
 			//get input name		
-			const inputName = (savedInputsNames[inputReference] != undefined) ? savedInputsNames[inputReference] : (inputs[i].name != undefined) ? inputs[i].name : inputs[i].reference;
+			const inputName = (savedInputsNames[inputReference] != undefined) ? savedInputsNames[inputReference] : inputs[i].name;
 
 			//get input type
 			const inputType = (inputs[i].type != undefined) ? INPUT_SOURCE_TYPES.indexOf(inputs[i].type) : 3;
@@ -641,10 +641,11 @@ class openwebIfTvDevice {
 				})
 				.onSet(async (name) => {
 					try {
+						const nameIdentifier = (inputReference != undefined) ? inputReference : false;
 						let newName = savedInputsNames;
-						newName[inputReference] = name;
+						newName[nameIdentifier] = name;
 						const newCustomName = JSON.stringify(newName);
-						const writeNewCustomName = await fsPromises.writeFile(this.inputsNamesFile, newCustomName);
+						const writeNewCustomName = (nameIdentifier != false) ? false : await fsPromises.writeFile(this.inputsNamesFile, newCustomName);
 						this.log.debug('Device: %s %s, saved new Input successful, savedInputsNames: %s', this.host, accessoryName, newCustomName);
 						if (!this.disableLogInfo) {
 							this.log('Device: %s %s, new Input name saved successful, name: %s reference: %s', this.host, accessoryName, name, inputReference);
@@ -685,10 +686,11 @@ class openwebIfTvDevice {
 				})
 				.onSet(async (state) => {
 					try {
-						let newState = savedTargetVisibility;
-						newState[inputReference] = state;
+						const targetVisibilityIdentifier = (inputReference != undefined) ? inputReference : false;
+						let newState = savedInputsNames;
+						newState[targetVisibilityIdentifier] = state;
 						const newTargetVisibility = JSON.stringify(newState);
-						await fsPromises.writeFile(this.targetVisibilityInputsFile, newTargetVisibility);
+						const writeNewTargetVisibility = (targetVisibilityIdentifier != false) ? false : await fsPromises.writeFile(this.targetVisibilityInputsFile, newTargetVisibility);
 						this.log.debug('Device: %s %s, Input: %s, saved target visibility state: %s', this.host, accessoryName, inputName, newTargetVisibility);
 						if (!this.disableLogInfo) {
 							this.log('Device: %s %s, Input: %s, saved target visibility state: %s', this.host, accessoryName, inputName, state ? 'HIDEN' : 'SHOWN');
