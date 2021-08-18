@@ -687,7 +687,7 @@ class openwebIfTvDevice {
 				.onSet(async (state) => {
 					try {
 						const targetVisibilityIdentifier = (inputReference != undefined) ? inputReference : false;
-						let newState = savedInputsNames;
+						let newState = savedTargetVisibility;
 						newState[targetVisibilityIdentifier] = state;
 						const newTargetVisibility = JSON.stringify(newState);
 						const writeNewTargetVisibility = (targetVisibilityIdentifier != false) ? await fsPromises.writeFile(this.targetVisibilityInputsFile, newTargetVisibility) : false;
