@@ -243,6 +243,11 @@ class openwebIfTvDevice {
 			this.firmwareRevision = firmwareRevision;
 
 			this.checkDeviceInfo = false;
+
+			//start prepare accessory
+			if (this.startPrepareAccessory) {
+				this.prepareAccessory();
+			}
 			const updateDeviceState = !this.checkDeviceState ? this.updateDeviceState() : false;
 		} catch (error) {
 			this.log.debug('Device: %s %s, get device info eror: %s, device offline, trying to reconnect', this.host, this.name, error);
@@ -308,11 +313,6 @@ class openwebIfTvDevice {
 				this.muteState = this.muteState;
 			}
 			this.checkDeviceState = true;
-
-			//start prepare accessory
-			if (this.startPrepareAccessory) {
-				this.prepareAccessory();
-			}
 		} catch (error) {
 			this.log.debug('Device: %s %s, update device state error: %s', this.host, this.name, error);
 			this.checkDeviceState = false;
