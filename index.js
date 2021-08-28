@@ -128,6 +128,7 @@ class openwebIfTvDevice {
 		//setup variables
 		this.checkDeviceInfo = true;
 		this.checkDeviceState = false;
+		this.startPrepareAccessory = true;
 
 		this.inputsService = new Array();
 		this.inputsReference = new Array();
@@ -336,6 +337,11 @@ class openwebIfTvDevice {
 				this.muteState = this.muteState;
 			}
 			this.checkDeviceState = true;
+
+			//start prepare accessory
+			if (this.startPrepareAccessory) {
+				this.prepareAccessory();
+			}
 		} catch (error) {
 			this.log.debug('Device: %s %s, update device state error: %s', this.host, this.name, error);
 			this.checkDeviceState = false;
@@ -788,6 +794,7 @@ class openwebIfTvDevice {
 			accessory.addService(this.buttonsService[i]);
 		}
 
+		this.startPrepareAccessory = false;
 		this.log.debug('Device: %s %s, publishExternalAccessories.', this.host, accessoryName);
 		this.api.publishExternalAccessories(PLUGIN_NAME, [accessory]);
 	}
