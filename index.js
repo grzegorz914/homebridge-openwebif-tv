@@ -88,36 +88,22 @@ class openwebIfTvDevice {
 		this.buttons = config.buttons || [];
 
 		//add configured inputs to the default inputs
-		const defaultInputsArr = new Array();
-		const defaultInputsCount = DEFAULT_INPUTS.length;
-		for (let i = 0; i < defaultInputsCount; i++) {
-			const name = DEFAULT_INPUTS[i].name;
-			const reference = DEFAULT_INPUTS[i].reference;
-			const type = DEFAULT_INPUTS[i].type;
-			const mode = DEFAULT_INPUTS[i].mode;
-			const obj = {
-				'name': name,
-				'reference': reference,
-				'type': type,
-				'mode': mode
-			};
-			defaultInputsArr.push(obj);
-		}
+		const inputsArr = new Array(DEFAULT_INPUTS[0]);
 		const inputsCount = this.inputs.length;
 		for (let j = 0; j < inputsCount; j++) {
 			const name = this.inputs[j].name;
 			const reference = this.inputs[j].reference;
 			const type = 'OTHER';
 			const mode = 0;
-			const obj1 = {
+			const inputsObj = {
 				'name': name,
 				'reference': reference,
 				'type': type,
 				'mode': mode
 			};
-			defaultInputsArr.push(obj1);
+			inputsArr.push(inputsObj);
 		}
-		this.inputs = defaultInputsArr;
+		this.inputs = inputsArr;
 
 		//get config info
 		this.manufacturer = config.manufacturer || 'Manufacturer';
@@ -199,6 +185,17 @@ class openwebIfTvDevice {
 		try {
 			const [response, response1] = await axios.all([axios.get(this.url + '/api/deviceinfo'), axios.get(this.url + '/api/getallservices')]);
 			this.log.debug('Device: %s %s, debug response: %s, response1: %s', this.host, this.name, response.data, response1.data);
+
+			//save inputs to the file
+			try {
+				const inputsArr = this.inputs;
+				const obj = JSON.stringify(inputsArr, null, 2);
+				const writeInputs = fsPromises.writeFile(this.inputsFile, obj);
+				this.log.debug('Device: %s %s, save inputs succesful, inputs: %s', this.host, this.name, obj);
+			} catch (error) {
+				this.log.error('Device: %s %s, save inputs error: %s', this.host, this.name, error);
+			};
+
 			const result = (response.data.brand != undefined) ? response : {
 				'data': {
 					'brand': this.manufacturer,
@@ -222,30 +219,6 @@ class openwebIfTvDevice {
 			const devInfo = JSON.stringify(obj, null, 2);
 			const writeDevInfo = await fsPromises.writeFile(this.devInfoFile, devInfo);
 			this.log.debug('Device: %s %s, saved device info successful: %s', this.host, this.name, devInfo);
-
-			//save inputs to the file
-			try {
-				const inputsArr = new Array();
-				const inputsCount = this.inputs.length;
-				for (let i = 0; i < inputsCount; i++) {
-					const name = this.inputs[i].name;
-					const reference = this.inputs[i].reference;
-					const type = this.inputs[i].type;
-					const mode = this.inputs[i].mode;
-					const inputsObj = {
-						'name': name,
-						'reference': reference,
-						'type': type,
-						'mode': mode
-					}
-					inputsArr.push(inputsObj);
-				}
-				const obj = JSON.stringify(inputsArr, null, 2);
-				const writeInputs = fsPromises.writeFile(this.inputsFile, obj);
-				this.log.debug('Device: %s %s %s, write inputs list: %s', this.host, this.name, this.zoneName, obj);
-			} catch (error) {
-				this.log.debug('Device: %s %s %s, write inputs error: %s', this.host, this.name, this.zoneName, error);
-			};
 
 			const manufacturer = result.data.brand;
 			const modelName = result.data.model;
