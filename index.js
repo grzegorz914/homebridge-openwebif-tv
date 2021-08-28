@@ -10,6 +10,13 @@ const PLATFORM_NAME = 'OpenWebIfTv';
 
 const INPUT_SOURCE_TYPES = ['OTHER', 'HOME_SCREEN', 'TUNER', 'HDMI', 'COMPOSITE_VIDEO', 'S_VIDEO', 'COMPONENT_VIDEO', 'DVI', 'AIRPLAY', 'USB', 'APPLICATION'];
 
+const DEFAULT_INPUTS = [{
+	'name': 'Unconfigured input',
+	'reference': 'undefined',
+	'type': 'undefined',
+	'mode': 'undefined'
+}];
+
 let Accessory, Characteristic, Service, Categories, AccessoryUUID;
 
 module.exports = (api) => {
@@ -80,6 +87,38 @@ class openwebIfTvDevice {
 		this.inputs = config.inputs || [];
 		this.buttons = config.buttons || [];
 
+		//add configured inputs to the default inputs
+		const defaultInputsArr = new Array();
+		const defaultInputsCount = DEFAULT_INPUTS.length;
+		for (let i = 0; i < defaultInputsCount; i++) {
+			const name = DEFAULT_INPUTS[i].name;
+			const reference = DEFAULT_INPUTS[i].reference;
+			const type = DEFAULT_INPUTS[i].type;
+			const mode = DEFAULT_INPUTS[i].mode;
+			const obj = {
+				'name': name,
+				'reference': reference,
+				'type': type,
+				'mode': mode
+			};
+			defaultInputsArr.push(obj);
+		}
+		const inputsCount = this.inputs.length;
+		for (let j = 0; j < inputsCount; j++) {
+			const name = this.inputs[j].name;
+			const reference = this.inputs[j].reference;
+			const type = 'OTHER';
+			const mode = 0;
+			const obj1 = {
+				'name': name,
+				'reference': reference,
+				'type': type,
+				'mode': mode
+			};
+			defaultInputsArr.push(obj1);
+		}
+		this.inputs = defaultInputsArr;
+
 		//get config info
 		this.manufacturer = config.manufacturer || 'Manufacturer';
 		this.modelName = config.modelName || 'Model Name';
@@ -94,6 +133,7 @@ class openwebIfTvDevice {
 		this.inputsReference = new Array();
 		this.inputsName = new Array();
 		this.inputsType = new Array();
+		this.inputsMode = new Array();
 
 		this.buttonsService = new Array();
 		this.buttonsReference = new Array();
@@ -113,19 +153,19 @@ class openwebIfTvDevice {
 		this.inputIdentifier = 0;
 
 		this.prefDir = path.join(api.user.storagePath(), 'openwebifTv');
+		this.devInfoFile = this.prefDir + '/' + 'devInfo_' + this.host.split('.').join('');
 		this.inputsFile = this.prefDir + '/' + 'inputs_' + this.host.split('.').join('');
 		this.inputsNamesFile = this.prefDir + '/' + 'inputsNames_' + this.host.split('.').join('');
 		this.targetVisibilityInputsFile = this.prefDir + '/' + 'targetVisibilityInputs_' + this.host.split('.').join('');
-		this.devInfoFile = this.prefDir + '/' + 'devInfo_' + this.host.split('.').join('');
 		this.url = this.auth ? ('http://' + this.user + ':' + this.pass + '@' + this.host + ':' + this.port) : ('http://' + this.host + ':' + this.port);
 
-		//check if prefs directory ends with a /, if not then add it
-		if (this.prefDir.endsWith('/') == false) {
-			this.prefDir = this.prefDir + '/';
-		}
 		//check if the directory exists, if not then create it
 		if (fs.existsSync(this.prefDir) == false) {
 			fsPromises.mkdir(this.prefDir);
+		}
+		//check if the files exists, if not then create it
+		if (fs.existsSync(this.devInfoFile) == false) {
+			fsPromises.writeFile(this.devInfoFile, '');
 		}
 		//check if the files exists, if not then create it
 		if (fs.existsSync(this.inputsFile) == false) {
@@ -138,10 +178,6 @@ class openwebIfTvDevice {
 		//check if the files exists, if not then create it
 		if (fs.existsSync(this.targetVisibilityInputsFile) == false) {
 			fsPromises.writeFile(this.targetVisibilityInputsFile, '');
-		}
-		//check if the files exists, if not then create it
-		if (fs.existsSync(this.devInfoFile) == false) {
-			fsPromises.writeFile(this.devInfoFile, '');
 		}
 
 		//Check device state
@@ -186,9 +222,29 @@ class openwebIfTvDevice {
 			const writeDevInfo = await fsPromises.writeFile(this.devInfoFile, devInfo);
 			this.log.debug('Device: %s %s, saved device info successful: %s', this.host, this.name, devInfo);
 
-			const channels = JSON.stringify(response1.data.services, null, 2);
-			const writeChannels = await fsPromises.writeFile(this.inputsFile, channels);
-			this.log.debug('Device: %s %s, saved channels successful.', this.host, this.name);
+			//save inputs to the file
+			try {
+				const inputsArr = new Array();
+				const inputsCount = this.inputs.length;
+				for (let i = 0; i < inputsCount; i++) {
+					const name = this.inputs[i].name;
+					const reference = this.inputs[i].reference;
+					const type = this.inputs[i].type;
+					const mode = this.inputs[i].mode;
+					const inputsObj = {
+						'name': name,
+						'reference': reference,
+						'type': type,
+						'mode': mode
+					}
+					inputsArr.push(inputsObj);
+				}
+				const obj = JSON.stringify(inputsArr, null, 2);
+				const writeInputs = fsPromises.writeFile(this.inputsFile, obj);
+				this.log.debug('Device: %s %s %s, write inputs list: %s', this.host, this.name, this.zoneName, obj);
+			} catch (error) {
+				this.log.debug('Device: %s %s %s, write inputs error: %s', this.host, this.name, this.zoneName, error);
+			};
 
 			const manufacturer = result.data.brand;
 			const modelName = result.data.model;
@@ -382,8 +438,8 @@ class openwebIfTvDevice {
 			.onSet(async (inputIdentifier) => {
 				try {
 					const inputName = this.inputsName[inputIdentifier];
-					const inputReference = (this.inputsReference[inputIdentifier] != undefined) ? this.inputsReference[inputIdentifier] : 0;
-					const response = await axios.get(this.url + '/api/zap?sRef=' + inputReference);
+					const inputReference = this.inputsReference[inputIdentifier];
+					const setInput = (inputReference != undefined) ? await axios.get(this.url + '/api/zap?sRef=' + inputReference) : false;
 					if (!this.disableLogInfo) {
 						this.log('Device: %s %s, set Channel successful: %s %s', this.host, accessoryName, inputName, inputReference);
 					}
@@ -597,6 +653,9 @@ class openwebIfTvDevice {
 		//Prepare inputs services
 		this.log.debug('prepareInputsService');
 
+		const savedInputs = ((fs.readFileSync(this.inputsFile)).length > 0) ? JSON.parse(fs.readFileSync(this.inputsFile)) : [];
+		this.log.debug('Device: %s %s, read saved Inputs successful, inpits: %s', this.host, accessoryName, savedInputs)
+
 		const savedInputsNames = ((fs.readFileSync(this.inputsNamesFile)).length > 0) ? JSON.parse(fs.readFileSync(this.inputsNamesFile)) : {};
 		this.log.debug('Device: %s %s, read savedInputsNames: %s', this.host, accessoryName, savedInputsNames)
 
@@ -604,9 +663,9 @@ class openwebIfTvDevice {
 		this.log.debug('Device: %s %s, read savedTargetVisibility: %s', this.host, accessoryName, savedTargetVisibility);
 
 		//check available inputs and possible inputs count (max 94)
-		const inputs = this.inputs;
+		const inputs = (savedInputs.length > 0) ? savedInputs : this.inputs;
 		const inputsCount = inputs.length;
-		const maxInputsCount = (inputsCount > 94) ? 94 : inputsCount;
+		const maxInputsCount = (inputsCount < 94) ? inputsCount : 94;
 		for (let i = 0; i < maxInputsCount; i++) {
 
 			//get input reference
@@ -617,6 +676,9 @@ class openwebIfTvDevice {
 
 			//get input type
 			const inputType = (inputs[i].type != undefined) ? INPUT_SOURCE_TYPES.indexOf(inputs[i].type) : 3;
+
+			//get input mode
+			const inputMode = (inputs[i].mode != undefined) ? inputs[i].mode : 0;
 
 			//get input configured
 			const isConfigured = 1;
@@ -674,6 +736,7 @@ class openwebIfTvDevice {
 			this.inputsReference.push(inputReference);
 			this.inputsName.push(inputName);
 			this.inputsType.push(inputType);
+			this.inputsMode.push(inputMode);
 
 			this.inputsService.push(inputService);
 			this.televisionService.addLinkedService(this.inputsService[i]);
