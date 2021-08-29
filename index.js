@@ -36,20 +36,17 @@ class openwebIfTvPlatform {
 			return;
 		}
 		this.log = log;
-		this.config = config;
 		this.api = api;
-		this.devices = config.devices;
+		this.devices = config.devices || [];
 		this.accessories = [];
 
 		this.api.on('didFinishLaunching', () => {
 			this.log.debug('didFinishLaunching');
 			for (let i = 0; i < this.devices.length; i++) {
 				const device = this.devices[i];
-				const deviceName = device.name;
-				if (!deviceName) {
-					this.log.warn('Device Name Missing')
+				if (!device.name) {
+					this.log.warn('Device Name Missing');
 				} else {
-					this.log.info('Adding new accessory:', deviceName);
 					new openwebIfTvDevice(this.log, device, this.api);
 				}
 			}
@@ -57,12 +54,12 @@ class openwebIfTvPlatform {
 	}
 
 	configureAccessory(accessory) {
-		this.log.debug('configureAccessory');
+		this.log.debug('configurePlatformAccessory');
 		this.accessories.push(accessory);
 	}
 
 	removeAccessory(accessory) {
-		this.log.debug('removeAccessory');
+		this.log.debug('removePlatformAccessory');
 		this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
 	}
 }
@@ -71,7 +68,6 @@ class openwebIfTvDevice {
 	constructor(log, config, api) {
 		this.log = log;
 		this.api = api;
-		this.config = config;
 
 		//device configuration
 		this.name = config.name;
@@ -150,19 +146,15 @@ class openwebIfTvDevice {
 		if (fs.existsSync(this.prefDir) == false) {
 			fsPromises.mkdir(this.prefDir);
 		}
-		//check if the files exists, if not then create it
 		if (fs.existsSync(this.devInfoFile) == false) {
 			fsPromises.writeFile(this.devInfoFile, '');
 		}
-		//check if the files exists, if not then create it
 		if (fs.existsSync(this.inputsFile) == false) {
 			fsPromises.writeFile(this.inputsFile, '');
 		}
-		//check if the files exists, if not then create it
 		if (fs.existsSync(this.inputsNamesFile) == false) {
 			fsPromises.writeFile(this.inputsNamesFile, '');
 		}
-		//check if the files exists, if not then create it
 		if (fs.existsSync(this.targetVisibilityInputsFile) == false) {
 			fsPromises.writeFile(this.targetVisibilityInputsFile, '');
 		}
