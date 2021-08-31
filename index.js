@@ -653,8 +653,8 @@ class openwebIfTvDevice {
 			const isConfigured = 1;
 
 			//get input visibility state
-			const targetVisibility = (savedTargetVisibility[inputReference] != undefined) ? savedTargetVisibility[inputReference] : 0;
-			const currentVisibility = targetVisibility;
+			const currentVisibility = (savedTargetVisibility[inputReference] != undefined) ? savedTargetVisibility[inputReference] : 0;
+			const targetVisibility = currentVisibility;
 
 			const inputService = new Service.InputSource(accessoryName, 'Input ' + i);
 			inputService
