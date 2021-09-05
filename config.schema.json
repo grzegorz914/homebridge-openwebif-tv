@@ -16,21 +16,20 @@
             "name": {
               "title": "Device name",
               "type": "string",
-              "default": "Sat Receiver",
+              "placeholder": "Sat Receiver",
               "required": true
             },
             "host": {
               "title": "Address IP",
               "type": "string",
-              "default": "192.160.1.10",
+              "placeholder": "192.160.1.10",
               "required": true,
               "format": "hostname"
             },
             "port": {
               "title": "Port",
-              "type": "integer",
-              "default": 80,
-              "maximum": 65535,
+              "type": "string",
+              "placeholder": "80",
               "required": true
             },
             "auth": {
@@ -42,11 +41,13 @@
             "user": {
               "title": "User",
               "type": "string",
+              "placeholder": "User",
               "required": false
             },
             "pass": {
               "title": "Password",
               "type": "string",
+              "placeholder": "Password",
               "required": false
             },
             "refreshInterval": {
@@ -108,12 +109,14 @@
                   "name": {
                     "title": "Name",
                     "type": "string",
+                    "placeholder": "Input name",
                     "description": "Here set Your own name.",
                     "required": true
                   },
                   "reference": {
                     "title": "Reference",
                     "type": "string",
+                    "placeholder": "Input reference",
                     "description": "Here set the reference.",
                     "required": true
                   }
@@ -130,12 +133,14 @@
                   "name": {
                     "title": "Name",
                     "type": "string",
+                    "placeholder": "Button name",
                     "description": "Here set Your own name.",
                     "required": false
                   },
                   "reference": {
                     "title": "Reference",
                     "type": "string",
+                    "placeholder": "Button name",
                     "description": "Here set the reference.",
                     "required": true
                   }

@@ -70,16 +70,16 @@ class openwebIfTvDevice {
 		this.api = api;
 
 		//device configuration
-		this.name = config.name;
-		this.host = config.host;
-		this.port = config.port;
-		this.auth = config.auth;
-		this.user = config.user;
-		this.pass = config.pass;
+		this.name = config.name || 'Sat Receiver';
+		this.host = config.host || '';
+		this.port = config.port || '';
+		this.auth = config.auth || false;
+		this.user = config.user || '';
+		this.pass = config.pass || '';
 		this.refreshInterval = config.refreshInterval || 5;
-		this.disableLogInfo = config.disableLogInfo;
+		this.disableLogInfo = config.disableLogInfo || false;
 		this.volumeControl = config.volumeControl || 0;
-		this.switchInfoMenu = config.switchInfoMenu;
+		this.switchInfoMenu = config.switchInfoMenu || false;
 		this.inputs = config.inputs || [];
 		this.buttons = config.buttons || [];
 
