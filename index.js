@@ -10,7 +10,7 @@ const PLATFORM_NAME = 'OpenWebIfTv';
 
 const INPUT_SOURCE_TYPES = ['OTHER', 'HOME_SCREEN', 'TUNER', 'HDMI', 'COMPOSITE_VIDEO', 'S_VIDEO', 'COMPONENT_VIDEO', 'DVI', 'AIRPLAY', 'USB', 'APPLICATION'];
 const DEFAULT_INPUTS = [{
-	'name': 'Unconfigured input',
+	'name': 'Undefined',
 	'reference': 'undefined',
 	'type': 'undefined',
 	'mode': 'undefined'
@@ -134,16 +134,17 @@ class openwebIfTvDevice {
 		this.inputReference = '';
 		this.inputIdentifier = 0;
 
-		this.prefDir = path.join(api.user.storagePath(), 'openwebifTv');
-		this.devInfoFile = this.prefDir + '/' + 'devInfo_' + this.host.split('.').join('');
-		this.inputsFile = this.prefDir + '/' + 'inputs_' + this.host.split('.').join('');
-		this.inputsNamesFile = this.prefDir + '/' + 'inputsNames_' + this.host.split('.').join('');
-		this.targetVisibilityInputsFile = this.prefDir + '/' + 'targetVisibilityInputs_' + this.host.split('.').join('');
-		this.url = 'http://' + this.host + ':' + this.port;
+		const prefDir = path.join(api.user.storagePath(), 'openwebifTv');
+		const url = 'http://' + this.host + ':' + this.port;
+
+		this.devInfoFile = prefDir + '/' + 'devInfo_' + this.host.split('.').join('');
+		this.inputsFile = prefDir + '/' + 'inputs_' + this.host.split('.').join('');
+		this.inputsNamesFile = prefDir + '/' + 'inputsNames_' + this.host.split('.').join('');
+		this.targetVisibilityInputsFile = prefDir + '/' + 'targetVisibilityInputs_' + this.host.split('.').join('');
 
 		this.axiosInstance = axios.create({
 			method: 'GET',
-			baseURL: this.url,
+			baseURL: url,
 			timeout: 5000,
 			withCredentials: this.auth,
 			auth: {
@@ -153,8 +154,8 @@ class openwebIfTvDevice {
 		});
 
 		//check if the directory exists, if not then create it
-		if (fs.existsSync(this.prefDir) == false) {
-			fsPromises.mkdir(this.prefDir);
+		if (fs.existsSync(prefDir) == false) {
+			fsPromises.mkdir(prefDir);
 		}
 		if (fs.existsSync(this.devInfoFile) == false) {
 			fsPromises.writeFile(this.devInfoFile, '');
