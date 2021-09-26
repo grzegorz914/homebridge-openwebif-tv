@@ -117,7 +117,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
   }
 ```
 
-Sort of channel in HomeKit app is alpahabetically but U can sort the channels as in Yours receivers adding channel number at first place of every name, some example:
+* Sort of channels in HomeKit app is alpahabetically but U can sort the channels as in Yours receivers adding channel number at first place of every name:
 
 ```json
                 {
@@ -190,10 +190,10 @@ Sort of channel in HomeKit app is alpahabetically but U can sort the channels as
 5. Enter the Homebridge PIN, this can be found under the QR code in Homebridge UI or your Homebridge logs, alternatively you can select *Use Camera* and scan the QR code again.
 
 ## Limitations
-1. Due to HomeKit app limitation max. services for 1 accessory is 100. Over this value HomeKit app will no response. As services in this accessory are, (1.information service, 2.speaker service, 3.lightbulb service, 4.television service and inputs service 5-100(where every input = 1 service)). If all services are enabled possible inputs to use is 96.
+* Due to HomeKit app limitation max. services for 1 accessory is 100. Over this value HomeKit app will no response. As services in this accessory are, (1.information service, 2.speaker service, 3.lightbulb service, 4.television service and inputs service 5-100(where every input = 1 service)). If all services are enabled possible inputs to use is 96.
 
 ## Whats new:
 https://github.com/grzegorz914/homebridge-openwebif-tv/blob/master/CHANGELOG.md
 
 ## Development
-- Pull request and help in development highly appreciated.
+* Pull request and help in development highly appreciated.
