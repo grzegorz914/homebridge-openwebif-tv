@@ -19,7 +19,7 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | --- | --- | --- | --- |
 | [Homebridge](https://github.com/homebridge/homebridge) | [Homebridge Wiki](https://github.com/homebridge/homebridge/wiki) | HomeKit Bridge | Required |
 | [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) | [Homebridge Config UI X Wiki](https://github.com/oznu/homebridge-config-ui-x/wiki) | Web User Interface | Recommended |
-| [Homebridge OpenWebIf TV](https://www.npmjs.com/package/homebridge-lgwebos-tv) | `npm install -g homebridge-openwebif-tv` | Plug-In | Required |
+| [Homebridge OpenWebIf TV](https://www.npmjs.com/package/homebridge-openwebif-tv) | `npm install -g homebridge-openwebif-tv` | Plug-In | Required |
 
 ## Know issues
 * If use with Hoobs possible config incompatibilty.
@@ -27,7 +27,7 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 ## Note
 * Versin 3.6.0 and above need to be used with Homebridge min. v1.3.x.
 
-## Info
+## Features and How To Use Them
 * Power ON/OFF short press tile in HomeKit app.
 * RC/Media control is possible after you go to the RC app on iPhone/iPad.
 * Speaker control is possible after you go to RC app on iPhone/iPad `Speaker Service`.
@@ -190,7 +190,15 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 5. Enter the Homebridge PIN, this can be found under the QR code in Homebridge UI or your Homebridge logs, alternatively you can select *Use Camera* and scan the QR code again.
 
 ## Limitations
-* Due to HomeKit app limitation max. services for 1 accessory is 100. Over this value HomeKit app will no response. As services in this accessory are, (1.information service, 2.speaker service, 3.lightbulb service, 4.television service and inputs service 5-100(where every input = 1 service)). If all services are enabled possible inputs to use is 96.
+* Due to a HomeKit limitation, that maximum services for 1 accessory is 100. Acessories containing services above this value in the HomeKit app will not respond.
+* If all services are enabled possible inputs to use is 95. The services in this accessory are:
+  * Information service.
+  * Speaker service.
+  * Lightbulb service.
+  * Fan service
+  * Television service.
+  * Inputs service which may range from 6 to 100 as each input is 1 service.
+  * Buttons service which may range from 6 to 100 as each input is 1 service.
 
 ## Whats new:
 https://github.com/grzegorz914/homebridge-openwebif-tv/blob/master/CHANGELOG.md
