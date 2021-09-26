@@ -61,8 +61,8 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `switchInfoMenu` | If enabled, `I` button change its behaviour in RC app between Menu and INFO. |
 | `inputs.name` | Here set *Channel Name* which You want expose to the *Homebridge/HomeKit*. |
 | `inputs.reference` | Here set *Channel Reference*. All can be found in `homebridge_directory/openwebifTv/inputs_xxxx`. |
-| `inputsButton.name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*.| 
-| `inputsButton.reference` | Here set *Channel Reference*. All can be found in `homebridge_directory/openwebifTv/inputs_xxxx`. | 
+| `buttons.name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*.| 
+| `buttons.reference` | Here set *Channel Reference*. All can be found in `homebridge_directory/openwebifTv/inputs_xxxx`. | 
 | `manufacturer`, `model`, `serialNumber`, `firmwareRevision` | optional branding data displayed in Home.app. |
 
 ```json
