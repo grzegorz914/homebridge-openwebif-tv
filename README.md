@@ -31,7 +31,7 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 * Power ON/OFF short press tile in HomeKit app.
 * RC/Media control is possible after you go to the RC app on iPhone/iPad.
 * Speaker control is possible after you go to RC app on iPhone/iPad `Speaker Service`.
-* Legacy Volume and Mute control is possible throught extra `lightbulb` (slider) or using Siri `Volume Service`.
+* Legacy Volume and Mute control is possible throught extra `lightbulb`/`fan` (slider) or using Siri `Volume Service`.
 * Inputs can be changed after long press tile in Home.app and select Input from the list or create separate tile in the Buttons section.
 * Siri control.
 
