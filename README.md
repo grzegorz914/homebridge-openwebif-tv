@@ -10,7 +10,7 @@
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/grzegorz914/homebridge-openwebif-tv.svg)](https://github.com/grzegorz914/homebridge-openwebif-tv/pulls)
 [![GitHub issues](https://img.shields.io/github/issues/grzegorz914/homebridge-openwebif-tv.svg)](https://github.com/grzegorz914/homebridge-openwebif-tv/issues)
 
-Homebridge plugin for Sat Receivers basis on the OpenWebIf API. Tested with Dreambox DM900, VU+ Ultimo 4K, Formuler F4 Turbo.
+Homebridge plugin for Sat Receivers basis on the OpenWebIf API. Tested with VU+ Ultimo 4K, Formuler F4 Turbo.
 
 </span>
 
@@ -49,16 +49,23 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
   <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/master/graphics/ustawienia.png" width="840"></a>
 </p>
 
-1. Use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) to configure the plugin (strongly recomended), or update your configuration file manually. See `sample-config.json` in this repository for a sample or add the bottom example to Your config.json file.
-2. If port `80` not working check which port is set for Your Sat Receiver.
-3. All `reference` and `name` from Your sat receiver are stored in `homebridge_directory/openwebifTv/inputs_xxxx`, if U want somthing changed in channel list please add Yours prefered channels to the config bouquets.
-4. In `refreshInterval` set the data refresh time in seconds, default 5sec.
-5. In `volumeControl` You can select what a additional volume control mode You want to use (None, Slider, Fan).
-6. If `disableLogInfo` is enabled, disable log info, all values and state will not be displayed in Homebridge log console.
-7. If `switchInfoMenu` is enabled, `I` button change its behaviour in RC app between Menu and INFO.
-8. In `inputs` configure channels (this will be displayed as TV Services list inside main accessory).
-9. In `inputsButton` configure channels button (this will be displayed as separate tile inside main accessory or direct in HomeKit main screen).
-8. `manufacturer`, `model`, `serialNumber`, `firmwareRevision` - optional branding data displayed in Home.app
+| Key | Description | 
+| --- | --- |
+| `name` | Here set the accessory *Name* to be displayed in *Homebridge/HomeKit*. |
+| `host` | Here set the *Hsostname or Address IP* of Sat Receiver.|
+| `port` | Here set the *Port* of Sat Receiver. |
+| `auth` | If enabled, authorizatins credentials will be used for login to Sat Receiver. |
+| `user` | Here set the *Username* of Sat Receiver. |
+| `pass` | Here set the *Password* of Sat Receiver. |
+| `refreshInterval` | Here set the data refresh time in seconds. |
+| `volumeControl` | You can choice what a additional volume control mode You want to use (None, Slider, Fan). |
+| `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |
+| `switchInfoMenu` | If enabled, `I` button change its behaviour in RC app between Menu and INFO. |
+| `inputs.name` | Here set *Channel Name* which You want expose to the *Homebridge/HomeKit*. |
+| `inputs.reference` | Here set *Channel Reference*. All can be found in `homebridge_directory/openwebifTv/inputs_xxxx`. |
+| `inputsButton.name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*.| 
+| `inputsButton.reference` | Here set *Channel Reference*. All can be found in `homebridge_directory/openwebifTv/inputs_xxxx`. | 
+| `manufacturer`, `model`, `serialNumber`, `firmwareRevision` | optional branding data displayed in Home.app. |
 
 ```json
 {
