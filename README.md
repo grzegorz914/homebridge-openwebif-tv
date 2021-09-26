@@ -25,15 +25,15 @@ Homebridge plugin for Sat Receivers basis on the OpenWebIf API. Tested with Drea
 * If use with Hoobs possible config incompatibilty.
 
 ## Note
-1. Versin 3.6.0 and above need to be used with Homebridge min. v1.3.x.
+* Versin 3.6.0 and above need to be used with Homebridge min. v1.3.x.
 
 ## Info
-1. Power ON/OFF short press tile in HomeKit app.
-2. RC/Media control is possible after you go to the RC app on iPhone/iPad.
-3. Speaker control is possible after you go to RC app on iPhone/iPad `Speaker Service`.
-4. Legacy volume and mute control is possible throught extra `lightbulb` (slider) or using Siri `Volume Service`.
-5. Inputs can be changed after loong press tile in HomeKit app and select from the list or create separate tile in the Inputs button section.
-6. Siri control.
+* Power ON/OFF short press tile in HomeKit app.
+* RC/Media control is possible after you go to the RC app on iPhone/iPad.
+* Speaker control is possible after you go to RC app on iPhone/iPad `Speaker Service`.
+* Legacy volume and mute control is possible throught extra `lightbulb` (slider) or using Siri `Volume Service`.
+* Inputs can be changed after loong press tile in HomeKit app and select from the list or create separate tile in the Inputs button section.
+* Siri control.
 
 <p align="left">
   <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/master/graphics/homekit.png" height="300"></a> 
