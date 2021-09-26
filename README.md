@@ -52,11 +52,11 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `name` | Here set the accessory *Name* to be displayed in *Homebridge/HomeKit*. |
 | `host` | Here set the *Hsostname or Address IP* of Sat Receiver.|
 | `port` | Here set the *Port* of Sat Receiver. |
-| `auth` | If enabled, authorizatins credentials will be used for login to Sat Receiver. |
-| `user` | Here set the *Username* of Sat Receiver. |
-| `pass` | Here set the *Password* of Sat Receiver. |
+| `auth` | If enabled, authorizatins credentials will be used for login. |
+| `user` | Here set the authorization *Username*. |
+| `pass` | Here set the authorization *Password*. |
 | `refreshInterval` | Here set the data refresh time in seconds. |
-| `volumeControl` | You can choice what a additional volume control mode You want to use (None, Slider, Fan). |
+| `volumeControl` | Here choice what a additional volume control mode You want to use (None, Slider, Fan). |
 | `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |
 | `switchInfoMenu` | If enabled, `I` button change its behaviour in RC app between Menu and INFO. |
 | `inputs.name` | Here set *Channel Name* which You want expose to the *Homebridge/HomeKit*. |
