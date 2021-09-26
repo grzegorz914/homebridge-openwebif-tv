@@ -34,6 +34,7 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 * Legacy Volume and Mute control is possible throught extra `lightbulb`/`fan` (slider).
 * Inputs can be changed after long press tile in Home.app and select Input from the list or create separate tile in the Buttons section.
 * Siri can be used to control Power, Legacy Volume, Mute and switch Inputs with created Buttons.
+* Home automations and shortcuts can be used for all functions.
 
 <p align="left">
   <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/master/graphics/homekit.png" width="480"></a> 
