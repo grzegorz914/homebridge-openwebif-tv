@@ -14,24 +14,15 @@ Homebridge plugin for Sat Receivers basis on the OpenWebIf API. Tested with Drea
 
 </span>
 
-## Package
-1. [Homebridge](https://github.com/homebridge/homebridge)
-2. [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x)
-
-## Installation
-1. Follow the step-by-step instructions on the [Homebridge Wiki](https://github.com/homebridge/homebridge/wiki) for how to install Homebridge.
-2. Follow the step-by-step instructions on the [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) for how to install Homebridge Config UI X.
-3. Install homebridge-openwebif-tv using: `npm install -g homebridge-openwebif-tv` or search for `OpenWebIf TV` in Config UI X.
+## Package Requirements
+| Package Link | Installation | Role | Required |
+| --- | --- | --- | --- |
+| [Homebridge](https://github.com/homebridge/homebridge) | [Homebridge Wiki](https://github.com/homebridge/homebridge/wiki) | HomeKit Bridge | Required |
+| [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) | [Homebridge Config UI X Wiki](https://github.com/oznu/homebridge-config-ui-x/wiki) | Web User Interface | Recommended |
+| [Homebridge LG webOS TV](https://www.npmjs.com/package/homebridge-lgwebos-tv) | `npm install -g homebridge-lgwebos-tv` | Plug-In | Required |
 
 ## Know issues
-1. If use with Hoobs possible config incompatibilty.
-
-## HomeKit pairing
-1. Each accessories needs to be manually paired. 
-2. Open the Home <img src='https://user-images.githubusercontent.com/3979615/78010622-4ea1d380-738e-11ea-8a17-e6a465eeec35.png' height='16.42px'> app on your device. 
-3. Tap the Home tab, then tap <img src='https://user-images.githubusercontent.com/3979615/78010869-9aed1380-738e-11ea-9644-9f46b3633026.png' height='16.42px'>. 
-4. Tap *Add Accessory*, and select *I Don't Have a Code or Cannot Scan*. 
-5. Enter the Homebridge PIN, this can be found under the QR code in Homebridge UI or your Homebridge logs, alternatively you can select *Use Camera* and scan the QR code again.
+* If use with Hoobs possible config incompatibilty.
 
 ## Note
 1. Versin 3.6.0 and above need to be used with Homebridge min. v1.3.x.
@@ -52,6 +43,12 @@ Homebridge plugin for Sat Receivers basis on the OpenWebIf API. Tested with Drea
 </p>
 
 ## Configuration
+Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) plugin to configure this plugin (Highly Recommended). The sample configuration can be edited and used manually as an alternative. See the `sample-config.json` file in this repository for an example or copy the example below into your config.json file, making the apporpriate changes before saving it. Be sure to always make a backup copy of your config.json file before making any changes to it.
+
+<p align="left">
+  <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/master/graphics/ustawienia.png" width="840"></a>
+</p>
+
 1. Use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x) to configure the plugin (strongly recomended), or update your configuration file manually. See `sample-config.json` in this repository for a sample or add the bottom example to Your config.json file.
 2. If port `80` not working check which port is set for Your Sat Receiver.
 3. All `reference` and `name` from Your sat receiver are stored in `homebridge_directory/openwebifTv/inputs_xxxx`, if U want somthing changed in channel list please add Yours prefered channels to the config bouquets.
@@ -62,10 +59,6 @@ Homebridge plugin for Sat Receivers basis on the OpenWebIf API. Tested with Drea
 8. In `inputs` configure channels (this will be displayed as TV Services list inside main accessory).
 9. In `inputsButton` configure channels button (this will be displayed as separate tile inside main accessory or direct in HomeKit main screen).
 8. `manufacturer`, `model`, `serialNumber`, `firmwareRevision` - optional branding data displayed in Home.app
-
-<p align="left">
-  <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/master/graphics/ustawienia.png" height="170"></a>
-</p>
 
 ```json
 {
@@ -183,6 +176,14 @@ Sort of channel in HomeKit app is alpahabetically but U can sort the channels as
                     "reference": "1:0:1:3DD0:640:13E:820000:0:0:0:"
                 }
 ```
+
+## HomeKit pairing
+1. Each accessories needs to be manually paired. 
+2. Open the Home <img src='https://user-images.githubusercontent.com/3979615/78010622-4ea1d380-738e-11ea-8a17-e6a465eeec35.png' height='16.42px'> app on your device. 
+3. Tap the Home tab, then tap <img src='https://user-images.githubusercontent.com/3979615/78010869-9aed1380-738e-11ea-9644-9f46b3633026.png' height='16.42px'>. 
+4. Tap *Add Accessory*, and select *I Don't Have a Code or Cannot Scan*. 
+5. Enter the Homebridge PIN, this can be found under the QR code in Homebridge UI or your Homebridge logs, alternatively you can select *Use Camera* and scan the QR code again.
+
 ## Limitations
 1. Due to HomeKit app limitation max. services for 1 accessory is 100. Over this value HomeKit app will no response. As services in this accessory are, (1.information service, 2.speaker service, 3.lightbulb service, 4.television service and inputs service 5-100(where every input = 1 service)). If all services are enabled possible inputs to use is 96.
 
