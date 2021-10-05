@@ -20,7 +20,7 @@
               "required": true
             },
             "host": {
-              "title": "Address IP",
+              "title": "IP/Hostname",
               "type": "string",
               "placeholder": "192.160.1.10",
               "format": "hostname",
@@ -63,7 +63,7 @@
               "type": "boolean",
               "default": false,
               "description": "This disable log info, all values and state will not be displayed in Homebridge log console.",
-              "required": false
+              "required": true
             },
             "volumeControl": {
               "title": "Volume control mode",
@@ -97,7 +97,7 @@
               "type": "boolean",
               "default": false,
               "description": "This toggle behaviour for *I* button in RC app and *PowerModeSelection* in settings.",
-              "required": false
+              "required": true
             },
             "inputs": {
               "title": "Inputs",

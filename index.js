@@ -111,15 +111,10 @@ class openwebIfTvDevice {
 		this.checkDeviceState = false;
 		this.startPrepareAccessory = true;
 
-		this.inputsService = new Array();
 		this.inputsReference = new Array();
 		this.inputsName = new Array();
 		this.inputsType = new Array();
 		this.inputsMode = new Array();
-
-		this.buttonsService = new Array();
-		this.buttonsReference = new Array();
-		this.buttonsName = new Array();
 
 		this.powerState = false;
 		this.volume = 0;
@@ -140,7 +135,7 @@ class openwebIfTvDevice {
 		this.devInfoFile = prefDir + '/' + 'devInfo_' + this.host.split('.').join('');
 		this.inputsFile = prefDir + '/' + 'inputs_' + this.host.split('.').join('');
 		this.inputsNamesFile = prefDir + '/' + 'inputsNames_' + this.host.split('.').join('');
-		this.targetVisibilityInputsFile = prefDir + '/' + 'targetVisibilityInputs_' + this.host.split('.').join('');
+		this.inputsTargetVisibilityFile = prefDir + '/' + 'inputsTargetVisibility_' + this.host.split('.').join('');
 
 		this.axiosInstance = axios.create({
 			method: 'GET',
@@ -166,8 +161,8 @@ class openwebIfTvDevice {
 		if (fs.existsSync(this.inputsNamesFile) == false) {
 			fsPromises.writeFile(this.inputsNamesFile, '');
 		}
-		if (fs.existsSync(this.targetVisibilityInputsFile) == false) {
-			fsPromises.writeFile(this.targetVisibilityInputsFile, '');
+		if (fs.existsSync(this.inputsTargetVisibilityFile) == false) {
+			fsPromises.writeFile(this.inputsTargetVisibilityFile, '');
 		}
 
 		//Check device state
@@ -639,7 +634,7 @@ class openwebIfTvDevice {
 		const savedInputsNames = ((fs.readFileSync(this.inputsNamesFile)).length > 0) ? JSON.parse(fs.readFileSync(this.inputsNamesFile)) : {};
 		this.log.debug('Device: %s %s, read savedInputsNames: %s', this.host, accessoryName, savedInputsNames)
 
-		const savedTargetVisibility = ((fs.readFileSync(this.targetVisibilityInputsFile)).length > 0) ? JSON.parse(fs.readFileSync(this.targetVisibilityInputsFile)) : {};
+		const savedTargetVisibility = ((fs.readFileSync(this.inputsTargetVisibilityFile)).length > 0) ? JSON.parse(fs.readFileSync(this.inputsTargetVisibilityFile)) : {};
 		this.log.debug('Device: %s %s, read savedTargetVisibility: %s', this.host, accessoryName, savedTargetVisibility);
 
 		//check available inputs and possible inputs count (max 94)
@@ -702,7 +697,7 @@ class openwebIfTvDevice {
 						let newState = savedTargetVisibility;
 						newState[targetVisibilityIdentifier] = state;
 						const newTargetVisibility = JSON.stringify(newState);
-						const writeNewTargetVisibility = (targetVisibilityIdentifier != false) ? await fsPromises.writeFile(this.targetVisibilityInputsFile, newTargetVisibility) : false;
+						const writeNewTargetVisibility = (targetVisibilityIdentifier != false) ? await fsPromises.writeFile(this.inputsTargetVisibilityFile, newTargetVisibility) : false;
 						this.log.debug('Device: %s %s, Input: %s, saved target visibility state: %s', this.host, accessoryName, inputName, newTargetVisibility);
 						if (!this.disableLogInfo) {
 							this.log('Device: %s %s, Input: %s, saved target visibility state: %s', this.host, accessoryName, inputName, state ? 'HIDEN' : 'SHOWN');
@@ -718,9 +713,8 @@ class openwebIfTvDevice {
 			this.inputsType.push(inputType);
 			this.inputsMode.push(inputMode);
 
-			this.inputsService.push(inputService);
-			this.televisionService.addLinkedService(this.inputsService[i]);
-			accessory.addService(this.inputsService[i]);
+			this.televisionService.addLinkedService(inputService);
+			accessory.addService(inputService);
 		}
 
 		//Prepare inputs button services
@@ -761,11 +755,8 @@ class openwebIfTvDevice {
 							.updateCharacteristic(Characteristic.On, false);
 					}, 250);
 				});
-			this.buttonsReference.push(buttonReference);
-			this.buttonsName.push(buttonName);
 
-			this.buttonsService.push(buttonService)
-			accessory.addService(this.buttonsService[i]);
+			accessory.addService(buttonService);
 		}
 
 		this.startPrepareAccessory = false;
