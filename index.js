@@ -525,6 +525,7 @@ class openwebIfTvDevice {
 					this.log.error('Device: %s %s, can not set Volume Selector command. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
 				};
 			});
+
 		this.speakerService.getCharacteristic(Characteristic.Volume)
 			.onGet(async () => {
 				try {
@@ -551,6 +552,7 @@ class openwebIfTvDevice {
 					this.log.error('Device: %s %s, can not set Volume level. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
 				};
 			});
+
 		this.speakerService.getCharacteristic(Characteristic.Mute)
 			.onGet(async () => {
 				try {
@@ -577,7 +579,6 @@ class openwebIfTvDevice {
 				}
 			});
 
-		this.televisionService.addLinkedService(this.speakerService);
 		accessory.addService(this.speakerService);
 
 		//Prepare volume service
@@ -601,8 +602,10 @@ class openwebIfTvDevice {
 					.onSet(async (state) => {
 						this.speakerService.setCharacteristic(Characteristic.Mute, !state);
 					});
+
 				accessory.addService(this.volumeService);
 			}
+
 			if (this.volumeControl == 2) {
 				this.volumeServiceFan = new Service.Fan(accessoryName + ' Volume', 'Volume');
 				this.volumeServiceFan.getCharacteristic(Characteristic.RotationSpeed)
@@ -621,6 +624,7 @@ class openwebIfTvDevice {
 					.onSet(async (state) => {
 						this.speakerService.setCharacteristic(Characteristic.Mute, !state);
 					});
+
 				accessory.addService(this.volumeServiceFan);
 			}
 		}
