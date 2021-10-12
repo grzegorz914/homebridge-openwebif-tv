@@ -28,8 +28,8 @@
             },
             "port": {
               "title": "Port",
-              "type": "string",
-              "placeholder": "80",
+              "type": "integer",
+              "placeholder": 80,
               "required": true
             },
             "auth": {
