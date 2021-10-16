@@ -9,12 +9,6 @@ const PLUGIN_NAME = 'homebridge-openwebif-tv';
 const PLATFORM_NAME = 'OpenWebIfTv';
 
 const INPUT_SOURCE_TYPES = ['OTHER', 'HOME_SCREEN', 'TUNER', 'HDMI', 'COMPOSITE_VIDEO', 'S_VIDEO', 'COMPONENT_VIDEO', 'DVI', 'AIRPLAY', 'USB', 'APPLICATION'];
-const DEFAULT_INPUTS = [{
-	'name': 'Undefined',
-	'reference': 'undefined',
-	'type': 'undefined',
-	'mode': 'undefined'
-}];
 
 let Accessory, Characteristic, Service, Categories, AccessoryUUID;
 
@@ -83,7 +77,7 @@ class openwebIfTvDevice {
 		this.buttons = config.buttons || [];
 
 		//add configured inputs to the default inputs
-		const inputsArr = new Array(DEFAULT_INPUTS[0]);
+		const inputsArr = new Array();
 		const inputsCount = this.inputs.length;
 		for (let j = 0; j < inputsCount; j++) {
 			const name = this.inputs[j].name;
@@ -135,7 +129,7 @@ class openwebIfTvDevice {
 		this.devInfoFile = prefDir + '/' + 'devInfo_' + this.host.split('.').join('');
 		this.inputsFile = prefDir + '/' + 'inputs_' + this.host.split('.').join('');
 		this.inputsNamesFile = prefDir + '/' + 'inputsNames_' + this.host.split('.').join('');
-		this.inputsTargetVisibilityFile = prefDir + '/' + 'inputsTargetVisibility_' + this.host.split('.').join('');
+		this.inputsTargetVisibilityFile = prefDir + '/' + 'inputsTargetVisibility_' + this.host.split('.').join('')
 
 		this.axiosInstance = axios.create({
 			method: 'GET',
@@ -165,6 +159,16 @@ class openwebIfTvDevice {
 			fsPromises.writeFile(this.inputsTargetVisibilityFile, '');
 		}
 
+		//save inputs to the file
+		try {
+			const inputsArr = this.inputs;
+			const obj = JSON.stringify(inputsArr, null, 2);
+			fsPromises.writeFile(this.inputsFile, obj);
+			this.log.debug('Device: %s %s, save inputs succesful, inputs: %s', this.host, this.name, obj);
+		} catch (error) {
+			this.log.error('Device: %s %s, save inputs error: %s', this.host, this.name, error);
+		};
+
 		//Check device state
 		setInterval(function () {
 			if (this.checkDeviceInfo) {
@@ -181,16 +185,6 @@ class openwebIfTvDevice {
 		try {
 			const [response, response1] = await axios.all([this.axiosInstance('/api/deviceinfo'), this.axiosInstance('/api/getallservices')]);
 			this.log.debug('Device: %s %s, debug response: %s, response1: %s', this.host, this.name, response.data, response1.data);
-
-			//save inputs to the file
-			try {
-				const inputsArr = this.inputs;
-				const obj = JSON.stringify(inputsArr, null, 2);
-				const writeInputs = fsPromises.writeFile(this.inputsFile, obj);
-				this.log.debug('Device: %s %s, save inputs succesful, inputs: %s', this.host, this.name, obj);
-			} catch (error) {
-				this.log.error('Device: %s %s, save inputs error: %s', this.host, this.name, error);
-			};
 
 			const result = (response.data.brand != undefined) ? response : {
 				'data': {
@@ -239,13 +233,8 @@ class openwebIfTvDevice {
 			this.modelName = modelName;
 			this.serialNumber = serialNumber;
 			this.firmwareRevision = firmwareRevision;
-
 			this.checkDeviceInfo = false;
 
-			//start prepare accessory
-			if (this.startPrepareAccessory) {
-				this.prepareAccessory();
-			}
 			const updateDeviceState = !this.checkDeviceState ? this.updateDeviceState() : false;
 		} catch (error) {
 			this.log.debug('Device: %s %s, get device info eror: %s, device offline, trying to reconnect', this.host, this.name, error);
@@ -267,7 +256,7 @@ class openwebIfTvDevice {
 			const volume = response.data.volume;
 			const muteState = powerState ? (response.data.muted == true) : true;
 
-			const currentInputIdentifier = (this.inputsReference.indexOf(inputReference) >= 0) ? this.inputsReference.indexOf(inputReference) : 0;
+			const currentInputIdentifier = (this.inputsReference.indexOf(inputReference) >= 0) ? this.inputsReference.indexOf(inputReference) : this.inputIdentifier;
 			const inputIdentifier = this.setStartInput ? this.setStartInputIdentifier : currentInputIdentifier;
 
 			if (this.televisionService) {
@@ -311,6 +300,11 @@ class openwebIfTvDevice {
 				this.muteState = this.muteState;
 			}
 			this.checkDeviceState = true;
+
+			//start prepare accessory
+			if (this.startPrepareAccessory) {
+				this.prepareAccessory();
+			}
 		} catch (error) {
 			this.log.debug('Device: %s %s, update device state error: %s', this.host, this.name, error);
 			this.checkDeviceState = false;
