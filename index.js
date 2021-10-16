@@ -186,36 +186,16 @@ class openwebIfTvDevice {
 			const [response, response1] = await axios.all([this.axiosInstance('/api/deviceinfo'), this.axiosInstance('/api/getallservices')]);
 			this.log.debug('Device: %s %s, debug response: %s, response1: %s', this.host, this.name, response.data, response1.data);
 
-			const result = (response.data.brand != undefined) ? response : {
-				'data': {
-					'brand': this.manufacturer,
-					'model': this.modelName,
-					'webifver': this.serialNumber,
-					'imagever': this.firmwareRevision,
-					'kernel': 'undefined',
-					'chipset': 'undefined'
-				}
-			};
-			const obj = (result.data.brand != undefined) ? {
-				'data': {
-					'brand': result.data.brand,
-					'model': result.data.model,
-					'webifver': result.data.webifver,
-					'imagever': result.data.imagever,
-					'kernel': result.data.kernelver,
-					'chipset': result.data.chipset
-				}
-			} : result;
-			const devInfo = JSON.stringify(obj, null, 2);
+			const manufacturer = response.data.brand || this.manufacturer;
+			const modelName = response.data.model || this.modelName;
+			const serialNumber = response.data.webifver || this.serialNumber;
+			const firmwareRevision = response.data.imagever || this.firmwareRevision;
+			const kernelVer = response.data.kernelver || 'Unknown';
+			const chipset = response.data.chipset || 'Unknown';
+
+			const devInfo = JSON.stringify(response.data, null, 2);
 			const writeDevInfo = await fsPromises.writeFile(this.devInfoFile, devInfo);
 			this.log.debug('Device: %s %s, saved device info successful: %s', this.host, this.name, devInfo);
-
-			const manufacturer = result.data.brand;
-			const modelName = result.data.model;
-			const serialNumber = result.data.webifver;
-			const firmwareRevision = result.data.imagever;
-			const kernelVer = result.data.kernelver;
-			const chipset = result.data.chipset;
 
 			if (!this.disableLogInfo) {
 				this.log('Device: %s %s, state: Online.', this.host, this.name);
@@ -322,36 +302,20 @@ class openwebIfTvDevice {
 
 		//Prepare information service
 		this.log.debug('prepareInformationService');
-		try {
-			const readDevInfo = await fsPromises.readFile(this.devInfoFile);
-			const devInfo = (readDevInfo != undefined) ? JSON.parse(readDevInfo) : {
-				'data': {
-					'brand': this.manufacturer,
-					'model': this.modelName,
-					'webifver': this.serialNumber,
-					'imagever': this.firmwareRevision,
-					'kernel': 'undefined',
-					'chipset': 'undefined'
-				}
-			};
-			this.log.debug('Device: %s %s, read devInfo: %s', this.host, accessoryName, devInfo)
 
-			const manufacturer = devInfo.data.brand;
-			const modelName = devInfo.data.model;
-			const serialNumber = devInfo.data.webifver;
-			const firmwareRevision = devInfo.data.imagever;
+		const manufacturer = this.manufacturer;
+		const modelName = this.modelName;
+		const serialNumber = this.serialNumber;
+		const firmwareRevision = this.firmwareRevision;
 
-			accessory.removeService(accessory.getService(Service.AccessoryInformation));
-			const informationService = new Service.AccessoryInformation(accessoryName);
-			informationService
-				.setCharacteristic(Characteristic.Manufacturer, manufacturer)
-				.setCharacteristic(Characteristic.Model, modelName)
-				.setCharacteristic(Characteristic.SerialNumber, serialNumber)
-				.setCharacteristic(Characteristic.FirmwareRevision, firmwareRevision);
-			accessory.addService(informationService);
-		} catch (error) {
-			this.log.debug('Device: %s %s, prepareInformationService error: %s', this.host, accessoryName, error);
-		};
+		accessory.removeService(accessory.getService(Service.AccessoryInformation));
+		const informationService = new Service.AccessoryInformation(accessoryName);
+		informationService
+			.setCharacteristic(Characteristic.Manufacturer, manufacturer)
+			.setCharacteristic(Characteristic.Model, modelName)
+			.setCharacteristic(Characteristic.SerialNumber, serialNumber)
+			.setCharacteristic(Characteristic.FirmwareRevision, firmwareRevision);
+		accessory.addService(informationService);
 
 		//Prepare television service
 		this.log.debug('prepareTelevisionService');
