@@ -332,7 +332,7 @@ class openwebIfTvDevice {
 				try {
 					if (state != this.powerState) {
 						const newState = state ? '4' : '5';
-						const response = await this.axiosInstance(API_URL.SetPower + newState);
+						const setPower = await this.axiosInstance(API_URL.SetPower + newState);
 						if (!this.disableLogInfo) {
 							this.log('Device: %s %s, set Power state successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
 						}
@@ -420,7 +420,7 @@ class openwebIfTvDevice {
 							command = this.switchInfoMenu ? '358' : '139';
 							break;
 					}
-					const response = await this.axiosInstance(API_URL.SetRcCommand + command);
+					const setCommand = await this.axiosInstance(API_URL.SetRcCommand + command);
 					if (!this.disableLogInfo) {
 						this.log('Device: %s %s, set Remote Key successful, command: %s', this.host, accessoryName, command);
 					}
@@ -440,7 +440,7 @@ class openwebIfTvDevice {
 							command = '174';
 							break;
 					}
-					const response = await this.axiosInstance(API_URL.SetRcCommand + command);
+					const setCommand = await this.axiosInstance(API_URL.SetRcCommand + command);
 					if (!this.disableLogInfo) {
 						this.log('Device: %s %s, set Power Mode Selection successful, command: %s', this.host, accessoryName, command);
 					}
@@ -468,7 +468,7 @@ class openwebIfTvDevice {
 							command = '114';
 							break;
 					}
-					const response = await this.axiosInstance(API_URL.SetRcCommand + command);
+					const setCommand = await this.axiosInstance(API_URL.SetRcCommand + command);
 					if (!this.disableLogInfo) {
 						this.log('Device: %s %s, set Volume Selector successful, command: %s', this.host, accessoryName, command);
 					}
@@ -495,7 +495,7 @@ class openwebIfTvDevice {
 					if (volume == 0 || volume == 100) {
 						volume = this.volume;
 					}
-					const response = await this.axiosInstance(API_URL.SetVolume + volume);
+					const setVolume = await this.axiosInstance(API_URL.SetVolume + volume);
 					if (!this.disableLogInfo) {
 						this.log('Device: %s %s, set Volume level successful: %s', this.host, accessoryName, volume);
 					}
@@ -520,7 +520,7 @@ class openwebIfTvDevice {
 			.onSet(async (state) => {
 				if (state != this.muteState) {
 					try {
-						const response = await this.axiosInstance(API_URL.ToggleMute);
+						const setMute = await this.axiosInstance(API_URL.ToggleMute);
 						if (!this.disableLogInfo) {
 							this.log('Device: %s %s, set Mute successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
 						}
