@@ -8,6 +8,17 @@ const path = require('path');
 const PLUGIN_NAME = 'homebridge-openwebif-tv';
 const PLATFORM_NAME = 'OpenWebIfTv';
 
+const API_URL = {
+	'DeviceInfo': '/api/deviceinfo',
+	'DeviceStatus': '/api/statusinfo',
+	'GetAllServices': '/api/getallservices',
+	'SetPower': '/api/powerstate?newstate=',
+	'SetChannel': '/api/zap?sRef=',
+	'SetVolume': '/api/vol?set=set',
+	'ToggleMute': '/api/vol?set=mute',
+	'SetRcCommand': '/api/remotecontrol?command='
+};
+
 const INPUT_SOURCE_TYPES = ['OTHER', 'HOME_SCREEN', 'TUNER', 'HDMI', 'COMPOSITE_VIDEO', 'S_VIDEO', 'COMPONENT_VIDEO', 'DVI', 'AIRPLAY', 'USB', 'APPLICATION'];
 
 let Accessory, Characteristic, Service, Categories, AccessoryUUID;
@@ -65,7 +76,7 @@ class openwebIfTvDevice {
 		//device configuration
 		this.name = config.name || 'Sat Receiver';
 		this.host = config.host || '';
-		this.port = config.port || '';
+		this.port = config.port || 80;
 		this.auth = config.auth || false;
 		this.user = config.user || '';
 		this.pass = config.pass || '';
@@ -75,24 +86,6 @@ class openwebIfTvDevice {
 		this.switchInfoMenu = config.switchInfoMenu || false;
 		this.inputs = config.inputs || [];
 		this.buttons = config.buttons || [];
-
-		//add configured inputs to the default inputs
-		const inputsArr = new Array();
-		const inputsCount = this.inputs.length;
-		for (let j = 0; j < inputsCount; j++) {
-			const name = this.inputs[j].name;
-			const reference = this.inputs[j].reference;
-			const type = 'OTHER';
-			const mode = 0;
-			const inputsObj = {
-				'name': name,
-				'reference': reference,
-				'type': type,
-				'mode': mode
-			};
-			inputsArr.push(inputsObj);
-		}
-		this.inputs = inputsArr;
 
 		//get config info
 		this.manufacturer = config.manufacturer || 'Manufacturer';
@@ -183,7 +176,7 @@ class openwebIfTvDevice {
 	async getDeviceInfo() {
 		this.log.debug('Device: %s %s, requesting Device Info.', this.host, this.name);
 		try {
-			const [response, response1] = await axios.all([this.axiosInstance('/api/deviceinfo'), this.axiosInstance('/api/getallservices')]);
+			const [response, response1] = await axios.all([this.axiosInstance(API_URL.DeviceInfo), this.axiosInstance(API_URL.GetAllServices)]);
 			this.log.debug('Device: %s %s, debug response: %s, response1: %s', this.host, this.name, response.data, response1.data);
 
 			const manufacturer = response.data.brand || this.manufacturer;
@@ -226,7 +219,7 @@ class openwebIfTvDevice {
 	async updateDeviceState() {
 		this.log.debug('Device: %s %s, requesting Device state.', this.host, this.name);
 		try {
-			const response = await this.axiosInstance('/api/statusinfo');
+			const response = await this.axiosInstance(API_URL.DeviceStatus);
 			this.log.debug('Device: %s %s, debug response: %s', this.host, this.name, response.data);
 
 			const powerState = (response.data.inStandby == 'false');
@@ -339,7 +332,7 @@ class openwebIfTvDevice {
 				try {
 					if (state != this.powerState) {
 						const newState = state ? '4' : '5';
-						const response = await this.axiosInstance('/api/powerstate?newstate=' + newState);
+						const response = await this.axiosInstance(API_URL.SetPower + newState);
 						if (!this.disableLogInfo) {
 							this.log('Device: %s %s, set Power state successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
 						}
@@ -372,7 +365,7 @@ class openwebIfTvDevice {
 				try {
 					const inputName = this.inputsName[inputIdentifier];
 					const inputReference = this.inputsReference[inputIdentifier];
-					const setInput = (inputReference != undefined) ? await this.axiosInstance('/api/zap?sRef=' + inputReference) : false;
+					const setInput = (inputReference != undefined) ? await this.axiosInstance(API_URL.SetChannel + inputReference) : false;
 					if (!this.disableLogInfo) {
 						this.log('Device: %s %s, set Channel successful: %s %s', this.host, accessoryName, inputName, inputReference);
 					}
@@ -427,7 +420,7 @@ class openwebIfTvDevice {
 							command = this.switchInfoMenu ? '358' : '139';
 							break;
 					}
-					const response = await this.axiosInstance('/api/remotecontrol?command=' + command);
+					const response = await this.axiosInstance(API_URL.SetRcCommand + command);
 					if (!this.disableLogInfo) {
 						this.log('Device: %s %s, set Remote Key successful, command: %s', this.host, accessoryName, command);
 					}
@@ -447,7 +440,7 @@ class openwebIfTvDevice {
 							command = '174';
 							break;
 					}
-					const response = await this.axiosInstance('/api/remotecontrol?command=' + command);
+					const response = await this.axiosInstance(API_URL.SetRcCommand + command);
 					if (!this.disableLogInfo) {
 						this.log('Device: %s %s, set Power Mode Selection successful, command: %s', this.host, accessoryName, command);
 					}
@@ -475,7 +468,7 @@ class openwebIfTvDevice {
 							command = '114';
 							break;
 					}
-					const response = await this.axiosInstance('/api/remotecontrol?command=' + command);
+					const response = await this.axiosInstance(API_URL.SetRcCommand + command);
 					if (!this.disableLogInfo) {
 						this.log('Device: %s %s, set Volume Selector successful, command: %s', this.host, accessoryName, command);
 					}
@@ -502,7 +495,7 @@ class openwebIfTvDevice {
 					if (volume == 0 || volume == 100) {
 						volume = this.volume;
 					}
-					const response = await this.axiosInstance('/api/vol?set=set' + volume);
+					const response = await this.axiosInstance(API_URL.SetVolume + volume);
 					if (!this.disableLogInfo) {
 						this.log('Device: %s %s, set Volume level successful: %s', this.host, accessoryName, volume);
 					}
@@ -527,7 +520,7 @@ class openwebIfTvDevice {
 			.onSet(async (state) => {
 				if (state != this.muteState) {
 					try {
-						const response = await this.axiosInstance('/api/vol?set=mute');
+						const response = await this.axiosInstance(API_URL.ToggleMute);
 						if (!this.disableLogInfo) {
 							this.log('Device: %s %s, set Mute successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
 						}
@@ -612,10 +605,10 @@ class openwebIfTvDevice {
 			const inputName = (savedInputsNames[inputReference] != undefined) ? savedInputsNames[inputReference] : inputs[i].name;
 
 			//get input type
-			const inputType = (inputs[i].type != undefined) ? INPUT_SOURCE_TYPES.indexOf(inputs[i].type) : 3;
+			const inputType = 0;
 
 			//get input mode
-			const inputMode = (inputs[i].mode != undefined) ? inputs[i].mode : 0;
+			const inputMode = 0;
 
 			//get input configured
 			const isConfigured = 1;
@@ -705,7 +698,7 @@ class openwebIfTvDevice {
 				})
 				.onSet(async (state) => {
 					try {
-						const setInput = (state && this.powerState) ? await this.axiosInstance('/api/zap?sRef=' + buttonReference) : false;
+						const setInput = (state && this.powerState) ? await this.axiosInstance(API_URL.SetChannel + buttonReference) : false;
 						if (!this.disableLogInfo) {
 							this.log('Device: %s %s, set new Channel successful: %s %s', this.host, accessoryName, buttonName, buttonReference);
 						}
