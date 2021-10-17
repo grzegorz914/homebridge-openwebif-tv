@@ -111,9 +111,11 @@ class openwebIfTvDevice {
 		this.setStartInput = false;
 		this.setStartInputIdentifier = 0;
 
+		this.inputReference = '';
 		this.inputName = '';
 		this.inputEventName = '';
-		this.inputReference = '';
+		this.inputType = 0;
+		this.inputMode = 0;
 		this.inputIdentifier = 0;
 
 		const prefDir = path.join(api.user.storagePath(), 'openwebifTv');
@@ -219,41 +221,32 @@ class openwebIfTvDevice {
 	async updateDeviceState() {
 		this.log.debug('Device: %s %s, requesting Device state.', this.host, this.name);
 		try {
-			const response = await this.axiosInstance(API_URL.DeviceStatus);
-			this.log.debug('Device: %s %s, debug response: %s', this.host, this.name, response.data);
+			const deviceStatusData = await this.axiosInstance(API_URL.DeviceStatus);
+			this.log.debug('Device: %s %s, debug deviceStatusData: %s', this.host, this.name, deviceStatusData.data);
 
-			const powerState = (response.data.inStandby == 'false');
-			const inputName = response.data.currservice_station;
-			const inputEventName = response.data.currservice_name;
-			const inputReference = response.data.currservice_serviceref;
-			const volume = response.data.volume;
-			const muteState = powerState ? (response.data.muted == true) : true;
+			const powerState = (deviceStatusData.data.inStandby == 'false');
+			const inputName = deviceStatusData.data.currservice_station;
+			const inputEventName = deviceStatusData.data.currservice_name;
+			const inputReference = deviceStatusData.data.currservice_serviceref;
+			const volume = deviceStatusData.data.volume;
+			const muteState = powerState ? (deviceStatusData.data.muted == true) : true;
 
 			const currentInputIdentifier = (this.inputsReference.indexOf(inputReference) >= 0) ? this.inputsReference.indexOf(inputReference) : this.inputIdentifier;
 			const inputIdentifier = this.setStartInput ? this.setStartInputIdentifier : currentInputIdentifier;
 
 			if (this.televisionService) {
-				if (powerState) {
-					this.televisionService
-						.updateCharacteristic(Characteristic.Active, true)
-					this.powerState = true;
-				}
-
-				if (!powerState) {
-					this.televisionService
-						.updateCharacteristic(Characteristic.Active, false);
-					this.powerState = false;
-				}
+				this.televisionService
+					.updateCharacteristic(Characteristic.Active, powerState)
 
 				const setUpdateCharacteristic = this.setStartInput ? this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier) :
 					this.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
 				this.setStartInput = (inputIdentifier == inputIdentifier) ? false : true;
-
-				this.inputName = inputName;
-				this.inputEventName = inputEventName;
-				this.inputReference = inputReference;
-				this.inputIdentifier = inputIdentifier;
 			}
+			this.powerState = powerState;
+			this.inputName = inputName;
+			this.inputEventName = inputEventName;
+			this.inputReference = inputReference;
+			this.inputIdentifier = inputIdentifier;
 
 			if (this.speakerService) {
 				this.speakerService
@@ -269,9 +262,9 @@ class openwebIfTvDevice {
 						.updateCharacteristic(Characteristic.RotationSpeed, volume)
 						.updateCharacteristic(Characteristic.On, !muteState);
 				}
-				this.volume = volume;
-				this.muteState = this.muteState;
 			}
+			this.volume = volume;
+			this.muteState = muteState;
 			this.checkDeviceState = true;
 
 			//start prepare accessory
@@ -334,7 +327,7 @@ class openwebIfTvDevice {
 						const newState = state ? '4' : '5';
 						const setPower = await this.axiosInstance(API_URL.SetPower + newState);
 						if (!this.disableLogInfo) {
-							this.log('Device: %s %s, set Power state successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
+							this.log('Device: %s %s, set Power state successful, state: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
 						}
 					}
 				} catch (error) {
@@ -351,8 +344,6 @@ class openwebIfTvDevice {
 					const inputIdentifier = this.inputIdentifier;
 					if (!this.disableLogInfo) {
 						this.log('Device: %s %s, get Channel successful: %s %s', this.host, accessoryName, inputName, inputReference);
-					}
-					if (!this.disableLogInfo) {
 						this.log('Device: %s %s, get Event successful: %s', this.host, accessoryName, inputEventName);
 					}
 					return inputIdentifier;
@@ -367,7 +358,7 @@ class openwebIfTvDevice {
 					const inputReference = this.inputsReference[inputIdentifier];
 					const setInput = (inputReference != undefined) ? await this.axiosInstance(API_URL.SetChannel + inputReference) : false;
 					if (!this.disableLogInfo) {
-						this.log('Device: %s %s, set Channel successful: %s %s', this.host, accessoryName, inputName, inputReference);
+						this.log('Device: %s %s, set Channel successful, name: %s, reference: %s', this.host, accessoryName, inputName, inputReference);
 					}
 					this.setStartInputIdentifier = inputIdentifier;
 					this.setStartInput = this.powerState ? false : true;
@@ -428,6 +419,8 @@ class openwebIfTvDevice {
 					this.log.error('Device: %s %s, can not set Remote Key command. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
 				};
 			});
+
+		//optional television characteristics
 		this.televisionService.getCharacteristic(Characteristic.PowerModeSelection)
 			.onSet(async (command) => {
 				try {
@@ -700,7 +693,7 @@ class openwebIfTvDevice {
 					try {
 						const setInput = (state && this.powerState) ? await this.axiosInstance(API_URL.SetChannel + buttonReference) : false;
 						if (!this.disableLogInfo) {
-							this.log('Device: %s %s, set new Channel successful: %s %s', this.host, accessoryName, buttonName, buttonReference);
+							this.log('Device: %s %s, set new Channel successful, name: %s, reference: %s', this.host, accessoryName, buttonName, buttonReference);
 						}
 					} catch (error) {
 						this.log.error('Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', this.host, accessoryName, error);
