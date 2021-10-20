@@ -35,9 +35,7 @@
   },
   "keywords": [
     "homebridge",
-    "homebridge-plugin",
     "HomeKit",
-    "homebridge-openwebif-tv",
     "OpenWebIf",
     "Enigma2"
   ],
