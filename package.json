@@ -35,9 +35,9 @@
   },
   "keywords": [
     "homebridge",
-    "HomeKit",
-    "OpenWebIf",
-    "Enigma2"
+    "homekit",
+    "openwebif",
+    "enigma2"
   ],
   "contributors": [],
   "scripts": {
