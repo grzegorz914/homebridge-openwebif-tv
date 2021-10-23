@@ -118,6 +118,9 @@ class openwebIfTvDevice {
 		this.inputMode = 0;
 		this.inputIdentifier = 0;
 
+		this.brightness = 0;
+		this.pictureMode = 0;
+
 		const prefDir = path.join(api.user.storagePath(), 'openwebifTv');
 		const url = 'http://' + this.host + ':' + this.port;
 
