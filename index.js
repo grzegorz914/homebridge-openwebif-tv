@@ -122,12 +122,12 @@ class openwebIfTvDevice {
 		this.pictureMode = 0;
 
 		const prefDir = path.join(api.user.storagePath(), 'openwebifTv');
-		const url = 'http://' + this.host + ':' + this.port;
+		const url = `http://${this.host}:${this.port}`;
 
-		this.devInfoFile = prefDir + '/' + 'devInfo_' + this.host.split('.').join('');
-		this.inputsFile = prefDir + '/' + 'inputs_' + this.host.split('.').join('');
-		this.inputsNamesFile = prefDir + '/' + 'inputsNames_' + this.host.split('.').join('');
-		this.inputsTargetVisibilityFile = prefDir + '/' + 'inputsTargetVisibility_' + this.host.split('.').join('')
+		this.devInfoFile = `${prefDir}/devInfo_${this.host.split('.').join('')}`;
+		this.inputsFile = `${prefDir}/inputs_${this.host.split('.').join('')}`;
+		this.inputsNamesFile = `${prefDir}/inputsNames_${this.host.split('.').join('')}`;
+		this.inputsTargetVisibilityFile = `${prefDir}/inputsTargetVisibility_${this.host.split('.').join('')}`
 
 		this.axiosInstance = axios.create({
 			method: 'GET',
