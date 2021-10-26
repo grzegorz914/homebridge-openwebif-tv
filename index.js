@@ -120,14 +120,14 @@ class openwebIfTvDevice {
 
 		this.brightness = 0;
 		this.pictureMode = 0;
-
-		const prefDir = path.join(api.user.storagePath(), 'openwebifTv');
 		const url = `http://${this.host}:${this.port}`;
 
-		this.devInfoFile = `${prefDir}/devInfo_${this.host.split('.').join('')}`;
-		this.inputsFile = `${prefDir}/inputs_${this.host.split('.').join('')}`;
-		this.inputsNamesFile = `${prefDir}/inputsNames_${this.host.split('.').join('')}`;
-		this.inputsTargetVisibilityFile = `${prefDir}/inputsTargetVisibility_${this.host.split('.').join('')}`
+
+		this.prefDir = path.join(api.user.storagePath(), 'openwebifTv');
+		this.devInfoFile = `${this.prefDir}/devInfo_${this.host.split('.').join('')}`;
+		this.inputsFile = `${this.prefDir}/inputs_${this.host.split('.').join('')}`;
+		this.inputsNamesFile = `${this.prefDir}/inputsNames_${this.host.split('.').join('')}`;
+		this.inputsTargetVisibilityFile = `${this.prefDir}/inputsTargetVisibility_${this.host.split('.').join('')}`
 
 		this.axiosInstance = axios.create({
 			method: 'GET',
@@ -140,43 +140,51 @@ class openwebIfTvDevice {
 			},
 		});
 
-		//check if the directory exists, if not then create it
-		if (fs.existsSync(prefDir) == false) {
-			fsPromises.mkdir(prefDir);
-		}
-		if (fs.existsSync(this.devInfoFile) == false) {
-			fsPromises.writeFile(this.devInfoFile, '');
-		}
-		if (fs.existsSync(this.inputsFile) == false) {
-			fsPromises.writeFile(this.inputsFile, '');
-		}
-		if (fs.existsSync(this.inputsNamesFile) == false) {
-			fsPromises.writeFile(this.inputsNamesFile, '');
-		}
-		if (fs.existsSync(this.inputsTargetVisibilityFile) == false) {
-			fsPromises.writeFile(this.inputsTargetVisibilityFile, '');
-		}
-
-		//save inputs to the file
-		try {
-			const inputsArr = this.inputs;
-			const obj = JSON.stringify(inputsArr, null, 2);
-			fsPromises.writeFile(this.inputsFile, obj);
-			this.log.debug('Device: %s %s, save inputs succesful, inputs: %s', this.host, this.name, obj);
-		} catch (error) {
-			this.log.error('Device: %s %s, save inputs error: %s', this.host, this.name, error);
-		};
-
 		//Check device state
 		setInterval(function () {
 			if (this.checkDeviceInfo) {
-				this.getDeviceInfo();
+				this.prepareDirectoryAndFiles();
 			}
 			if (!this.checkDeviceInfo && this.checkDeviceState) {
 				this.updateDeviceState();
 			}
 		}.bind(this), this.refreshInterval * 1000);
 	}
+
+	async prepareDirectoryAndFiles() {
+		this.log.debug('Device: %s %s, prepare directory and files.', this.host, this.name);
+
+		try {
+			//check if the directory exists, if not then create it
+			if (fs.existsSync(this.prefDir) == false) {
+				await fsPromises.mkdir(this.prefDir);
+			}
+			if (fs.existsSync(this.devInfoFile) == false) {
+				await fsPromises.writeFile(this.devInfoFile, '');
+			}
+			if (fs.existsSync(this.inputsFile) == false) {
+				await fsPromises.writeFile(this.inputsFile, '');
+			}
+			if (fs.existsSync(this.inputsNamesFile) == false) {
+				await fsPromises.writeFile(this.inputsNamesFile, '');
+			}
+			if (fs.existsSync(this.inputsTargetVisibilityFile) == false) {
+				await fsPromises.writeFile(this.inputsTargetVisibilityFile, '');
+			}
+
+			//save inputs to the file
+			const inputs = this.inputs;
+			const obj = JSON.stringify(inputs, null, 2);
+			const writeInputs = await fsPromises.writeFile(this.inputsFile, obj);
+			this.log.debug('Device: %s %s, save inputs succesful, inputs: %s', this.host, this.name, obj);
+
+			const getDeviceInfo = this.getDeviceInfo();
+		} catch (error) {
+			this.log.error('Device: %s %s, save inputs error: %s', this.host, this.name, error);
+			this.checkDeviceState = false;
+			this.checkDeviceInfo = true;
+		};
+	};
 
 	async getDeviceInfo() {
 		this.log.debug('Device: %s %s, requesting Device Info.', this.host, this.name);
