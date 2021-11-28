@@ -138,7 +138,7 @@
                   "reference": {
                     "title": "Reference",
                     "type": "string",
-                    "placeholder": "Button name",
+                    "placeholder": "Button reference",
                     "description": "Here set the reference.",
                     "required": false
                   }
