@@ -3,6 +3,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).## [3.8.6] - (14.09.2021)
+
+## [3.9.0] - (13.12.2021)
+## Changes
+- use event emmiter for state changes
+- added debug mode
+- removed refresh interval
+
 ## [3.8.8] - (05.10.2021
 ## Changes
 - code cleanup

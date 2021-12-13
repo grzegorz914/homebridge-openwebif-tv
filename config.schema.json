@@ -50,14 +50,6 @@
               "placeholder": "Password",
               "required": false
             },
-            "refreshInterval": {
-              "title": "Refresh interval (sec)",
-              "type": "integer",
-              "default": 5,
-              "minimum": 0,
-              "maximum": 60,
-              "required": true
-            },
             "disableLogInfo": {
               "title": "Disable log info",
               "type": "boolean",
@@ -65,6 +57,13 @@
               "description": "This disable log info, all values and state will not be displayed in Homebridge log console.",
               "required": true
             },
+            "enableDebugMode": {
+							"title": "Enable Debug Mode",
+							"type": "boolean",
+							"default": false,
+							"description": "This enable debug mode.",
+							"required": false
+						},
             "volumeControl": {
               "title": "Volume control mode",
               "type": "integer",
@@ -240,9 +239,9 @@
         "expandable": true,
         "expanded": false,
         "items": [
+          "devices[].enableDebugMode",
           "devices[].disableLogInfo",
           "devices[].switchInfoMenu",
-          "devices[].refreshInterval",
           "devices[].volumeControl"
         ]
       },

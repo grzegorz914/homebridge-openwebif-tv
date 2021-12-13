@@ -58,7 +58,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `auth` | If enabled, authorizatins credentials will be used for login. |
 | `user` | Here set the authorization *Username*. |
 | `pass` | Here set the authorization *Password*. |
-| `refreshInterval` | Here set the data refresh time in seconds. |
+| `enableDebugMode` | If enabled, deep log will be present in homebridge console. |
 | `volumeControl` | Here choice what a additional volume control mode You want to use (None, Slider, Fan). |
 | `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |
 | `switchInfoMenu` | If enabled, `I` button change its behaviour in RC app between Menu and INFO. |
@@ -81,6 +81,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
         "pass": "pass",
         "refreshInterval": 5,
         "disableLogInfo": false,
+        "enableDebugMode": false,
         "volumeControl": 0,
         "switchInfoMenu": false,
         "inputs": [
