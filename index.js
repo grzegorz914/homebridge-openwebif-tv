@@ -154,6 +154,7 @@ class openwebIfTvDevice {
 				const firmwareRevision = response.data.imagever || this.firmwareRevision;
 				const kernelVer = response.data.kernelver || 'Unknown';
 				const chipset = response.data.chipset || 'Unknown';
+				const mac = response.data.ifaces[0].mac || this.name;
 
 				this.log('-------- %s --------', this.name);
 				this.log('Manufacturer: %s', manufacturer);
@@ -168,6 +169,7 @@ class openwebIfTvDevice {
 				this.modelName = modelName;
 				this.serialNumber = serialNumber;
 				this.firmwareRevision = firmwareRevision;
+				this.mac = mac;
 
 				//start prepare accessory
 				if (this.startPrepareAccessory) {
@@ -254,7 +256,7 @@ class openwebIfTvDevice {
 	async prepareAccessory() {
 		this.log.debug('prepareAccessory');
 		const accessoryName = this.name;
-		const accessoryUUID = AccessoryUUID.generate(accessoryName);
+		const accessoryUUID = AccessoryUUID.generate(this.mac);
 		const accessoryCategory = Categories.TV_SET_TOP_BOX;
 		const accessory = new Accessory(accessoryName, accessoryUUID, accessoryCategory);
 
