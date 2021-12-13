@@ -216,7 +216,7 @@ class openwebIfTvDevice {
 	}
 
 	async prepareDirectoryAndFiles() {
-		this.log.debug('Device: %s %s, prepare directory and files.', this.host, this.name);
+		const debug = this.enableDebugMode ? this.log('Device: %s %s, prepare directory and files.', this.host, this.name) : false;
 
 		try {
 			//check if the directory exists, if not then create it
@@ -243,7 +243,7 @@ class openwebIfTvDevice {
 			const inputs = this.inputs;
 			const obj = JSON.stringify(inputs, null, 2);
 			const writeInputs = await fsPromises.writeFile(this.inputsFile, obj);
-			this.log.debug('Device: %s %s, save inputs succesful, inputs: %s', this.host, this.name, obj);
+			const debug = this.enableDebugMode ? this.log('Device: %s %s, save inputs succesful, inputs: %s', this.host, this.name, obj) : false;
 		} catch (error) {
 			this.log.error('Device: %s %s, save inputs error: %s', this.host, this.name, error);
 		};
@@ -573,13 +573,13 @@ class openwebIfTvDevice {
 		this.log.debug('prepareInputsService');
 
 		const savedInputs = ((fs.readFileSync(this.inputsFile)).length > 0) ? JSON.parse(fs.readFileSync(this.inputsFile)) : [];
-		this.log.debug('Device: %s %s, read saved Inputs successful, inpits: %s', this.host, accessoryName, savedInputs)
+		const debug = this.enableDebugMode ? this.log('Device: %s %s, read saved Inputs successful, inpits: %s', this.host, accessoryName, savedInputs) : false;
 
 		const savedInputsNames = ((fs.readFileSync(this.inputsNamesFile)).length > 0) ? JSON.parse(fs.readFileSync(this.inputsNamesFile)) : {};
-		this.log.debug('Device: %s %s, read savedInputsNames: %s', this.host, accessoryName, savedInputsNames)
+		const debug = this.enableDebugMode ? this.log('Device: %s %s, read savedInputsNames: %s', this.host, accessoryName, savedInputsNames) : false;
 
 		const savedTargetVisibility = ((fs.readFileSync(this.inputsTargetVisibilityFile)).length > 0) ? JSON.parse(fs.readFileSync(this.inputsTargetVisibilityFile)) : {};
-		this.log.debug('Device: %s %s, read savedTargetVisibility: %s', this.host, accessoryName, savedTargetVisibility);
+		const debug = this.enableDebugMode ? this.log('Device: %s %s, read savedTargetVisibility: %s', this.host, accessoryName, savedTargetVisibility) : false;
 
 		//check available inputs and possible inputs count (max 94)
 		const inputs = (savedInputs.length > 0) ? savedInputs : this.inputs;
@@ -624,7 +624,7 @@ class openwebIfTvDevice {
 					const newCustomName = JSON.stringify(newName);
 					try {
 						const writeNewCustomName = (nameIdentifier != false) ? await fsPromises.writeFile(this.inputsNamesFile, newCustomName) : false;
-						this.log.debug('Device: %s %s, saved new Input successful, savedInputsNames: %s', this.host, accessoryName, newCustomName);
+						const debug = this.enableDebugMode ? this.log('Device: %s %s, saved new Input successful, savedInputsNames: %s', this.host, accessoryName, newCustomName) : false;
 						const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, new Input name saved successful, name: %s reference: %s', this.host, accessoryName, name, inputReference);
 					} catch (error) {
 						this.log.error('Device: %s %s, new Input name saved failed, error: %s', this.host, accessoryName, error);
@@ -640,7 +640,7 @@ class openwebIfTvDevice {
 					const newTargetVisibility = JSON.stringify(newState);
 					try {
 						const writeNewTargetVisibility = (targetVisibilityIdentifier != false) ? await fsPromises.writeFile(this.inputsTargetVisibilityFile, newTargetVisibility) : false;
-						this.log.debug('Device: %s %s, Input: %s, saved target visibility state: %s', this.host, accessoryName, inputName, newTargetVisibility);
+						const debug = this.enableDebugMode ? this.log('Device: %s %s, Input: %s, saved target visibility state: %s', this.host, accessoryName, inputName, newTargetVisibility) : false;
 						const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, Input: %s, saved target visibility state: %s', this.host, accessoryName, inputName, state ? 'HIDEN' : 'SHOWN')
 						inputService.setCharacteristic(Characteristic.CurrentVisibilityState, state);
 					} catch (error) {
@@ -696,7 +696,7 @@ class openwebIfTvDevice {
 		}
 
 		this.startPrepareAccessory = false;
-		this.log.debug('Device: %s %s, publishExternalAccessories.', this.host, accessoryName);
+		const debug = this.enableDebugMode ? this.log('Device: %s %s, publishExternalAccessories.', this.host, accessoryName) : false;
 		this.api.publishExternalAccessories(PLUGIN_NAME, [accessory]);
 	}
 };
