@@ -71,7 +71,7 @@ class OPENWEBIF extends EventEmitter {
 
     updateDeviceState() {
         this.checkStateOnFirstRun = true;
-        setInterval(async () => {
+        this.checkState = setInterval(async () => {
             try {
                 const deviceStatusData = await this.axiosInstance(API_URL.DeviceStatus);
                 const power = (deviceStatusData.data.inStandby == 'false');
@@ -93,8 +93,11 @@ class OPENWEBIF extends EventEmitter {
                 };
             } catch (error) {
                 this.emit('error', `update device state error: ${error}`);
+                this.isConnected = false;
                 this.emit('deviceState', false, '', '', '', 0, true);
                 this.emit('disconnect', 'Disconnected.');
+                clearInterval(this.checkState);
+                this.connect();
             };
         }, 750)
     };
