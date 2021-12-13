@@ -107,7 +107,7 @@ class openwebIfTvDevice {
 		this.infoMenuState = false;
 
 		this.setStartInput = false;
-		this.setStartInputIdentifier = 0;
+		this.startInputIdentifier = 0;
 
 		this.inputName = '';
 		this.inputEventName = '';
@@ -178,7 +178,7 @@ class openwebIfTvDevice {
 			})
 			.on('deviceState', (power, name, eventName, reference, volume, mute) => {
 				const currentInputIdentifier = (this.inputsReference.indexOf(reference) >= 0) ? this.inputsReference.indexOf(reference) : this.inputIdentifier;
-				const inputIdentifier = this.setStartInput ? this.setStartInputIdentifier : currentInputIdentifier;
+				const inputIdentifier = this.setStartInput ? this.startInputIdentifier : currentInputIdentifier;
 
 				if (this.televisionService) {
 					this.televisionService
@@ -313,11 +313,9 @@ class openwebIfTvDevice {
 				const inputReference = this.inputsReference[inputIdentifier];
 				try {
 					const setInput = (this.powerState && inputReference != undefined) ? await this.openwebif.send(API_URL.SetChannel + inputReference) : false;
-					const updateDeviceState = this.powerState ? this.updateDeviceState() : false;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Channel successful, name: %s, reference: %s', this.host, accessoryName, inputName, inputReference);
-					this.setStartInputIdentifier = inputIdentifier;
+					this.startInputIdentifier = inputIdentifier;
 					this.setStartInput = this.powerState ? false : true;
-					this.inputIdentifier = inputIdentifier;
 				} catch (error) {
 					this.log.error('Device: %s %s, can not set Channel. Might be due to a wrong settings in config, error: %s.', this.host, accessoryName, error);
 				};
@@ -407,15 +405,11 @@ class openwebIfTvDevice {
 		//		const length = 0x01;
 		//		const value = 0x01;
 		//		const data = [tag, length, value];
-		//		if (!this.disableLogInfo) {
-		//			this.log('Device: %s %s, get display order successful: %s %', this.host, accessoryName, data);
-		//		}
+		//			const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, get display order successful: %s %', this.host, accessoryName, data);
 		//		return data;
 		//	})
 		//	.onSet(async (data) => {
-		//		if (!this.disableLogInfo) {
-		//			this.log('Device: %s %s, set display order successful: %s.', this.host, accessoryName, data);
-		//		}
+		//			const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set display order successful: %s.', this.host, accessoryName, data);
 		//	});
 
 		this.televisionService.getCharacteristic(Characteristic.CurrentMediaState)
