@@ -405,11 +405,11 @@ class openwebIfTvDevice {
 		//		const length = 0x01;
 		//		const value = 0x01;
 		//		const data = [tag, length, value];
-		//			const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, get display order successful: %s %', this.host, accessoryName, data);
+		//		const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, get display order successful: %s %', this.host, accessoryName, data);
 		//		return data;
 		//	})
 		//	.onSet(async (data) => {
-		//			const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set display order successful: %s.', this.host, accessoryName, data);
+		//		const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set display order successful: %s.', this.host, accessoryName, data);
 		//	});
 
 		this.televisionService.getCharacteristic(Characteristic.CurrentMediaState)
@@ -500,19 +500,17 @@ class openwebIfTvDevice {
 
 		this.speakerService.getCharacteristic(Characteristic.Mute)
 			.onGet(async () => {
-				const state = this.powerState ? this.muteState : true;
+				const state = this.muteState;
 				const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, get Mute state successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
 				return state;
 			})
 			.onSet(async (state) => {
-				if (state != this.muteState) {
-					try {
-						const setMute = await this.openwebif.send(API_URL.ToggleMute);
-						const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Mute successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
-					} catch (error) {
-						this.log.error('Device: %s %s, can not set Mute. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
-					};
-				}
+				try {
+					const toggleMute = (this.powerState && state != this.muteState) ? await this.openwebif.send(API_URL.ToggleMute) : false;
+					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Mute successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
+				} catch (error) {
+					this.log.error('Device: %s %s, can not set Mute. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
+				};
 			});
 
 		accessory.addService(this.speakerService);
@@ -532,7 +530,7 @@ class openwebIfTvDevice {
 					});
 				this.volumeService.getCharacteristic(Characteristic.On)
 					.onGet(async () => {
-						const state = this.powerState ? !this.muteState : false;
+						const state = !this.muteState;
 						return state;
 					})
 					.onSet(async (state) => {
@@ -554,7 +552,7 @@ class openwebIfTvDevice {
 					});
 				this.volumeServiceFan.getCharacteristic(Characteristic.On)
 					.onGet(async () => {
-						const state = this.powerState ? !this.muteState : false;
+						const state = !this.muteState;
 						return state;
 					})
 					.onSet(async (state) => {
