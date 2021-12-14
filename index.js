@@ -103,7 +103,7 @@ class openwebIfTvDevice {
 
 		this.powerState = false;
 		this.volume = 0;
-		this.muteState = false;
+		this.muteState = true;
 		this.infoMenuState = false;
 
 		this.setStartInput = false;
