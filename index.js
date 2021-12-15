@@ -125,6 +125,8 @@ class openwebIfTvDevice {
 		this.inputsTargetVisibilityFile = `${this.prefDir}/inputsTargetVisibility_${this.host.split('.').join('')}`;
 		this.channelsFile = `${this.prefDir}/channels_${this.host.split('.').join('')}`;
 
+		this.prepareDirectoryAndFiles();
+
 		this.openwebif = new openwebif({
 			host: this.host,
 			port: this.port,
