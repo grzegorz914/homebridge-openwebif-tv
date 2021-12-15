@@ -1,6 +1,6 @@
 const fs = require('fs');
 const fsPromises = fs.promises;
-const EventEmitter = require('events');
+const EventEmitter = require('events').EventEmitter;
 const axios = require('axios');
 
 const API_URL = {
@@ -29,6 +29,7 @@ class OPENWEBIF extends EventEmitter {
         this.axiosInstance = axios.create({
             method: 'GET',
             baseURL: url,
+            timeout: 5000,
             withCredentials: this.auth,
             auth: {
                 username: this.user,
@@ -45,7 +46,7 @@ class OPENWEBIF extends EventEmitter {
         this.mute = false;
         this.checkStateOnFirstRun = false;
 
-        this.connect();
+        this.getDeviceInfo();
     };
 
     async getDeviceInfo() {
@@ -56,16 +57,14 @@ class OPENWEBIF extends EventEmitter {
             const channels = JSON.stringify(response1.data, null, 2);
             const writeChannels = await fsPromises.writeFile(this.channelsFile, channels);
             this.emit('debug', `response: ${response.data}, response1: ${response1.data}`);
-            this.emit('connect', 'Connected.');
+            this.emit('reconnect', 'Connected.');
             this.emit('deviceInfo', response);
             this.isConnected = true;
             this.updateDeviceState();
         } catch (error) {
             this.emit('error', `device info error: ${error}`);
-
-            setTimeout(() => {
-                this.connect();
-            }, 5000);
+            this.isConnected = false;
+            this.reconnect();
         };
     };
 
@@ -94,10 +93,10 @@ class OPENWEBIF extends EventEmitter {
             } catch (error) {
                 this.emit('error', `update device state error: ${error}`);
                 this.isConnected = false;
+
                 this.emit('deviceState', false, '', '', '', 0, true);
                 this.emit('disconnect', 'Disconnected.');
-                clearInterval(this.checkState);
-                this.connect();
+                this.reconnect();
             };
         }, 750)
     };
@@ -115,8 +114,9 @@ class OPENWEBIF extends EventEmitter {
         });
     };
 
-    connect() {
+    reconnect() {
         if (!this.isConnected) {
+            clearInterval(this.checkState);
             this.getDeviceInfo();
         };
     };
