@@ -297,7 +297,7 @@ class openwebIfTvDevice {
 					const setPower = (state != this.powerState) ? await this.openwebif.send(API_URL.SetPower + newState) : false;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Power state successful, state: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
 				} catch (error) {
-					this.log.error('Device: %s %s, can not new Power state. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
+					this.log.error('Device: %s %s, can not set new Power state. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
 				};
 			});
 
