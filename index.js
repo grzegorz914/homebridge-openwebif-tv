@@ -137,7 +137,7 @@ class openwebIfTvDevice {
 			channelsFile: this.channelsFile,
 		});
 
-		this.openwebif.on('connect', (message) => {
+		this.openwebif.on('connected', (message) => {
 				this.log('Device: %s %s, %s', this.host, this.name, message);
 			})
 			.on('error', (error) => {
@@ -214,7 +214,7 @@ class openwebIfTvDevice {
 				this.muteState = mute;
 				this.inputIdentifier = inputIdentifier;
 			})
-			.on('disconnect', (message) => {
+			.on('disconnected', (message) => {
 				this.log('Device: %s %s, %s', this.host, this.name, message);
 			});
 	}
