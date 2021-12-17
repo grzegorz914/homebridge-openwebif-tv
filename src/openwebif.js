@@ -29,7 +29,7 @@ class OPENWEBIF extends EventEmitter {
         this.axiosInstance = axios.create({
             method: 'GET',
             baseURL: url,
-            timeout: 1000,
+            timeout: 1500,
             withCredentials: this.auth,
             auth: {
                 username: this.user,
@@ -48,7 +48,7 @@ class OPENWEBIF extends EventEmitter {
 
         setInterval(() => {
             const chackState = this.isConnected ? this.emit('checkState') : false;
-        }, 1500)
+        }, 1750)
 
         this.on('connect', (message, message1) => {
                 this.isConnected = true;
@@ -82,7 +82,7 @@ class OPENWEBIF extends EventEmitter {
                 };
             })
         this.on('disconnect', () => {
-            this.emit('deviceState', false, '', '', '', 0, true);
+            this.emit('deviceState', false, this.name, this.eventName, this.reference, this.volume, true);
             this.emit('disconnected', 'Disconnected.');
             this.isConnected = false;
 

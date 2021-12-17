@@ -105,9 +105,7 @@ class openwebIfTvDevice {
 		this.volume = 0;
 		this.muteState = true;
 		this.infoMenuState = false;
-
 		this.setStartInput = false;
-		this.startInputIdentifier = 0;
 
 		this.inputName = '';
 		this.inputEventName = '';
@@ -179,8 +177,7 @@ class openwebIfTvDevice {
 				};
 			})
 			.on('deviceState', (power, name, eventName, reference, volume, mute) => {
-				const currentInputIdentifier = (this.inputsReference.indexOf(reference) >= 0) ? this.inputsReference.indexOf(reference) : this.inputIdentifier;
-				const inputIdentifier = this.setStartInput ? this.startInputIdentifier : currentInputIdentifier;
+				const inputIdentifier = (this.inputsReference.indexOf(reference) >= 0) ? this.inputsReference.indexOf(reference) : this.inputIdentifier;
 
 				if (this.televisionService) {
 					this.televisionService
@@ -188,7 +185,7 @@ class openwebIfTvDevice {
 
 					const setUpdateCharacteristic = this.setStartInput ? this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier) :
 						this.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
-					this.setStartInput = (currentInputIdentifier == inputIdentifier) ? false : true;
+					this.setStartInput = (this.inputIdentifier == inputIdentifier) ? false : true;
 				}
 
 				if (this.speakerService) {
@@ -316,7 +313,7 @@ class openwebIfTvDevice {
 				try {
 					const setInput = (this.powerState && inputReference != undefined) ? await this.openwebif.send(API_URL.SetChannel + inputReference) : false;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Channel successful, name: %s, reference: %s', this.host, accessoryName, inputName, inputReference);
-					this.startInputIdentifier = inputIdentifier;
+					this.inputIdentifier = inputIdentifier;
 					this.setStartInput = this.powerState ? false : true;
 				} catch (error) {
 					this.log.error('Device: %s %s, can not set Channel. Might be due to a wrong settings in config, error: %s.', this.host, accessoryName, error);
