@@ -4,20 +4,10 @@ const fs = require('fs');
 const fsPromises = require('fs').promises;
 const path = require('path');
 const openwebif = require('./src/openwebif')
+const API_URL = require('./src/apiurl.json');
 
 const PLUGIN_NAME = 'homebridge-openwebif-tv';
 const PLATFORM_NAME = 'OpenWebIfTv';
-
-const API_URL = {
-	'DeviceInfo': '/api/deviceinfo',
-	'DeviceStatus': '/api/statusinfo',
-	'GetAllServices': '/api/getallservices',
-	'SetPower': '/api/powerstate?newstate=',
-	'SetChannel': '/api/zap?sRef=',
-	'SetVolume': '/api/vol?set=set',
-	'ToggleMute': '/api/vol?set=mute',
-	'SetRcCommand': '/api/remotecontrol?command='
-};
 
 const INPUT_SOURCE_TYPES = ['OTHER', 'HOME_SCREEN', 'TUNER', 'HDMI', 'COMPOSITE_VIDEO', 'S_VIDEO', 'COMPONENT_VIDEO', 'DVI', 'AIRPLAY', 'USB', 'APPLICATION'];
 
@@ -183,9 +173,14 @@ class openwebIfTvDevice {
 					this.televisionService
 						.updateCharacteristic(Characteristic.Active, power)
 
-					const setUpdateCharacteristic = this.setStartInput ? this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier) :
-						this.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
-					this.setStartInput = (this.inputIdentifier == inputIdentifier) ? false : true;
+						if (this.setStartInput) {
+							setTimeout(() => {
+								this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier)
+							}, 1200);
+						} else {
+							this.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
+						}
+						this.setStartInput = (this.inputIdentifier == inputIdentifier) ? false : true;
 				}
 
 				if (this.speakerService) {

@@ -2,17 +2,8 @@ const fs = require('fs');
 const fsPromises = fs.promises;
 const EventEmitter = require('events').EventEmitter;
 const axios = require('axios');
+const API_URL = require('./apiurl.json');
 
-const API_URL = {
-    'DeviceInfo': '/api/deviceinfo',
-    'DeviceStatus': '/api/statusinfo',
-    'GetAllServices': '/api/getallservices',
-    'SetPower': '/api/powerstate?newstate=',
-    'SetChannel': '/api/zap?sRef=',
-    'SetVolume': '/api/vol?set=set',
-    'ToggleMute': '/api/vol?set=mute',
-    'SetRcCommand': '/api/remotecontrol?command='
-};
 
 class OPENWEBIF extends EventEmitter {
     constructor(config) {
@@ -52,12 +43,12 @@ class OPENWEBIF extends EventEmitter {
 
         this.on('connect', (message, message1) => {
                 this.isConnected = true;
+                this.checkStateOnFirstRun = true;
                 this.emit('connected', 'Connected.');
                 this.emit('deviceInfo', message);
             })
             .on('checkState', async () => {
                 try {
-                    this.checkStateOnFirstRun = true;
                     const deviceStatusData = await this.axiosInstance(API_URL.DeviceStatus);
                     const power = (deviceStatusData.data.inStandby == 'false');
                     const name = deviceStatusData.data.currservice_station;
