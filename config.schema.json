@@ -3,7 +3,7 @@
   "pluginType": "platform",
   "singular": true,
   "headerDisplay": "This plugin works with Sat Receivers basis on the OpenWebIf interface and are exposed to HomeKit as separate accessories and each needs to be manually paired.\n\n1. Open the Home <img src='https://user-images.githubusercontent.com/3979615/78010622-4ea1d380-738e-11ea-8a17-e6a465eeec35.png' height='16.42px'> app on your device.\n2. Tap the <img src='https://user-images.githubusercontent.com/3979615/78010869-9aed1380-738e-11ea-9644-9f46b3633026.png' height='16.42px'>.\n3. Tap *Add Accessory*, and select *I Don't Have a Code or Cannot Scan* or *More Options*.\n4. Select Your accessory.\n5. Enter the Homebridge PIN or scan the QR code, this can be found in Homebridge UI or Homebridge logs.\n6. Complete the accessory setup.",
-	"footerDisplay": "This plugin is available [here](https://github.com/grzegorz914/homebridge-openwebif-tv).",
+  "footerDisplay": "This plugin is available [here](https://github.com/grzegorz914/homebridge-openwebif-tv).",
   "schema": {
     "type": "object",
     "properties": {
@@ -58,12 +58,12 @@
               "required": true
             },
             "enableDebugMode": {
-							"title": "Enable Debug Mode",
-							"type": "boolean",
-							"default": false,
-							"description": "This enable debug mode.",
-							"required": false
-						},
+              "title": "Enable Debug Mode",
+              "type": "boolean",
+              "default": false,
+              "description": "This enable debug mode.",
+              "required": false
+            },
             "volumeControl": {
               "title": "Volume control mode",
               "type": "integer",
@@ -134,12 +134,315 @@
                     "description": "Here set Your own name.",
                     "required": false
                   },
+                  "mode": {
+                    "title": "Mode",
+                    "type": "integer",
+                    "maximum": 1,
+                    "description": "Here select the function mode.",
+                    "oneOf": [{
+                        "title": "Live TV Channel",
+                        "enum": [
+                          0
+                        ]
+                      },
+                      {
+                        "title": "Remote Control",
+                        "enum": [
+                          1
+                        ]
+                      }
+                    ],
+                    "required": true
+                  },
                   "reference": {
                     "title": "Reference",
                     "type": "string",
                     "placeholder": "Button reference",
                     "description": "Here set the reference.",
                     "required": false
+                  },
+                  "command": {
+                    "title": "RC Command",
+                    "type": "string",
+                    "oneOf": [{
+                        "title": "0",
+                        "enum": [
+                          "11"
+                        ]
+                      },
+                      {
+                        "title": "1",
+                        "enum": [
+                          "2"
+                        ]
+                      },
+                      {
+                        "title": "2",
+                        "enum": [
+                          "3"
+                        ]
+                      },
+                      {
+                        "title": "3",
+                        "enum": [
+                          "4"
+                        ]
+                      },
+                      {
+                        "title": "4",
+                        "enum": [
+                          "5"
+                        ]
+                      },
+                      {
+                        "title": "5",
+                        "enum": [
+                          "6"
+                        ]
+                      },
+                      {
+                        "title": "6",
+                        "enum": [
+                          "7"
+                        ]
+                      },
+                      {
+                        "title": "7",
+                        "enum": [
+                          "8"
+                        ]
+                      },
+                      {
+                        "title": "8",
+                        "enum": [
+                          "9"
+                        ]
+                      },
+                      {
+                        "title": "9",
+                        "enum": [
+                          "10"
+                        ]
+                      },
+                      {
+                        "title": "<",
+                        "enum": [
+                          "412"
+                        ]
+                      },
+                      {
+                        "title": ">",
+                        "enum": [
+                          "407"
+                        ]
+                      },
+                      {
+                        "title": "Power",
+                        "enum": [
+                          "116"
+                        ]
+                      },
+                      {
+                        "title": "Volume Up",
+                        "enum": [
+                          "115"
+                        ]
+                      },
+                      {
+                        "title": "Volume Down",
+                        "enum": [
+                          "114"
+                        ]
+                      },
+                      {
+                        "title": "Mute",
+                        "enum": [
+                          "113"
+                        ]
+                      },
+                      {
+                        "title": "Channel Up",
+                        "enum": [
+                          "402"
+                        ]
+                      },
+                      {
+                        "title": "Channel Down",
+                        "enum": [
+                          "403"
+                        ]
+                      },
+                      {
+                        "title": "Epg",
+                        "enum": [
+                          "358"
+                        ]
+                      },
+                      {
+                        "title": "Menu",
+                        "enum": [
+                          "139"
+                        ]
+                      },
+                      {
+                        "title": "Menu Up",
+                        "enum": [
+                          "103"
+                        ]
+                      },
+                      {
+                        "title": "Menu Down",
+                        "enum": [
+                          "108"
+                        ]
+                      },
+                      {
+                        "title": "Menu Left",
+                        "enum": [
+                          "105"
+                        ]
+                      },
+                      {
+                        "title": "Menu Right",
+                        "enum": [
+                          "106"
+                        ]
+                      },
+                      {
+                        "title": "Menu OK",
+                        "enum": [
+                          "352"
+                        ]
+                      },
+                      {
+                        "title": "Back",
+                        "enum": [
+                          "174"
+                        ]
+                      },
+                      {
+                        "title": "Exit",
+                        "enum": [
+                          "174"
+                        ]
+                      },
+                      {
+                        "title": "Play",
+                        "enum": [
+                          "207"
+                        ]
+                      },
+                      {
+                        "title": "Pause",
+                        "enum": [
+                          "119"
+                        ]
+                      },
+                      {
+                        "title": "Stop",
+                        "enum": [
+                          "128"
+                        ]
+                      },
+                      {
+                        "title": "Record",
+                        "enum": [
+                          "167"
+                        ]
+                      },
+                      {
+                        "title": "Fast Forward",
+                        "enum": [
+                          "208"
+                        ]
+                      },
+                      {
+                        "title": "Fast Backward",
+                        "enum": [
+                          "168"
+                        ]
+                      },
+                      {
+                        "title": "Next Track",
+                        "enum": [
+                          "407"
+                        ]
+                      },
+                      {
+                        "title": "Previous Track",
+                        "enum": [
+                          "412"
+                        ]
+                      },
+                      {
+                        "title": "Red",
+                        "enum": [
+                          "398"
+                        ]
+                      },
+                      {
+                        "title": "Green",
+                        "enum": [
+                          "399"
+                        ]
+                      },
+                      {
+                        "title": "Yellow",
+                        "enum": [
+                          "400"
+                        ]
+                      },
+                      {
+                        "title": "Blue",
+                        "enum": [
+                          "401"
+                        ]
+                      },
+                      {
+                        "title": "TV",
+                        "enum": [
+                          "377"
+                        ]
+                      },
+                      {
+                        "title": "Radio",
+                        "enum": [
+                          "385"
+                        ]
+                      },
+                      {
+                        "title": "Wideo",
+                        "enum": [
+                          "393"
+                        ]
+                      },
+                      {
+                        "title": "Audio",
+                        "enum": [
+                          "392"
+                        ]
+                      },
+                      {
+                        "title": "Help",
+                        "enum": [
+                          "138"
+                        ]
+                      },
+                      {
+                        "title": "Subtitle",
+                        "enum": [
+                          "370"
+                        ]
+                      },
+                      {
+                        "title": "Text",
+                        "enum": [
+                          "388"
+                        ]
+                      }
+                    ],
+                    "description": "Here select the remote control command.",
+                    "required": true
                   }
                 }
               }
@@ -214,7 +517,9 @@
           "title": "{{ value.name || 'new button' }}",
           "items": [
             "devices[].buttons[].name",
-            "devices[].buttons[].reference"
+            "devices[].buttons[].mode",
+            "devices[].buttons[].reference",
+            "devices[].buttons[].command"
           ]
         }]
       },

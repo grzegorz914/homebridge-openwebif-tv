@@ -173,14 +173,14 @@ class openwebIfTvDevice {
 					this.televisionService
 						.updateCharacteristic(Characteristic.Active, power)
 
-						if (this.setStartInput) {
-							setTimeout(() => {
-								this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier)
-							}, 1200);
-						} else {
-							this.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
-						}
-						this.setStartInput = (this.inputIdentifier == inputIdentifier) ? false : true;
+					if (this.setStartInput) {
+						setTimeout(() => {
+							this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier)
+						}, 1200);
+					} else {
+						this.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
+					}
+					this.setStartInput = (this.inputIdentifier == inputIdentifier) ? false : true;
 				}
 
 				if (this.speakerService) {
@@ -654,25 +654,31 @@ class openwebIfTvDevice {
 		const maxButtonsCount = ((inputsCount + buttonsCount) < 94) ? buttonsCount : 94 - inputsCount;
 		for (let i = 0; i < maxButtonsCount; i++) {
 
+			//get button mode
+			const buttonMode = buttons[i].mode;
+
 			//get button reference
 			const buttonReference = buttons[i].reference;
 
+			//get button command
+			const buttonCommand = buttons[i].command;
+
 			//get button name
-			const buttonName = (buttons[i].name != undefined) ? buttons[i].name : buttons[i].reference;
+			const buttonName = (buttons[i].name != undefined) ? buttons[i].name : [buttonReference, buttonReference, buttonCommand][buttonMode];
 
 			const buttonService = new Service.Switch(`${accessoryName} ${buttonName}`, `Button ${i}`);
 			buttonService.getCharacteristic(Characteristic.On)
 				.onGet(async () => {
 					const state = false;
-					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, get current state successful: %s', this.host, accessoryName, state);
 					return state;
 				})
 				.onSet(async (state) => {
 					try {
-						const setInput = (this.powerState && state) ? await this.openwebif.send(API_URL.SetChannel + buttonReference) : false;
-						const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set new Channel successful, name: %s, reference: %s', this.host, accessoryName, buttonName, buttonReference);
+						const setInput = (state && this.powerState && buttonMode == 0) ? await this.openwebif.send(API_URL.SetChannel + buttonReference) : false;
+						const setCommand = (state && this.powerState && buttonMode == 1) ? await this.openwebif.send(API_URL.SetRcCommand + buttonCommand) : false;
+						const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set %s successful, name: %s, reference: %s', this.host, accessoryName, ['Channel', 'Command'][buttonMode], buttonName, buttonReference);
 					} catch (error) {
-						this.log.error('Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', this.host, accessoryName, error);
+						this.log.error('Device: %s %s, set %s error: %s', this.host, accessoryName, ['Channel', 'Command'][buttonMode], error);
 					};
 					setTimeout(() => {
 						buttonService

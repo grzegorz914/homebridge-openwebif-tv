@@ -65,7 +65,9 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `inputs.name` | Here set *Channel Name* which You want expose to the *Homebridge/HomeKit*. |
 | `inputs.reference` | Here set *Channel Reference*. All can be found in `homebridge_directory/openwebifTv/inputs_xxxx`. |
 | `buttons.name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*.| 
-| `buttons.reference` | Here set *Channel Reference*. All can be found in `homebridge_directory/openwebifTv/inputs_xxxx`. | 
+| `buttons.mode` | Here select button mode, `Live TV Channel` or `Remote Control`. |
+| `buttons.reference` | Here set *Reference*, only for `Live TV Channel` mode, in other case leave empty. | 
+| `buttons.command` | Here select `Remote Control` command which will be assigned to the button. |
 | `manufacturer`, `modelName`, `serialNumber`, `firmwareRevision` | optional branding data displayed in Home.app. |
 
 ```json
@@ -101,16 +103,19 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
         "buttons": [
           {
             "name": "Das Erste HD",
+            "mode": 0,
             "reference": "1:0:19:283D:3FB:1:C00000:0:0:0:"
           },
           {
             "name": "ZDF HD",
+            "mode": 0,
             "reference": "1:0:19:2B66:3F3:1:C00000:0:0:0:"
           },
           {
-            "name": "RTL HD",
-            "reference": "1:0:19:EF10:421:1:C00000:0:0:0:"
-          },
+            "name": "Menu Up",
+            "mode": 1,
+            "command": "115"
+          }
         ],
           "manufacturer": "Manufacturer",
           "modelName": "Model",
