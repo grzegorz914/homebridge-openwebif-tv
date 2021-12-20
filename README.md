@@ -29,11 +29,11 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 
 ## Features and How To Use Them
 * Power ON/OFF short press tile in HomeKit app.
-* RC/Media control is possible after you go to the RC app on iPhone/iPad.
-* Speaker control is possible after you go to RC app on iPhone/iPad `Speaker Service`.
+* RC/Media control is possible after you go to the RC app.
+* Speaker control is possible after you go to RC app and use hardware buttons.
 * Legacy Volume and Mute control is possible throught extra `lightbulb`/`fan` (slider).
-* Inputs can be changed after long press tile in Home.app and select Input from the list or create separate tile in the Buttons section.
-* Siri can be used to control Power, Legacy Volume, Mute and switch Inputs with created Buttons.
+* Channels can be changed after long press tile and select from the list.
+* Siri can be used for all functions through created extra buttons.
 * Home automations and shortcuts can be used for all functions.
 
 <p align="left">
@@ -58,10 +58,10 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `auth` | If enabled, authorizatins credentials will be used for login. |
 | `user` | Here set the authorization *Username*. |
 | `pass` | Here set the authorization *Password*. |
-| `enableDebugMode` | If enabled, deep log will be present in homebridge console. |
-| `volumeControl` | Here choice what a additional volume control mode You want to use (None, Slider, Fan). |
-| `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |
-| `switchInfoMenu` | If enabled, `I` button change its behaviour in RC app between Menu and INFO. |
+| `enableDebugMode` | This enable deep log in homebridge console. |
+| `disableLogInfo` | This disable log info, all values and state will not be displayed in Homebridge log console. |
+| `volumeControl` | Here select volume control mode `None`, `Slider`, `Fan`. |
+| `switchInfoMenu` | This switch the behaviour of `I` button in RC app between Menu and Home. |
 | `inputs.name` | Here set *Channel Name* which You want expose to the *Homebridge/HomeKit*. |
 | `inputs.reference` | Here set *Channel Reference*. All can be found in `homebridge_directory/openwebifTv/inputs_xxxx`. |
 | `buttons.name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*.| 
