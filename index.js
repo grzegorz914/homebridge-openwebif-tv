@@ -664,7 +664,7 @@ class openwebIfTvDevice {
 			const buttonCommand = buttons[i].command;
 
 			//get button name
-			const buttonName = (buttons[i].name != undefined) ? buttons[i].name : [buttonReference, buttonReference, buttonCommand][buttonMode];
+			const buttonName = (buttons[i].name != undefined) ? buttons[i].name : [buttonReference, buttonCommand][buttonMode];
 
 			const buttonService = new Service.Switch(`${accessoryName} ${buttonName}`, `Button ${i}`);
 			buttonService.getCharacteristic(Characteristic.On)
