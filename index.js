@@ -676,14 +676,14 @@ class openwebIfTvDevice {
 					try {
 						const setInput = (state && this.powerState && buttonMode == 0) ? await this.openwebif.send(API_URL.SetChannel + buttonReference) : false;
 						const setCommand = (state && this.powerState && buttonMode == 1) ? await this.openwebif.send(API_URL.SetRcCommand + buttonCommand) : false;
-						const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set %s successful, name: %s, reference: %s', this.host, accessoryName, ['Channel', 'Command'][buttonMode], buttonName, buttonReference);
+						const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set %s successful, name: %s, reference: %s', this.host, accessoryName, ['Channel', 'Command'][buttonMode], buttonName, [buttonReference, buttonCommand][buttonMode]);
 					} catch (error) {
 						this.log.error('Device: %s %s, set %s error: %s', this.host, accessoryName, ['Channel', 'Command'][buttonMode], error);
 					};
 					setTimeout(() => {
 						buttonService
 							.updateCharacteristic(Characteristic.On, false);
-					}, 250);
+					}, 150);
 				});
 
 			accessory.addService(buttonService);
