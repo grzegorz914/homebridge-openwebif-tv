@@ -68,7 +68,6 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `buttons.mode` | Here select button mode, `Live TV Channel` or `Remote Control`. |
 | `buttons.reference` | Here set *Reference*, only for `Live TV Channel` mode, in other case leave empty. | 
 | `buttons.command` | Here select `Remote Control` command which will be assigned to the button. |
-| `manufacturer`, `modelName`, `serialNumber`, `firmwareRevision` | optional branding data displayed in Home.app. |
 
 ```json
 {
@@ -116,11 +115,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
             "mode": 1,
             "command": "115"
           }
-        ],
-          "manufacturer": "Manufacturer",
-          "modelName": "Model",
-          "serialNumber": "Serial Number",
-          "firmwareRevision": "Firmware Revision"
+        ]
       }
     ]
   }

@@ -45,7 +45,7 @@
           "reference": "1:0:19:EF74:3F9:1:C00000:0:0:0:"
         }
       ],
-      "inputsButton": [{
+      "buttons": [{
           "name": "Das Erste HD",
           "mode": 0,
           "reference": "1:0:19:283D:3FB:1:C00000:0:0:0:"
@@ -64,11 +64,7 @@
           "mode": 1,
           "command": "115"
         }
-      ],
-      "manufacturer": "Manufacturer",
-      "modelName": "Model",
-      "serialNumber": "Serial Number",
-      "firmwareRevision": "Firmware Revision"
+      ]
     }]
   }]
 }

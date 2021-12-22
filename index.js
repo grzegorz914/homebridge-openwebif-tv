@@ -78,10 +78,10 @@ class openwebIfTvDevice {
 		this.buttons = config.buttons || [];
 
 		//get config info
-		this.manufacturer = config.manufacturer || 'Manufacturer';
-		this.modelName = config.modelName || 'Model Name';
-		this.serialNumber = config.serialNumber || 'Serial Number';
-		this.firmwareRevision = config.firmwareRevision || 'Firmware Revision';
+		this.manufacturer = 'Manufacturer';
+		this.modelName = 'Model Name';
+		this.serialNumber = 'Serial Number';
+		this.firmwareRevision = 'Firmware Revision';
 
 		//setup variables
 		this.startPrepareAccessory = true;
@@ -94,14 +94,11 @@ class openwebIfTvDevice {
 		this.powerState = false;
 		this.volume = 0;
 		this.muteState = true;
-		this.infoMenuState = false;
 		this.setStartInput = false;
-
-		this.inputName = '';
-		this.inputEventName = '';
-		this.inputType = 0;
-		this.inputMode = 0;
+		this.channelName = '';
+		this.channelEventName = '';
 		this.inputIdentifier = 0;
+		this.infoMenuState = false;
 
 		this.brightness = 0;
 		this.pictureMode = 0;
@@ -137,14 +134,7 @@ class openwebIfTvDevice {
 			.on('message', (message) => {
 				const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, %s', this.host, this.name, message);
 			})
-			.on('deviceInfo', (response) => {
-				const manufacturer = response.data.brand || this.manufacturer;
-				const modelName = response.data.model || this.modelName;
-				const serialNumber = response.data.webifver || this.serialNumber;
-				const firmwareRevision = response.data.imagever || this.firmwareRevision;
-				const kernelVer = response.data.kernelver || 'Unknown';
-				const chipset = response.data.chipset || 'Unknown';
-				const mac = response.data.ifaces[0].mac || this.name;
+			.on('deviceInfo', (manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) => {
 
 				this.log('-------- %s --------', this.name);
 				this.log('Manufacturer: %s', manufacturer);
@@ -166,7 +156,7 @@ class openwebIfTvDevice {
 					this.prepareAccessory();
 				};
 			})
-			.on('deviceState', (power, name, eventName, reference, volume, mute) => {
+			.on('stateChanged', (power, name, eventName, reference, volume, mute) => {
 				const inputIdentifier = (this.inputsReference.indexOf(reference) >= 0) ? this.inputsReference.indexOf(reference) : this.inputIdentifier;
 
 				if (this.televisionService) {
@@ -200,8 +190,8 @@ class openwebIfTvDevice {
 				}
 
 				this.powerState = power;
-				this.inputName = name;
-				this.inputEventName = eventName;
+				this.channelName = name;
+				this.channelEventName = eventName;
 				this.volume = volume;
 				this.muteState = mute;
 				this.inputIdentifier = inputIdentifier;
@@ -296,10 +286,10 @@ class openwebIfTvDevice {
 		this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
 			.onGet(async () => {
 				const inputIdentifier = this.inputIdentifier;
-				const inputEventName = this.inputEventName;
+				const channelEventName = this.channelEventName;
 				const inputName = this.inputsName[inputIdentifier];
 				const inputReference = this.inputsReference[inputIdentifier];
-				const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, get Channel: %s, Event: %s, Reference: %s', this.host, accessoryName, inputName, inputEventName, inputReference);
+				const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, get Channel: %s, Event: %s, Reference: %s', this.host, accessoryName, inputName, channelEventName, inputReference);
 				return inputIdentifier;
 			})
 			.onSet(async (inputIdentifier) => {

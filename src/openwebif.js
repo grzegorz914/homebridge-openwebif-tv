@@ -41,11 +41,10 @@ class OPENWEBIF extends EventEmitter {
             const chackState = this.isConnected ? this.emit('checkState') : false;
         }, 2500)
 
-        this.on('connect', (message, message1) => {
+        this.on('connect', () => {
                 this.isConnected = true;
                 this.checkStateOnFirstRun = true;
                 this.emit('connected', 'Connected.');
-                this.emit('deviceInfo', message);
             })
             .on('checkState', async () => {
                 try {
@@ -58,7 +57,7 @@ class OPENWEBIF extends EventEmitter {
                     const mute = power ? (deviceStatusData.data.muted == true) : true;
                     if (this.checkStateOnFirstRun == true || power != this.power || name != this.name || eventName != this.eventName || reference != this.reference || volume != this.volume || mute != this.mute) {
                         this.emit('debug', `deviceStatusData: ${deviceStatusData.data}`);
-                        this.emit('deviceState', power, name, eventName, reference, volume, mute);
+                        this.emit('stateChanged', power, name, eventName, reference, volume, mute);
                         this.power = power;
                         this.name = name;
                         this.eventName = eventName;
@@ -73,7 +72,7 @@ class OPENWEBIF extends EventEmitter {
                 };
             })
         this.on('disconnect', () => {
-            this.emit('deviceState', false, this.name, this.eventName, this.reference, this.volume, true);
+            this.emit('stateChanged', false, this.name, this.eventName, this.reference, this.volume, true);
             this.emit('disconnected', 'Disconnected.');
             this.isConnected = false;
 
@@ -88,6 +87,14 @@ class OPENWEBIF extends EventEmitter {
     async getDeviceInfo() {
         try {
             const response = await this.axiosInstance(API_URL.DeviceInfo);
+            const manufacturer = response.data.brand || this.manufacturer;
+            const modelName = response.data.model || this.modelName;
+            const serialNumber = response.data.webifver || this.serialNumber;
+            const firmwareRevision = response.data.imagever || this.firmwareRevision;
+            const kernelVer = response.data.kernelver || 'Unknown';
+            const chipset = response.data.chipset || 'Unknown';
+            const mac = response.data.ifaces[0].mac || this.name;
+
             const devInfo = JSON.stringify(response.data, null, 2);
             const writeDevInfo = await fsPromises.writeFile(this.devInfoFile, devInfo);
 
@@ -95,7 +102,8 @@ class OPENWEBIF extends EventEmitter {
             const channels = JSON.stringify(response1.data, null, 2);
             const writeChannels = await fsPromises.writeFile(this.channelsFile, channels);
             this.emit('debug', `response: ${response.data}, response1: ${response1.data}`);
-            this.emit('connect', response, response1);
+            this.emit('connect');
+            this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
         } catch (error) {
             this.emit('error', `device info error: ${error}`);
             this.emit('disconnect');
