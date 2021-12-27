@@ -105,19 +105,19 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
             "name": "Das Erste HD",
             "mode": 0,
             "reference": "1:0:19:283D:3FB:1:C00000:0:0:0:",
-						"displayType": 0,
+						"displayType": 0
           },
           {
             "name": "ZDF HD",
             "mode": 0,
             "reference": "1:0:19:2B66:3F3:1:C00000:0:0:0:",
-						"displayType": 0,
+						"displayType": 0
           },
           {
             "name": "Menu Up",
             "mode": 1,
             "command": "115",
-						"displayType": 0,
+						"displayType": 0
           }
         ]
       }
