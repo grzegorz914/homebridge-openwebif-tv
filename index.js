@@ -38,8 +38,8 @@ class openwebIfTvPlatform {
 			this.log.debug('didFinishLaunching');
 			for (let i = 0; i < this.devices.length; i++) {
 				const device = this.devices[i];
-				if (!device.name) {
-					this.log.warn('Device Name Missing');
+				if (!device.name || !device.host || !device.port) {
+					this.log.warn('Device Name, Host or Port Missing');
 				} else {
 					new openwebIfTvDevice(this.log, device, this.api);
 				}
@@ -65,8 +65,8 @@ class openwebIfTvDevice {
 
 		//device configuration
 		this.name = config.name || 'Sat Receiver';
-		this.host = config.host || '';
-		this.port = config.port || 80;
+		this.host = config.host;
+		this.port = config.port;
 		this.auth = config.auth || false;
 		this.user = config.user || '';
 		this.pass = config.pass || '';
@@ -110,7 +110,38 @@ class openwebIfTvDevice {
 		this.inputsTargetVisibilityFile = `${this.prefDir}/inputsTargetVisibility_${this.host.split('.').join('')}`;
 		this.channelsFile = `${this.prefDir}/channels_${this.host.split('.').join('')}`;
 
-		this.prepareDirectoryAndFiles();
+		try {
+			//check if the directory exists, if not then create it
+			if (fs.existsSync(this.prefDir) == false) {
+				fs.mkdirSync(this.prefDir);
+			}
+			if (fs.existsSync(this.devInfoFile) == false) {
+				fs.writeFileSync(this.devInfoFile, '');
+			}
+			if (fs.existsSync(this.inputsFile) == false) {
+				fs.writeFileSync(this.inputsFile, '');
+			}
+			if (fs.existsSync(this.inputsNamesFile) == false) {
+				fs.writeFileSync(this.inputsNamesFile, '');
+			}
+			if (fs.existsSync(this.inputsTargetVisibilityFile) == false) {
+				fs.writeFileSync(this.inputsTargetVisibilityFile, '');
+			}
+			if (fs.existsSync(this.channelsFile) == false) {
+				fs.writeFileSync(this.channelsFile, '');
+			}
+		} catch (error) {
+			this.log.error('Device: %s %s, prepare directory or files error: %s', this.host, this.name, error);
+		};
+
+		try {
+			//save inputs to the file
+			const obj = JSON.stringify(this.inputs, null, 2);
+			fs.writeFileSync(this.inputsFile, obj);
+			const debug = this.enableDebugMode ? this.log('Device: %s %s, save inputs succesful, inputs: %s', this.host, this.name, obj) : false;
+		} catch (error) {
+			this.log.error('Device: %s %s, save inputs error: %s', this.host, this.name, error);
+		};
 
 		this.openwebif = new openwebif({
 			host: this.host,
@@ -200,41 +231,6 @@ class openwebIfTvDevice {
 				this.log('Device: %s %s, %s', this.host, this.name, message);
 			});
 	}
-
-	async prepareDirectoryAndFiles() {
-		const debug = this.enableDebugMode ? this.log('Device: %s %s, prepare directory and files.', this.host, this.name) : false;
-
-		try {
-			//check if the directory exists, if not then create it
-			if (fs.existsSync(this.prefDir) == false) {
-				await fsPromises.mkdir(this.prefDir);
-			}
-			if (fs.existsSync(this.devInfoFile) == false) {
-				await fsPromises.writeFile(this.devInfoFile, '');
-			}
-			if (fs.existsSync(this.inputsFile) == false) {
-				await fsPromises.writeFile(this.inputsFile, '');
-			}
-			if (fs.existsSync(this.inputsNamesFile) == false) {
-				await fsPromises.writeFile(this.inputsNamesFile, '');
-			}
-			if (fs.existsSync(this.inputsTargetVisibilityFile) == false) {
-				await fsPromises.writeFile(this.inputsTargetVisibilityFile, '');
-			}
-			if (fs.existsSync(this.channelsFile) == false) {
-				await fsPromises.writeFile(this.channelsFile, '');
-			}
-
-			//save inputs to the file
-			const inputs = this.inputs;
-			const obj = JSON.stringify(inputs, null, 2);
-			const writeInputs = await fsPromises.writeFile(this.inputsFile, obj);
-			const debug = this.enableDebugMode ? this.log('Device: %s %s, save inputs succesful, inputs: %s', this.host, this.name, obj) : false;
-		} catch (error) {
-			this.log.error('Device: %s %s, save inputs error: %s', this.host, this.name, error);
-		};
-	};
-
 
 	//Prepare accessory
 	async prepareAccessory() {
