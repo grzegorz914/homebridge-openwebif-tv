@@ -67,7 +67,7 @@ class OPENWEBIF extends EventEmitter {
                         this.checkStateOnFirstRun = false;
                     };
                 } catch (error) {
-                    this.emit('error', `update device state error: ${error}`);
+                    this.emit('error', `device state error: ${error}`);
                     this.emit('disconnect');
                 };
             })
