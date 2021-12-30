@@ -181,11 +181,6 @@ class openwebIfTvDevice {
 				this.serialNumber = serialNumber;
 				this.firmwareRevision = firmwareRevision;
 				this.mac = mac;
-
-				//start prepare accessory
-				if (this.startPrepareAccessory) {
-					this.prepareAccessory();
-				};
 			})
 			.on('stateChanged', (power, name, eventName, reference, volume, mute) => {
 				const inputIdentifier = (this.inputsReference.indexOf(reference) >= 0) ? this.inputsReference.indexOf(reference) : this.inputIdentifier;
@@ -196,12 +191,12 @@ class openwebIfTvDevice {
 
 					if (this.setStartInput) {
 						setTimeout(() => {
-							this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier)
+							this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
+							this.setStartInput = false;
 						}, 1200);
 					} else {
 						this.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
 					}
-					this.setStartInput = (this.inputIdentifier == inputIdentifier) ? false : true;
 				}
 
 				if (this.speakerService) {
@@ -226,6 +221,11 @@ class openwebIfTvDevice {
 				this.volume = volume;
 				this.muteState = mute;
 				this.inputIdentifier = inputIdentifier;
+
+				//start prepare accessory
+				if (this.startPrepareAccessory) {
+					this.prepareAccessory();
+				};
 			})
 			.on('disconnected', (message) => {
 				this.log('Device: %s %s, %s', this.host, this.name, message);

@@ -67,14 +67,16 @@ class OPENWEBIF extends EventEmitter {
                         this.checkStateOnFirstRun = false;
                     };
                 } catch (error) {
-                    this.emit('error', `device state error: ${error}`);
+                    this.emit('debug', `device state error: ${error}`);
                     this.emit('disconnect');
                 };
             })
         this.on('disconnect', () => {
-            this.emit('stateChanged', this.power, this.name, this.eventName, this.reference, this.volume, this.mute);
-            this.emit('disconnected', 'Disconnected.');
-            this.isConnected = false;
+            if (this.isConnected) {
+                this.emit('stateChanged', this.power, this.name, this.eventName, this.reference, this.volume, this.mute);
+                this.emit('disconnected', 'Disconnected.');
+                this.isConnected = false;
+            };
 
             setTimeout(() => {
                 this.getDeviceInfo();
@@ -105,7 +107,7 @@ class OPENWEBIF extends EventEmitter {
             this.emit('connect');
             this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
         } catch (error) {
-            this.emit('error', `device info error: ${error}`);
+            this.emit('debug', `device info error: ${error}`);
             this.emit('disconnect');
         };
     };
