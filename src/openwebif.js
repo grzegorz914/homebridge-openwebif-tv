@@ -28,6 +28,8 @@ class OPENWEBIF extends EventEmitter {
             },
         });
 
+        this.firstStart = true;
+        this.checkStateOnFirstRun = false;
         this.isConnected = false;
         this.power = false;
         this.name = '';
@@ -35,7 +37,6 @@ class OPENWEBIF extends EventEmitter {
         this.reference = '';
         this.volume = 0;
         this.mute = false;
-        this.checkStateOnFirstRun = false;
 
         setInterval(() => {
             const chackState = this.isConnected ? this.emit('checkState') : false;
@@ -72,10 +73,11 @@ class OPENWEBIF extends EventEmitter {
                 };
             })
         this.on('disconnect', () => {
-            if (this.isConnected) {
+            if (this.isConnected || this.firstStart) {
                 this.emit('stateChanged', this.power, this.name, this.eventName, this.reference, this.volume, this.mute);
                 this.emit('disconnected', 'Disconnected.');
                 this.isConnected = false;
+                this.firstStart = false;
             };
 
             setTimeout(() => {
