@@ -57,8 +57,6 @@ class OPENWEBIF extends EventEmitter {
                     const volume = deviceStatusData.data.volume;
                     const mute = power ? (deviceStatusData.data.muted == true) : true;
                     if (this.checkStateOnFirstRun == true || power != this.power || name != this.name || eventName != this.eventName || reference != this.reference || volume != this.volume || mute != this.mute) {
-                        this.emit('debug', `deviceStatusData: ${deviceStatusData.data}`);
-                        this.emit('stateChanged', power, name, eventName, reference, volume, mute);
                         this.power = power;
                         this.name = name;
                         this.eventName = eventName;
@@ -66,24 +64,26 @@ class OPENWEBIF extends EventEmitter {
                         this.volume = volume;
                         this.mute = mute;
                         this.checkStateOnFirstRun = false;
+                        this.emit('debug', `deviceStatusData: ${deviceStatusData.data}`);
+                        this.emit('stateChanged', this.isConnected, power, name, eventName, reference, volume, mute);
                     };
                 } catch (error) {
                     this.emit('debug', `device state error: ${error}`);
                     this.emit('disconnect');
                 };
             })
-        this.on('disconnect', () => {
-            if (this.isConnected || this.firstStart) {
-                this.emit('stateChanged', this.power, this.name, this.eventName, this.reference, this.volume, this.mute);
-                this.emit('disconnected', 'Disconnected.');
-                this.isConnected = false;
-                this.firstStart = false;
-            };
+            .on('disconnect', () => {
+                if (this.isConnected || this.firstStart) {
+                    this.isConnected = false;
+                    this.firstStart = false;
+                    this.emit('stateChanged', this.isConnected, this.power, this.name, this.eventName, this.reference, this.volume, this.mute);
+                    this.emit('disconnected', 'Disconnected.');
+                };
 
-            setTimeout(() => {
-                this.getDeviceInfo();
-            }, 7500);
-        });
+                setTimeout(() => {
+                    this.getDeviceInfo();
+                }, 7500);
+            });
 
         this.getDeviceInfo();
     };

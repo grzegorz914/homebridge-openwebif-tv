@@ -187,12 +187,13 @@ class openwebIfTvDevice {
 					this.prepareAccessory();
 				};
 			})
-			.on('stateChanged', (power, name, eventName, reference, volume, mute) => {
+			.on('stateChanged', (isConnected, power, name, eventName, reference, volume, mute) => {
 				const inputIdentifier = (this.inputsReference.indexOf(reference) >= 0) ? this.inputsReference.indexOf(reference) : this.inputIdentifier;
 
+				const powerState = (isConnected == true && power == true);
 				if (this.televisionService) {
 					this.televisionService
-						.updateCharacteristic(Characteristic.Active, power)
+						.updateCharacteristic(Characteristic.Active, powerState)
 						.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
 
 					if (this.setStartInput) {

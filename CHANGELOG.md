@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.11.10] - (31.12.2021)
+### Fixed
+- power state report if device is disaconnected from network
+
 ## [3.11.9] - (30.12.2021)
 ### Added
 - log Receiver Disconnected if plugin restart and Receiver not on network
