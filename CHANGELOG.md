@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.11.10] - (31.12.2021)
 ### Fixed
-- power state report if device is disaconnected from network
+- power state report if device is disconnected from network
 
 ## [3.11.9] - (30.12.2021)
 ### Added
