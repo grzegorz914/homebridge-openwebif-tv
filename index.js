@@ -70,9 +70,10 @@ class openwebIfTvDevice {
 		this.auth = config.auth || false;
 		this.user = config.user || '';
 		this.pass = config.pass || '';
-		this.disableLogInfo = config.disableLogInfo || false;
 		this.volumeControl = config.volumeControl || 0;
 		this.switchInfoMenu = config.switchInfoMenu || false;
+		this.disableLogInfo = config.disableLogInfo || false;
+		this.disableLogDeviceInfo = config.disableLogDeviceInfo || false;
 		this.enableDebugMode = config.enableDebugMode || false;
 		this.inputs = config.inputs || [];
 		this.buttons = config.buttons || [];
@@ -166,15 +167,16 @@ class openwebIfTvDevice {
 				const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, %s', this.host, this.name, message);
 			})
 			.on('deviceInfo', (manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) => {
-
-				this.log('-------- %s --------', this.name);
-				this.log('Manufacturer: %s', manufacturer);
-				this.log('Model: %s', modelName);
-				this.log('Kernel: %s', kernelVer);
-				this.log('Chipset: %s', chipset);
-				this.log('Webif version: %s', serialNumber);
-				this.log('Firmware: %s', firmwareRevision);
-				this.log('----------------------------------');
+				if (!this.disableLogDeviceInfo) {
+					this.log('-------- %s --------', this.name);
+					this.log('Manufacturer: %s', manufacturer);
+					this.log('Model: %s', modelName);
+					this.log('Kernel: %s', kernelVer);
+					this.log('Chipset: %s', chipset);
+					this.log('Webif version: %s', serialNumber);
+					this.log('Firmware: %s', firmwareRevision);
+					this.log('----------------------------------');
+				}
 
 				this.manufacturer = manufacturer;
 				this.modelName = modelName;

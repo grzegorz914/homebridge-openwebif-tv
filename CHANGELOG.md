@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.11.11] - (03.01.2022)
+### Added
+-  ability to disable log device info by every connections device to the network (Advanced Section)
+
 ## [3.11.10] - (31.12.2021)
 ### Fixed
 - power state report if device is disconnected from network

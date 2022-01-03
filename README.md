@@ -60,6 +60,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `pass` | Here set the authorization *Password*. |
 | `enableDebugMode` | This enable deep log in homebridge console. |
 | `disableLogInfo` | This disable log info, all values and state will not be displayed in Homebridge log console. |
+| `disableLogDeviceInfo` | If enabled, add ability to disable log device info by every connections device to the network. |
 | `volumeControl` | Here select volume control mode `None`, `Slider`, `Fan`. |
 | `switchInfoMenu` | This switch the behaviour of `I` button in RC app between Menu and Home. |
 | `inputs.name` | Here set *Channel Name* which You want expose to the *Homebridge/HomeKit*. |
@@ -83,6 +84,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
         "pass": "pass",
         "refreshInterval": 5,
         "disableLogInfo": false,
+        "disableLogDeviceInfo": false,
         "enableDebugMode": false,
         "volumeControl": 0,
         "switchInfoMenu": false,
