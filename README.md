@@ -29,9 +29,9 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 
 ## Troubleshoot
 * If for some reason the device will not be displayed in Home app try this procedure:
-   * Go to `./homebridge/persist`
-   * Remove `AccessoryInfo.xxx` file which contain Your device data: `{"displayName":"Sat Receiver"}`
-   * Next remove `IdentifierCashe.xxx` file with same name as `AccessoryInfo.xxx`
+   * Go to `./homebridge/persist`.
+   * Remove `AccessoryInfo.xxx` file which contain Your device data: `{"displayName":"Sat Receiver"}`.
+   * Next remove `IdentifierCashe.xxx` file with same name as `AccessoryInfo.xxx`.
    * Restart Homebridge and try add it to the Home app again.
 
 ## Features and How To Use Them
