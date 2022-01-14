@@ -69,7 +69,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `switchInfoMenu` | This switch the behaviour of `I` button in RC app between Menu and Home. |
 | `inputs.name` | Here set *Channel Name* which You want expose to the *Homebridge/HomeKit*. |
 | `inputs.reference` | Here set *Channel Reference*. All can be found in `homebridge_directory/openwebifTv/inputs_xxxx`. |
-| `inputs.switch` | If enabled, the tile for that *Chasnnel** will be expose to the *Homebridge/HomeKit* and can be used for HomeKit automation. |
+| `inputs.switch` | If enabled, the tile for that *Chasnnel* will be expose to the *Homebridge/HomeKit* and can be used for HomeKit automation. |
 | `inputs.displayType` | Here select display type in HomeKit app, possible `Button`, `Switch`, `Motion Sensor`, `Occupancy Sensor`.|
 | `buttons.name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*.| 
 | `buttons.mode` | Here select button mode, `Live TV Channel` or `Remote Control`. |
