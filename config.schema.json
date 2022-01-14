@@ -51,14 +51,14 @@
               "required": false
             },
             "disableLogInfo": {
-              "title": "Disable log info",
+              "title": "Disable Log Info",
               "type": "boolean",
               "default": false,
               "description": "This disable logging values and states on every it change.",
               "required": false
             },
             "disableLogDeviceInfo": {
-              "title": "Disable log device info",
+              "title": "Disable Log Device Info",
               "type": "boolean",
               "default": false,
               "description": "This disable log device info by every connections device to the network.",
@@ -72,7 +72,7 @@
               "required": false
             },
             "volumeControl": {
-              "title": "Volume control mode",
+              "title": "Volume Control Mode",
               "type": "integer",
               "minimum": 0,
               "maximum": 2,
