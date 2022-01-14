@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.12.0] - (14.01.2022)
+### Added
+- ability to use channels with automations, shortcuts in HomeKit app
+- ability to choice type of channels in automations (button, switch, motion sensor, occupancy sensor)
+
+### Changs
+- code cleanup
+- update config.schema
+
+### Fixed
+- services calculation count
+
 ## [3.11.11] - (03.01.2022)
 ### Added
 -  ability to disable log device info by every connections device to the network (Advanced Section)
@@ -30,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.11.3] - (28.12.2021)
 ### Added
-- Selectable display type of buttons in Home app
+- Selectable display type of buttons in HomeKit app
 
 ## [3.11.0] - (22.12.2021)
 ## Changes

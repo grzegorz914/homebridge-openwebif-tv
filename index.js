@@ -92,14 +92,20 @@ class openwebIfTvDevice {
 		this.inputsType = new Array();
 		this.inputsMode = new Array();
 
+		this.inputsSwitchIndex = new Array();
+		this.inputsSwitchDisplayType = new Array();
+
 		this.powerState = false;
+		this.reference = '';
 		this.volume = 0;
 		this.muteState = true;
+		this.infoMenuState = false;
+
 		this.setStartInput = false;
+		this.startInputIdentifier = 0;
+		this.inputIdentifier = 0;
 		this.channelName = '';
 		this.channelEventName = '';
-		this.inputIdentifier = 0;
-		this.infoMenuState = false;
 
 		this.brightness = 0;
 		this.pictureMode = 0;
@@ -111,35 +117,31 @@ class openwebIfTvDevice {
 		this.inputsTargetVisibilityFile = `${this.prefDir}/inputsTargetVisibility_${this.host.split('.').join('')}`;
 		this.channelsFile = `${this.prefDir}/channels_${this.host.split('.').join('')}`;
 
-		try {
-			//check if the directory exists, if not then create it
-			if (fs.existsSync(this.prefDir) == false) {
-				fs.mkdirSync(this.prefDir);
-			}
-			if (fs.existsSync(this.devInfoFile) == false) {
-				fs.writeFileSync(this.devInfoFile, '');
-			}
-			if (fs.existsSync(this.inputsFile) == false) {
-				fs.writeFileSync(this.inputsFile, '');
-			}
-			if (fs.existsSync(this.inputsNamesFile) == false) {
-				fs.writeFileSync(this.inputsNamesFile, '');
-			}
-			if (fs.existsSync(this.inputsTargetVisibilityFile) == false) {
-				fs.writeFileSync(this.inputsTargetVisibilityFile, '');
-			}
-			if (fs.existsSync(this.channelsFile) == false) {
-				fs.writeFileSync(this.channelsFile, '');
-			}
-		} catch (error) {
-			this.log.error('Device: %s %s, prepare directory or files error: %s', this.host, this.name, error);
-		};
+		//check if the directory exists, if not then create it
+		if (fs.existsSync(this.prefDir) == false) {
+			fs.mkdirSync(this.prefDir);
+		}
+		if (fs.existsSync(this.devInfoFile) == false) {
+			fs.writeFileSync(this.devInfoFile, '');
+		}
+		if (fs.existsSync(this.inputsFile) == false) {
+			fs.writeFileSync(this.inputsFile, '');
+		}
+		if (fs.existsSync(this.inputsNamesFile) == false) {
+			fs.writeFileSync(this.inputsNamesFile, '');
+		}
+		if (fs.existsSync(this.inputsTargetVisibilityFile) == false) {
+			fs.writeFileSync(this.inputsTargetVisibilityFile, '');
+		}
+		if (fs.existsSync(this.channelsFile) == false) {
+			fs.writeFileSync(this.channelsFile, '');
+		}
 
+		//save inputs to the file
 		try {
-			//save inputs to the file
-			const obj = JSON.stringify(this.inputs, null, 2);
-			fs.writeFileSync(this.inputsFile, obj);
-			const debug = this.enableDebugMode ? this.log('Device: %s %s, save inputs succesful, inputs: %s', this.host, this.name, obj) : false;
+			const inputs = JSON.stringify(this.inputs, null, 2);
+			fs.writeFileSync(this.inputsFile, inputs);
+			const debug = this.enableDebugMode ? this.log('Device: %s %s, save inputs succesful, inputs: %s', this.host, this.name, inputs) : false;
 		} catch (error) {
 			this.log.error('Device: %s %s, save inputs error: %s', this.host, this.name, error);
 		};
@@ -200,7 +202,7 @@ class openwebIfTvDevice {
 
 					if (this.setStartInput) {
 						setTimeout(() => {
-							this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
+							this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, this.startInputIdentifier);
 							this.setStartInput = false;
 						}, 1200);
 					}
@@ -222,7 +224,20 @@ class openwebIfTvDevice {
 					}
 				}
 
+				if (this.switchServices) {
+					const switchServicesCount = this.switchServices.length;
+					for (let i = 0; i < switchServicesCount; i++) {
+						const index = this.inputsSwitchIndex[i];
+						const state = powerState ? (this.inputsReference[index] == reference) : false;
+						const displayType = this.inputsSwitchDisplayType[index];
+						const characteristicType = [Characteristic.On, Characteristic.On, Characteristic.MotionDetected, Characteristic.OccupancyDetected][displayType];
+						this.switchServices[i]
+							.updateCharacteristic(characteristicType, state);
+					}
+				}
+
 				this.powerState = power;
+				this.reference = reference;
 				this.channelName = name;
 				this.channelEventName = eventName;
 				this.volume = volume;
@@ -297,10 +312,11 @@ class openwebIfTvDevice {
 					const setInput = (this.powerState && inputReference != undefined) ? await this.openwebif.send(API_URL.SetChannel + inputReference) : false;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Channel successful, name: %s, reference: %s', this.host, accessoryName, inputName, inputReference);
 					this.inputIdentifier = inputIdentifier;
-					this.setStartInput = this.powerState ? false : true;
 				} catch (error) {
 					this.log.error('Device: %s %s, can not set Channel. Might be due to a wrong settings in config, error: %s.', this.host, accessoryName, error);
 				};
+				this.setStartInput = !this.powerState;
+				this.startInputIdentifier = inputIdentifier;
 			});
 
 		this.televisionService.getCharacteristic(Characteristic.RemoteKey)
@@ -575,6 +591,12 @@ class openwebIfTvDevice {
 			//get input mode
 			const inputMode = 0;
 
+			//get input switch
+			const inputSwitch = (inputs[i].switch != undefined) ? inputs[i].switch : false;
+
+			//get input switch
+			const inputSwitchDisplayType = (inputs[i].displayType != undefined) ? inputs[i].displayType : 0;
+
 			//get input configured
 			const isConfigured = 1;
 
@@ -628,9 +650,61 @@ class openwebIfTvDevice {
 			this.inputsName.push(inputName);
 			this.inputsType.push(inputType);
 			this.inputsMode.push(inputMode);
+			this.inputsSwitchDisplayType.push(inputSwitchDisplayType);
+			const pushInputSwitchIndex = inputSwitch ? this.inputsSwitchIndex.push(i) : false;
 
 			this.televisionService.addLinkedService(inputService);
 			accessory.addService(inputService);
+		}
+
+		//Prepare inputs switch service
+		//check available switch inputs and possible count (max 94)
+		this.switchServices = new Array();
+		const inputsSwitchCount = this.inputsSwitchIndex.length;
+		const availableInputSwitchCount = 94 - maxInputsCount;
+		const maxInputsSwitchCount = (availableInputSwitchCount > 0) ? (availableInputSwitchCount > inputsSwitchCount) ? inputsSwitchCount : availableInputSwitchCount : 0;
+		for (let i = 0; i < maxInputsSwitchCount; i++) {
+
+			//get input switch index
+			const inputSwitchIndex = this.inputsSwitchIndex[i];
+
+			//get input switch reference
+			const inputSwitchReference = this.inputsReference[inputSwitchIndex];
+
+			//get input switch name		
+			const inputSwitchName = this.inputsName[inputSwitchIndex];
+
+			//get input switch display type
+			const inputSwitchDisplayType = this.inputsSwitchDisplayType[inputSwitchIndex];
+
+
+			const serviceType = [Service.Outlet, Service.Switch, Service.MotionSensor, Service.OccupancySensor][inputSwitchDisplayType];
+			const characteristicType = [Characteristic.On, Characteristic.On, Characteristic.MotionDetected, Characteristic.OccupancyDetected][inputSwitchDisplayType];
+			const switchService = new serviceType(`${accessoryName} ${inputSwitchName}`, `Sensor ${i}`);
+			switchService.getCharacteristic(characteristicType)
+				.onGet(async () => {
+					const state = this.powerState ? (inputSwitchReference == this.reference) : false;
+					return state;
+				})
+				.onSet(async (state) => {
+					if (inputSwitchDisplayType <= 1) {
+						try {
+							const setSwitchInput = (state && this.powerState) ? await this.openwebif.send(API_URL.SetChannel + inputSwitchReference) : false;
+							const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set new Channel successful, name: %s, reference: %s', this.host, accessoryName, inputSwitchName, inputSwitchReference);
+						} catch (error) {
+							this.log.error('Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', this.host, accessoryName, error);
+						};
+						if (!this.powerState) {
+							setTimeout(() => {
+								this.switchServices[i]
+									.updateCharacteristic(Characteristic.On, false);
+							}, 150);
+						}
+					};
+				});
+
+			this.switchServices.push(switchService);
+			accessory.addService(this.switchServices[i]);
 		}
 
 		//Prepare inputs button services
@@ -639,7 +713,8 @@ class openwebIfTvDevice {
 		//check available buttons and possible buttons count (max 94 - inputsCount)
 		const buttons = this.buttons;
 		const buttonsCount = buttons.length;
-		const maxButtonsCount = ((inputsCount + buttonsCount) < 94) ? buttonsCount : 94 - inputsCount;
+		const availableButtonsCount = (94 - (maxInputsCount + maxInputsSwitchCount));
+		const maxButtonsCount = (availableButtonsCount > 0) ? (availableButtonsCount > buttonsCount) ? buttonsCount : availableButtonsCount : 0;
 		for (let i = 0; i < maxButtonsCount; i++) {
 
 			//get button mode
