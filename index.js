@@ -122,19 +122,19 @@ class openwebIfTvDevice {
 			fs.mkdirSync(this.prefDir);
 		}
 		if (fs.existsSync(this.devInfoFile) == false) {
-			fs.writeFileSync(this.devInfoFile, '');
+			fs.writeFileSync(this.devInfoFile, {});
 		}
 		if (fs.existsSync(this.inputsFile) == false) {
-			fs.writeFileSync(this.inputsFile, '');
+			fs.writeFileSync(this.inputsFile, []);
 		}
 		if (fs.existsSync(this.inputsNamesFile) == false) {
-			fs.writeFileSync(this.inputsNamesFile, '');
+			fs.writeFileSync(this.inputsNamesFile, {});
 		}
 		if (fs.existsSync(this.inputsTargetVisibilityFile) == false) {
-			fs.writeFileSync(this.inputsTargetVisibilityFile, '');
+			fs.writeFileSync(this.inputsTargetVisibilityFile, {});
 		}
 		if (fs.existsSync(this.channelsFile) == false) {
-			fs.writeFileSync(this.channelsFile, '');
+			fs.writeFileSync(this.channelsFile, {});
 		}
 
 		//save inputs to the file
@@ -659,105 +659,109 @@ class openwebIfTvDevice {
 
 		//Prepare inputs switch service
 		//check available switch inputs and possible count (max 94)
-		this.switchServices = new Array();
 		const inputsSwitchCount = this.inputsSwitchIndex.length;
 		const availableInputSwitchCount = 94 - maxInputsCount;
 		const maxInputsSwitchCount = (availableInputSwitchCount > 0) ? (availableInputSwitchCount > inputsSwitchCount) ? inputsSwitchCount : availableInputSwitchCount : 0;
-		for (let i = 0; i < maxInputsSwitchCount; i++) {
+		if (maxInputsSwitchCount > 0) {
+			this.log.debug('prepareInputsSwitchService');
+			this.switchServices = new Array();
+			for (let i = 0; i < maxInputsSwitchCount; i++) {
 
-			//get input switch index
-			const inputSwitchIndex = this.inputsSwitchIndex[i];
+				//get input switch index
+				const inputSwitchIndex = this.inputsSwitchIndex[i];
 
-			//get input switch reference
-			const inputSwitchReference = this.inputsReference[inputSwitchIndex];
+				//get input switch reference
+				const inputSwitchReference = this.inputsReference[inputSwitchIndex];
 
-			//get input switch name		
-			const inputSwitchName = this.inputsName[inputSwitchIndex];
+				//get input switch name		
+				const inputSwitchName = this.inputsName[inputSwitchIndex];
 
-			//get input switch display type
-			const inputSwitchDisplayType = this.inputsSwitchDisplayType[inputSwitchIndex];
+				//get input switch display type
+				const inputSwitchDisplayType = this.inputsSwitchDisplayType[inputSwitchIndex];
 
 
-			const serviceType = [Service.Outlet, Service.Switch, Service.MotionSensor, Service.OccupancySensor][inputSwitchDisplayType];
-			const characteristicType = [Characteristic.On, Characteristic.On, Characteristic.MotionDetected, Characteristic.OccupancyDetected][inputSwitchDisplayType];
-			const switchService = new serviceType(`${accessoryName} ${inputSwitchName}`, `Sensor ${i}`);
-			switchService.getCharacteristic(characteristicType)
-				.onGet(async () => {
-					const state = this.powerState ? (inputSwitchReference == this.reference) : false;
-					return state;
-				})
-				.onSet(async (state) => {
-					if (inputSwitchDisplayType <= 1) {
-						try {
-							const setSwitchInput = (state && this.powerState) ? await this.openwebif.send(API_URL.SetChannel + inputSwitchReference) : false;
-							const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set new Channel successful, name: %s, reference: %s', this.host, accessoryName, inputSwitchName, inputSwitchReference);
-						} catch (error) {
-							this.log.error('Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', this.host, accessoryName, error);
+				const serviceType = [Service.Outlet, Service.Switch, Service.MotionSensor, Service.OccupancySensor][inputSwitchDisplayType];
+				const characteristicType = [Characteristic.On, Characteristic.On, Characteristic.MotionDetected, Characteristic.OccupancyDetected][inputSwitchDisplayType];
+				const switchService = new serviceType(`${accessoryName} ${inputSwitchName}`, `Sensor ${i}`);
+				switchService.getCharacteristic(characteristicType)
+					.onGet(async () => {
+						const state = this.powerState ? (inputSwitchReference == this.reference) : false;
+						return state;
+					})
+					.onSet(async (state) => {
+						if (inputSwitchDisplayType <= 1) {
+							try {
+								const setSwitchInput = (state && this.powerState) ? await this.openwebif.send(API_URL.SetChannel + inputSwitchReference) : false;
+								const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set new Channel successful, name: %s, reference: %s', this.host, accessoryName, inputSwitchName, inputSwitchReference);
+							} catch (error) {
+								this.log.error('Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', this.host, accessoryName, error);
+							};
+							if (!this.powerState) {
+								setTimeout(() => {
+									this.switchServices[i]
+										.updateCharacteristic(Characteristic.On, false);
+								}, 150);
+							}
 						};
-						if (!this.powerState) {
-							setTimeout(() => {
-								this.switchServices[i]
-									.updateCharacteristic(Characteristic.On, false);
-							}, 150);
-						}
-					};
-				});
+					});
 
-			this.switchServices.push(switchService);
-			accessory.addService(this.switchServices[i]);
+				this.switchServices.push(switchService);
+				accessory.addService(this.switchServices[i]);
+			}
 		}
 
 		//Prepare inputs button services
-		this.log.debug('prepareInputsButtonService');
-
 		//check available buttons and possible buttons count (max 94 - inputsCount)
 		const buttons = this.buttons;
 		const buttonsCount = buttons.length;
 		const availableButtonsCount = (94 - (maxInputsCount + maxInputsSwitchCount));
 		const maxButtonsCount = (availableButtonsCount > 0) ? (availableButtonsCount > buttonsCount) ? buttonsCount : availableButtonsCount : 0;
-		for (let i = 0; i < maxButtonsCount; i++) {
+		if (maxButtonsCount > 0) {
+			this.log.debug('prepareInputsButtonService');
+			for (let i = 0; i < maxButtonsCount; i++) {
 
-			//get button mode
-			const buttonMode = buttons[i].mode;
+				//get button mode
+				const buttonMode = buttons[i].mode;
 
-			//get button reference
-			const buttonReference = buttons[i].reference;
+				//get button reference
+				const buttonReference = buttons[i].reference;
 
-			//get button command
-			const buttonCommand = buttons[i].command;
+				//get button command
+				const buttonCommand = buttons[i].command;
 
-			//get button name
-			const buttonName = (buttons[i].name != undefined) ? buttons[i].name : [buttonReference, buttonCommand][buttonMode];
+				//get button name
+				const buttonName = (buttons[i].name != undefined) ? buttons[i].name : [buttonReference, buttonCommand][buttonMode];
 
-			//get button display type
-			const buttonDisplayType = (buttons[i].displayType != undefined) ? buttons[i].displayType : 0;
+				//get button display type
+				const buttonDisplayType = (buttons[i].displayType != undefined) ? buttons[i].displayType : 0;
 
-			const serviceType = [Service.Outlet, Service.Switch][buttonDisplayType];
-			const buttonService = new serviceType(`${accessoryName} ${buttonName}`, `Button ${i}`);
-			buttonService.getCharacteristic(Characteristic.On)
-				.onGet(async () => {
-					const state = false;
-					return state;
-				})
-				.onSet(async (state) => {
-					try {
-						const setInput = (state && this.powerState && buttonMode == 0) ? await this.openwebif.send(API_URL.SetChannel + buttonReference) : false;
-						const setCommand = (state && this.powerState && buttonMode == 1) ? await this.openwebif.send(API_URL.SetRcCommand + buttonCommand) : false;
-						const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set %s successful, name: %s, reference: %s', this.host, accessoryName, ['Channel', 'Command'][buttonMode], buttonName, [buttonReference, buttonCommand][buttonMode]);
-					} catch (error) {
-						this.log.error('Device: %s %s, set %s error: %s', this.host, accessoryName, ['Channel', 'Command'][buttonMode], error);
-					};
-					setTimeout(() => {
-						buttonService
-							.updateCharacteristic(Characteristic.On, false);
-					}, 150);
-				});
+				const serviceType = [Service.Outlet, Service.Switch][buttonDisplayType];
+				const buttonService = new serviceType(`${accessoryName} ${buttonName}`, `Button ${i}`);
+				buttonService.getCharacteristic(Characteristic.On)
+					.onGet(async () => {
+						const state = false;
+						return state;
+					})
+					.onSet(async (state) => {
+						try {
+							const setInput = (state && this.powerState && buttonMode == 0) ? await this.openwebif.send(API_URL.SetChannel + buttonReference) : false;
+							const setCommand = (state && this.powerState && buttonMode == 1) ? await this.openwebif.send(API_URL.SetRcCommand + buttonCommand) : false;
+							const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set %s successful, name: %s, reference: %s', this.host, accessoryName, ['Channel', 'Command'][buttonMode], buttonName, [buttonReference, buttonCommand][buttonMode]);
+						} catch (error) {
+							this.log.error('Device: %s %s, set %s error: %s', this.host, accessoryName, ['Channel', 'Command'][buttonMode], error);
+						};
+						setTimeout(() => {
+							buttonService
+								.updateCharacteristic(Characteristic.On, false);
+						}, 150);
+					});
 
-			accessory.addService(buttonService);
+				accessory.addService(buttonService);
+			}
 		}
 
 		this.startPrepareAccessory = false;
-		const debug3 = this.enableDebugMode ? this.log('Device: %s %s, publishExternalAccessories.', this.host, accessoryName) : false;
+		const debug3 = this.enableDebugMode ? this.log('Device: %s %s, publishExternalAccessory.', this.host, accessoryName) : false;
 		this.api.publishExternalAccessories(PLUGIN_NAME, [accessory]);
 	}
 };
