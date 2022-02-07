@@ -79,15 +79,15 @@ class OPENWEBIF extends EventEmitter {
                     this.firstStart = false;
                     this.emit('stateChanged', this.isConnected, this.power, this.name, this.eventName, this.reference, this.volume, this.mute);
                     this.emit('disconnected', 'Disconnected, trying to reconnect.');
-
-                    setTimeout(async () => {
-                        try {
-                            await this.reconnect();
-                        } catch (error) {
-                            this.emit('debug', `Reconnect error: ${error}`);
-                        };
-                    }, 7500);
                 };
+
+                setTimeout(async () => {
+                    try {
+                        await this.reconnect();
+                    } catch (error) {
+                        this.emit('debug', `Reconnect error: ${error}`);
+                    };
+                }, 7500);
             });
 
         this.connect();
