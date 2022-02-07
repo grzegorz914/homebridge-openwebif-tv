@@ -626,7 +626,7 @@ class openwebIfTvDevice {
 					const nameIdentifier = (inputReference != undefined) ? inputReference : false;
 					let newName = savedInputsNames;
 					newName[nameIdentifier] = name;
-					const newCustomName = JSON.stringify(newName);
+					const newCustomName = JSON.stringify(newName, null, 2);
 					try {
 						const writeNewCustomName = (nameIdentifier != false) ? await fsPromises.writeFile(this.inputsNamesFile, newCustomName) : false;
 						const debug = this.enableDebugMode ? this.log('Device: %s %s, saved new Input successful, savedInputsNames: %s', this.host, accessoryName, newCustomName) : false;
@@ -642,7 +642,7 @@ class openwebIfTvDevice {
 					const targetVisibilityIdentifier = (inputReference != undefined) ? inputReference : false;
 					let newState = savedTargetVisibility;
 					newState[targetVisibilityIdentifier] = state;
-					const newTargetVisibility = JSON.stringify(newState);
+					const newTargetVisibility = JSON.stringify(newState, null, 2);
 					try {
 						const writeNewTargetVisibility = (targetVisibilityIdentifier != false) ? await fsPromises.writeFile(this.inputsTargetVisibilityFile, newTargetVisibility) : false;
 						const debug = this.enableDebugMode ? this.log('Device: %s %s, Input: %s, saved target visibility state: %s', this.host, accessoryName, inputName, newTargetVisibility) : false;
