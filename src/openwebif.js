@@ -28,9 +28,9 @@ class OPENWEBIF extends EventEmitter {
             },
         });
 
+        this.isConnected = false;
         this.firstStart = true;
         this.checkStateOnFirstRun = false;
-        this.isConnected = false;
         this.power = false;
         this.name = '';
         this.eventName = '';
@@ -68,7 +68,7 @@ class OPENWEBIF extends EventEmitter {
                         this.emit('stateChanged', this.isConnected, power, name, eventName, reference, volume, mute);
                     };
                 } catch (error) {
-                    this.emit('debug', `Device state error: ${error}`);
+                    this.emit('error', `Device state error: ${error}`);
                     this.emit('disconnect');
                 };
             })
@@ -78,7 +78,7 @@ class OPENWEBIF extends EventEmitter {
                     this.isConnected = false;
                     this.firstStart = false;
                     this.emit('stateChanged', this.isConnected, this.power, this.name, this.eventName, this.reference, this.volume, this.mute);
-                    this.emit('disconnected', 'Disconnected.');
+                    this.emit('disconnected', 'Disconnected, trying to reconnect.');
 
                     setTimeout(async () => {
                         try {
@@ -97,37 +97,40 @@ class OPENWEBIF extends EventEmitter {
         try {
             await this.getDeviceInfo();
         } catch (error) {
-            this.emit('debug', `Connect error: ${error}, trying to reconnect.`);
-            this.emit('disconnect');
+            this.emit('error', `Connect error: ${error}.`);
         };
     };
 
     getDeviceInfo() {
         return new Promise(async (resolve, reject) => {
             try {
-                const response = await this.axiosInstance(API_URL.DeviceInfo);
-                const manufacturer = response.data.brand || this.manufacturer;
-                const modelName = response.data.model || this.modelName;
-                const serialNumber = response.data.webifver || this.serialNumber;
-                const firmwareRevision = response.data.imagever || this.firmwareRevision;
-                const kernelVer = response.data.kernelver || 'Unknown';
-                const chipset = response.data.chipset || 'Unknown';
-                const mac = response.data.ifaces[0].mac || this.name;
+                const deviceInfo = await this.axiosInstance(API_URL.DeviceInfo);
+                const manufacturer = deviceInfo.data.brand || this.manufacturer;
+                const modelName = deviceInfo.data.model || this.modelName;
+                const serialNumber = deviceInfo.data.webifver || this.serialNumber;
+                const firmwareRevision = deviceInfo.data.imagever || this.firmwareRevision;
+                const kernelVer = deviceInfo.data.kernelver || 'Unknown';
+                const chipset = deviceInfo.data.chipset || 'Unknown';
+                const mac = deviceInfo.data.ifaces[0].mac || this.name;
 
-                const devInfo = JSON.stringify(response.data, null, 2);
+                const devInfo = JSON.stringify(deviceInfo.data, null, 2);
+                this.emit('debug', `Device info: ${devInfo}`);
                 const writeDevInfo = await fsPromises.writeFile(this.devInfoFile, devInfo);
 
-                const response1 = await this.axiosInstance(API_URL.GetAllServices);
-                const channels = JSON.stringify(response1.data, null, 2);
+                const channelsInfo = await this.axiosInstance(API_URL.GetAllServices);
+                const channels = JSON.stringify(channelsInfo.data, null, 2);
+                this.emit('debug', `Channels info: ${channels}`);
                 const writeChannels = await fsPromises.writeFile(this.channelsFile, channels);
-                this.emit('debug', `Response: ${response.data}, response1: ${response1.data}`);
+
                 this.emit('connect');
                 this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
                 resolve(true);
             } catch (error) {
                 this.emit('debug', `Get device info error: ${error}`);
-                this.emit('disconnect');
                 reject(error);
+
+                //disconnect
+                this.emit('disconnect');
             };
         });
     };
@@ -151,7 +154,7 @@ class OPENWEBIF extends EventEmitter {
                 await this.getDeviceInfo();
                 resolve(true);
             } catch (error) {
-                this.emit('debug', `Reconnect error: ${error}`);
+                this.emit('debug', `Reconnect device error: ${error}`);
                 reject(error);
             };
         });
