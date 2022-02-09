@@ -127,10 +127,8 @@ class OPENWEBIF extends EventEmitter {
                 resolve(true);
             } catch (error) {
                 this.emit('debug', `Get device info error: ${error}`);
-                reject(error);
-
-                //disconnect
                 this.emit('disconnect');
+                reject(error);
             };
         });
     };
