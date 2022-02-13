@@ -225,7 +225,7 @@ class openwebIfTvDevice {
 					const switchServicesCount = this.switchServices.length;
 					for (let i = 0; i < switchServicesCount; i++) {
 						const index = this.switchsIndex[i];
-						const state = powerState ? (this.inputsReference[index] == reference) : false;
+						const state = power ? (this.inputsReference[index] == reference) : false;
 						const displayType = this.switchsDisplayType[index];
 						const characteristicType = [Characteristic.On, Characteristic.On, Characteristic.MotionDetected, Characteristic.OccupancyDetected][displayType];
 						this.switchServices[i]
