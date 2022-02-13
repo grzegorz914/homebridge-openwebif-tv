@@ -101,8 +101,6 @@ class openwebIfTvDevice {
 		this.muteState = true;
 		this.infoMenuState = false;
 
-		this.setStartInput = false;
-		this.startInputIdentifier = 0;
 		this.inputIdentifier = 0;
 		this.channelName = '';
 		this.channelEventName = '';
@@ -198,21 +196,13 @@ class openwebIfTvDevice {
 					this.prepareAccessory();
 				};
 			})
-			.on('stateChanged', (isConnected, power, name, eventName, reference, volume, mute) => {
+			.on('stateChanged', (power, name, eventName, reference, volume, mute) => {
 				const inputIdentifier = (this.inputsReference.indexOf(reference) >= 0) ? this.inputsReference.indexOf(reference) : this.inputIdentifier;
 
-				const powerState = (isConnected && power);
 				if (this.televisionService) {
 					this.televisionService
-						.updateCharacteristic(Characteristic.Active, powerState)
+						.updateCharacteristic(Characteristic.Active, power)
 						.updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
-
-					if (this.setStartInput) {
-						setTimeout(() => {
-							this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, this.startInputIdentifier);
-							this.setStartInput = false;
-						}, 1200);
-					}
 				}
 
 				if (this.speakerService) {
@@ -316,14 +306,12 @@ class openwebIfTvDevice {
 				const inputName = this.inputsName[inputIdentifier];
 				const inputReference = this.inputsReference[inputIdentifier];
 				try {
-					const setInput = (this.powerState && inputReference != undefined) ? await this.openwebif.send(API_URL.SetChannel + inputReference) : false;
+					const setInput = (inputReference != undefined) ? await this.openwebif.send(API_URL.SetChannel + inputReference) : false;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Channel successful, name: %s, reference: %s', this.host, accessoryName, inputName, inputReference);
 					this.inputIdentifier = inputIdentifier;
 				} catch (error) {
 					this.log.error('Device: %s %s, can not set Channel. Might be due to a wrong settings in config, error: %s.', this.host, accessoryName, error);
 				};
-				this.setStartInput = !this.powerState;
-				this.startInputIdentifier = inputIdentifier;
 			});
 
 		this.televisionService.getCharacteristic(Characteristic.RemoteKey)

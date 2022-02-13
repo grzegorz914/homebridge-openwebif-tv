@@ -20,7 +20,7 @@ class OPENWEBIF extends EventEmitter {
         this.axiosInstance = axios.create({
             method: 'GET',
             baseURL: url,
-            timeout: 2500,
+            timeout: 2750,
             withCredentials: this.auth,
             auth: {
                 username: this.user,
@@ -28,8 +28,7 @@ class OPENWEBIF extends EventEmitter {
             },
         });
 
-        this.isConnected = false;
-        this.firstStart = true;
+        this.firstStart = false;
         this.checkStateOnFirstRun = false;
         this.power = false;
         this.name = '';
@@ -39,13 +38,40 @@ class OPENWEBIF extends EventEmitter {
         this.mute = false;
 
         this.on('connect', () => {
-                this.isConnected = true;
+                this.firstStart = true;
                 this.checkStateOnFirstRun = true;
                 this.emit('connected', 'Connected.');
 
                 this.chackState = setInterval(() => {
                     this.emit('checkState');
-                }, 2500)
+                }, 3000)
+            })
+            .on('checkDeviceInfo', async () => {
+                try {
+                    const deviceInfo = await this.axiosInstance(API_URL.DeviceInfo);
+                    const manufacturer = deviceInfo.data.brand || this.manufacturer;
+                    const modelName = deviceInfo.data.model || this.modelName;
+                    const serialNumber = deviceInfo.data.webifver || this.serialNumber;
+                    const firmwareRevision = deviceInfo.data.imagever || this.firmwareRevision;
+                    const kernelVer = deviceInfo.data.kernelver || 'Unknown';
+                    const chipset = deviceInfo.data.chipset || 'Unknown';
+                    const mac = deviceInfo.data.ifaces[0].mac || this.name;
+
+                    const devInfo = JSON.stringify(deviceInfo.data, null, 2);
+                    this.emit('debug', `Device info: ${devInfo}`);
+                    const writeDevInfo = await fsPromises.writeFile(this.devInfoFile, devInfo);
+
+                    const channelsInfo = await this.axiosInstance(API_URL.GetAllServices);
+                    const channels = JSON.stringify(channelsInfo.data, null, 2);
+                    this.emit('debug', `Channels info: ${channels}`);
+                    const writeChannels = await fsPromises.writeFile(this.channelsFile, channels);
+
+                    this.emit('connect');
+                    this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
+                } catch (error) {
+                    this.emit('debug', `Device info error: ${error}`);
+                    this.emit('disconnect');
+                };
             })
             .on('checkState', async () => {
                 try {
@@ -65,72 +91,28 @@ class OPENWEBIF extends EventEmitter {
                         this.mute = mute;
                         this.checkStateOnFirstRun = false;
                         this.emit('debug', `Device status data: ${deviceStatusData.data}`);
-                        this.emit('stateChanged', this.isConnected, power, name, eventName, reference, volume, mute);
+                        this.emit('stateChanged', power, name, eventName, reference, volume, mute);
                     };
                 } catch (error) {
-                    this.emit('error', `Device state error: ${error}`);
+                    this.emit('debug', `Device state error: ${error}`);
                     this.emit('disconnect');
                 };
             })
             .on('disconnect', () => {
-                if (this.isConnected || this.firstStart) {
-                    clearInterval(this.chackState);
-                    this.isConnected = false;
+                clearInterval(this.chackState);
+                this.emit('stateChanged', false, this.name, this.eventName, this.reference, this.volume, true);
+
+                if (this.firstStart) {
                     this.firstStart = false;
-                    this.emit('stateChanged', this.isConnected, this.power, this.name, this.eventName, this.reference, this.volume, this.mute);
                     this.emit('disconnected', 'Disconnected, trying to reconnect.');
                 };
 
-                setTimeout(async () => {
-                    try {
-                        await this.reconnect();
-                    } catch (error) {
-                        this.emit('debug', `Reconnect error: ${error}`);
-                    };
+                setTimeout(() => {
+                    this.emit('checkDeviceInfo');
                 }, 7500);
             });
 
-        this.connect();
-    };
-
-    async connect() {
-        try {
-            await this.getDeviceInfo();
-        } catch (error) {
-            this.emit('error', `Connect error: ${error}.`);
-        };
-    };
-
-    getDeviceInfo() {
-        return new Promise(async (resolve, reject) => {
-            try {
-                const deviceInfo = await this.axiosInstance(API_URL.DeviceInfo);
-                const manufacturer = deviceInfo.data.brand || this.manufacturer;
-                const modelName = deviceInfo.data.model || this.modelName;
-                const serialNumber = deviceInfo.data.webifver || this.serialNumber;
-                const firmwareRevision = deviceInfo.data.imagever || this.firmwareRevision;
-                const kernelVer = deviceInfo.data.kernelver || 'Unknown';
-                const chipset = deviceInfo.data.chipset || 'Unknown';
-                const mac = deviceInfo.data.ifaces[0].mac || this.name;
-
-                const devInfo = JSON.stringify(deviceInfo.data, null, 2);
-                this.emit('debug', `Device info: ${devInfo}`);
-                const writeDevInfo = await fsPromises.writeFile(this.devInfoFile, devInfo);
-
-                const channelsInfo = await this.axiosInstance(API_URL.GetAllServices);
-                const channels = JSON.stringify(channelsInfo.data, null, 2);
-                this.emit('debug', `Channels info: ${channels}`);
-                const writeChannels = await fsPromises.writeFile(this.channelsFile, channels);
-
-                this.emit('connect');
-                this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
-                resolve(true);
-            } catch (error) {
-                this.emit('debug', `Get device info error: ${error}`);
-                this.emit('disconnect');
-                reject(error);
-            };
-        });
+        this.emit('checkDeviceInfo');
     };
 
     send(apiUrl) {
@@ -141,18 +123,6 @@ class OPENWEBIF extends EventEmitter {
                 resolve(true);
             } catch (error) {
                 this.emit('error', `Send command error: ${error}`);
-                reject(error);
-            };
-        });
-    };
-
-    reconnect() {
-        return new Promise(async (resolve, reject) => {
-            try {
-                await this.getDeviceInfo();
-                resolve(true);
-            } catch (error) {
-                this.emit('debug', `Reconnect device error: ${error}`);
                 reject(error);
             };
         });
