@@ -39,6 +39,7 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 * Channels can be changed using Channels selector in HomeKit.app, additionally can create separate tile.
 * Siri can be used for all functions, some times need create legacy buttons/switches/sensors.
 * Automations can be used for all functions, some times need create legacy buttons/switches/sensors.
+* MQTT Client publisch all available data from device.
 
 <p align="left">
   <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/master/graphics/homekit.png" width="382"></a>
@@ -76,6 +77,13 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `buttons.reference` | Here set *Reference*, only for `Live TV Channel` mode, in other case leave empty. | 
 | `buttons.command` | Here select `Remote Control` command which will be assigned to the button. |
 | `buttons.displayType` | Here select display type in HomeKit app, possible `Switch`, `Button` - selectable in HomeKit app as Light, Fan, Outlet.|
+| `enableMqtt` | If enabled, MQTT Broker will start automatically and publish all awailable PV installation data. |
+| `mqttHost` | Here set the *IP Address* or *Hostname* for MQTT Broker.) |
+| `mqttPort` | Here set the *Port* for MQTT Broker, default 1883.) |
+| `mqttPrefix` | Here set the *Prefix* for *Topic* or leave empty.) |
+| `mqttAuth` | If enabled, MQTT Broker will use authorization credentials. |
+| `mqttUser` | Here set the MQTT Broker user. |
+| `mqttPasswd` | Here set the MQTT Broker password. |
 
 ```json
 {
@@ -133,7 +141,14 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
             "command": "115",
 						"displayType": 0
           }
-        ]
+        ],
+        "enableMqtt": false,
+        "mqttHost": "192.168.1.33",
+        "mqttPort": 1883,
+        "mqttPrefix": "home/envoy",
+        "mqttAuth": false,
+        "mqttUser": "user",
+        "mqttPass": "password"
       }
     ]
   }

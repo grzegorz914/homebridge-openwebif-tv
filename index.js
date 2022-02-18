@@ -4,6 +4,7 @@ const fs = require('fs');
 const fsPromises = require('fs').promises;
 const path = require('path');
 const openwebif = require('./src/openwebif')
+const mqttClient = require('./src/mqtt.js');
 const API_URL = require('./src/apiurl.json');
 
 const PLUGIN_NAME = 'homebridge-openwebif-tv';
@@ -75,6 +76,13 @@ class openwebIfTvDevice {
 		this.disableLogInfo = config.disableLogInfo || false;
 		this.disableLogDeviceInfo = config.disableLogDeviceInfo || false;
 		this.enableDebugMode = config.enableDebugMode || false;
+		this.enableMqtt = config.enableMqtt || false;
+		this.mqttHost = config.mqttHost;
+		this.mqttPort = config.mqttPort || 1883;
+		this.mqttPrefix = config.mqttPrefix;
+		this.mqttAuth = config.mqttAuth || false;
+		this.mqttUser = config.mqttUser;
+		this.mqttPasswd = config.mqttPasswd;
 		this.inputs = config.inputs || [];
 		this.buttons = config.buttons || [];
 
@@ -151,6 +159,34 @@ class openwebIfTvDevice {
 			this.log.error('Device: %s %s, save inputs error: %s', this.host, this.name, error);
 		};
 
+		//mqtt client
+		this.mqttClient = new mqttClient({
+			enabled: this.enableMqtt,
+			host: this.mqttHost,
+			port: this.mqttPort,
+			prefix: this.mqttPrefix,
+			auth: this.mqttAuth,
+			user: this.mqttUser,
+			passwd: this.mqttPasswd
+		});
+
+		this.mqttClient.on('connected', (message) => {
+				this.log('Device: %s %s, %s', this.host, this.name, message);
+			})
+			.on('error', (error) => {
+				this.log('Device: %s %s, %s', this.host, this.name, error);
+			})
+			.on('debug', (message) => {
+				const debug = this.enableDebugMode ? this.log('Device: %s %s, debug: %s', this.host, this.name, message) : false;
+			})
+			.on('message', (message) => {
+				const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, %s', this.host, this.name, message);
+			})
+			.on('disconnected', (message) => {
+				this.log('Device: %s %s, %s', this.host, this.name, message);
+			});
+
+		//openwebif client
 		this.openwebif = new openwebif({
 			host: this.host,
 			port: this.port,
@@ -240,6 +276,9 @@ class openwebIfTvDevice {
 				this.volume = volume;
 				this.muteState = mute;
 				this.inputIdentifier = inputIdentifier;
+			})
+			.on('mqtt', (topic, message) => {
+				this.mqttClient.send(topic, message);
 			})
 			.on('disconnected', (message) => {
 				this.log('Device: %s %s, %s', this.host, this.name, message);

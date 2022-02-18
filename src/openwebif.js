@@ -1,6 +1,6 @@
 const fs = require('fs');
 const fsPromises = fs.promises;
-const EventEmitter = require('events').EventEmitter;
+const EventEmitter = require('events');
 const axios = require('axios');
 const API_URL = require('./apiurl.json');
 
@@ -20,7 +20,6 @@ class OPENWEBIF extends EventEmitter {
         this.axiosInstance = axios.create({
             method: 'GET',
             baseURL: url,
-            timeout: 2750,
             withCredentials: this.auth,
             auth: {
                 username: this.user,
@@ -68,6 +67,8 @@ class OPENWEBIF extends EventEmitter {
 
                     this.emit('connect');
                     this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
+                    const topic = 'Device Info';
+                    this.emit('mqtt', topic, devInfo);
                 } catch (error) {
                     this.emit('debug', `Device info error: ${error}`);
                     this.emit('disconnect');
@@ -90,9 +91,11 @@ class OPENWEBIF extends EventEmitter {
                         this.volume = volume;
                         this.mute = mute;
                         this.checkStateOnFirstRun = false;
-                        this.emit('debug', `Device status data: ${deviceStatusData.data}`);
+                        this.emit('debug', `Device status data: ${JSON.stringify(deviceStatusData.data, null, 2)}`);
                         this.emit('stateChanged', power, name, eventName, reference, volume, mute);
                     };
+                    const topic = 'Device State';
+                    this.emit('mqtt', topic, JSON.stringify(deviceStatusData.data, null, 2));
                 } catch (error) {
                     this.emit('debug', `Device state error: ${error}`);
                     this.emit('disconnect');
