@@ -145,7 +145,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
         "enableMqtt": false,
         "mqttHost": "192.168.1.33",
         "mqttPort": 1883,
-        "mqttPrefix": "home/envoy",
+        "mqttPrefix": "home/openwebif",
         "mqttAuth": false,
         "mqttUser": "user",
         "mqttPass": "password"
