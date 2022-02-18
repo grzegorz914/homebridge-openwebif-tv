@@ -67,8 +67,7 @@ class OPENWEBIF extends EventEmitter {
 
                     this.emit('connect');
                     this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
-                    const topic = 'Info';
-                    this.emit('mqtt', topic, devInfo);
+                    this.emit('mqtt', 'Info', devInfo);
                 } catch (error) {
                     this.emit('debug', `Device info error: ${error}`);
                     this.emit('disconnect');
@@ -94,8 +93,7 @@ class OPENWEBIF extends EventEmitter {
                         this.emit('debug', `Device status data: ${JSON.stringify(deviceStatusData.data, null, 2)}`);
                         this.emit('stateChanged', power, name, eventName, reference, volume, mute);
                     };
-                    const topic = 'State';
-                    this.emit('mqtt', topic, JSON.stringify(deviceStatusData.data, null, 2));
+                    this.emit('mqtt', 'State', JSON.stringify(deviceStatusData.data, null, 2));
                 } catch (error) {
                     this.emit('debug', `Device state error: ${error}`);
                     this.emit('disconnect');

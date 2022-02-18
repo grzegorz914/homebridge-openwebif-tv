@@ -165,6 +165,7 @@ class openwebIfTvDevice {
 			host: this.mqttHost,
 			port: this.mqttPort,
 			prefix: this.mqttPrefix,
+			topic: this.name,
 			auth: this.mqttAuth,
 			user: this.mqttUser,
 			passwd: this.mqttPasswd
