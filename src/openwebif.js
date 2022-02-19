@@ -20,7 +20,7 @@ class OPENWEBIF extends EventEmitter {
         this.axiosInstance = axios.create({
             method: 'GET',
             baseURL: url,
-            timeout: 3000,
+            timeout: 5000,
             withCredentials: this.auth,
             auth: {
                 username: this.user,
@@ -41,10 +41,7 @@ class OPENWEBIF extends EventEmitter {
                 this.firstStart = true;
                 this.checkStateOnFirstRun = true;
                 this.emit('connected', 'Connected.');
-
-                this.chackState = setInterval(() => {
-                    this.emit('checkState');
-                }, 3000)
+                this.checkState();
             })
             .on('checkDeviceInfo', async () => {
                 try {
@@ -95,13 +92,13 @@ class OPENWEBIF extends EventEmitter {
                         this.emit('stateChanged', power, name, eventName, reference, volume, mute);
                     };
                     this.emit('mqtt', 'State', JSON.stringify(deviceStatusData.data, null, 2));
+                    this.checkState();
                 } catch (error) {
                     this.emit('debug', `Device state error: ${error}`);
                     this.emit('disconnect');
                 };
             })
             .on('disconnect', () => {
-                clearInterval(this.chackState);
                 this.emit('stateChanged', false, this.name, this.eventName, this.reference, this.volume, true);
 
                 if (this.firstStart) {
@@ -115,6 +112,12 @@ class OPENWEBIF extends EventEmitter {
             });
 
         this.emit('checkDeviceInfo');
+    };
+
+    checkState() {
+        setTimeout(() => {
+            this.emit('checkState');
+        }, 1500)
     };
 
     send(apiUrl) {
