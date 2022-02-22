@@ -72,7 +72,7 @@ class openwebIfTvDevice {
 		this.user = config.user || '';
 		this.pass = config.pass || '';
 		this.volumeControl = config.volumeControl || 0;
-		this.switchInfoMenu = config.switchInfoMenu || false;
+		this.infoButtonCommand = config.infoButtonCommand || '139';
 		this.disableLogInfo = config.disableLogInfo || false;
 		this.disableLogDeviceInfo = config.disableLogDeviceInfo || false;
 		this.enableDebugMode = config.enableDebugMode || false;
@@ -394,7 +394,7 @@ class openwebIfTvDevice {
 						command = '164';
 						break;
 					case Characteristic.RemoteKey.INFORMATION:
-						command = this.switchInfoMenu ? '358' : '139';
+						command = this.infoButtonCommand;
 						break;
 				}
 				try {

@@ -98,11 +98,287 @@
               ],
               "required": true
             },
-            "switchInfoMenu": {
-              "title": "Switch Info/Menu",
-              "type": "boolean",
-              "default": false,
-              "description": "This toggle behaviour for *I* button in RC app and *PowerModeSelection* in settings.",
+            "infoButtonCommand": {
+              "title": "Info Button",
+              "type": "string",
+              "oneOf": [{
+                  "title": "0",
+                  "enum": [
+                    "11"
+                  ]
+                },
+                {
+                  "title": "1",
+                  "enum": [
+                    "2"
+                  ]
+                },
+                {
+                  "title": "2",
+                  "enum": [
+                    "3"
+                  ]
+                },
+                {
+                  "title": "3",
+                  "enum": [
+                    "4"
+                  ]
+                },
+                {
+                  "title": "4",
+                  "enum": [
+                    "5"
+                  ]
+                },
+                {
+                  "title": "5",
+                  "enum": [
+                    "6"
+                  ]
+                },
+                {
+                  "title": "6",
+                  "enum": [
+                    "7"
+                  ]
+                },
+                {
+                  "title": "7",
+                  "enum": [
+                    "8"
+                  ]
+                },
+                {
+                  "title": "8",
+                  "enum": [
+                    "9"
+                  ]
+                },
+                {
+                  "title": "9",
+                  "enum": [
+                    "10"
+                  ]
+                },
+                {
+                  "title": "<",
+                  "enum": [
+                    "412"
+                  ]
+                },
+                {
+                  "title": ">",
+                  "enum": [
+                    "407"
+                  ]
+                },
+                {
+                  "title": "Power",
+                  "enum": [
+                    "116"
+                  ]
+                },
+                {
+                  "title": "Volume Up",
+                  "enum": [
+                    "115"
+                  ]
+                },
+                {
+                  "title": "Volume Down",
+                  "enum": [
+                    "114"
+                  ]
+                },
+                {
+                  "title": "Mute",
+                  "enum": [
+                    "113"
+                  ]
+                },
+                {
+                  "title": "Channel Up",
+                  "enum": [
+                    "402"
+                  ]
+                },
+                {
+                  "title": "Channel Down",
+                  "enum": [
+                    "403"
+                  ]
+                },
+                {
+                  "title": "Epg",
+                  "enum": [
+                    "358"
+                  ]
+                },
+                {
+                  "title": "Menu",
+                  "enum": [
+                    "139"
+                  ]
+                },
+                {
+                  "title": "Menu Up",
+                  "enum": [
+                    "103"
+                  ]
+                },
+                {
+                  "title": "Menu Down",
+                  "enum": [
+                    "108"
+                  ]
+                },
+                {
+                  "title": "Menu Left",
+                  "enum": [
+                    "105"
+                  ]
+                },
+                {
+                  "title": "Menu Right",
+                  "enum": [
+                    "106"
+                  ]
+                },
+                {
+                  "title": "Menu OK",
+                  "enum": [
+                    "352"
+                  ]
+                },
+                {
+                  "title": "Back",
+                  "enum": [
+                    "174"
+                  ]
+                },
+                {
+                  "title": "Exit",
+                  "enum": [
+                    "174"
+                  ]
+                },
+                {
+                  "title": "Play",
+                  "enum": [
+                    "207"
+                  ]
+                },
+                {
+                  "title": "Pause",
+                  "enum": [
+                    "119"
+                  ]
+                },
+                {
+                  "title": "Stop",
+                  "enum": [
+                    "128"
+                  ]
+                },
+                {
+                  "title": "Record",
+                  "enum": [
+                    "167"
+                  ]
+                },
+                {
+                  "title": "Fast Forward",
+                  "enum": [
+                    "208"
+                  ]
+                },
+                {
+                  "title": "Fast Backward",
+                  "enum": [
+                    "168"
+                  ]
+                },
+                {
+                  "title": "Next Track",
+                  "enum": [
+                    "407"
+                  ]
+                },
+                {
+                  "title": "Previous Track",
+                  "enum": [
+                    "412"
+                  ]
+                },
+                {
+                  "title": "Red",
+                  "enum": [
+                    "398"
+                  ]
+                },
+                {
+                  "title": "Green",
+                  "enum": [
+                    "399"
+                  ]
+                },
+                {
+                  "title": "Yellow",
+                  "enum": [
+                    "400"
+                  ]
+                },
+                {
+                  "title": "Blue",
+                  "enum": [
+                    "401"
+                  ]
+                },
+                {
+                  "title": "TV",
+                  "enum": [
+                    "377"
+                  ]
+                },
+                {
+                  "title": "Radio",
+                  "enum": [
+                    "385"
+                  ]
+                },
+                {
+                  "title": "Wideo",
+                  "enum": [
+                    "393"
+                  ]
+                },
+                {
+                  "title": "Audio",
+                  "enum": [
+                    "392"
+                  ]
+                },
+                {
+                  "title": "Help",
+                  "enum": [
+                    "138"
+                  ]
+                },
+                {
+                  "title": "Subtitle",
+                  "enum": [
+                    "370"
+                  ]
+                },
+                {
+                  "title": "Text",
+                  "enum": [
+                    "388"
+                  ]
+                }
+              ],
+              "description": "Here select the function of info button in RC.",
               "required": true
             },
             "inputs": {
@@ -669,7 +945,7 @@
           "devices[].enableDebugMode",
           "devices[].disableLogInfo",
           "devices[].disableLogDeviceInfo",
-          "devices[].switchInfoMenu",
+          "devices[].infoButtonCommand",
           "devices[].volumeControl"
         ]
       }

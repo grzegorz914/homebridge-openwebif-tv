@@ -67,7 +67,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `disableLogInfo` | This disable log info, all values and state will not be displayed in Homebridge log console. |
 | `disableLogDeviceInfo` | If enabled, add ability to disable log device info by every connections device to the network. |
 | `volumeControl` | Here select volume control mode `None`, `Slider`, `Fan`. |
-| `switchInfoMenu` | This switch the behaviour of `I` button in RC app between Menu and Home. |
+| `infoButtonCommand` | Here select the function of `I` button in RC app. |
 | `inputs.name` | Here set *Channel Name* which You want expose to the *Homebridge/HomeKit*. |
 | `inputs.reference` | Here set *Channel Reference*. All can be found in `homebridge_directory/openwebifTv/inputs_xxxx`. |
 | `inputs.switch` | If enabled, the tile for that *Chasnnel* will be expose to the *Homebridge/HomeKit* and can be used for HomeKit automation. |
@@ -101,7 +101,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
         "disableLogDeviceInfo": false,
         "enableDebugMode": false,
         "volumeControl": 0,
-        "switchInfoMenu": false,
+        "infoButtonCommand": "139",
         "inputs": [
           {
             "name": "Das Erste HD",

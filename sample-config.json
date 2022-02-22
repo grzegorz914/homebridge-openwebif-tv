@@ -27,7 +27,7 @@
       "disableLogDeviceInfo": false,
       "enableDebugMode": false,
       "volumeControl": 0,
-      "switchInfoMenu": false,
+      "infoButtonCommand": "139",
       "inputs": [{
           "name": "Das Erste HD",
           "reference": "1:0:19:283D:3FB:1:C00000:0:0:0:",
