@@ -83,7 +83,8 @@
       "mqttPrefix": "home/openwebif",
       "mqttAuth": false,
       "mqttUser": "user",
-      "mqttPass": "password"
+      "mqttPass": "password",
+      "mqttDebug": false
     }]
   }]
 }

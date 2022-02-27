@@ -76,6 +76,8 @@ class openwebIfTvDevice {
 		this.disableLogInfo = config.disableLogInfo || false;
 		this.disableLogDeviceInfo = config.disableLogDeviceInfo || false;
 		this.enableDebugMode = config.enableDebugMode || false;
+		this.inputs = config.inputs || [];
+		this.buttons = config.buttons || [];
 		this.enableMqtt = config.enableMqtt || false;
 		this.mqttHost = config.mqttHost;
 		this.mqttPort = config.mqttPort || 1883;
@@ -83,8 +85,7 @@ class openwebIfTvDevice {
 		this.mqttAuth = config.mqttAuth || false;
 		this.mqttUser = config.mqttUser;
 		this.mqttPasswd = config.mqttPasswd;
-		this.inputs = config.inputs || [];
-		this.buttons = config.buttons || [];
+		this.mqttDebug = config.mqttDebug || false;
 
 		//get config info
 		this.manufacturer = 'Manufacturer';
@@ -168,7 +169,8 @@ class openwebIfTvDevice {
 			topic: this.name,
 			auth: this.mqttAuth,
 			user: this.mqttUser,
-			passwd: this.mqttPasswd
+			passwd: this.mqttPasswd,
+			debug: this.mqttDebug
 		});
 
 		this.mqttClient.on('connected', (message) => {
@@ -178,10 +180,10 @@ class openwebIfTvDevice {
 				this.log('Device: %s %s, %s', this.host, this.name, error);
 			})
 			.on('debug', (message) => {
-				const debug = this.enableDebugMode ? this.log('Device: %s %s, debug: %s', this.host, this.name, message) : false;
+				this.log('Device: %s %s, debug: %s', this.host, this.name, message);
 			})
 			.on('message', (message) => {
-				const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, %s', this.host, this.name, message);
+				this.log('Device: %s %s, %s', this.host, this.name, message);
 			})
 			.on('disconnected', (message) => {
 				this.log('Device: %s %s, %s', this.host, this.name, message);

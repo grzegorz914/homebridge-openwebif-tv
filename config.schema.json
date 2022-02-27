@@ -65,7 +65,7 @@
               "required": false
             },
             "enableDebugMode": {
-              "title": "Enable Debug Mode",
+              "title": "Debug",
               "type": "boolean",
               "default": false,
               "description": "This enable debug mode.",
@@ -96,7 +96,7 @@
                   ]
                 }
               ],
-              "required": true
+              "required": false
             },
             "infoButtonCommand": {
               "title": "Info Button",
@@ -655,6 +655,16 @@
               "condition": {
                 "functionBody": "return model.devices[arrayIndices].enableMqtt === true && model.devices[arrayIndices].mqttAuth === true;"
               }
+            },
+            "mqttDebug": {
+              "title": "Debug",
+              "type": "boolean",
+              "default": false,
+              "required": false,
+              "description": "This enable debug mode for MQTT.",
+              "condition": {
+                "functionBody": "return model.devices[arrayIndices].enableMqtt === true;"
+              }
             }
           }
         }
@@ -720,7 +730,8 @@
           "devices[].mqttPrefix",
           "devices[].mqttAuth",
           "devices[].mqttUser",
-          "devices[].mqttPasswd"
+          "devices[].mqttPasswd",
+          "devices[].mqttDebug"
         ]
       },
       {

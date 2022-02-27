@@ -84,6 +84,7 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
 | `mqttAuth` | If enabled, MQTT Broker will use authorization credentials. |
 | `mqttUser` | Here set the MQTT Broker user. |
 | `mqttPasswd` | Here set the MQTT Broker password. |
+| `mqttDebug` | If enabled, deep log will be present in homebridge console for MQTT. |
 
 ```json
 {
@@ -148,7 +149,8 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
         "mqttPrefix": "home/openwebif",
         "mqttAuth": false,
         "mqttUser": "user",
-        "mqttPass": "password"
+        "mqttPass": "password",
+        "mqttDebug": false
       }
     ]
   }
