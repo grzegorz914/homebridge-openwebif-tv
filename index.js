@@ -475,7 +475,7 @@ class openwebIfTvDevice {
 			.onSet(async (command) => {
 				switch (command) {
 					case Characteristic.PowerModeSelection.SHOW:
-						command = this.infoMenuState ? '174' : (this.switchInfoMenu ? '139' : '358');
+						command = this.infoMenuState ? '174' : '139';
 						this.infoMenuState = !this.infoMenuState;
 						break;
 					case Characteristic.PowerModeSelection.HIDE:
