@@ -229,11 +229,6 @@ class openwebIfTvDevice {
 				this.serialNumber = serialNumber;
 				this.firmwareRevision = firmwareRevision;
 				this.mac = mac;
-
-				//start prepare accessory
-				if (this.startPrepareAccessory) {
-					this.prepareAccessory();
-				};
 			})
 			.on('stateChanged', (power, name, eventName, reference, volume, mute) => {
 				const inputIdentifier = (this.inputsReference.indexOf(reference) >= 0) ? this.inputsReference.indexOf(reference) : this.inputIdentifier;
@@ -279,6 +274,11 @@ class openwebIfTvDevice {
 				this.volume = volume;
 				this.muteState = mute;
 				this.inputIdentifier = inputIdentifier;
+
+				//start prepare accessory
+				if (this.startPrepareAccessory && this.mac !== undefined) {
+					this.prepareAccessory();
+				};
 			})
 			.on('mqtt', (topic, message) => {
 				this.mqttClient.send(topic, message);

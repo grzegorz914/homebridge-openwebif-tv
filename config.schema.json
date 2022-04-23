@@ -720,23 +720,6 @@
       {
         "key": "devices[]",
         "type": "section",
-        "title": "MQTT Client",
-        "expandable": true,
-        "expanded": false,
-        "items": [
-          "devices[].enableMqtt",
-          "devices[].mqttHost",
-          "devices[].mqttPort",
-          "devices[].mqttPrefix",
-          "devices[].mqttAuth",
-          "devices[].mqttUser",
-          "devices[].mqttPasswd",
-          "devices[].mqttDebug"
-        ]
-      },
-      {
-        "key": "devices[]",
-        "type": "section",
         "title": "Authorization",
         "expandable": true,
         "expanded": false,
@@ -760,6 +743,23 @@
           "devices[].disableLogDeviceInfo",
           "devices[].infoButtonCommand",
           "devices[].volumeControl"
+        ]
+      },
+      {
+        "key": "devices[]",
+        "type": "section",
+        "title": "MQTT",
+        "expandable": true,
+        "expanded": false,
+        "items": [
+          "devices[].enableMqtt",
+          "devices[].mqttHost",
+          "devices[].mqttPort",
+          "devices[].mqttPrefix",
+          "devices[].mqttAuth",
+          "devices[].mqttUser",
+          "devices[].mqttPasswd",
+          "devices[].mqttDebug"
         ]
       }
     ]
