@@ -276,7 +276,7 @@ class openwebIfTvDevice {
 				this.inputIdentifier = inputIdentifier;
 
 				//start prepare accessory
-				if (this.startPrepareAccessory && this.mac !== undefined) {
+				if (this.startPrepareAccessory) {
 					this.prepareAccessory();
 				};
 			})
