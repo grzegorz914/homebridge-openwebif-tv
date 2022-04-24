@@ -47,6 +47,11 @@ class OPENWEBIF extends EventEmitter {
             .on('checkDeviceInfo', async () => {
                 try {
                     const deviceInfo = await this.axiosInstance(API_URL.DeviceInfo);
+                    const devInfo = JSON.stringify(deviceInfo.data, null, 2);
+                    this.emit('debug', `Device info data: ${devInfo}`);
+                    const writeDevInfo = await fsPromises.writeFile(this.devInfoFile, devInfo);
+                    this.devInfo = devInfo;
+
                     const manufacturer = deviceInfo.data.brand || 'Unknown';
                     const modelName = deviceInfo.data.model || 'Unknown';
                     const serialNumber = deviceInfo.data.webifver || 'Unknown';
@@ -55,17 +60,12 @@ class OPENWEBIF extends EventEmitter {
                     const chipset = deviceInfo.data.chipset || 'Unknown';
                     const mac = deviceInfo.data.ifaces[0].mac;
 
+                    const channelsInfo = await this.axiosInstance(API_URL.GetAllServices);
+                    const channels = JSON.stringify(channelsInfo.data, null, 2);
+                    this.emit('debug', `Channels info: ${channels}`);
+                    const writeChannels = await fsPromises.writeFile(this.channelsFile, channels);
+
                     if (mac !== null && mac !== undefined) {
-                        const devInfo = JSON.stringify(deviceInfo.data, null, 2);
-                        this.emit('debug', `Device info: ${devInfo}`);
-                        const writeDevInfo = await fsPromises.writeFile(this.devInfoFile, devInfo);
-                        this.devInfo = devInfo;
-
-                        const channelsInfo = await this.axiosInstance(API_URL.GetAllServices);
-                        const channels = JSON.stringify(channelsInfo.data, null, 2);
-                        this.emit('debug', `Channels info: ${channels}`);
-                        const writeChannels = await fsPromises.writeFile(this.channelsFile, channels);
-
                         this.emit('connect');
                         this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
                     } else {
@@ -79,13 +79,15 @@ class OPENWEBIF extends EventEmitter {
             })
             .on('checkState', async () => {
                 try {
-                    const deviceStatusData = await this.axiosInstance(API_URL.DeviceStatus);
-                    const power = (deviceStatusData.data.inStandby == 'false');
-                    const name = deviceStatusData.data.currservice_station;
-                    const eventName = deviceStatusData.data.currservice_name;
-                    const reference = deviceStatusData.data.currservice_serviceref;
-                    const volume = deviceStatusData.data.volume;
-                    const mute = power ? (deviceStatusData.data.muted == true) : true;
+                    const deviceState = await this.axiosInstance(API_URL.DeviceStatus);
+                    this.emit('debug', `State data: ${JSON.stringify(deviceState.data, null, 2)}`);
+
+                    const power = (deviceState.data.inStandby == 'false');
+                    const name = deviceState.data.currservice_station;
+                    const eventName = deviceState.data.currservice_name;
+                    const reference = deviceState.data.currservice_serviceref;
+                    const volume = deviceState.data.volume;
+                    const mute = power ? (deviceState.data.muted == true) : true;
                     if (this.checkStateOnFirstRun == true || power != this.power || name != this.name || eventName != this.eventName || reference != this.reference || volume != this.volume || mute != this.mute) {
                         this.power = power;
                         this.name = name;
@@ -94,11 +96,10 @@ class OPENWEBIF extends EventEmitter {
                         this.volume = volume;
                         this.mute = mute;
                         this.checkStateOnFirstRun = false;
-                        this.emit('debug', `Device status data: ${JSON.stringify(deviceStatusData.data, null, 2)}`);
                         this.emit('stateChanged', power, name, eventName, reference, volume, mute);
                     };
                     this.emit('mqtt', 'Info', this.devInfo);
-                    this.emit('mqtt', 'State', JSON.stringify(deviceStatusData.data, null, 2));
+                    this.emit('mqtt', 'State', JSON.stringify(deviceState.data, null, 2));
                     this.checkState();
                 } catch (error) {
                     this.emit('debug', `Device state error: ${error}`);
