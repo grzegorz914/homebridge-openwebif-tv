@@ -28,7 +28,7 @@ class OPENWEBIF extends EventEmitter {
             },
         });
 
-        this.firstStart = false;
+        this.firstDisconnect = false;
         this.checkStateOnFirstRun = false;
         this.power = false;
         this.name = '';
@@ -36,9 +36,10 @@ class OPENWEBIF extends EventEmitter {
         this.reference = '';
         this.volume = 0;
         this.mute = false;
+        this.devInfo = '';
 
         this.on('connect', () => {
-                this.firstStart = true;
+                this.firstDisconnect = true;
                 this.checkStateOnFirstRun = true;
                 this.emit('connected', 'Connected.');
                 this.checkState();
@@ -66,7 +67,7 @@ class OPENWEBIF extends EventEmitter {
 
                         this.emit('connect');
                         this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
-                        this.emit('mqtt', 'Info', devInfo);
+                        this.devInfo = devInfo;
                     } else {
                         this.emit('debug', `Device mac address unknown: ${mac}`);
                         this.checkDeviceInfo();
@@ -96,21 +97,21 @@ class OPENWEBIF extends EventEmitter {
                         this.emit('debug', `Device status data: ${JSON.stringify(deviceStatusData.data, null, 2)}`);
                         this.emit('stateChanged', power, name, eventName, reference, volume, mute);
                     };
+                    this.emit('mqtt', 'Info', this.devInfo);
                     this.emit('mqtt', 'State', JSON.stringify(deviceStatusData.data, null, 2));
                     this.checkState();
                 } catch (error) {
                     this.emit('debug', `Device state error: ${error}`);
-                    this.emit('disconnect');
+                    const firstRun = this.checkStateOnFirstRun ? this.checkDeviceInfo() : this.emit('disconnect');
                 };
             })
             .on('disconnect', () => {
-                this.emit('stateChanged', false, this.name, this.eventName, this.reference, this.volume, true);
-
-                if (this.firstStart) {
-                    this.firstStart = false;
+                if (this.firstDisconnect) {
+                    this.firstDisconnect = false;
                     this.emit('disconnected', 'Disconnected, trying to reconnect.');
                 };
 
+                this.emit('stateChanged', false, this.name, this.eventName, this.reference, this.volume, true);
                 this.checkDeviceInfo();
             });
 

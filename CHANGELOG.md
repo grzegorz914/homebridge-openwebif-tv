@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.13.16] - (24.04.2022)
+## Changes
+- fixed MQTT info report
+
 ## [3.13.12] - (23.04.2022)
 ## Changes
 - prepare accessory process to prevent create accessory with wrong UUID
