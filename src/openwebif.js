@@ -59,6 +59,7 @@ class OPENWEBIF extends EventEmitter {
                         const devInfo = JSON.stringify(deviceInfo.data, null, 2);
                         this.emit('debug', `Device info: ${devInfo}`);
                         const writeDevInfo = await fsPromises.writeFile(this.devInfoFile, devInfo);
+                        this.devInfo = devInfo;
 
                         const channelsInfo = await this.axiosInstance(API_URL.GetAllServices);
                         const channels = JSON.stringify(channelsInfo.data, null, 2);
@@ -67,7 +68,6 @@ class OPENWEBIF extends EventEmitter {
 
                         this.emit('connect');
                         this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
-                        this.devInfo = devInfo;
                     } else {
                         this.emit('debug', `Device mac address unknown: ${mac}`);
                         this.checkDeviceInfo();
