@@ -13,8 +13,11 @@ class OPENWEBIF extends EventEmitter {
         this.user = config.user;
         this.pass = config.pass;
         this.auth = config.auth;
+        this.infoLog = config.infoLog;
+        this.debugLog = config.debugLog;
         this.devInfoFile = config.devInfoFile;
         this.channelsFile = config.channelsFile;
+        this.mqttEnabled = config.enableMqtt;
 
         const url = `http://${this.host}:${this.port}`;
         this.axiosInstance = axios.create({
@@ -28,18 +31,18 @@ class OPENWEBIF extends EventEmitter {
             },
         });
 
-        this.firstDisconnect = false;
+        this.firstRun = false;
         this.checkStateOnFirstRun = false;
         this.power = false;
         this.name = '';
         this.eventName = '';
         this.reference = '';
         this.volume = 0;
-        this.mute = false;
+        this.mute = true;
         this.devInfo = '';
 
         this.on('connect', () => {
-                this.firstDisconnect = true;
+                this.firstRun = true;
                 this.checkStateOnFirstRun = true;
                 this.emit('connected', 'Connected.');
                 this.checkState();
@@ -48,7 +51,7 @@ class OPENWEBIF extends EventEmitter {
                 try {
                     const deviceInfo = await this.axiosInstance(API_URL.DeviceInfo);
                     const devInfo = JSON.stringify(deviceInfo.data, null, 2);
-                    this.emit('debug', `Device info data: ${devInfo}`);
+                    const debug = this.debugLog ? this.emit('debug', `Device info data: ${devInfo}`) : false;
                     const writeDevInfo = await fsPromises.writeFile(this.devInfoFile, devInfo);
                     this.devInfo = devInfo;
 
@@ -62,25 +65,25 @@ class OPENWEBIF extends EventEmitter {
 
                     const channelsInfo = await this.axiosInstance(API_URL.GetAllServices);
                     const channels = JSON.stringify(channelsInfo.data, null, 2);
-                    this.emit('debug', `Channels info: ${channels}`);
+                    const debu1g = this.debugLog ? this.emit('debug', `Channels info: ${channels}`) : false;
                     const writeChannels = await fsPromises.writeFile(this.channelsFile, channels);
 
                     if (mac !== null && mac !== undefined) {
                         this.emit('connect');
                         this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
                     } else {
-                        this.emit('debug', `Device mac address unknown: ${mac}`);
+                        const debug = this.debugLog ? this.emit('debug', `Device mac address unknown: ${mac}`) : false;
                         this.checkDeviceInfo();
                     }
                 } catch (error) {
-                    this.emit('debug', `Device info error: ${error}`);
+                    this.emit('error', `Device info error: ${error}`);
                     this.checkDeviceInfo();
                 };
             })
             .on('checkState', async () => {
                 try {
                     const deviceState = await this.axiosInstance(API_URL.DeviceStatus);
-                    this.emit('debug', `State data: ${JSON.stringify(deviceState.data, null, 2)}`);
+                    const debug = this.debugLog ? this.emit('debug', `State data: ${JSON.stringify(deviceState.data, null, 2)}`) : false;
 
                     const power = (deviceState.data.inStandby == 'false');
                     const name = deviceState.data.currservice_station;
@@ -98,8 +101,8 @@ class OPENWEBIF extends EventEmitter {
                         this.checkStateOnFirstRun = false;
                         this.emit('stateChanged', power, name, eventName, reference, volume, mute);
                     };
-                    this.emit('mqtt', 'Info', this.devInfo);
-                    this.emit('mqtt', 'State', JSON.stringify(deviceState.data, null, 2));
+                    const mqtt = this.mqttEnabled ? this.emit('mqtt', 'Info', this.devInfo) : false;
+                    const mqtt1 = this.mqttEnabled ? this.emit('mqtt', 'State', JSON.stringify(deviceState.data, null, 2)) : false;
                     this.checkState();
                 } catch (error) {
                     this.emit('debug', `Device state error: ${error}`);
@@ -107,8 +110,8 @@ class OPENWEBIF extends EventEmitter {
                 };
             })
             .on('disconnect', () => {
-                if (this.firstDisconnect) {
-                    this.firstDisconnect = false;
+                if (this.firstRun) {
+                    this.firstRun = false;
                     this.emit('disconnected', 'Disconnected, trying to reconnect.');
                 };
 
@@ -128,14 +131,14 @@ class OPENWEBIF extends EventEmitter {
     checkDeviceInfo() {
         setTimeout(() => {
             this.emit('checkDeviceInfo');
-        }, 7500);
+        }, 10000);
     };
 
     send(apiUrl) {
         return new Promise(async (resolve, reject) => {
             try {
                 const sendCommand = await this.axiosInstance(apiUrl);
-                this.emit('message', `Send command: ${apiUrl}`);
+                const info = this.infoLog ? false : this.emit('message', `Send command: ${apiUrl}`);
                 resolve(true);
             } catch (error) {
                 this.emit('error', `Send command error: ${error}`);

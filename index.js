@@ -196,8 +196,11 @@ class openwebIfTvDevice {
 			user: this.user,
 			pass: this.pass,
 			auth: this.auth,
+			infoLog: this.disableLogInfo,
+			debugLog: this.enableDebugMode,
 			devInfoFile: this.devInfoFile,
 			channelsFile: this.channelsFile,
+			mqttEnabled: this.enableMqtt
 		});
 
 		this.openwebif.on('connected', (message) => {
@@ -207,10 +210,10 @@ class openwebIfTvDevice {
 				this.log('Device: %s %s, %s', this.host, this.name, error);
 			})
 			.on('debug', (message) => {
-				const debug = this.enableDebugMode ? this.log('Device: %s %s, debug: %s', this.host, this.name, message) : false;
+				this.log('Device: %s %s, debug: %s', this.host, this.name, message);
 			})
 			.on('message', (message) => {
-				const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, %s', this.host, this.name, message);
+				this.log('Device: %s %s, %s', this.host, this.name, message);
 			})
 			.on('deviceInfo', (manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) => {
 				if (!this.disableLogDeviceInfo) {
