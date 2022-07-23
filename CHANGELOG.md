@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.13.19] - (25.04.2022)
 ## Changes
+- refactor information service
+- refactor buttons service
+
+## [3.13.19] - (25.04.2022)
+## Changes
 - refactor send debug and info log
 - refactor send mqtt message
 - update dependencies

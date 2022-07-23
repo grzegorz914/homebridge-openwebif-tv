@@ -294,27 +294,24 @@ class openwebIfTvDevice {
 	//prepare accessory
 	async prepareAccessory() {
 		this.log.debug('prepareAccessory');
-		const accessoryName = this.name;
-		const accessoryUUID = AccessoryUUID.generate(this.mac);
-		const accessoryCategory = Categories.TV_SET_TOP_BOX;
-		const accessory = new Accessory(accessoryName, accessoryUUID, accessoryCategory);
-
-		//prepare information service
-		this.log.debug('prepareInformationService');
-
 		const manufacturer = this.manufacturer;
 		const modelName = this.modelName;
 		const serialNumber = this.serialNumber;
 		const firmwareRevision = this.firmwareRevision;
 
-		accessory.removeService(accessory.getService(Service.AccessoryInformation));
-		const informationService = new Service.AccessoryInformation(accessoryName);
-		informationService
+		//accessory
+		const accessoryName = this.name;
+		const accessoryUUID = AccessoryUUID.generate(this.mac);
+		const accessoryCategory = Categories.TV_SET_TOP_BOX;
+		const accessory = new Accessory(accessoryName, accessoryUUID, accessoryCategory);
+
+		//information service
+		this.log.debug('prepareInformationService');
+		accessory.getService(Service.AccessoryInformation)
 			.setCharacteristic(Characteristic.Manufacturer, manufacturer)
 			.setCharacteristic(Characteristic.Model, modelName)
 			.setCharacteristic(Characteristic.SerialNumber, serialNumber)
 			.setCharacteristic(Characteristic.FirmwareRevision, firmwareRevision);
-		accessory.addService(informationService);
 
 		//prepare television service
 		this.log.debug('prepareTelevisionService');
@@ -784,9 +781,18 @@ class openwebIfTvDevice {
 						return state;
 					})
 					.onSet(async (state) => {
+						let url = '';
+						switch (buttonMode) {
+							case 0:
+								url = API_URL.SetChannel + buttonReference;
+								break;
+							case 1:
+								url = API_URL.SetRcCommand + buttonCommand;
+								break;
+						};
+
 						try {
-							const setInput = (state && this.powerState && buttonMode == 0) ? await this.openwebif.send(API_URL.SetChannel + buttonReference) : false;
-							const setCommand = (state && this.powerState && buttonMode == 1) ? await this.openwebif.send(API_URL.SetRcCommand + buttonCommand) : false;
+							const send = (state && this.powerState) ? await this.openwebif.send(url) : false;
 							const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set %s successful, name: %s, reference: %s', this.host, accessoryName, ['Channel', 'Command'][buttonMode], buttonName, [buttonReference, buttonCommand][buttonMode]);
 						} catch (error) {
 							this.log.error('Device: %s %s, set %s error: %s', this.host, accessoryName, ['Channel', 'Command'][buttonMode], error);
