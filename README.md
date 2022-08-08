@@ -1,12 +1,14 @@
 <p align="center">
-  <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/master/homebridge-openwebif-tv.png" width="640"></a>
+  <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/main/homebridge-openwebif-tv.png" width="640"></a>
 </p>
 
 <span align="center">
 
 # Homebridge OpenWebIf TV
 [![verified-by-homebridge](https://badgen.net/badge/homebridge/verified/purple)](https://github.com/homebridge/homebridge/wiki/Verified-Plugins)
-[![npm](https://badgen.net/npm/dt/homebridge-openwebif-tv?color=purple)](https://www.npmjs.com/package/homebridge-openwebif-tv) [![npm](https://badgen.net/npm/v/homebridge-openwebif-tv?color=purple)](https://www.npmjs.com/package/homebridge-openwebif-tv)
+[![npm](https://badgen.net/npm/dt/homebridge-openwebif-tv?color=purple)](https://www.npmjs.com/package/homebridge-openwebif-tv) 
+[![npm](https://badgen.net/npm/v/homebridge-openwebif-tv?color=purple)](https://www.npmjs.com/package/homebridge-openwebif-tv)
+[![npm](https://img.shields.io/npm/v/homebridge-openwebif-tv/beta.svg?style=flat-square)](https://www.npmjs.com/package/homebridge-openwebif-tv)
 [![GitHub pull requests](https://img.shields.io/github/issues-pr/grzegorz914/homebridge-openwebif-tv.svg)](https://github.com/grzegorz914/homebridge-openwebif-tv/pulls)
 [![GitHub issues](https://img.shields.io/github/issues/grzegorz914/homebridge-openwebif-tv.svg)](https://github.com/grzegorz914/homebridge-openwebif-tv/issues)
 
@@ -42,17 +44,19 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 * MQTT Client publisch all available data from device.
 
 <p align="left">
-  <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/master/graphics/homekit.png" width="382"></a>
-  <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/master/graphics/inputs.png" width="135"></a>
-  <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/master/graphics/rc1.png" width="135"></a>
-  <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/master/graphics/RC.png" width="135"></a>
+  <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/main/graphics/homekit.png" width="382"></a>
+  <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/main/graphics/inputs.png" width="135"></a>
+  <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/main/graphics/rc1.png" width="135"></a>
+  <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/main/graphics/RC.png" width="135"></a>
 </p>
 
-## Configuration
-Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) plugin to configure this plugin (Highly Recommended). The sample configuration can be edited and used manually as an alternative. See the `sample-config.json` file in this repository for an example or copy the example below into your config.json file, making the apporpriate changes before saving it. Be sure to always make a backup copy of your config.json file before making any changes to it.
+### Configuration
+* Run this plugin as a child bridge (Highly Recommended).
+* Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-config-ui-x/wiki) to configure this plugin (Highly Recommended). 
+* The sample configuration can be edited and used manually as an alternative. See the `sample-config.json` file in this repository for an example or copy the example below into your config.json file, making the apporpriate changes before saving it. Be sure to always make a backup copy of your config.json file before making any changes to it.
 
 <p align="left">
-  <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/master/graphics/ustawienia.png" width="840"></a>
+  <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/main/graphics/ustawienia.png" width="840"></a>
 </p>
 
 | Key | Description | 
@@ -221,14 +225,14 @@ Install and use [Homebridge Config UI X](https://github.com/oznu/homebridge-conf
                 }
 ```
 
-## Adding to HomeKit
+### Adding to HomeKit
 Each accessory needs to be manually paired. 
 1. Open the Home <img src='https://user-images.githubusercontent.com/3979615/78010622-4ea1d380-738e-11ea-8a17-e6a465eeec35.png' width='16.42px'> app on your device. 
-2. Tap the <img src='https://user-images.githubusercontent.com/3979615/78010869-9aed1380-738e-11ea-9644-9f46b3633026.png' width='16.42px'>. 
-3. Tap *Add Accessory*, and select *I Don't Have a Code or Cannot Scan* or *More Options*. 
-4. Select Your accessory. 
-5. Enter the Homebridge PIN or scan the QR code, this can be found in Homebridge UI or Homebridge logs.
-6. Complete the accessory setup.
+2. Tap the Home tab, then tap <img src='https://user-images.githubusercontent.com/3979615/78010869-9aed1380-738e-11ea-9644-9f46b3633026.png' width='16.42px'>. 
+3. Tap *Add Accessory*, and select *I Don't Have a Code, Cannot Scan* or *More options*. 
+4. Select Your accessory and press add anyway. 
+5. Enter the PIN or scan the QR code, this can be found in Homebridge UI or Homebridge logs.
+6. Complete the accessory setup
 
 ## Limitations
 * That maximum Services for 1 accessory is 100. If Services > 100, accessory stop responding.
@@ -243,7 +247,7 @@ Each accessory needs to be manually paired.
   * Inputs, which may range from 6 to 100 as each input is 1 service.
   * Buttons, which may range from 6 to 100 as each button is 1 service.
 
-## [What's New](https://github.com/grzegorz914/homebridge-openwebif-tv/blob/master/CHANGELOG.md)
+## [What's New](https://github.com/grzegorz914/homebridge-openwebif-tv/blob/main/CHANGELOG.md)
 
 ## Development
 * Pull request and help in development highly appreciated.
