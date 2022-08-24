@@ -45,13 +45,15 @@ class OPENWEBIF extends EventEmitter {
                 this.firstRun = true;
                 this.checkStateOnFirstRun = true;
                 this.emit('connected', 'Connected.');
-                this.checkState();
+                setTimeout(() => {
+                    this.emit('checkState');
+                }, 1500)
             })
             .on('checkDeviceInfo', async () => {
                 try {
                     const deviceInfo = await this.axiosInstance(API_URL.DeviceInfo);
                     const devInfo = JSON.stringify(deviceInfo.data, null, 2);
-                    const debug = this.debugLog ? this.emit('debug', `Device info data: ${devInfo}`) : false;
+                    const debug = this.debugLog ? this.emit('debug', `Info data: ${devInfo}`) : false;
                     const writeDevInfo = await fsPromises.writeFile(this.devInfoFile, devInfo);
                     this.devInfo = devInfo;
 
@@ -72,11 +74,11 @@ class OPENWEBIF extends EventEmitter {
                         this.emit('connect');
                         this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
                     } else {
-                        const debug = this.debugLog ? this.emit('debug', `Device mac address unknown: ${mac}`) : false;
+                        const debug = this.debugLog ? this.emit('debug', `Mac address unknown: ${mac}`) : false;
                         this.checkDeviceInfo();
                     }
                 } catch (error) {
-                    this.emit('error', `Device info error: ${error}`);
+                    this.emit('error', `Info error: ${error}`);
                     this.checkDeviceInfo();
                 };
             })
@@ -103,16 +105,19 @@ class OPENWEBIF extends EventEmitter {
                     };
                     const mqtt = this.mqttEnabled ? this.emit('mqtt', 'Info', this.devInfo) : false;
                     const mqtt1 = this.mqttEnabled ? this.emit('mqtt', 'State', JSON.stringify(deviceState.data, null, 2)) : false;
-                    this.checkState();
+
+                    setTimeout(() => {
+                        this.emit('checkState');
+                    }, 1500)
                 } catch (error) {
-                    this.emit('debug', `Device state error: ${error}`);
+                    this.emit('error', `State error: ${error}`);
                     const firstRun = this.checkStateOnFirstRun ? this.checkDeviceInfo() : this.emit('disconnect');
                 };
             })
             .on('disconnect', () => {
                 if (this.firstRun) {
                     this.firstRun = false;
-                    this.emit('disconnected', 'Disconnected, trying to reconnect.');
+                    this.emit('disconnected', 'Disconnected.');
                 };
 
                 this.emit('stateChanged', false, this.name, this.eventName, this.reference, this.volume, true);
@@ -120,15 +125,10 @@ class OPENWEBIF extends EventEmitter {
             });
 
         this.emit('checkDeviceInfo');
-    };
-
-    checkState() {
-        setTimeout(() => {
-            this.emit('checkState');
-        }, 1500)
-    };
+    };;
 
     checkDeviceInfo() {
+        this.emit('debug', 'Reconnect in 10s.');
         setTimeout(() => {
             this.emit('checkDeviceInfo');
         }, 10000);
