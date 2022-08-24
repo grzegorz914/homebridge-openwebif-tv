@@ -659,9 +659,8 @@ class openwebIfTvDevice {
 					newName[nameIdentifier] = name;
 					const newCustomName = JSON.stringify(newName, null, 2);
 					try {
-						const writeNewCustomName = (nameIdentifier != false) ? await fsPromises.writeFile(this.inputsNamesFile, newCustomName) : false;
-						const debug = this.enableDebugMode ? this.log('Device: %s %s, saved new Input successful, savedInputsNames: %s', this.host, accessoryName, newCustomName) : false;
-						const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, new Input name saved successful, name: %s reference: %s', this.host, accessoryName, name, inputReference);
+						const writeNewCustomName = nameIdentifier ? await fsPromises.writeFile(this.inputsNamesFile, newCustomName) : false;
+						const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, new Input name saved successful, name: %s reference: %s', this.host, accessoryName, newCustomName, inputReference);
 					} catch (error) {
 						this.log.error('Device: %s %s, new Input name saved failed, error: %s', this.host, accessoryName, error);
 					}
@@ -675,8 +674,7 @@ class openwebIfTvDevice {
 					newState[targetVisibilityIdentifier] = state;
 					const newTargetVisibility = JSON.stringify(newState, null, 2);
 					try {
-						const writeNewTargetVisibility = (targetVisibilityIdentifier != false) ? await fsPromises.writeFile(this.inputsTargetVisibilityFile, newTargetVisibility) : false;
-						const debug = this.enableDebugMode ? this.log('Device: %s %s, Input: %s, saved target visibility state: %s', this.host, accessoryName, inputName, newTargetVisibility) : false;
+						const writeNewTargetVisibility = targetVisibilityIdentifier ? await fsPromises.writeFile(this.inputsTargetVisibilityFile, newTargetVisibility) : false;
 						const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, Input: %s, saved target visibility state: %s', this.host, accessoryName, inputName, state ? 'HIDEN' : 'SHOWN')
 						inputService.setCharacteristic(Characteristic.CurrentVisibilityState, state);
 					} catch (error) {
