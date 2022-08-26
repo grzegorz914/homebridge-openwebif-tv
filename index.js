@@ -616,12 +616,14 @@ class openwebIfTvDevice {
 		const inputsCount = inputs.length;
 		const maxInputsCount = (inputsCount < 94) ? inputsCount : 94;
 		for (let i = 0; i < maxInputsCount; i++) {
+			//input
+			const input = inputs[i];
 
 			//get input reference
-			const inputReference = (inputs[i].reference != undefined) ? inputs[i].reference : undefined;
+			const inputReference = (input.reference != undefined) ? input.reference : undefined;
 
 			//get input name		
-			const inputName = (savedInputsNames[inputReference] != undefined) ? savedInputsNames[inputReference] : inputs[i].name;
+			const inputName = (savedInputsNames[inputReference] != undefined) ? savedInputsNames[inputReference] : input.name;
 
 			//get input type
 			const inputType = 0;
@@ -630,10 +632,10 @@ class openwebIfTvDevice {
 			const inputMode = 0;
 
 			//get input switch
-			const inputSwitch = (inputs[i].switch != undefined) ? inputs[i].switch : false;
+			const inputSwitch = (input.switch != undefined) ? input.switch : false;
 
 			//get input switch
-			const switchDisplayType = (inputs[i].displayType != undefined) ? inputs[i].displayType : 0;
+			const switchDisplayType = (input.displayType != undefined) ? input.displayType : 0;
 
 			//get input configured
 			const isConfigured = 1;
@@ -755,21 +757,23 @@ class openwebIfTvDevice {
 		if (maxButtonsCount > 0) {
 			this.log.debug('prepareButtonsService');
 			for (let i = 0; i < maxButtonsCount; i++) {
+				//button
+				const button = buttons[i];
 
 				//get button mode
-				const buttonMode = buttons[i].mode;
+				const buttonMode = button.mode;
 
 				//get button reference
-				const buttonReference = buttons[i].reference;
+				const buttonReference = button.reference;
 
 				//get button command
-				const buttonCommand = buttons[i].command;
+				const buttonCommand = button.command;
 
 				//get button name
-				const buttonName = (buttons[i].name != undefined) ? buttons[i].name : [buttonReference, buttonCommand][buttonMode];
+				const buttonName = (button.name != undefined) ? button.name : [buttonReference, buttonCommand][buttonMode];
 
 				//get button display type
-				const buttonDisplayType = (buttons[i].displayType != undefined) ? buttons[i].displayType : 0;
+				const buttonDisplayType = (button.displayType != undefined) ? button.displayType : 0;
 
 				const serviceType = [Service.Outlet, Service.Switch][buttonDisplayType];
 				const buttonService = new serviceType(`${accessoryName} ${buttonName}`, `Button ${i}`);
