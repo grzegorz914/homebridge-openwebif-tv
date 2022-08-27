@@ -98,7 +98,7 @@ class openwebIfTvDevice {
 		this.inputsType = new Array();
 		this.inputsMode = new Array();
 
-		this.switchsIndex = new Array();
+		this.switches = new Array();
 		this.switchsDisplayType = new Array();
 
 		this.powerState = false;
@@ -258,7 +258,7 @@ class openwebIfTvDevice {
 				if (this.switchServices) {
 					const switchServicesCount = this.switchServices.length;
 					for (let i = 0; i < switchServicesCount; i++) {
-						const index = this.switchsIndex[i];
+						const index = this.switches[i];
 						const state = power ? (this.inputsReference[index] == reference) : false;
 						const displayType = this.switchsDisplayType[index];
 						const characteristicType = [Characteristic.On, Characteristic.On, Characteristic.MotionDetected, Characteristic.OccupancyDetected][displayType];
@@ -686,7 +686,7 @@ class openwebIfTvDevice {
 			this.inputsType.push(inputType);
 			this.inputsMode.push(inputMode);
 			this.switchsDisplayType.push(switchDisplayType);
-			const pushSwitchIndex = inputSwitch ? this.switchsIndex.push(i) : false;
+			const pushSwitchIndex = inputSwitch ? this.switches.push(i) : false;
 
 			this.televisionService.addLinkedService(inputService);
 			accessory.addService(inputService);
@@ -694,25 +694,24 @@ class openwebIfTvDevice {
 
 		//prepare switch service
 		//check available switchs and possible switchs count (max 94)
-		const switchsCount = this.switchsIndex.length;
+		const switchsCount = this.switches.length;
 		const availableSwitchsCount = 94 - maxInputsCount;
 		const maxSwitchsCount = (availableSwitchsCount > 0) ? (availableSwitchsCount > switchsCount) ? switchsCount : availableSwitchsCount : 0;
 		if (maxSwitchsCount > 0) {
 			this.log.debug('prepareSwitchsService');
 			this.switchServices = new Array();
 			for (let i = 0; i < maxSwitchsCount; i++) {
-
-				//get switch index
-				const switchIndex = this.switchsIndex[i];
+				//get switch
+				const inputSwitch = this.switches[i];
 
 				//get switch reference
-				const switchReference = this.inputsReference[switchIndex];
+				const switchReference = this.inputsReference[inputSwitch];
 
 				//get switch name		
-				const switchName = this.inputsName[switchIndex];
+				const switchName = this.inputsName[inputSwitch];
 
 				//get switch display type
-				const switchDisplayType = this.switchsDisplayType[switchIndex];
+				const switchDisplayType = this.switchsDisplayType[inputSwitch];
 
 
 				const serviceType = [Service.Outlet, Service.Switch, Service.MotionSensor, Service.OccupancySensor][switchDisplayType];
