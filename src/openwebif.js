@@ -3,7 +3,7 @@ const fs = require('fs');
 const fsPromises = fs.promises;
 const EventEmitter = require('events');
 const axios = require('axios');
-const CONSTANS = require('./src/constans.json');
+const CONSTANS = require('./constans.json');
 
 class OPENWEBIF extends EventEmitter {
     constructor(config) {
