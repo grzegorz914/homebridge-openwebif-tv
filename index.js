@@ -1,16 +1,13 @@
 'use strict';
-
 const fs = require('fs');
 const fsPromises = require('fs').promises;
 const path = require('path');
 const openwebif = require('./src/openwebif')
 const mqttClient = require('./src/mqtt.js');
-const API_URL = require('./src/apiurl.json');
 
 const PLUGIN_NAME = 'homebridge-openwebif-tv';
 const PLATFORM_NAME = 'OpenWebIfTv';
-
-const INPUT_SOURCE_TYPES = ['OTHER', 'HOME_SCREEN', 'TUNER', 'HDMI', 'COMPOSITE_VIDEO', 'S_VIDEO', 'COMPONENT_VIDEO', 'DVI', 'AIRPLAY', 'USB', 'APPLICATION'];
+const CONSTANS = require('./src/constans.json');
 
 let Accessory, Characteristic, Service, Categories, AccessoryUUID;
 
@@ -32,7 +29,7 @@ class openwebIfTvPlatform {
 		}
 		this.log = log;
 		this.api = api;
-		this.devices = config.devices || [];
+		this.devices = config.devices;
 		this.accessories = [];
 
 		this.api.on('didFinishLaunching', () => {
@@ -40,7 +37,7 @@ class openwebIfTvPlatform {
 			for (let i = 0; i < this.devices.length; i++) {
 				const device = this.devices[i];
 				if (!device.name || !device.host || !device.port) {
-					this.log.warn('Device Name, Host or Port Missing');
+					this.log.warn('Device name, host or port missing!');
 				} else {
 					new openwebIfTvDevice(this.log, device, this.api);
 				}
@@ -65,7 +62,7 @@ class openwebIfTvDevice {
 		this.api = api;
 
 		//device configuration
-		this.name = config.name || 'Sat Receiver';
+		this.name = config.name;
 		this.host = config.host;
 		this.port = config.port;
 		this.auth = config.auth || false;
@@ -174,8 +171,8 @@ class openwebIfTvDevice {
 		});
 
 		this.mqttClient.on('connected', (message) => {
-				this.log('Device: %s %s, %s', this.host, this.name, message);
-			})
+			this.log('Device: %s %s, %s', this.host, this.name, message);
+		})
 			.on('error', (error) => {
 				this.log('Device: %s %s, %s', this.host, this.name, error);
 			})
@@ -204,8 +201,8 @@ class openwebIfTvDevice {
 		});
 
 		this.openwebif.on('connected', (message) => {
-				this.log('Device: %s %s, %s', this.host, this.name, message);
-			})
+			this.log('Device: %s %s, %s', this.host, this.name, message);
+		})
 			.on('error', (error) => {
 				this.log('Device: %s %s, %s', this.host, this.name, error);
 			})
@@ -328,7 +325,7 @@ class openwebIfTvDevice {
 			.onSet(async (state) => {
 				const newState = state ? '4' : '5';
 				try {
-					const setPower = (state != this.powerState) ? await this.openwebif.send(API_URL.SetPower + newState) : false;
+					const setPower = (state != this.powerState) ? await this.openwebif.send(CONSTANS.ApiUrls.SetPower + newState) : false;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Power state successful, state: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
 					this.powerState = state;
 				} catch (error) {
@@ -349,7 +346,7 @@ class openwebIfTvDevice {
 				const inputName = this.inputsName[inputIdentifier];
 				const inputReference = this.inputsReference[inputIdentifier];
 				try {
-					const setInput = (inputReference != undefined) ? await this.openwebif.send(API_URL.SetChannel + inputReference) : false;
+					const setInput = (inputReference != undefined) ? await this.openwebif.send(CONSTANS.ApiUrls.SetChannel + inputReference) : false;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Channel successful, name: %s, reference: %s', this.host, accessoryName, inputName, inputReference);
 					this.inputIdentifier = inputIdentifier;
 				} catch (error) {
@@ -401,7 +398,7 @@ class openwebIfTvDevice {
 						break;
 				}
 				try {
-					const setCommand = (this.powerState) ? await this.openwebif.send(API_URL.SetRcCommand + command) : false;
+					const setCommand = (this.powerState) ? await this.openwebif.send(CONSTANS.ApiUrls.SetRcCommand + command) : false;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Remote Key successful, command: %s', this.host, accessoryName, command);
 				} catch (error) {
 					this.log.error('Device: %s %s, can not set Remote Key command. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
@@ -483,7 +480,7 @@ class openwebIfTvDevice {
 						break;
 				}
 				try {
-					const setCommand = (this.powerState) ? await this.openwebif.send(API_URL.SetRcCommand + command) : false;
+					const setCommand = (this.powerState) ? await this.openwebif.send(CONSTANS.ApiUrls.SetRcCommand + command) : false;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Power Mode Selection successful, command: %s', this.host, accessoryName, command);
 				} catch (error) {
 					this.log.error('Device: %s %s, can not set Power Mode Selection command. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
@@ -509,7 +506,7 @@ class openwebIfTvDevice {
 						break;
 				}
 				try {
-					const setCommand = (this.powerState) ? await this.openwebif.send(API_URL.SetRcCommand + command) : false;
+					const setCommand = (this.powerState) ? await this.openwebif.send(CONSTANS.ApiUrls.SetRcCommand + command) : false;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Volume Selector successful, command: %s', this.host, accessoryName, command);
 				} catch (error) {
 					this.log.error('Device: %s %s, can not set Volume Selector command. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
@@ -527,7 +524,7 @@ class openwebIfTvDevice {
 					volume = this.volume;
 				}
 				try {
-					const setVolume = await this.openwebif.send(API_URL.SetVolume + volume);
+					const setVolume = await this.openwebif.send(CONSTANS.ApiUrls.SetVolume + volume);
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Volume level successful: %s', this.host, accessoryName, volume);
 				} catch (error) {
 					this.log.error('Device: %s %s, can not set Volume level. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
@@ -542,7 +539,7 @@ class openwebIfTvDevice {
 			})
 			.onSet(async (state) => {
 				try {
-					const toggleMute = (this.powerState && state != this.muteState) ? await this.openwebif.send(API_URL.ToggleMute) : false;
+					const toggleMute = (this.powerState && state != this.muteState) ? await this.openwebif.send(CONSTANS.ApiUrls.ToggleMute) : false;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Mute successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
 				} catch (error) {
 					this.log.error('Device: %s %s, can not set Mute. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
@@ -729,7 +726,7 @@ class openwebIfTvDevice {
 					.onSet(async (state) => {
 						if (switchDisplayType <= 1) {
 							try {
-								const setSwitchInput = (state && this.powerState) ? await this.openwebif.send(API_URL.SetChannel + switchReference) : false;
+								const setSwitchInput = (state && this.powerState) ? await this.openwebif.send(CONSTANS.ApiUrls.SetChannel + switchReference) : false;
 								const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set new Channel successful, name: %s, reference: %s', this.host, accessoryName, switchName, switchReference);
 							} catch (error) {
 								this.log.error('Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', this.host, accessoryName, error);
@@ -786,10 +783,10 @@ class openwebIfTvDevice {
 						let url = '';
 						switch (buttonMode) {
 							case 0:
-								url = API_URL.SetChannel + buttonReference;
+								url = CONSTANS.ApiUrls.SetChannel + buttonReference;
 								break;
 							case 1:
-								url = API_URL.SetRcCommand + buttonCommand;
+								url = CONSTANS.ApiUrls.SetRcCommand + buttonCommand;
 								break;
 						};
 
@@ -810,7 +807,7 @@ class openwebIfTvDevice {
 		}
 
 		this.api.publishExternalAccessories(PLUGIN_NAME, [accessory]);
-		const debug3 = this.enableDebugMode ? this.log(`Device: ${ this.host} ${accessoryName}, published as external accessory.`) : false;
+		const debug3 = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, published as external accessory.`) : false;
 		this.startPrepareAccessory = false;
 	}
 };

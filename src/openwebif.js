@@ -1,9 +1,9 @@
+'use strict';
 const fs = require('fs');
 const fsPromises = fs.promises;
 const EventEmitter = require('events');
 const axios = require('axios');
-const API_URL = require('./apiurl.json');
-
+const CONSTANS = require('./src/constans.json');
 
 class OPENWEBIF extends EventEmitter {
     constructor(config) {
@@ -42,16 +42,16 @@ class OPENWEBIF extends EventEmitter {
         this.devInfo = '';
 
         this.on('connect', () => {
-                this.firstRun = true;
-                this.checkStateOnFirstRun = true;
-                this.emit('connected', 'Connected.');
-                setTimeout(() => {
-                    this.emit('checkState');
-                }, 1500)
-            })
+            this.firstRun = true;
+            this.checkStateOnFirstRun = true;
+            this.emit('connected', 'Connected.');
+            setTimeout(() => {
+                this.emit('checkState');
+            }, 1500)
+        })
             .on('checkDeviceInfo', async () => {
                 try {
-                    const deviceInfo = await this.axiosInstance(API_URL.DeviceInfo);
+                    const deviceInfo = await this.axiosInstance(CONSTANS.ApiUrls.DeviceInfo);
                     const devInfo = JSON.stringify(deviceInfo.data, null, 2);
                     const debug = this.debugLog ? this.emit('debug', `Info data: ${devInfo}`) : false;
                     const writeDevInfo = await fsPromises.writeFile(this.devInfoFile, devInfo);
@@ -65,12 +65,12 @@ class OPENWEBIF extends EventEmitter {
                     const chipset = deviceInfo.data.chipset || 'Unknown';
                     const mac = deviceInfo.data.ifaces[0].mac;
 
-                    const channelsInfo = await this.axiosInstance(API_URL.GetAllServices);
+                    const channelsInfo = await this.axiosInstance(CONSTANS.ApiUrls.GetAllServices);
                     const channels = JSON.stringify(channelsInfo.data, null, 2);
                     const debu1g = this.debugLog ? this.emit('debug', `Channels info: ${channels}`) : false;
                     const writeChannels = await fsPromises.writeFile(this.channelsFile, channels);
 
-                    if (mac !== null && mac !== undefined) {
+                    if (mac != null && mac != undefined) {
                         this.emit('connect');
                         this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
                     } else {
@@ -84,7 +84,7 @@ class OPENWEBIF extends EventEmitter {
             })
             .on('checkState', async () => {
                 try {
-                    const deviceState = await this.axiosInstance(API_URL.DeviceStatus);
+                    const deviceState = await this.axiosInstance(CONSTANS.ApiUrls.DeviceStatus);
                     const debug = this.debugLog ? this.emit('debug', `State data: ${JSON.stringify(deviceState.data, null, 2)}`) : false;
 
                     const power = (deviceState.data.inStandby == 'false');
