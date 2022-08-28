@@ -151,9 +151,9 @@ class openwebIfTvDevice {
 		try {
 			const inputs = JSON.stringify(this.inputs, null, 2);
 			fs.writeFileSync(this.inputsFile, inputs);
-			const debug = this.enableDebugMode ? this.log('Device: %s %s, save inputs succesful, inputs: %s', this.host, this.name, inputs) : false;
+			const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, save inputs succesful, inputs: ${inputs}`) : false;
 		} catch (error) {
-			this.log.error('Device: %s %s, save inputs error: %s', this.host, this.name, error);
+			this.log.error(`Device: ${this.host} ${this.name}, save inputs error: ${error}`);
 		};
 
 		//mqtt client
@@ -170,19 +170,19 @@ class openwebIfTvDevice {
 		});
 
 		this.mqttClient.on('connected', (message) => {
-			this.log('Device: %s %s, %s', this.host, this.name, message);
+			this.log(`Device: ${this.host} ${this.name}, ${message}`);
 		})
 			.on('error', (error) => {
-				this.log('Device: %s %s, %s', this.host, this.name, error);
+				this.log.error(`Device: ${this.host} ${this.name}, ${error}`);
 			})
 			.on('debug', (message) => {
-				this.log('Device: %s %s, debug: %s', this.host, this.name, message);
+				this.log(`Device: ${this.host} ${this.name}, debug: ${message}`);
 			})
 			.on('message', (message) => {
-				this.log('Device: %s %s, %s', this.host, this.name, message);
+				this.log(`Device: ${this.host} ${this.name}, ${message}`);
 			})
 			.on('disconnected', (message) => {
-				this.log('Device: %s %s, %s', this.host, this.name, message);
+				this.log(`Device: ${this.host} ${this.name}, ${message}`);
 			});
 
 		//openwebif client
@@ -200,16 +200,16 @@ class openwebIfTvDevice {
 		});
 
 		this.openwebif.on('connected', (message) => {
-			this.log('Device: %s %s, %s', this.host, this.name, message);
+			this.log(`Device: ${this.host} ${this.name}, ${message}`);
 		})
 			.on('error', (error) => {
-				this.log('Device: %s %s, %s', this.host, this.name, error);
+				this.log.error(`Device: ${this.host} ${this.name}, ${error}`);
 			})
 			.on('debug', (message) => {
-				this.log('Device: %s %s, debug: %s', this.host, this.name, message);
+				this.log(`Device: ${this.host} ${this.name}, debug: ${message}`);
 			})
 			.on('message', (message) => {
-				this.log('Device: %s %s, %s', this.host, this.name, message);
+				this.log(`Device: ${this.host} ${this.name}, ${message}`);
 			})
 			.on('deviceInfo', (manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) => {
 				if (!this.disableLogDeviceInfo) {
@@ -283,7 +283,7 @@ class openwebIfTvDevice {
 				this.mqttClient.send(topic, message);
 			})
 			.on('disconnected', (message) => {
-				this.log('Device: %s %s, %s', this.host, this.name, message);
+				this.log(`Device: ${this.host} ${this.name}, ${message}`);
 			});
 	}
 
