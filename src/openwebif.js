@@ -17,7 +17,7 @@ class OPENWEBIF extends EventEmitter {
         this.debugLog = config.debugLog;
         this.devInfoFile = config.devInfoFile;
         this.channelsFile = config.channelsFile;
-        this.mqttEnabled = config.enableMqtt;
+        this.mqttEnabled = config.mqttEnabled;
 
         const url = `http://${this.host}:${this.port}`;
         this.axiosInstance = axios.create({
@@ -132,6 +132,7 @@ class OPENWEBIF extends EventEmitter {
             try {
                 const sendCommand = await this.axiosInstance(apiUrl);
                 const info = this.infoLog ? false : this.emit('message', `Send command: ${apiUrl}`);
+                this.emit('checkState');
                 resolve(true);
             } catch (error) {
                 this.emit('error', `Send command error: ${error}`);

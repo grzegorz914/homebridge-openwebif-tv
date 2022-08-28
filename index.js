@@ -326,7 +326,6 @@ class openwebIfTvDevice {
 				try {
 					const setPower = (state != this.power) ? await this.openwebif.send(CONSTANS.ApiUrls.SetPower + newState) : false;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Power state successful, state: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
-					this.power = state;
 				} catch (error) {
 					this.log.error('Device: %s %s, can not set new Power state. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
 				};
@@ -347,7 +346,6 @@ class openwebIfTvDevice {
 				try {
 					const setInput = (inputReference != undefined) ? await this.openwebif.send(CONSTANS.ApiUrls.SetChannel + inputReference) : false;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Channel successful, name: %s, reference: %s', this.host, accessoryName, inputName, inputReference);
-					this.inputIdentifier = inputIdentifier;
 				} catch (error) {
 					this.log.error('Device: %s %s, can not set Channel. Might be due to a wrong settings in config, error: %s.', this.host, accessoryName, error);
 				};
