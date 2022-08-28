@@ -75,7 +75,7 @@ class openwebIfTvDevice {
 		this.enableDebugMode = config.enableDebugMode || false;
 		this.inputs = config.inputs || [];
 		this.buttons = config.buttons || [];
-		this.enableMqtt = config.enableMqtt || false;
+		this.mqttEnabled = config.enableMqtt || false;
 		this.mqttHost = config.mqttHost;
 		this.mqttPort = config.mqttPort || 1883;
 		this.mqttPrefix = config.mqttPrefix;
@@ -158,7 +158,7 @@ class openwebIfTvDevice {
 
 		//mqtt client
 		this.mqttClient = new mqttClient({
-			enabled: this.enableMqtt,
+			enabled: this.mqttEnabled,
 			host: this.mqttHost,
 			port: this.mqttPort,
 			prefix: this.mqttPrefix,
@@ -196,7 +196,7 @@ class openwebIfTvDevice {
 			debugLog: this.enableDebugMode,
 			devInfoFile: this.devInfoFile,
 			channelsFile: this.channelsFile,
-			mqttEnabled: this.enableMqtt
+			mqttEnabled: this.mqttEnabled
 		});
 
 		this.openwebif.on('connected', (message) => {
