@@ -31,7 +31,6 @@ class OPENWEBIF extends EventEmitter {
             },
         });
 
-        this.firstRun = false;
         this.checkStateOnFirstRun = false;
         this.power = false;
         this.name = '';
@@ -42,12 +41,11 @@ class OPENWEBIF extends EventEmitter {
         this.devInfo = '';
 
         this.on('connect', () => {
-            this.firstRun = true;
             this.checkStateOnFirstRun = true;
             this.emit('connected', 'Connected.');
             setTimeout(() => {
                 this.emit('checkState');
-            }, 1500)
+            }, 500)
         })
             .on('checkDeviceInfo', async () => {
                 try {
@@ -71,14 +69,14 @@ class OPENWEBIF extends EventEmitter {
                     const writeChannels = await fsPromises.writeFile(this.channelsFile, channels);
 
                     if (mac != null && mac != undefined) {
-                        this.emit('connect');
                         this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
+                        this.emit('connect');
                     } else {
-                        const debug = this.debugLog ? this.emit('debug', `Mac address unknown: ${mac}`) : false;
+                        const debug = this.debugLog ? this.emit('debug', `Mac address unknown: ${mac}, reconnect in 15s.`) : false;
                         this.checkDeviceInfo();
                     }
                 } catch (error) {
-                    this.emit('error', `Info error: ${error}`);
+                    this.emit('error', `Info error: ${error}, reconnect in 15s.`);
                     this.checkDeviceInfo();
                 };
             })
@@ -110,16 +108,12 @@ class OPENWEBIF extends EventEmitter {
                         this.emit('checkState');
                     }, 1500)
                 } catch (error) {
-                    this.emit('error', `State error: ${error}`);
+                    this.emit('error', `State error: ${error}, reconnect in 15s.`);
                     const firstRun = this.checkStateOnFirstRun ? this.checkDeviceInfo() : this.emit('disconnect');
                 };
             })
             .on('disconnect', () => {
-                if (this.firstRun) {
-                    this.firstRun = false;
-                    this.emit('disconnected', 'Disconnected.');
-                };
-
+                this.emit('disconnected', 'Disconnected.');
                 this.emit('stateChanged', false, this.name, this.eventName, this.reference, this.volume, true);
                 this.checkDeviceInfo();
             });
@@ -128,10 +122,9 @@ class OPENWEBIF extends EventEmitter {
     };;
 
     checkDeviceInfo() {
-        this.emit('debug', 'Reconnect in 10s.');
         setTimeout(() => {
             this.emit('checkDeviceInfo');
-        }, 10000);
+        }, 15000);
     };
 
     send(apiUrl) {
