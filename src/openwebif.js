@@ -50,18 +50,18 @@ class OPENWEBIF extends EventEmitter {
             .on('checkDeviceInfo', async () => {
                 try {
                     const deviceInfo = await this.axiosInstance(CONSTANS.ApiUrls.DeviceInfo);
-                    const devInfo = JSON.stringify(deviceInfo.data, null, 2);
-                    const debug = this.debugLog ? this.emit('debug', `Info data: ${devInfo}`) : false;
-                    const writeDevInfo = await fsPromises.writeFile(this.devInfoFile, devInfo);
+                    const devInfo = deviceInfo.data;
+                    const debug = this.debugLog ? this.emit('debug', `Info: ${JSON.stringify(devInfo, null, 2)}`) : false;
+                    const writeDevInfo = await fsPromises.writeFile(this.devInfoFile, JSON.stringify(devInfo, null, 2));
                     this.devInfo = devInfo;
 
-                    const manufacturer = deviceInfo.data.brand || 'Unknown';
-                    const modelName = deviceInfo.data.model || 'Unknown';
-                    const serialNumber = deviceInfo.data.webifver || 'Unknown';
-                    const firmwareRevision = deviceInfo.data.imagever || 'Unknown';
-                    const kernelVer = deviceInfo.data.kernelver || 'Unknown';
-                    const chipset = deviceInfo.data.chipset || 'Unknown';
-                    const mac = deviceInfo.data.ifaces[0].mac;
+                    const manufacturer = devInfo.brand || 'Unknown';
+                    const modelName = devInfo.model || 'Unknown';
+                    const serialNumber = devInfo.webifver || 'Unknown';
+                    const firmwareRevision = devInfo.imagever || 'Unknown';
+                    const kernelVer = devInfo.kernelver || 'Unknown';
+                    const chipset = devInfo.chipset || 'Unknown';
+                    const mac = devInfo.ifaces[0].mac;
 
                     const channelsInfo = await this.axiosInstance(CONSTANS.ApiUrls.GetAllServices);
                     const channels = JSON.stringify(channelsInfo.data, null, 2);
@@ -83,14 +83,15 @@ class OPENWEBIF extends EventEmitter {
             .on('checkState', async () => {
                 try {
                     const deviceState = await this.axiosInstance(CONSTANS.ApiUrls.DeviceStatus);
-                    const debug = this.debugLog ? this.emit('debug', `State data: ${JSON.stringify(deviceState.data, null, 2)}`) : false;
+                    const devState = deviceState.data;
+                    const debug = this.debugLog ? this.emit('debug', `State: ${JSON.stringify(devState, null, 2)}`) : false;
 
-                    const power = (deviceState.data.inStandby == 'false');
-                    const name = deviceState.data.currservice_station;
-                    const eventName = deviceState.data.currservice_name;
-                    const reference = deviceState.data.currservice_serviceref;
-                    const volume = deviceState.data.volume;
-                    const mute = power ? (deviceState.data.muted == true) : true;
+                    const power = (devState.inStandby == 'false');
+                    const name = devState.currservice_station;
+                    const eventName = devState.currservice_name;
+                    const reference = devState.currservice_serviceref;
+                    const volume = devState.volume;
+                    const mute = power ? (devState.muted == true) : true;
                     if (this.checkStateOnFirstRun == true || power != this.power || name != this.name || eventName != this.eventName || reference != this.reference || volume != this.volume || mute != this.mute) {
                         this.power = power;
                         this.name = name;
@@ -101,8 +102,8 @@ class OPENWEBIF extends EventEmitter {
                         this.checkStateOnFirstRun = false;
                         this.emit('stateChanged', power, name, eventName, reference, volume, mute);
                     };
-                    const mqtt = this.mqttEnabled ? this.emit('mqtt', 'Info', this.devInfo) : false;
-                    const mqtt1 = this.mqttEnabled ? this.emit('mqtt', 'State', JSON.stringify(deviceState.data, null, 2)) : false;
+                    const mqtt = this.mqttEnabled ? this.emit('mqtt', 'Info', JSON.stringify(this.devInfo, null, 2)) : false;
+                    const mqtt1 = this.mqttEnabled ? this.emit('mqtt', 'State', JSON.stringify(devState, null, 2)) : false;
 
                     setTimeout(() => {
                         this.emit('checkState');
