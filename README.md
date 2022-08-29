@@ -41,7 +41,7 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 * Channels can be changed using Channels selector in HomeKit.app, additionally can create separate tile.
 * Siri can be used for all functions, some times need create legacy buttons/switches/sensors.
 * Automations can be used for all functions, some times need create legacy buttons/switches/sensors.
-* MQTT Client publisch *Info* and *State* data payload as JSON.
+* MQTT publisch topic *Info* and *State* as payload JSON data.
 
 <p align="left">
   <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/main/graphics/homekit.png" width="382"></a>
