@@ -1,9 +1,9 @@
 'use strict';
-const fs = require('fs');
-const fsPromises = require('fs').promises;
 const path = require('path');
-const openwebif = require('./src/openwebif')
-const mqttClient = require('./src/mqtt.js');
+const fs = require('fs');
+const fsPromises = fs.promises;
+const Mqtt = require('./src/mqtt.js');
+const OpenWebIf = require('./src/openwebif.js')
 
 const PLUGIN_NAME = 'homebridge-openwebif-tv';
 const PLATFORM_NAME = 'OpenWebIfTv';
@@ -157,7 +157,7 @@ class openwebIfTvDevice {
 		};
 
 		//mqtt client
-		this.mqttClient = new mqttClient({
+		this.mqtt = new Mqtt({
 			enabled: this.mqttEnabled,
 			host: this.mqttHost,
 			port: this.mqttPort,
@@ -169,7 +169,7 @@ class openwebIfTvDevice {
 			debug: this.mqttDebug
 		});
 
-		this.mqttClient.on('connected', (message) => {
+		this.mqtt.on('connected', (message) => {
 			this.log(`Device: ${this.host} ${this.name}, ${message}`);
 		})
 			.on('error', (error) => {
@@ -186,13 +186,12 @@ class openwebIfTvDevice {
 			});
 
 		//openwebif client
-		this.openwebif = new openwebif({
+		this.openwebif = new OpenWebIf({
 			host: this.host,
 			port: this.port,
 			user: this.user,
 			pass: this.pass,
 			auth: this.auth,
-			infoLog: this.disableLogInfo,
 			debugLog: this.enableDebugMode,
 			devInfoFile: this.devInfoFile,
 			channelsFile: this.channelsFile,
@@ -202,15 +201,6 @@ class openwebIfTvDevice {
 		this.openwebif.on('connected', (message) => {
 			this.log(`Device: ${this.host} ${this.name}, ${message}`);
 		})
-			.on('error', (error) => {
-				this.log.error(`Device: ${this.host} ${this.name}, ${error}`);
-			})
-			.on('debug', (message) => {
-				this.log(`Device: ${this.host} ${this.name}, debug: ${message}`);
-			})
-			.on('message', (message) => {
-				this.log(`Device: ${this.host} ${this.name}, ${message}`);
-			})
 			.on('deviceInfo', (manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) => {
 				if (!this.disableLogDeviceInfo) {
 					this.log('-------- %s --------', this.name);
@@ -279,8 +269,17 @@ class openwebIfTvDevice {
 					this.prepareAccessory();
 				};
 			})
+			.on('error', (error) => {
+				this.log.error(`Device: ${this.host} ${this.name}, ${error}`);
+			})
+			.on('debug', (message) => {
+				this.log(`Device: ${this.host} ${this.name}, debug: ${message}`);
+			})
+			.on('message', (message) => {
+				this.log(`Device: ${this.host} ${this.name}, ${message}`);
+			})
 			.on('mqtt', (topic, message) => {
-				this.mqttClient.send(topic, message);
+				this.mqtt.send(topic, message);
 			})
 			.on('disconnected', (message) => {
 				this.log(`Device: ${this.host} ${this.name}, ${message}`);
@@ -326,6 +325,7 @@ class openwebIfTvDevice {
 				try {
 					const setPower = (state != this.power) ? await this.openwebif.send(CONSTANS.ApiUrls.SetPower + newState) : false;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Power state successful, state: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
+					this.power = state;
 				} catch (error) {
 					this.log.error('Device: %s %s, can not set new Power state. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
 				};
@@ -346,6 +346,7 @@ class openwebIfTvDevice {
 				try {
 					const setInput = (inputReference != undefined) ? await this.openwebif.send(CONSTANS.ApiUrls.SetChannel + inputReference) : false;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Channel successful, name: %s, reference: %s', this.host, accessoryName, inputName, inputReference);
+					this.inputIdentifier = inputIdentifier;
 				} catch (error) {
 					this.log.error('Device: %s %s, can not set Channel. Might be due to a wrong settings in config, error: %s.', this.host, accessoryName, error);
 				};
@@ -509,6 +510,7 @@ class openwebIfTvDevice {
 				try {
 					const setVolume = await this.openwebif.send(CONSTANS.ApiUrls.SetVolume + volume);
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Volume level successful: %s', this.host, accessoryName, volume);
+					this.volume = volume;
 				} catch (error) {
 					this.log.error('Device: %s %s, can not set Volume level. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
 				};
@@ -524,6 +526,7 @@ class openwebIfTvDevice {
 				try {
 					const toggleMute = (this.power && state != this.mute) ? await this.openwebif.send(CONSTANS.ApiUrls.ToggleMute) : false;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Mute successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
+					this.mute = state;
 				} catch (error) {
 					this.log.error('Device: %s %s, can not set Mute. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
 				};
