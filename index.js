@@ -189,10 +189,19 @@ class openwebIfTvDevice {
 			mqttEnabled: this.mqttEnabled
 		});
 
-		this.openwebif.on('connected', (message) => {
+		this.openwebif.on('connected', async (message) => {
 			this.log(`Device: ${this.host} ${this.name}, ${message}`);
+
+			//save inputs to the file
+			try {
+				const inputs = JSON.stringify(this.inputs, null, 2);
+				const writeInputs = await fsPromises.writeFile(this.inputsFile, inputs);
+				const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, save inputs succesful, inputs: ${inputs}`) : false;
+			} catch (error) {
+				this.log.error(`Device: ${this.host} ${this.name}, save inputs error: ${error}`);
+			};
 		})
-			.on('deviceInfo', async (manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) => {
+			.on('deviceInfo', (manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) => {
 				if (!this.disableLogDeviceInfo) {
 					this.log('-------- %s --------', this.name);
 					this.log('Manufacturer: %s', manufacturer);
@@ -203,15 +212,6 @@ class openwebIfTvDevice {
 					this.log('Firmware: %s', firmwareRevision);
 					this.log('----------------------------------');
 				}
-
-				//save inputs to the file
-				try {
-					const inputs = JSON.stringify(this.inputs, null, 2);
-					const writeInputs = await fsPromises.writeFile(this.inputsFile, inputs);
-					const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, save inputs succesful, inputs: ${inputs}`) : false;
-				} catch (error) {
-					this.log.error(`Device: ${this.host} ${this.name}, save inputs error: ${error}`);
-				};
 
 				this.manufacturer = manufacturer;
 				this.modelName = modelName;
