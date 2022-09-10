@@ -39,9 +39,9 @@ class OPENWEBIF extends EventEmitter {
         this.mute = true;
         this.devInfo = '';
 
-        this.on('connect', () => {
+        this.on('firstRun', () => {
             this.checkStateOnFirstRun = true;
-            this.emit('connected', 'Connected.');
+
             setTimeout(() => {
                 this.emit('checkState');
             }, 500)
@@ -68,8 +68,9 @@ class OPENWEBIF extends EventEmitter {
                     const writeChannels = await fsPromises.writeFile(channelsFile, channels);
 
                     if (mac != null && mac != undefined) {
+                        this.emit('connected', 'Connected.');
                         this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
-                        this.emit('connect');
+                        this.emit('firstRun');
                     } else {
                         const debug = debugLog ? this.emit('debug', `Mac address unknown: ${mac}, reconnect in 15s.`) : false;
                         this.checkDeviceInfo();
