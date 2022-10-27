@@ -62,6 +62,9 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | `enableDebugMode` | This enable deep log in homebridge console. |
 | `disableLogInfo` | This disable log info, all values and state will not be displayed in Homebridge log console. |
 | `disableLogDeviceInfo` | If enabled, add ability to disable log device info by every connections device to the network. |
+| `sensorPower`| If enabled, then Power will be exposed as a `Motion Sensor` to use with automations. |
+| `sensorVolume`| If enabled, then Volume will be exposed as a `Motion Sensor` to use with automations. |
+| `sensorMute`| If enabled, then Mute will be exposed as a `Motion Sensor` to use with automations. |
 | `volumeControl` | Here select volume control mode `None`, `Slider`, `Fan`. |
 | `infoButtonCommand` | Here select the function of `I` button in RC app. |
 | `inputs.name` | Here set *Channel Name* which You want expose to the *Homebridge/HomeKit*. |
@@ -93,7 +96,9 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
         "auth": false,
         "user": "user",
         "pass": "pass",
-        "refreshInterval": 5,
+        "sensorPower": false,
+        "sensorVolume": false,
+        "sensorMute": false,
         "disableLogInfo": false,
         "disableLogDeviceInfo": false,
         "enableDebugMode": false,

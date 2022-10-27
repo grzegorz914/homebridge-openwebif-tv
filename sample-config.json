@@ -14,77 +14,86 @@
     "comment": "In this section set the port for Homebridge accessories."
   },
   "accessories": [],
-  "platforms": [{
-    "platform": "OpenWebIfTv",
-    "devices": [{
-      "name": "Sat Receiver",
-      "host": "192.168.1.10",
-      "port": 80,
-      "auth": false,
-      "user": "user",
-      "pass": "pass",
-      "disableLogInfo": false,
-      "disableLogDeviceInfo": false,
-      "enableDebugMode": false,
-      "volumeControl": 0,
-      "infoButtonCommand": "139",
-      "inputs": [{
-          "name": "Das Erste HD",
-          "reference": "1:0:19:283D:3FB:1:C00000:0:0:0:",
-          "switch": false,
-          "displayType": 0
-        },
+  "platforms": [
+    {
+      "platform": "OpenWebIfTv",
+      "devices": [
         {
-          "name": "ZDF HD",
-          "reference": "1:0:19:2B66:3F3:1:C00000:0:0:0:",
-          "switch": false,
-          "displayType": 0
-        },
-        {
-          "name": "RTL HD",
-          "reference": "1:0:19:EF10:421:1:C00000:0:0:0:",
-          "switch": false,
-          "displayType": 0
-        },
-        {
-          "name": "SAT.1 HD",
-          "reference": "1:0:19:EF74:3F9:1:C00000:0:0:0:",
-          "switch": false,
-          "displayType": 0
+          "name": "Sat Receiver",
+          "host": "192.168.1.10",
+          "port": 80,
+          "auth": false,
+          "user": "user",
+          "pass": "pass",
+          "sensorPower": false,
+          "sensorVolume": false,
+          "sensorMute": false,
+          "disableLogInfo": false,
+          "disableLogDeviceInfo": false,
+          "enableDebugMode": false,
+          "volumeControl": 0,
+          "infoButtonCommand": "139",
+          "inputs": [
+            {
+              "name": "Das Erste HD",
+              "reference": "1:0:19:283D:3FB:1:C00000:0:0:0:",
+              "switch": false,
+              "displayType": 0
+            },
+            {
+              "name": "ZDF HD",
+              "reference": "1:0:19:2B66:3F3:1:C00000:0:0:0:",
+              "switch": false,
+              "displayType": 0
+            },
+            {
+              "name": "RTL HD",
+              "reference": "1:0:19:EF10:421:1:C00000:0:0:0:",
+              "switch": false,
+              "displayType": 0
+            },
+            {
+              "name": "SAT.1 HD",
+              "reference": "1:0:19:EF74:3F9:1:C00000:0:0:0:",
+              "switch": false,
+              "displayType": 0
+            }
+          ],
+          "buttons": [
+            {
+              "name": "Das Erste HD",
+              "mode": 0,
+              "reference": "1:0:19:283D:3FB:1:C00000:0:0:0:",
+              "displayType": 0
+            },
+            {
+              "name": "ZDF HD",
+              "mode": 0,
+              "reference": "1:0:19:2B66:3F3:1:C00000:0:0:0:",
+              "displayType": 0
+            },
+            {
+              "name": "RTL HD",
+              "reference": "1:0:19:EF10:421:1:C00000:0:0:0:",
+              "displayType": 0
+            },
+            {
+              "name": "Menu Up",
+              "mode": 1,
+              "command": "115",
+              "displayType": 0
+            }
+          ],
+          "enableMqtt": false,
+          "mqttHost": "192.168.1.33",
+          "mqttPort": 1883,
+          "mqttPrefix": "home/openwebif",
+          "mqttAuth": false,
+          "mqttUser": "user",
+          "mqttPass": "password",
+          "mqttDebug": false
         }
-      ],
-      "buttons": [{
-          "name": "Das Erste HD",
-          "mode": 0,
-          "reference": "1:0:19:283D:3FB:1:C00000:0:0:0:",
-          "displayType": 0
-        },
-        {
-          "name": "ZDF HD",
-          "mode": 0,
-          "reference": "1:0:19:2B66:3F3:1:C00000:0:0:0:",
-          "displayType": 0
-        },
-        {
-          "name": "RTL HD",
-          "reference": "1:0:19:EF10:421:1:C00000:0:0:0:",
-          "displayType": 0
-        },
-        {
-          "name": "Menu Up",
-          "mode": 1,
-          "command": "115",
-          "displayType": 0
-        }
-      ],
-      "enableMqtt": false,
-      "mqttHost": "192.168.1.33",
-      "mqttPort": 1883,
-      "mqttPrefix": "home/openwebif",
-      "mqttAuth": false,
-      "mqttUser": "user",
-      "mqttPass": "password",
-      "mqttDebug": false
-    }]
-  }]
+      ]
+    }
+  ]
 }

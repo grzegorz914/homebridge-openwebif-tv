@@ -68,6 +68,9 @@ class openwebIfTvDevice {
 		this.auth = config.auth || false;
 		this.user = config.user || '';
 		this.pass = config.pass || '';
+		this.sensorPower = config.sensorPower || false;
+		this.sensorVolume = config.sensorVolume || false
+		this.sensorMute = config.sensorMute || false
 		this.volumeControl = config.volumeControl || 0;
 		this.infoButtonCommand = config.infoButtonCommand || '139';
 		this.disableLogInfo = config.disableLogInfo || false;
@@ -112,6 +115,8 @@ class openwebIfTvDevice {
 		this.channelEventName = '';
 
 		this.brightness = 0;
+
+		this.sensorVolumeState = false;
 
 		this.prefDir = path.join(api.user.storagePath(), 'openwebifTv');
 		this.devInfoFile = `${this.prefDir}/devInfo_${this.host.split('.').join('')}`;
@@ -242,6 +247,24 @@ class openwebIfTvDevice {
 							.updateCharacteristic(Characteristic.RotationSpeed, volume)
 							.updateCharacteristic(Characteristic.On, !mute);
 					}
+				}
+
+				if (this.sensorPowerService) {
+					this.sensorPowerService
+						.updateCharacteristic(Characteristic.MotionDetected, power)
+				}
+
+				if (this.sensorVolumeService) {
+					const state = (this.volume != volume) ? true : false;
+					this.sensorVolumeService
+						.updateCharacteristic(Characteristic.MotionDetected, state)
+					this.sensorVolumeState = state;
+				}
+
+				if (this.sensorMuteService) {
+					const state = power ? this.mute : false;
+					this.sensorMuteService
+						.updateCharacteristic(Characteristic.MotionDetected, state)
 				}
 
 				if (this.switchServices) {
@@ -581,6 +604,40 @@ class openwebIfTvDevice {
 				accessory.addService(this.volumeServiceFan);
 			}
 		}
+
+		//prepare sensor service
+		if (this.sensorPower) {
+			this.log.debug('prepareSensorPowerService')
+			this.sensorPowerService = new Service.MotionSensor(`${accessoryName} Power Sensor`, `Power Sensor`);
+			this.sensorPowerService.getCharacteristic(Characteristic.MotionDetected)
+				.onGet(async () => {
+					const state = this.power;
+					return state;
+				});
+			accessory.addService(this.sensorPowerService);
+		};
+
+		if (this.sensorVolume) {
+			this.log.debug('prepareSensorVolumeService')
+			this.sensorVolumeService = new Service.MotionSensor(`${accessoryName} Volume Sensor`, `Volume Sensor`);
+			this.sensorVolumeService.getCharacteristic(Characteristic.MotionDetected)
+				.onGet(async () => {
+					const state = this.sensorVolumeState;
+					return state;
+				});
+			accessory.addService(this.sensorVolumeService);
+		};
+
+		if (this.sensorMute) {
+			this.log.debug('prepareSensorMuteService')
+			this.sensorMuteService = new Service.MotionSensor(`${accessoryName} Mute Sensor`, `Mute Sensor`);
+			this.sensorMuteService.getCharacteristic(Characteristic.MotionDetected)
+				.onGet(async () => {
+					const state = this.power ? this.mute : false;
+					return state;
+				});
+			accessory.addService(this.sensorMuteService);
+		};
 
 		//prepare inputs service
 		this.log.debug('prepareInputsService');
