@@ -27,7 +27,7 @@ class OPENWEBIF extends EventEmitter {
             auth: {
                 username: user,
                 password: pass
-            },
+            }
         });
 
         this.checkStateOnFirstRun = false;
