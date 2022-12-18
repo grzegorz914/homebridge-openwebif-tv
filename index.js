@@ -770,10 +770,8 @@ class openwebIfTvDevice {
 							try {
 								const setSwitchInput = (state && this.power) ? await this.openwebif.send(CONSTANS.ApiUrls.SetChannel + switchReference) : false;
 								const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set new Channel successful, name: %s, reference: %s', this.host, accessoryName, switchName, switchReference);
-								switchService.updateCharacteristic(Characteristic.On, false);
 							} catch (error) {
 								this.log.error('Device: %s %s, can not set new Channel. Might be due to a wrong settings in config, error: %s.', this.host, accessoryName, error);
-								switchService.updateCharacteristic(Characteristic.On, false);
 							};
 						};
 					});
@@ -814,7 +812,15 @@ class openwebIfTvDevice {
 				const buttonService = new serviceType(`${accessoryName} ${buttonName}`, `Button ${i}`);
 				buttonService.getCharacteristic(Characteristic.On)
 					.onGet(async () => {
-						const state = false;
+						let state = false;
+						switch (buttonMode) {
+							case 0:
+								state = (buttonReference == this.reference) ? true : false;
+								break;
+							case 1:
+								state = false;
+								break;
+						};
 						return state;
 					})
 					.onSet(async (state) => {
@@ -831,10 +837,12 @@ class openwebIfTvDevice {
 						try {
 							const send = (state && this.power) ? await this.openwebif.send(url) : false;
 							const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set %s successful, name: %s, reference: %s', this.host, accessoryName, ['Channel', 'Command'][buttonMode], buttonName, [buttonReference, buttonCommand][buttonMode]);
-							buttonService.updateCharacteristic(Characteristic.On, false);
+
+							setTimeout(() => {
+								const setChar = (state && this.power && buttonMode == 1) ? buttonService.updateCharacteristic(Characteristic.On, false) : false;
+							}, 300)
 						} catch (error) {
 							this.log.error('Device: %s %s, set %s error: %s', this.host, accessoryName, ['Channel', 'Command'][buttonMode], error);
-							buttonService.updateCharacteristic(Characteristic.On, false);
 						};
 					});
 
