@@ -59,9 +59,6 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | `auth` | If enabled, authorizatins credentials will be used for login. |
 | `user` | Here set the authorization *Username*. |
 | `pass` | Here set the authorization *Password*. |
-| `enableDebugMode` | This enable deep log in homebridge console. |
-| `disableLogInfo` | This disable log info, all values and state will not be displayed in Homebridge log console. |
-| `disableLogDeviceInfo` | If enabled, add ability to disable log device info by every connections device to the network. |
 | `sensorPower`| If enabled, then the Power will be exposed as a `Motion Sensor` to use with automations. |
 | `sensorVolume`| If enabled, then the Volume will be exposed as a `Motion Sensor` to use with automations. |
 | `sensorMute`| If enabled, then the Mute will be exposed as a `Motion Sensor` to use with automations. |
@@ -76,6 +73,9 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | `buttons.reference` | Here set *Reference*, only for `Live TV Channel` mode, in other case leave empty. | 
 | `buttons.command` | Here select `Remote Control` command which will be assigned to the button. |
 | `buttons.displayType` | Here select display type in HomeKit app, possible `Switch`, `Button` - selectable in HomeKit app as Light, Fan, Outlet.|
+| `enableDebugMode` | If enabled, deep log will be present in homebridge console. |
+| `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |
+| `disableLogDeviceInfo` | If enabled, add ability to disable log device info by every connections device to the network. |
 | `enableMqtt` | If enabled, MQTT Broker will start automatically and publish all awailable PV installation data. |
 | `mqttHost` | Here set the *IP Address* or *Hostname* for MQTT Broker.) |
 | `mqttPort` | Here set the *Port* for MQTT Broker, default 1883.) |
