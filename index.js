@@ -815,7 +815,7 @@ class openwebIfTvDevice {
 						let state = false;
 						switch (buttonMode) {
 							case 0:
-								state = (buttonReference == this.reference) ? true : false;
+								state = this.power ? (buttonReference == this.reference) : false;
 								break;
 							case 1:
 								state = false;
