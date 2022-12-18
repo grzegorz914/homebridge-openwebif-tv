@@ -125,33 +125,6 @@ class openwebIfTvDevice {
 		this.inputsTargetVisibilityFile = `${this.prefDir}/inputsTargetVisibility_${this.host.split('.').join('')}`;
 		this.channelsFile = `${this.prefDir}/channels_${this.host.split('.').join('')}`;
 
-		//check if the directory exists, if not then create it
-		if (fs.existsSync(this.prefDir) == false) {
-			fs.mkdirSync(this.prefDir);
-		}
-		if (fs.existsSync(this.devInfoFile) == false) {
-			const obj = {
-				'manufacturer': this.manufacturer,
-				'modelName': this.modelName,
-				'serialNumber': this.serialNumber,
-				'firmwareRevision': this.firmwareRevision
-			};
-			const devInfo = JSON.stringify(obj, null, 2);
-			fs.writeFileSync(this.devInfoFile, devInfo);
-		}
-		if (fs.existsSync(this.inputsFile) == false) {
-			fs.writeFileSync(this.inputsFile, '');
-		}
-		if (fs.existsSync(this.inputsNamesFile) == false) {
-			fs.writeFileSync(this.inputsNamesFile, '');
-		}
-		if (fs.existsSync(this.inputsTargetVisibilityFile) == false) {
-			fs.writeFileSync(this.inputsTargetVisibilityFile, '');
-		}
-		if (fs.existsSync(this.channelsFile) == false) {
-			fs.writeFileSync(this.channelsFile, '');
-		}
-
 		//mqtt client
 		this.mqtt = new Mqtt({
 			enabled: this.mqttEnabled,
@@ -189,21 +162,55 @@ class openwebIfTvDevice {
 			pass: this.pass,
 			auth: this.auth,
 			debugLog: this.enableDebugMode,
-			devInfoFile: this.devInfoFile,
-			channelsFile: this.channelsFile,
 			mqttEnabled: this.mqttEnabled
 		});
 
-		this.openwebif.on('connected', async (message) => {
-			this.log(`Device: ${this.host} ${this.name}, ${message}`);
+		this.openwebif.on('connected', async (devInfo, channels) => {
+			this.log(`Device: ${this.host} ${this.name}, Connected.`);
 
-			//save inputs to the file
 			try {
-				const inputs = JSON.stringify(this.inputs, null, 2);
-				const writeInputs = await fsPromises.writeFile(this.inputsFile, inputs);
-				const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, save inputs succesful, inputs: ${inputs}`) : false;
+				// Create pref directory if it doesn't exist
+				if (!fs.existsSync(this.prefDir)) {
+					await fsPromises.mkdir(this.prefDir);
+				}
+
+				// Create device info file if it doesn't exist
+				if (!fs.existsSync(this.devInfoFile)) {
+					await fsPromises.writeFile(this.devInfoFile, '');
+				}
+
+				// Create inputs file if it doesn't exist
+				if (!fs.existsSync(this.inputsFile)) {
+					await fsPromises.writeFile(this.inputsFile, '');
+				}
+
+				// Create inputs names file if it doesn't exist
+				if (!fs.existsSync(this.inputsNamesFile)) {
+					await fsPromises.writeFile(this.inputsNamesFile, '');
+				}
+
+				// Create inputs target visibility file if it doesn't exist
+				if (!fs.existsSync(this.inputsTargetVisibilityFile)) {
+					await fsPromises.writeFile(this.inputsTargetVisibilityFile, '');
+				}
+
+				// Create channels file if it doesn't exist
+				if (!fs.existsSync(this.channelsFile)) {
+					await fsPromises.writeFile(this.channelsFile, '');
+				}
+				await fsPromises.writeFile(this.devInfoFile, devInfo);
+				await fsPromises.writeFile(this.channelsFile, channels);
+
+				//save inputs to the file
+				try {
+					const inputs = JSON.stringify(this.inputs, null, 2);
+					const writeInputs = await fsPromises.writeFile(this.inputsFile, inputs);
+					const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, save inputs succesful, inputs: ${inputs}`) : false;
+				} catch (error) {
+					this.log.error(`Device: ${this.host} ${this.name}, save inputs error: ${error}`);
+				};
 			} catch (error) {
-				this.log.error(`Device: ${this.host} ${this.name}, save inputs error: ${error}`);
+				this.log.error(`Device: ${this.host} ${this.name}, ${this.zoneControl} create files, save devInfo or channels error: ${error}`);
 			};
 		})
 			.on('deviceInfo', (manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) => {

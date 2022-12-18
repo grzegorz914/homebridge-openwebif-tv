@@ -1,6 +1,4 @@
 'use strict';
-const fs = require('fs');
-const fsPromises = fs.promises;
 const axios = require('axios');
 const EventEmitter = require('events');
 const CONSTANS = require('./constans.json');
@@ -14,8 +12,6 @@ class OPENWEBIF extends EventEmitter {
         const pass = config.pass;
         const auth = config.auth;
         const debugLog = config.debugLog;
-        const devInfoFile = config.devInfoFile;
-        const channelsFile = config.channelsFile;
         const mqttEnabled = config.mqttEnabled;
 
         const url = `http://${host}:${port}`;
@@ -50,8 +46,8 @@ class OPENWEBIF extends EventEmitter {
                 try {
                     const deviceInfo = await this.axiosInstance(CONSTANS.ApiUrls.DeviceInfo);
                     const devInfo = deviceInfo.data;
+                    const devInfo1 = JSON.stringify(devInfo, null, 2);
                     const debug = debugLog ? this.emit('debug', `Info: ${JSON.stringify(devInfo, null, 2)}`) : false;
-                    const writeDevInfo = await fsPromises.writeFile(devInfoFile, JSON.stringify(devInfo, null, 2));
                     this.devInfo = devInfo;
 
                     const manufacturer = devInfo.brand || 'Unknown';
@@ -65,10 +61,9 @@ class OPENWEBIF extends EventEmitter {
                     const channelsInfo = await this.axiosInstance(CONSTANS.ApiUrls.GetAllServices);
                     const channels = JSON.stringify(channelsInfo.data, null, 2);
                     const debu1g = debugLog ? this.emit('debug', `Channels info: ${channels}`) : false;
-                    const writeChannels = await fsPromises.writeFile(channelsFile, channels);
 
                     if (mac != null && mac != undefined) {
-                        this.emit('connected', 'Connected.');
+                        this.emit('connected', devInfo1, channels);
                         this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
                         this.emit('firstRun');
                     } else {
