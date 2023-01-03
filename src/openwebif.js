@@ -62,14 +62,14 @@ class OPENWEBIF extends EventEmitter {
                     const channels = JSON.stringify(channelsInfo.data, null, 2);
                     const debu1g = debugLog ? this.emit('debug', `Channels info: ${channels}`) : false;
 
-                    if (mac != null && mac != undefined) {
-                        this.emit('connected', devInfo1, channels);
-                        this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
-                        this.emit('firstRun');
-                    } else {
+                    if (mac === null || mac === undefined) {
                         const debug = debugLog ? this.emit('debug', `Mac address unknown: ${mac}, reconnect in 15s.`) : false;
                         this.checkDeviceInfo();
+                        return;
                     }
+                    this.emit('connected', devInfo1, channels);
+                    this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
+                    this.emit('firstRun');
                 } catch (error) {
                     this.emit('error', `Info error: ${error}, reconnect in 15s.`);
                     this.checkDeviceInfo();
@@ -87,7 +87,7 @@ class OPENWEBIF extends EventEmitter {
                     const reference = devState.currservice_serviceref;
                     const volume = devState.volume;
                     const mute = power ? (devState.muted == true) : true;
-                    if (this.checkStateOnFirstRun || power != this.power || name != this.name || eventName != this.eventName || reference != this.reference || volume != this.volume || mute != this.mute) {
+                    if (this.checkStateOnFirstRun || power !== this.power || name !== this.name || eventName !== this.eventName || reference !== this.reference || volume !== this.volume || mute !== this.mute) {
                         this.power = power;
                         this.name = name;
                         this.eventName = eventName;
@@ -127,7 +127,6 @@ class OPENWEBIF extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             try {
                 const sendCommand = await this.axiosInstance(apiUrl);
-                this.emit('checkState');
                 resolve(true);
             } catch (error) {
                 this.emit('error', `Send command error: ${error}`);
