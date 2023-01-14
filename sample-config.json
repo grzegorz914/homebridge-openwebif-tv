@@ -28,6 +28,7 @@
           "sensorPower": false,
           "sensorVolume": false,
           "sensorMute": false,
+          "sensorChannel": false,
           "disableLogInfo": false,
           "disableLogDeviceInfo": false,
           "enableDebugMode": false,

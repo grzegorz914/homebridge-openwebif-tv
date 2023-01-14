@@ -481,24 +481,31 @@
               "required": false
             },
             "sensorPower": {
-              "title": "Power Sensor",
+              "title": "Power",
               "type": "boolean",
               "default": false,
               "description": "This expose Power as a Motion Sensor to use with automations.",
               "required": false
             },
             "sensorVolume": {
-              "title": "Volume Sensor",
+              "title": "Volume",
               "type": "boolean",
               "default": false,
               "description": "This expose Volume as a Motion Sensor to use with automations.",
               "required": false
             },
             "sensorMute": {
-              "title": "Mute Sensor",
+              "title": "Mute",
               "type": "boolean",
               "default": false,
               "description": "This expose Mute as a Motion Sensor to use with automations.",
+              "required": false
+            },
+            "sensorChannel": {
+              "title": "Channel",
+              "type": "boolean",
+              "default": false,
+              "description": "This expose Channel as a Motion Sensor to use with automations.",
               "required": false
             },
             "infoButtonCommand": {
@@ -752,6 +759,19 @@
         {
           "key": "devices[]",
           "type": "section",
+          "title": "Sensors",
+          "expandable": true,
+          "expanded": false,
+          "items": [
+            "devices[].sensorPower",
+            "devices[].sensorVolume",
+            "devices[].sensorMute",
+            "devices[].sensorChannel"
+          ]
+        },
+        {
+          "key": "devices[]",
+          "type": "section",
           "title": "Authorization",
           "expandable": true,
           "expanded": false,
@@ -773,9 +793,6 @@
             "devices[].enableDebugMode",
             "devices[].disableLogInfo",
             "devices[].disableLogDeviceInfo",
-            "devices[].sensorPower",
-            "devices[].sensorVolume",
-            "devices[].sensorMute",
             "devices[].infoButtonCommand",
             "devices[].volumeControl"
           ]

@@ -62,6 +62,7 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | `sensorPower`| If enabled, then the Power will be exposed as a `Motion Sensor` to use with automations. |
 | `sensorVolume`| If enabled, then the Volume will be exposed as a `Motion Sensor` to use with automations. |
 | `sensorMute`| If enabled, then the Mute will be exposed as a `Motion Sensor` to use with automations. |
+| `sensorChannel`| If enabled, then the Channel will be exposed as a `Motion Sensor` to use with automations. |
 | `volumeControl` | Here select volume control mode `None`, `Slider`, `Fan`. |
 | `infoButtonCommand` | Here select the function of `I` button in RC app. |
 | `inputs.name` | Here set *Channel Name* which You want expose to the *Homebridge/HomeKit*. |
@@ -99,6 +100,7 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
         "sensorPower": false,
         "sensorVolume": false,
         "sensorMute": false,
+        "sensorChannel": false,
         "disableLogInfo": false,
         "disableLogDeviceInfo": false,
         "enableDebugMode": false,

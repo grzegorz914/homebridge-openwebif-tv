@@ -68,8 +68,9 @@ class openwebIfTvDevice {
 		this.user = config.user || '';
 		this.pass = config.pass || '';
 		this.sensorPower = config.sensorPower || false;
-		this.sensorVolume = config.sensorVolume || false
-		this.sensorMute = config.sensorMute || false
+		this.sensorVolume = config.sensorVolume || false;
+		this.sensorMute = config.sensorMute || false;
+		this.sensorChannel = config.sensorChannel || false;
 		this.volumeControl = config.volumeControl || 0;
 		this.infoButtonCommand = config.infoButtonCommand || '139';
 		this.disableLogInfo = config.disableLogInfo || false;
@@ -116,6 +117,7 @@ class openwebIfTvDevice {
 		this.brightness = 0;
 
 		this.sensorVolumeState = false;
+		this.sensorChannelState = false;
 
 		this.prefDir = path.join(api.user.storagePath(), 'openwebifTv');
 		this.devInfoFile = `${this.prefDir}/devInfo_${this.host.split('.').join('')}`;
@@ -273,6 +275,13 @@ class openwebIfTvDevice {
 						.updateCharacteristic(Characteristic.MotionDetected, state)
 				}
 
+				if (this.sensorChannelService) {
+					const state = (this.inputIdentifier !== inputIdentifier) ? true : false;
+					this.sensorChannelService
+						.updateCharacteristic(Characteristic.MotionDetected, state)
+					this.sensorChannelState = state;
+				}
+
 				if (this.switchServices) {
 					const switchServicesCount = this.switchServices.length;
 					for (let i = 0; i < switchServicesCount; i++) {
@@ -316,7 +325,7 @@ class openwebIfTvDevice {
 	}
 
 	//prepare accessory
-	async prepareAccessory() {
+	prepareAccessory() {
 		this.log.debug('prepareAccessory');
 		const manufacturer = this.manufacturer;
 		const modelName = this.modelName;
@@ -643,6 +652,17 @@ class openwebIfTvDevice {
 					return state;
 				});
 			accessory.addService(this.sensorMuteService);
+		};
+
+		if (this.sensorChannel) {
+			this.log.debug('prepareSensorChannelService')
+			this.sensorChannelService = new Service.MotionSensor(`${accessoryName} Channel Sensor`, `Channel Sensor`);
+			this.sensorChannelService.getCharacteristic(Characteristic.MotionDetected)
+				.onGet(async () => {
+					const state = this.sensorChannelState;
+					return state;
+				});
+			accessory.addService(this.sensorChannelService);
 		};
 
 		//prepare inputs service
