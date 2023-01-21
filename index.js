@@ -96,13 +96,12 @@ class openwebIfTvDevice {
 		//setup variables
 		this.startPrepareAccessory = true;
 
-		this.inputsReference = new Array();
-		this.inputsName = new Array();
-		this.inputsType = new Array();
-		this.inputsMode = new Array();
-
-		this.switches = new Array();
-		this.switchsDisplayType = new Array();
+		this.inputsReference = [];
+		this.inputsName = [];
+		this.inputsType = [];
+		this.inputsMode = [];
+		this.switches = [];
+		this.switchsDisplayType = [];
 
 		this.power = false;
 		this.reference = '';
@@ -767,7 +766,7 @@ class openwebIfTvDevice {
 		const maxSwitchesCount = (availableSwitchsCount > 0) ? (availableSwitchsCount > switchsCount) ? switchsCount : availableSwitchsCount : 0;
 		if (maxSwitchesCount > 0) {
 			this.log.debug('prepareSwitchsService');
-			this.switchServices = new Array();
+			this.switchServices = [];
 			for (let i = 0; i < maxSwitchesCount; i++) {
 				//get switch
 				const inputSwitch = switches[i];
