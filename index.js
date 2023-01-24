@@ -749,7 +749,7 @@ class openwebIfTvDevice {
 			this.inputsType.push(inputType);
 			this.inputsMode.push(inputMode);
 			this.inputsSwitchsSensorsDisplayType.push(inputSwitchSensorDisplayType);
-			const pushInputSwitchIndex = inputSwitchSensorDisplayType === -1 ? false : this.inputsSwitchesSensors.push(i);
+			const pushInputSwitchIndex = inputSwitchSensorDisplayType >= 0 ? this.inputsSwitchesSensors.push(i) : false;
 
 			this.televisionService.addLinkedService(inputService);
 			accessory.addService(inputService);

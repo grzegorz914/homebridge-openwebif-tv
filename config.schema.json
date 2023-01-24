@@ -73,7 +73,6 @@
                   "displayType": {
                     "title": "Extra Tile",
                     "type": "integer",
-                    "default": -1,
                     "oneOf": [
                       {
                         "title": "None",
