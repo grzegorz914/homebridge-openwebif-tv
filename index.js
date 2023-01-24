@@ -262,7 +262,7 @@ class openwebIfTvDevice {
 				}
 
 				if (this.sensorVolumeService) {
-					const state = (this.volume !== volume) ? true : false;
+					const state = power ? (this.volume !== volume) : false;
 					this.sensorVolumeService
 						.updateCharacteristic(Characteristic.MotionDetected, state)
 					this.sensorVolumeState = state;
@@ -275,7 +275,7 @@ class openwebIfTvDevice {
 				}
 
 				if (this.sensorChannelService) {
-					const state = (this.inputIdentifier !== inputIdentifier) ? true : false;
+					const state = power ? (this.inputIdentifier !== inputIdentifier) : false;
 					this.sensorChannelService
 						.updateCharacteristic(Characteristic.MotionDetected, state)
 					this.sensorChannelState = state;
