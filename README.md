@@ -67,8 +67,7 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | `infoButtonCommand` | Here select the function of `I` button in RC app. |
 | `inputs.name` | Here set *Channel Name* which You want expose to the *Homebridge/HomeKit*. |
 | `inputs.reference` | Here set *Channel Reference*. All can be found in `homebridge_directory/openwebifTv/inputs_xxxx`. |
-| `inputs.switch` | If enabled, the tile for that *Chasnnel* will be expose to the *Homebridge/HomeKit* and can be used for HomeKit automation. |
-| `inputs.displayType` | Here select display type in HomeKit app, possible `Button`, `Switch`, `Motion Sensor`, `Occupancy Sensor`.|
+| `inputs.displayType` | Here select display type in HomeKit app, possible `None`, `Button`, `Switch`, `Motion Sensor`, `Occupancy Sensor`, `Contact Sensor`.|
 | `buttons.name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*.| 
 | `buttons.mode` | Here select button mode, `Live TV Channel` or `Remote Control`. |
 | `buttons.reference` | Here set *Reference*, only for `Live TV Channel` mode, in other case leave empty. | 
@@ -110,20 +109,17 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
           {
             "name": "Das Erste HD",
             "reference": "1:0:19:283D:3FB:1:C00000:0:0:0:",
-            "switch": false,
-					  "displayType": 0
+					  "displayType": -1
           },
           {
             "name": "ZDF HD",
             "reference": "1:0:19:2B66:3F3:1:C00000:0:0:0:",
-            "switch": false,
-					  "displayType": 0
+					  "displayType": -1
           },
           {
             "name": "RTL HD",
             "reference": "1:0:19:EF10:421:1:C00000:0:0:0:",
-            "switch": false,
-					  "displayType": 0
+					  "displayType": -1
           }
         ],
         "buttons": [

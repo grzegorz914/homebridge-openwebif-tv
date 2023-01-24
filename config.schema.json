@@ -70,16 +70,16 @@
                     "description": "Here set the reference.",
                     "required": true
                   },
-                  "switch": {
-                    "title": "Extra Input Tile",
-                    "type": "boolean",
-                    "description": "If enabled, the input tile will be added to the HomeKit app and can be used with automation.",
-                    "required": true
-                  },
                   "displayType": {
-                    "title": "Extra Input Tile Type",
+                    "title": "Extra Tile",
                     "type": "integer",
                     "oneOf": [
+                      {
+                        "title": "None",
+                        "enum": [
+                          -1
+                        ]
+                      },
                       {
                         "title": "Button",
                         "enum": [
@@ -103,9 +103,15 @@
                         "enum": [
                           3
                         ]
+                      },
+                      {
+                        "title": "Contact Sensor",
+                        "enum": [
+                          4
+                        ]
                       }
                     ],
-                    "description": "Here select the tile control or display type in HomeKit app.",
+                    "description": "Here select extra function/tile to be exposed in HomeKit app.",
                     "required": true
                   }
                 }
@@ -729,7 +735,6 @@
               "items": [
                 "devices[].inputs[].name",
                 "devices[].inputs[].reference",
-                "devices[].inputs[].switch",
                 "devices[].inputs[].displayType"
               ]
             }
