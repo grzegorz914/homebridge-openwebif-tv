@@ -759,23 +759,23 @@ class openwebIfTvDevice {
 		//check available switchs and possible switchs count (max 94)
 		const inputsSwitchesSensors = this.inputsSwitchesSensors;
 		const inputsSwitchesSensorsCount = inputsSwitchesSensors.length;
-		const availableSwitchsCount = 94 - maxInputsCount;
-		const maxInputsSwitchesSensorsCount = (availableSwitchsCount > 0) ? (availableSwitchsCount > inputsSwitchesSensorsCount) ? inputsSwitchesSensorsCount : availableSwitchsCount : 0;
+		const availableInputsSwitchesSensorsCount = 94 - maxInputsCount;
+		const maxInputsSwitchesSensorsCount = (availableInputsSwitchesSensorsCount > 0) ? (availableInputsSwitchesSensorsCount > inputsSwitchesSensorsCount) ? inputsSwitchesSensorsCount : availableInputsSwitchesSensorsCount : 0;
 		if (maxInputsSwitchesSensorsCount > 0) {
 			this.log.debug('prepareSwitchsService');
 			this.inputSwitchSensorServices = [];
 			for (let i = 0; i < maxInputsSwitchesSensorsCount; i++) {
 				//get switch
-				const inputSwitchSensor = inputsSwitchesSensors[i];
+				const index = inputsSwitchesSensors[i];
 
 				//get switch reference
-				const inputSwitchSensorReference = this.inputsReference[inputSwitchSensor];
+				const inputSwitchSensorReference = this.inputsReference[index];
 
 				//get switch name		
-				const inputSwitchSensorName = this.inputsName[inputSwitchSensor];
+				const inputSwitchSensorName = this.inputsName[index];
 
 				//get switch display type
-				const inputSwitchSensorDisplayType = this.inputsSwitchsSensorsDisplayType[inputSwitchSensor];
+				const inputSwitchSensorDisplayType = this.inputsSwitchsSensorsDisplayType[index];
 
 				const serviceType = [Service.Outlet, Service.Switch, Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][inputSwitchSensorDisplayType];
 				const characteristicType = [Characteristic.On, Characteristic.On, Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][inputSwitchSensorDisplayType];
