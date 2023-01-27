@@ -359,11 +359,11 @@ class openwebIfTvDevice {
 				return state;
 			})
 			.onSet(async (state) => {
-				const newState = state ? '4' : '5';
 				try {
+					const newState = state ? '4' : '5';
+
 					const setPower = (state !== this.power) ? await this.openwebif.send(CONSTANS.ApiUrls.SetPower + newState) : false;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Power state successful, state: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
-					this.power = state;
 				} catch (error) {
 					this.log.error('Device: %s %s, can not set new Power state. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
 				};
@@ -379,12 +379,12 @@ class openwebIfTvDevice {
 				return inputIdentifier;
 			})
 			.onSet(async (inputIdentifier) => {
-				const inputName = this.inputsName[inputIdentifier];
-				const inputReference = this.inputsReference[inputIdentifier];
 				try {
+					const inputName = this.inputsName[inputIdentifier];
+					const inputReference = this.inputsReference[inputIdentifier];
+
 					const setInput = await this.openwebif.send(CONSTANS.ApiUrls.SetChannel + inputReference);
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Channel successful, name: %s, reference: %s', this.host, accessoryName, inputName, inputReference);
-					this.inputIdentifier = inputIdentifier;
 				} catch (error) {
 					this.log.error('Device: %s %s, can not set Channel. Might be due to a wrong settings in config, error: %s.', this.host, accessoryName, error);
 				};
@@ -392,48 +392,49 @@ class openwebIfTvDevice {
 
 		this.televisionService.getCharacteristic(Characteristic.RemoteKey)
 			.onSet(async (command) => {
-				switch (command) {
-					case Characteristic.RemoteKey.REWIND:
-						command = '168';
-						break;
-					case Characteristic.RemoteKey.FAST_FORWARD:
-						command = '159';
-						break;
-					case Characteristic.RemoteKey.NEXT_TRACK:
-						command = '407';
-						break;
-					case Characteristic.RemoteKey.PREVIOUS_TRACK:
-						command = '412';
-						break;
-					case Characteristic.RemoteKey.ARROW_UP:
-						command = '103';
-						break;
-					case Characteristic.RemoteKey.ARROW_DOWN:
-						command = '108';
-						break;
-					case Characteristic.RemoteKey.ARROW_LEFT:
-						command = '105';
-						break;
-					case Characteristic.RemoteKey.ARROW_RIGHT:
-						command = '106';
-						break;
-					case Characteristic.RemoteKey.SELECT:
-						command = '352';
-						break;
-					case Characteristic.RemoteKey.BACK:
-						command = '174';
-						break;
-					case Characteristic.RemoteKey.EXIT:
-						command = '174';
-						break;
-					case Characteristic.RemoteKey.PLAY_PAUSE:
-						command = '164';
-						break;
-					case Characteristic.RemoteKey.INFORMATION:
-						command = this.infoButtonCommand;
-						break;
-				}
 				try {
+					switch (command) {
+						case Characteristic.RemoteKey.REWIND:
+							command = '168';
+							break;
+						case Characteristic.RemoteKey.FAST_FORWARD:
+							command = '159';
+							break;
+						case Characteristic.RemoteKey.NEXT_TRACK:
+							command = '407';
+							break;
+						case Characteristic.RemoteKey.PREVIOUS_TRACK:
+							command = '412';
+							break;
+						case Characteristic.RemoteKey.ARROW_UP:
+							command = '103';
+							break;
+						case Characteristic.RemoteKey.ARROW_DOWN:
+							command = '108';
+							break;
+						case Characteristic.RemoteKey.ARROW_LEFT:
+							command = '105';
+							break;
+						case Characteristic.RemoteKey.ARROW_RIGHT:
+							command = '106';
+							break;
+						case Characteristic.RemoteKey.SELECT:
+							command = '352';
+							break;
+						case Characteristic.RemoteKey.BACK:
+							command = '174';
+							break;
+						case Characteristic.RemoteKey.EXIT:
+							command = '174';
+							break;
+						case Characteristic.RemoteKey.PLAY_PAUSE:
+							command = '164';
+							break;
+						case Characteristic.RemoteKey.INFORMATION:
+							command = this.infoButtonCommand;
+							break;
+					}
+
 					const setCommand = (this.power) ? await this.openwebif.send(CONSTANS.ApiUrls.SetRcCommand + command) : false;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Remote Key successful, command: %s', this.host, accessoryName, command);
 				} catch (error) {
@@ -448,9 +449,9 @@ class openwebIfTvDevice {
 				return brightness;
 			})
 			.onSet(async (value) => {
-				const brightness = value;
-				const setBrightness = false
 				try {
+					const brightness = value;
+					const setBrightness = false
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Brightness successful, brightness: %s', this.host, accessoryName, value);
 				} catch (error) {
 					this.log.error('Device: %s %s, can not set Brightness. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
@@ -482,8 +483,8 @@ class openwebIfTvDevice {
 				return value;
 			})
 			.onSet(async (value) => {
-				const newMediaState = value;
 				try {
+					const newMediaState = value;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Media state successful, state: %s', this.host, accessoryName, ['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]);
 				} catch (error) {
 					this.log.error('Device: %s %s %s, set Media state error: %s', this.host, accessoryName, error);
@@ -492,16 +493,17 @@ class openwebIfTvDevice {
 
 		this.televisionService.getCharacteristic(Characteristic.PowerModeSelection)
 			.onSet(async (command) => {
-				switch (command) {
-					case Characteristic.PowerModeSelection.SHOW:
-						command = this.infoMenuState ? '174' : '139';
-						this.infoMenuState = !this.infoMenuState;
-						break;
-					case Characteristic.PowerModeSelection.HIDE:
-						command = '174';
-						break;
-				}
 				try {
+					switch (command) {
+						case Characteristic.PowerModeSelection.SHOW:
+							command = this.infoMenuState ? '174' : '139';
+							this.infoMenuState = !this.infoMenuState;
+							break;
+						case Characteristic.PowerModeSelection.HIDE:
+							command = '174';
+							break;
+					}
+
 					const setCommand = (this.power) ? await this.openwebif.send(CONSTANS.ApiUrls.SetRcCommand + command) : false;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Power Mode Selection successful, command: %s', this.host, accessoryName, command);
 				} catch (error) {
@@ -519,15 +521,16 @@ class openwebIfTvDevice {
 			.setCharacteristic(Characteristic.VolumeControlType, Characteristic.VolumeControlType.ABSOLUTE);
 		this.speakerService.getCharacteristic(Characteristic.VolumeSelector)
 			.onSet(async (command) => {
-				switch (command) {
-					case Characteristic.VolumeSelector.INCREMENT:
-						command = '115';
-						break;
-					case Characteristic.VolumeSelector.DECREMENT:
-						command = '114';
-						break;
-				}
 				try {
+					switch (command) {
+						case Characteristic.VolumeSelector.INCREMENT:
+							command = '115';
+							break;
+						case Characteristic.VolumeSelector.DECREMENT:
+							command = '114';
+							break;
+					}
+
 					const setCommand = (this.power) ? await this.openwebif.send(CONSTANS.ApiUrls.SetRcCommand + command) : false;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Volume Selector successful, command: %s', this.host, accessoryName, command);
 				} catch (error) {
@@ -542,13 +545,13 @@ class openwebIfTvDevice {
 				return volume;
 			})
 			.onSet(async (volume) => {
-				if (volume === 0 || volume === 100) {
-					volume = this.volume;
-				}
 				try {
+					if (volume === 0 || volume === 100) {
+						volume = this.volume;
+					}
+
 					const setVolume = await this.openwebif.send(CONSTANS.ApiUrls.SetVolume + volume);
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Volume level successful: %s', this.host, accessoryName, volume);
-					this.volume = volume;
 				} catch (error) {
 					this.log.error('Device: %s %s, can not set Volume level. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
 				};
@@ -564,7 +567,6 @@ class openwebIfTvDevice {
 				try {
 					const toggleMute = (this.power && state !== this.mute) ? await this.openwebif.send(CONSTANS.ApiUrls.ToggleMute) : false;
 					const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set Mute successful: %s', this.host, accessoryName, state ? 'ON' : 'OFF');
-					this.mute = state;
 				} catch (error) {
 					this.log.error('Device: %s %s, can not set Mute. Might be due to a wrong settings in config, error: %s', this.host, accessoryName, error);
 				};
@@ -718,10 +720,11 @@ class openwebIfTvDevice {
 			inputService
 				.getCharacteristic(Characteristic.ConfiguredName)
 				.onSet(async (name) => {
-					const nameIdentifier = (inputReference) ? inputReference : false;
-					savedInputsNames[nameIdentifier] = name;
-					const newCustomName = JSON.stringify(savedInputsNames, null, 2);
 					try {
+						const nameIdentifier = (inputReference) ? inputReference : false;
+						savedInputsNames[nameIdentifier] = name;
+						const newCustomName = JSON.stringify(savedInputsNames, null, 2);
+
 						const writeNewCustomName = nameIdentifier ? await fsPromises.writeFile(this.inputsNamesFile, newCustomName) : false;
 						const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, new Input name saved successful, name: %s reference: %s', this.host, accessoryName, newCustomName, inputReference);
 					} catch (error) {
@@ -732,10 +735,11 @@ class openwebIfTvDevice {
 			inputService
 				.getCharacteristic(Characteristic.TargetVisibilityState)
 				.onSet(async (state) => {
-					const targetVisibilityIdentifier = (inputReference) ? inputReference : false;
-					savedInputsTargetVisibility[targetVisibilityIdentifier] = state;
-					const newTargetVisibility = JSON.stringify(savedInputsTargetVisibility, null, 2);
 					try {
+						const targetVisibilityIdentifier = (inputReference) ? inputReference : false;
+						savedInputsTargetVisibility[targetVisibilityIdentifier] = state;
+						const newTargetVisibility = JSON.stringify(savedInputsTargetVisibility, null, 2);
+
 						const writeNewTargetVisibility = targetVisibilityIdentifier ? await fsPromises.writeFile(this.inputsTargetVisibilityFile, newTargetVisibility) : false;
 						const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, Input: %s, saved target visibility state: %s', this.host, accessoryName, inputName, state ? 'HIDEN' : 'SHOWN')
 						inputService.setCharacteristic(Characteristic.CurrentVisibilityState, state);
@@ -840,23 +844,22 @@ class openwebIfTvDevice {
 						return state;
 					})
 					.onSet(async (state) => {
-						let url = '';
-						switch (buttonMode) {
-							case 0:
-								url = CONSTANS.ApiUrls.SetChannel + buttonReference;
-								break;
-							case 1:
-								url = CONSTANS.ApiUrls.SetRcCommand + buttonCommand;
-								break;
-						};
-
 						try {
+							let url = '';
+							switch (buttonMode) {
+								case 0:
+									url = CONSTANS.ApiUrls.SetChannel + buttonReference;
+									break;
+								case 1:
+									url = CONSTANS.ApiUrls.SetRcCommand + buttonCommand;
+									break;
+							};
+
 							const send = (state && this.power) ? await this.openwebif.send(url) : false;
 							const logInfo = this.disableLogInfo ? false : this.log('Device: %s %s, set %s successful, name: %s, reference: %s', this.host, accessoryName, ['Channel', 'Command'][buttonMode], buttonName, [buttonReference, buttonCommand][buttonMode]);
 
-							setTimeout(() => {
-								const setChar = (state && this.power && buttonMode === 1) ? buttonService.updateCharacteristic(Characteristic.On, false) : false;
-							}, 300)
+							await new Promise(resolve => setTimeout(resolve, 300));
+							const setChar = (state && this.power && buttonMode === 1) ? buttonService.updateCharacteristic(Characteristic.On, false) : false;
 						} catch (error) {
 							this.log.error('Device: %s %s, set %s error: %s', this.host, accessoryName, ['Channel', 'Command'][buttonMode], error);
 						};
