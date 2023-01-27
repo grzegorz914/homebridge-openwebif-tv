@@ -233,7 +233,7 @@ class openwebIfTvDevice {
 				this.mac = mac;
 			})
 			.on('stateChanged', (power, name, eventName, reference, volume, mute) => {
-				const inputIdentifier = (this.inputsReference.indexOf(reference) >= 0) ? this.inputsReference.indexOf(reference) : this.inputIdentifier;
+				const inputIdentifier = this.inputsReference.includes(reference) ? this.inputsReference.findIndex(index => index === reference) : this.inputIdentifier;
 
 				if (this.televisionService) {
 					this.televisionService
