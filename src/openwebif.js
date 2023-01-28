@@ -39,30 +39,29 @@ class OPENWEBIF extends EventEmitter {
             try {
                 const deviceInfo = await this.axiosInstance(CONSTANS.ApiUrls.DeviceInfo);
                 const devInfo = deviceInfo.data;
-                const devInfo1 = JSON.stringify(devInfo, null, 2);
                 const debug = debugLog ? this.emit('debug', `Info: ${JSON.stringify(devInfo, null, 2)}`) : false;
                 this.devInfo = devInfo;
 
-                const manufacturer = devInfo.brand || 'Unknown';
-                const modelName = devInfo.model || 'Unknown';
-                const serialNumber = devInfo.webifver || 'Unknown';
-                const firmwareRevision = devInfo.imagever || 'Unknown';
-                const kernelVer = devInfo.kernelver || 'Unknown';
-                const chipset = devInfo.chipset || 'Unknown';
-                const mac = devInfo.ifaces[0].mac;
-
                 const channelsInfo = await this.axiosInstance(CONSTANS.ApiUrls.GetAllServices);
-                const channels = JSON.stringify(channelsInfo.data, null, 2);
-                const debu1g = debugLog ? this.emit('debug', `Channels info: ${channels}`) : false;
+                const channels = channelsInfo.data;
+                const debu1g = debugLog ? this.emit('debug', `Channels info: ${JSON.stringify(devInfo, null, 2)}`) : false;
 
-                if (mac === null || mac === undefined) {
-                    const debug = debugLog ? this.emit('debug', `Mac address unknown: ${mac}, reconnect in 15s.`) : false;
+                const manufacturer = devInfo.brand || 'undefined';
+                const modelName = devInfo.model || 'undefined';
+                const serialNumber = devInfo.webifver || 'undefined';
+                const firmwareRevision = devInfo.imagever || 'undefined';
+                const kernelVer = devInfo.kernelver || 'undefined';
+                const chipset = devInfo.chipset || 'undefined';
+                const mac = devInfo.ifaces[0].mac || false;
+
+                if (!mac) {
+                    const debug = debugLog ? this.emit('debug', `Mac address: ${mac}, reconnect in 15s.`) : false;
                     this.checkDeviceInfo();
                     return;
                 }
 
                 this.checkStateOnFirstRun = true;
-                this.emit('connected', devInfo1, channels);
+                this.emit('connected', devInfo, channels);
                 this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
                 this.emit('checkState');
             } catch (error) {
