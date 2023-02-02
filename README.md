@@ -77,9 +77,10 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |
 | `disableLogDeviceInfo` | If enabled, add ability to disable log device info by every connections device to the network. |
 | `enableMqtt` | If enabled, MQTT Broker will start automatically and publish all awailable PV installation data. |
+| `refreshInterval` | Here set the data refresh interval. |
 | `mqttHost` | Here set the *IP Address* or *Hostname* for MQTT Broker.) |
-| `mqttPort` | Here set the *Port* for MQTT Broker, default 1883.) |
-| `mqttPrefix` | Here set the *Prefix* for *Topic* or leave empty.) |
+| `mqttPort` | Here set the *Port* for MQTT Broker, default 1883. |
+| `mqttPrefix` | Here set the *Prefix* for *Topic* or leave empty. |
 | `mqttAuth` | If enabled, MQTT Broker will use authorization credentials. |
 | `mqttUser` | Here set the MQTT Broker user. |
 | `mqttPasswd` | Here set the MQTT Broker password. |
@@ -142,6 +143,7 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 						"displayType": 0
           }
         ],
+        "refreshInterval": 5,
         "enableMqtt": false,
         "mqttHost": "192.168.1.33",
         "mqttPort": 1883,

@@ -13,6 +13,7 @@ class OPENWEBIF extends EventEmitter {
         const auth = config.auth;
         const debugLog = config.debugLog;
         const mqttEnabled = config.mqttEnabled;
+        this.refreshInterval = config.refreshInterval;
 
         const url = `http://${host}:${port}`;
         this.axiosInstance = axios.create({
@@ -82,18 +83,14 @@ class OPENWEBIF extends EventEmitter {
                     const volume = devState.volume;
                     const mute = power ? (devState.muted == true) : true;
 
-                    if (!this.checkStateOnFirstRun && power === this.power && name === this.name && eventName === this.eventName && reference === this.reference && volume === this.volume && mute === this.mute) {
-                        this.checkState();
-                        return;
-                    };
-
+                    this.checkStateOnFirstRun = false;
                     this.power = power;
                     this.name = name;
                     this.eventName = eventName;
                     this.reference = reference;
                     this.volume = volume;
                     this.mute = mute;
-                    this.checkStateOnFirstRun = false;
+
                     this.emit('stateChanged', power, name, eventName, reference, volume, mute);
                     const mqtt = mqttEnabled ? this.emit('mqtt', 'Info', JSON.stringify(this.devInfo, null, 2)) : false;
                     const mqtt1 = mqttEnabled ? this.emit('mqtt', 'State', JSON.stringify(devState, null, 2)) : false;
@@ -118,14 +115,14 @@ class OPENWEBIF extends EventEmitter {
     };
 
     async checkState() {
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        await new Promise(resolve => setTimeout(resolve, this.refreshInterval * 1000));
         this.emit('checkState');
     };
 
     send(apiUrl) {
         return new Promise(async (resolve, reject) => {
             try {
-                const sendCommand = await this.axiosInstance(apiUrl);
+                await this.axiosInstance(apiUrl);
                 resolve(true);
             } catch (error) {
                 this.emit('error', `Send command error: ${error}`);
