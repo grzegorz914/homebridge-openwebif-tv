@@ -240,7 +240,7 @@ class openwebIfTvDevice {
 				this.firmwareRevision = firmwareRevision;
 				this.mac = mac;
 			})
-			.on('stateChanged', async (power, name, eventName, reference, volume, mute) => {
+			.on('stateChanged', (power, name, eventName, reference, volume, mute) => {
 				const inputIdentifier = this.inputsReference.includes(reference) ? this.inputsReference.findIndex(index => index === reference) : this.inputIdentifier;
 
 				if (this.televisionService) {
@@ -312,15 +312,6 @@ class openwebIfTvDevice {
 
 				//start prepare accessory
 				if (this.startPrepareAccessory) {
-					this.savedInputs = await fsPromises.readFile(this.inputsFile).length > 0 ? JSON.parse(await fsPromises.readFile(this.inputsFile)) : this.inputs;
-					const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, read saved Inputs successful, inpits: ${JSON.stringify(this.savedInputs, null, 2)}`) : false;
-
-					this.savedInputsNames = await fsPromises.readFile(this.inputsNamesFile).length > 0 ? JSON.parse(await fsPromises.readFile(this.inputsNamesFile)) : {};
-					const debug1 = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, read savedInputsNames: ${JSON.stringify(this.savedInputsNames, null, 2)}`) : false;
-
-					this.savedInputsTargetVisibility = await fsPromises.readFile(this.inputsTargetVisibilityFile).length > 0 ? JSON.parse(await fsPromises.readFile(this.inputsTargetVisibilityFile)) : {};
-					const debug2 = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, read savedTargetVisibility: ${JSON.stringify(this.savedInputsTargetVisibility, null, 2)}`) : false;
-
 					this.prepareAccessory();
 				};
 			})
@@ -684,9 +675,14 @@ class openwebIfTvDevice {
 
 		//prepare inputs service
 		this.log.debug('prepareInputsService');
-		const savedInputs = this.savedInputs;
-		const savedInputsNames = this.savedInputsNames;
-		const savedInputsTargetVisibility = this.savedInputsTargetVisibility;
+		const savedInputs = fs.readFileSync(this.inputsFile).length > 0 ? JSON.parse(fs.readFileSync(this.inputsFile)) : this.inputs;
+		const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, read saved Inputs successful, inpits: ${JSON.stringify(savedInputs, null, 2)}`) : false;
+
+		const savedInputsNames = fs.readFileSync(this.inputsNamesFile).length > 0 ? JSON.parse(fs.readFileSync(this.inputsNamesFile)) : {};
+		const debug1 = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, read savedInputsNames: ${JSON.stringify(savedInputsNames, null, 2)}`) : false;
+
+		const savedInputsTargetVisibility = fs.readFileSync(this.inputsTargetVisibilityFile).length > 0 ? JSON.parse(fs.readFileSync(this.inputsTargetVisibilityFile)) : {};
+		const debug2 = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, read savedTargetVisibility: ${JSON.stringify(savedInputsTargetVisibility, null, 2)}`) : false;
 
 		//check available inputs and possible inputs count (max 80)
 		const inputs = savedInputs;
