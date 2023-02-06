@@ -125,33 +125,34 @@ class openwebIfTvDevice {
 		this.channelsFile = `${this.prefDir}/channels_${this.host.split('.').join('')}`;
 
 		//mqtt client
-		this.mqtt = new Mqtt({
-			enabled: this.mqttEnabled,
-			host: this.mqttHost,
-			port: this.mqttPort,
-			prefix: this.mqttPrefix,
-			topic: this.name,
-			auth: this.mqttAuth,
-			user: this.mqttUser,
-			passwd: this.mqttPasswd,
-			debug: this.mqttDebug
-		});
-
-		this.mqtt.on('connected', (message) => {
-			this.log(`Device: ${this.host} ${this.name}, ${message}`);
-		})
-			.on('error', (error) => {
-				this.log.error(`Device: ${this.host} ${this.name}, ${error}`);
-			})
-			.on('debug', (message) => {
-				this.log(`Device: ${this.host} ${this.name}, debug: ${message}`);
-			})
-			.on('message', (message) => {
-				this.log(`Device: ${this.host} ${this.name}, ${message}`);
-			})
-			.on('disconnected', (message) => {
-				this.log(`Device: ${this.host} ${this.name}, ${message}`);
+		if (this.mqttEnabled) {
+			this.mqtt = new Mqtt({
+				host: this.mqttHost,
+				port: this.mqttPort,
+				prefix: this.mqttPrefix,
+				topic: this.name,
+				auth: this.mqttAuth,
+				user: this.mqttUser,
+				passwd: this.mqttPasswd,
+				debug: this.mqttDebug
 			});
+
+			this.mqtt.on('connected', (message) => {
+				this.log(`Device: ${this.host} ${this.name}, ${message}`);
+			})
+				.on('error', (error) => {
+					this.log.error(`Device: ${this.host} ${this.name}, ${error}`);
+				})
+				.on('debug', (message) => {
+					this.log(`Device: ${this.host} ${this.name}, debug: ${message}`);
+				})
+				.on('message', (message) => {
+					this.log(`Device: ${this.host} ${this.name}, ${message}`);
+				})
+				.on('disconnected', (message) => {
+					this.log(`Device: ${this.host} ${this.name}, ${message}`);
+				});
+		};
 
 		//openwebif client
 		this.openwebif = new OpenWebIf({
