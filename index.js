@@ -71,6 +71,7 @@ class openwebIfTvDevice {
 		this.sensorVolume = config.sensorVolume || false;
 		this.sensorMute = config.sensorMute || false;
 		this.sensorChannel = config.sensorChannel || false;
+		this.sensorInputs = config.sensorInputs || [];
 		this.volumeControl = config.volumeControl || 0;
 		this.infoButtonCommand = config.infoButtonCommand || '139';
 		this.disableLogInfo = config.disableLogInfo || false;
@@ -779,13 +780,13 @@ class openwebIfTvDevice {
 		}
 
 		//prepare inputs switch sensor service
+		this.inputSwitchButtonServices = [];
 		const inputsSwitchesButtons = this.inputsSwitchesButtons;
 		const inputsSwitchesButtonsCount = inputsSwitchesButtons.length;
 		const availableInputsSwitchesButtonsCount = 80 - this.inputsReference.length;
 		const maxInputsSwitchesButtonsCount = (availableInputsSwitchesButtonsCount > 0) ? (availableInputsSwitchesButtonsCount > inputsSwitchesButtonsCount) ? inputsSwitchesButtonsCount : availableInputsSwitchesButtonsCount : 0;
 		if (maxInputsSwitchesButtonsCount > 0) {
 			this.log.debug('prepareSwitchsService');
-			this.inputSwitchButtonServices = [];
 			for (let i = 0; i < maxInputsSwitchesButtonsCount; i++) {
 				//get switch
 				const index = inputsSwitchesButtons[i];
@@ -822,13 +823,13 @@ class openwebIfTvDevice {
 		}
 
 		//prepare sonsor service
+		this.sensorInputsServices = [];
 		const sensorInputs = this.sensorInputs;
 		const sensorInputsCount = sensorInputs.length;
 		const availableSensorInputsCount = 80 - (this.inputsReference.length + this.inputSwitchButtonServices.length);
 		const maxSensorInputsCount = (availableSensorInputsCount > 0) ? (availableSensorInputsCount > sensorInputsCount) ? sensorInputsCount : availableSensorInputsCount : 0;
 		if (maxSensorInputsCount > 0) {
 			this.log.debug('prepareSensorInputsServices');
-			this.sensorInputsServices = [];
 			for (let i = 0; i < maxSensorInputsCount; i++) {
 				//get sensor
 				const sensorInput = sensorInputs[i];
