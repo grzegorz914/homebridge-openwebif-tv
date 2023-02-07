@@ -102,8 +102,10 @@ class openwebIfTvDevice {
 		this.inputsType = [];
 		this.inputsMode = [];
 		this.inputsDisplayType = [];
+		this.inputsSwitchesButtons = [];
 
-		this.inputsSwitchesSensors = [];
+		this.sensorInputsReference = [];
+		this.sensorInputsDisplayType = [];
 
 		this.power = false;
 		this.reference = '';
@@ -115,7 +117,7 @@ class openwebIfTvDevice {
 		this.channelEventName = '';
 		this.brightness = 0;
 		this.sensorVolumeState = false;
-		this.sensorChannelState = false;
+		this.sensorInputState = false;
 
 		this.prefDir = path.join(api.user.storagePath(), 'openwebifTv');
 		this.devInfoFile = `${this.prefDir}/devInfo_${this.host.split('.').join('')}`;
@@ -283,21 +285,32 @@ class openwebIfTvDevice {
 						.updateCharacteristic(Characteristic.MotionDetected, state)
 				}
 
-				if (this.sensorChannelService) {
+				if (this.sensorInputService) {
 					const state = power ? (this.inputIdentifier !== inputIdentifier) : false;
-					this.sensorChannelService
+					this.sensorInputService
 						.updateCharacteristic(Characteristic.MotionDetected, state)
-					this.sensorChannelState = state;
+					this.sensorInputState = state;
 				}
 
-				if (this.inputSwitchSensorServices) {
-					const switchServicesCount = this.inputSwitchSensorServices.length;
+				if (this.inputSwitchButtonServices) {
+					const switchServicesCount = this.inputSwitchButtonServices.length;
 					for (let i = 0; i < switchServicesCount; i++) {
-						const index = this.inputsSwitchesSensors[i];
+						const index = this.inputsSwitchesButtons[i];
 						const state = power ? (this.inputsReference[index] === reference) : false;
 						const displayType = this.inputsDisplayType[index];
-						const characteristicType = [Characteristic.On, Characteristic.On, Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][displayType];
-						this.inputSwitchSensorServices[i]
+						const characteristicType = [Characteristic.On, Characteristic.On][displayType];
+						this.inputSwitchButtonServices[i]
+							.updateCharacteristic(characteristicType, state);
+					}
+				}
+
+				if (this.sensorInputsServices) {
+					const servicesCount = this.sensorInputsServices.length;
+					for (let i = 0; i < servicesCount; i++) {
+						const state = this.power ? (this.sensorInputsReference[i] === reference) : false;
+						const displayType = this.sensorInputsDisplayType[i];
+						const characteristicType = [Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][displayType];
+						this.sensorInputsServices[i]
 							.updateCharacteristic(characteristicType, state);
 					}
 				}
@@ -662,15 +675,15 @@ class openwebIfTvDevice {
 			accessory.addService(this.sensorMuteService);
 		};
 
-		if (this.sensorChannel) {
-			this.log.debug('prepareSensorChannelService')
-			this.sensorChannelService = new Service.MotionSensor(`${accessoryName} Channel Sensor`, `Channel Sensor`);
-			this.sensorChannelService.getCharacteristic(Characteristic.MotionDetected)
+		if (this.sensorInput) {
+			this.log.debug('prepareSensorInputService')
+			this.sensorInputService = new Service.MotionSensor(`${accessoryName} Input Sensor`, `Input Sensor`);
+			this.sensorInputService.getCharacteristic(Characteristic.MotionDetected)
 				.onGet(async () => {
-					const state = this.sensorChannelState;
+					const state = this.sensorInputState;
 					return state;
 				});
-			accessory.addService(this.sensorChannelService);
+			accessory.addService(this.sensorInputService);
 		};
 
 		//prepare inputs service
@@ -747,7 +760,7 @@ class openwebIfTvDevice {
 						const newTargetVisibility = JSON.stringify(savedInputsTargetVisibility, null, 2);
 
 						const writeNewTargetVisibility = targetVisibilityIdentifier ? await fsPromises.writeFile(this.inputsTargetVisibilityFile, newTargetVisibility) : false;
-						const logInfo = this.disableLogInfo ? false : this.log(`Device: ${this.host} ${accessoryName}, Input: ${inputName}, saved target visibility state: state: ${state ? 'HIDEN' : 'SHOWN'}`);
+						const logInfo = this.disableLogInfo ? false : this.log(`Device: ${this.host} ${accessoryName}, Input: ${inputName}, saved target visibility state: ${state ? 'HIDEN' : 'SHOWN'}`);
 						inputService.setCharacteristic(Characteristic.CurrentVisibilityState, state);
 					} catch (error) {
 						this.log.error(`Device: ${this.host} ${accessoryName}, saved target visibility state error: ${error}`);
@@ -759,23 +772,23 @@ class openwebIfTvDevice {
 			this.inputsType.push(inputType);
 			this.inputsMode.push(inputMode);
 			this.inputsDisplayType.push(inputDisplayType);
-			const pushInputSwitchIndex = inputDisplayType >= 0 ? this.inputsSwitchesSensors.push(i) : false;
+			const pushInputSwitchIndex = inputDisplayType >= 0 ? this.inputsSwitchesButtons.push(i) : false;
 
 			this.televisionService.addLinkedService(inputService);
 			accessory.addService(inputService);
 		}
 
 		//prepare inputs switch sensor service
-		const inputsSwitchesSensors = this.inputsSwitchesSensors;
-		const inputsSwitchesSensorsCount = inputsSwitchesSensors.length;
-		const availableInputsSwitchesSensorsCount = 80 - maxInputsCount;
-		const maxInputsSwitchesSensorsCount = (availableInputsSwitchesSensorsCount > 0) ? (availableInputsSwitchesSensorsCount > inputsSwitchesSensorsCount) ? inputsSwitchesSensorsCount : availableInputsSwitchesSensorsCount : 0;
-		if (maxInputsSwitchesSensorsCount > 0) {
+		const inputsSwitchesButtons = this.inputsSwitchesButtons;
+		const inputsSwitchesButtonsCount = inputsSwitchesButtons.length;
+		const availableInputsSwitchesButtonsCount = 80 - this.inputsReference.length;
+		const maxInputsSwitchesButtonsCount = (availableInputsSwitchesButtonsCount > 0) ? (availableInputsSwitchesButtonsCount > inputsSwitchesButtonsCount) ? inputsSwitchesButtonsCount : availableInputsSwitchesButtonsCount : 0;
+		if (maxInputsSwitchesButtonsCount > 0) {
 			this.log.debug('prepareSwitchsService');
-			this.inputSwitchSensorServices = [];
-			for (let i = 0; i < maxInputsSwitchesSensorsCount; i++) {
+			this.inputSwitchButtonServices = [];
+			for (let i = 0; i < maxInputsSwitchesButtonsCount; i++) {
 				//get switch
-				const index = inputsSwitchesSensors[i];
+				const index = inputsSwitchesButtons[i];
 
 				//get switch reference
 				const inputReference = this.inputsReference[index];
@@ -786,92 +799,130 @@ class openwebIfTvDevice {
 				//get switch display type
 				const inputDisplayType = this.inputsDisplayType[index];
 
-				const serviceType = [Service.Outlet, Service.Switch, Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][inputDisplayType];
-				const characteristicType = [Characteristic.On, Characteristic.On, Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][inputDisplayType];
-				const inputSwitchSensorService = new serviceType(`${accessoryName} ${inputName}`, `Sensor ${i}`);
-				inputSwitchSensorService.getCharacteristic(characteristicType)
+				const serviceType = [Service.Outlet, Service.Switch][inputDisplayType];
+				const characteristicType = [Characteristic.On, Characteristic.On][inputDisplayType];
+				const inputSwitchButtonService = new serviceType(`${accessoryName} ${inputName}`, `Switch ${i}`);
+				inputSwitchButtonService.getCharacteristic(characteristicType)
 					.onGet(async () => {
 						const state = this.power ? (inputReference === this.reference) : false;
 						return state;
 					})
 					.onSet(async (state) => {
-						if (inputDisplayType <= 1) {
-							try {
-								const setSwitchInput = (state && this.power) ? await this.openwebif.send(CONSTANS.ApiUrls.SetChannel + inputReference) : false;
-								const logInfo = this.disableLogInfo ? false : this.log(`Device: ${this.host} ${accessoryName}, set new Channel successful, name: ${name}, reference: ${inputReference}`);
-							} catch (error) {
-								this.log.error(`Device: ${this.host} ${accessoryName}, can not set new Channel. Might be due to a wrong settings in config, error: ${error}`);
-							};
+						try {
+							const setSwitchInput = (state && this.power) ? await this.openwebif.send(CONSTANS.ApiUrls.SetChannel + inputReference) : false;
+							const logInfo = this.disableLogInfo ? false : this.log(`Device: ${this.host} ${accessoryName}, set new Channel successful, name: ${inputName}, reference: ${inputReference}`);
+						} catch (error) {
+							this.log.error(`Device: ${this.host} ${accessoryName}, can not set new Channel. Might be due to a wrong settings in config, error: ${error}`);
 						};
 					});
 
-				this.inputSwitchSensorServices.push(inputSwitchSensorService);
-				accessory.addService(this.inputSwitchSensorServices[i]);
+				this.inputSwitchButtonServices.push(inputSwitchButtonService);
+				accessory.addService(this.inputSwitchButtonServices[i]);
+			}
+		}
+
+		//prepare sonsor service
+		const sensorInputs = this.sensorInputs;
+		const sensorInputsCount = sensorInputs.length;
+		const availableSensorInputsCount = 80 - (this.inputsReference.length + this.inputSwitchButtonServices.length);
+		const maxSensorInputsCount = (availableSensorInputsCount > 0) ? (availableSensorInputsCount > sensorInputsCount) ? sensorInputsCount : availableSensorInputsCount : 0;
+		if (maxSensorInputsCount > 0) {
+			this.log.debug('prepareSensorInputsServices');
+			this.sensorInputsServices = [];
+			for (let i = 0; i < maxSensorInputsCount; i++) {
+				//get sensor
+				const sensorInput = sensorInputs[i];
+
+				//get sensor name		
+				const sensorInputName = sensorInput.name || 'Not set in config';
+
+				//get sensor reference
+				const sensorInputReference = sensorInput.reference || 'Not set in config';
+
+				//get sensor display type
+				const sensorInputDisplayType = sensorInput.displayType || -1;
+
+				if (sensorInputDisplayType >= 0) {
+					const serviceType = [Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][sensorInputDisplayType];
+					const characteristicType = [Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][sensorInputDisplayType];
+					const sensorInputsService = new serviceType(`${accessoryName} ${sensorInputName}`, `Sensor ${sensorInputName}`);
+					sensorInputsService.getCharacteristic(characteristicType)
+						.onGet(async () => {
+							const state = this.power ? (sensorInputReference === this.reference) : false;
+							return state;
+						});
+
+					this.sensorInputsReference.push(sensorInputReference);
+					this.sensorInputsDisplayType.push(sensorInputDisplayType);
+					this.sensorInputsServices.push(sensorInputsService);
+					accessory.addService(this.sensorInputsServices[i]);
+				}
 			}
 		}
 
 		//prepare buttons service
 		const buttons = this.buttons;
 		const buttonsCount = buttons.length;
-		const availableButtonsCount = 80 - (maxInputsCount + maxInputsSwitchesSensorsCount);
+		const availableButtonsCount = 80 - (this.inputsReference.length + this.inputSwitchButtonServices.length + this.sensorInputsServices.length);
 		const maxButtonsCount = (availableButtonsCount > 0) ? (availableButtonsCount > buttonsCount) ? buttonsCount : availableButtonsCount : 0;
 		if (maxButtonsCount > 0) {
 			this.log.debug('prepareButtonsService');
 			for (const button of buttons) {
-				//get button mode
-				const buttonMode = button.mode;
+				//get button name
+				const buttonName = button.name || 'Not set in config'
 
 				//get button reference
-				const buttonReference = button.reference;
+				const buttonReference = button.reference || 'Not set in config'
+
+				//get button mode
+				const buttonMode = button.mode || 'Not set in config'
 
 				//get button command
-				const buttonCommand = button.command;
-
-				//get button name
-				const buttonName = (button.name) ? button.name : [buttonReference, buttonCommand][buttonMode];
+				const buttonCommand = button.command || 'Not set in config'
 
 				//get button display type
-				const buttonDisplayType = (button.displayType) ? button.displayType : 0;
+				const buttonDisplayType = button.displayType || -1;
 
-				const serviceType = [Service.Outlet, Service.Switch][buttonDisplayType];
-				const buttonService = new serviceType(`${accessoryName} ${buttonName}`, `Button ${buttonName}`);
-				buttonService.getCharacteristic(Characteristic.On)
-					.onGet(async () => {
-						let state = false;
-						switch (buttonMode) {
-							case 0:
-								state = this.power ? (buttonReference === this.reference) : false;
-								break;
-							case 1:
-								state = false;
-								break;
-						};
-						return state;
-					})
-					.onSet(async (state) => {
-						try {
-							let url = '';
+				if (buttonDisplayType >= 0) {
+					const serviceType = [Service.Outlet, Service.Switch][buttonDisplayType];
+					const buttonService = new serviceType(`${accessoryName} ${buttonName}`, `Button ${buttonName}`);
+					buttonService.getCharacteristic(Characteristic.On)
+						.onGet(async () => {
+							let state = false;
 							switch (buttonMode) {
 								case 0:
-									url = CONSTANS.ApiUrls.SetChannel + buttonReference;
+									state = this.power ? (buttonReference === this.reference) : false;
 									break;
 								case 1:
-									url = CONSTANS.ApiUrls.SetRcCommand + buttonCommand;
+									state = false;
 									break;
 							};
+							return state;
+						})
+						.onSet(async (state) => {
+							try {
+								let url = '';
+								switch (buttonMode) {
+									case 0:
+										url = CONSTANS.ApiUrls.SetChannel + buttonReference;
+										break;
+									case 1:
+										url = CONSTANS.ApiUrls.SetRcCommand + buttonCommand;
+										break;
+								};
 
-							const send = (state && this.power) ? await this.openwebif.send(url) : false;
-							const logInfo = this.disableLogInfo ? false : this.log(`Device: ${this.host} ${accessoryName}, set ${['Channel', 'Command'][buttonMode]} successful, name: ${buttonName}, reference: ${[buttonReference, buttonCommand][buttonMode]}`);
+								const send = (state && this.power) ? await this.openwebif.send(url) : false;
+								const logInfo = this.disableLogInfo ? false : this.log(`Device: ${this.host} ${accessoryName}, set ${['Channel', 'Command'][buttonMode]} successful, name: ${buttonName}, reference: ${[buttonReference, buttonCommand][buttonMode]}`);
 
-							await new Promise(resolve => setTimeout(resolve, 300));
-							const setChar = (state && this.power && buttonMode === 1) ? buttonService.updateCharacteristic(Characteristic.On, false) : false;
-						} catch (error) {
-							this.log.error(`Device: ${this.host} ${accessoryName}, set ${['Channel', 'Command'][buttonMode]} error: ${error}`);
-						};
-					});
-
-				accessory.addService(buttonService);
-			}
+								await new Promise(resolve => setTimeout(resolve, 300));
+								const setChar = (state && this.power && buttonMode === 1) ? buttonService.updateCharacteristic(Characteristic.On, false) : false;
+							} catch (error) {
+								this.log.error(`Device: ${this.host} ${accessoryName}, set ${['Channel', 'Command'][buttonMode]} error: ${error}`);
+							};
+						});
+					accessory.addService(buttonService);
+				}
+			};
 		}
 
 		this.api.publishExternalAccessories(PLUGIN_NAME, [accessory]);

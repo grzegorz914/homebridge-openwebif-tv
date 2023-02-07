@@ -42,13 +42,19 @@
               "title": "User",
               "type": "string",
               "placeholder": "User",
-              "required": false
+              "required": false,
+              "condition": {
+                "functionBody": "return model.devices[arrayIndices].auth === true;"
+              }
             },
             "pass": {
               "title": "Password",
               "type": "string",
               "placeholder": "Password",
-              "required": false
+              "required": false,
+              "condition": {
+                "functionBody": "return model.devices[arrayIndices].auth === true;"
+              }
             },
             "inputs": {
               "title": "Input",
@@ -90,24 +96,6 @@
                         "title": "Switch",
                         "enum": [
                           1
-                        ]
-                      },
-                      {
-                        "title": "Motion Sensor",
-                        "enum": [
-                          2
-                        ]
-                      },
-                      {
-                        "title": "Occupancy Sensor",
-                        "enum": [
-                          3
-                        ]
-                      },
-                      {
-                        "title": "Contact Sensor",
-                        "enum": [
-                          4
                         ]
                       }
                     ],
@@ -447,6 +435,12 @@
                     "type": "integer",
                     "oneOf": [
                       {
+                        "title": "None",
+                        "enum": [
+                          -1
+                        ]
+                      },
+                      {
                         "title": "Button",
                         "enum": [
                           0
@@ -464,27 +458,6 @@
                   }
                 }
               }
-            },
-            "disableLogInfo": {
-              "title": "Disable Log Info",
-              "type": "boolean",
-              "default": false,
-              "description": "This disable logging values and states on every it change.",
-              "required": false
-            },
-            "disableLogDeviceInfo": {
-              "title": "Disable Log Device Info",
-              "type": "boolean",
-              "default": false,
-              "description": "This disable log device info by every connections device to the network.",
-              "required": false
-            },
-            "enableDebugMode": {
-              "title": "Debug",
-              "type": "boolean",
-              "default": false,
-              "description": "This enable debug mode.",
-              "required": false
             },
             "sensorPower": {
               "title": "Power",
@@ -512,6 +485,83 @@
               "type": "boolean",
               "default": false,
               "description": "This expose Channel as a Motion Sensor to use with automations.",
+              "required": false
+            },
+            "sensorInputs": {
+              "type": "array",
+              "items": {
+                "title": "Inputs",
+                "type": "object",
+                "description": "Here create Input/App Sensors based on reference, sensor will active if switch to it.",
+                "properties": {
+                  "name": {
+                    "title": "Name",
+                    "type": "string",
+                    "placeholder": "Name",
+                    "description": "Here set Your own name.",
+                    "required": true
+                  },
+                  "reference": {
+                    "title": "Reference",
+                    "type": "string",
+                    "placeholder": "Input/Channel reference",
+                    "description": "Here set the Input/Channel reference.",
+                    "required": true
+                  },
+                  "displayType": {
+                    "title": "Type",
+                    "type": "integer",
+                    "oneOf": [
+                      {
+                        "title": "None",
+                        "enum": [
+                          -1
+                        ]
+                      },
+                      {
+                        "title": "Motion Sensor",
+                        "enum": [
+                          0
+                        ]
+                      },
+                      {
+                        "title": "Occupancy Sensor",
+                        "enum": [
+                          1
+                        ]
+                      },
+                      {
+                        "title": "Contact Sensor",
+                        "enum": [
+                          2
+                        ]
+                      }
+                    ],
+                    "description": "Here select sensor type to be exposed in HomeKit app.",
+                    "required": true
+                  }
+                }
+              }
+            },
+            "disableLogInfo": {
+              "title": "Disable Log Info",
+              "type": "boolean",
+              "default": false,
+              "description": "This disable logging values and states on every it change.",
+              "required": false
+            },
+            "disableLogDeviceInfo": {
+              "title": "Disable Log Device Info",
+              "type": "boolean",
+              "default": false,
+              "description": "This disable log device info by every connections device to the network.",
+              "required": false
+            },
+            "enableDebugMode": {
+              "title": "Debug",
+              "type": "boolean",
+              "default": false,
+              "description": "This enable debug mode.",
               "required": false
             },
             "infoButtonCommand": {
@@ -729,7 +779,6 @@
         "devices[].name",
         "devices[].host",
         "devices[].port",
-        "devices[].auth",
         {
           "key": "devices[]",
           "type": "section",
@@ -780,7 +829,26 @@
             "devices[].sensorPower",
             "devices[].sensorVolume",
             "devices[].sensorMute",
-            "devices[].sensorChannel"
+            "devices[].sensorChannel",
+            {
+              "key": "devices[]",
+              "type": "section",
+              "title": "Custom Inputs",
+              "expandable": true,
+              "expanded": false,
+              "items": [
+                {
+                  "key": "devices[].sensorInputs",
+                  "type": "tabarray",
+                  "title": "{{ value.name || 'new input sensor' }}",
+                  "items": [
+                    "devices[].sensorInputs[].name",
+                    "devices[].sensorInputs[].reference",
+                    "devices[].sensorInputs[].displayType"
+                  ]
+                }
+              ]
+            }
           ]
         },
         {
@@ -790,12 +858,10 @@
           "expandable": true,
           "expanded": false,
           "items": [
+            "devices[].auth",
             "devices[].user",
             "devices[].pass"
-          ],
-          "condition": {
-            "functionBody": "return model.devices[arrayIndices].auth === true;"
-          }
+          ]
         },
         {
           "key": "devices[]",

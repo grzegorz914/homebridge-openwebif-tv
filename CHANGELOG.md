@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.17.0] - (07.02.2023)
+## Changes
+- removed duplicated display type *sensors* from inputs section
+- config.schema updated
+- bump dependencies
+- cleanup
+
 ## [3.16.0] - (24.01.2023)
 ## Changes
 - removed switch properties from input section
