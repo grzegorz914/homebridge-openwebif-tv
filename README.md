@@ -79,6 +79,7 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | `enableDebugMode` | If enabled, deep log will be present in homebridge console. |
 | `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |
 | `disableLogDeviceInfo` | If enabled, add ability to disable log device info by every connections device to the network. |
+| `disableLogConnectError` | If enabled, disable logging device connect error. |
 | `enableMqtt` | If enabled, MQTT Broker will start automatically and publish all awailable PV installation data. |
 | `refreshInterval` | Here set the data refresh interval. |
 | `mqttHost` | Here set the *IP Address* or *Hostname* for MQTT Broker.) |
@@ -146,14 +147,15 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
         "sensorChannel": false,
         "sensorInputs": [
                 {
-                    "name": "HDMI 1",
-                    "reference": "com.webos.app.hdmi1",
+                    "name": "RTL HD",
+                    "reference": "1:0:19:EF10:421:1:C00000:0:0:0:",
                     "displayType": -1
                 }
            ],
         "enableDebugMode": false,   
         "disableLogInfo": false,
         "disableLogDeviceInfo": false,
+        "disableLogConnectError": false,
         "infoButtonCommand": "139",
         "volumeControl": 0,
         "refreshInterval": 5,

@@ -25,15 +25,6 @@
           "auth": false,
           "user": "user",
           "pass": "pass",
-          "sensorPower": false,
-          "sensorVolume": false,
-          "sensorMute": false,
-          "sensorChannel": false,
-          "disableLogInfo": false,
-          "disableLogDeviceInfo": false,
-          "enableDebugMode": false,
-          "volumeControl": 0,
-          "infoButtonCommand": "139",
           "inputs": [
             {
               "name": "Das Erste HD",
@@ -81,6 +72,23 @@
               "displayType": 0
             }
           ],
+          "sensorPower": false,
+          "sensorVolume": false,
+          "sensorMute": false,
+          "sensorChannel": false,
+          "sensorInputs": [
+            {
+                "name": "RTL HD",
+                "reference": "1:0:19:EF10:421:1:C00000:0:0:0:",
+                "displayType": -1
+            }
+       ],
+          "enableDebugMode": false,
+          "disableLogInfo": false,
+          "disableLogDeviceInfo": false,
+          "disableLogConnectError": false,
+          "infoButtonCommand": "139",
+          "volumeControl": 0,
           "refreshInterval": 5,
           "enableMqtt": false,
           "mqttHost": "192.168.1.33",

@@ -76,6 +76,7 @@ class openwebIfTvDevice {
 		this.infoButtonCommand = config.infoButtonCommand || '139';
 		this.disableLogInfo = config.disableLogInfo || false;
 		this.disableLogDeviceInfo = config.disableLogDeviceInfo || false;
+		this.disableLogConnectError = config.disableLogConnectError || false;
 		this.enableDebugMode = config.enableDebugMode || false;
 		this.inputs = config.inputs || [];
 		this.buttons = config.buttons || [];
@@ -164,6 +165,7 @@ class openwebIfTvDevice {
 			user: this.user,
 			pass: this.pass,
 			auth: this.auth,
+			disableLogConnectError: this.disableLogConnectError,
 			debugLog: this.enableDebugMode,
 			refreshInterval: this.refreshInterval,
 			mqttEnabled: this.mqttEnabled

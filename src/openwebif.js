@@ -11,6 +11,7 @@ class OPENWEBIF extends EventEmitter {
         const user = config.user;
         const pass = config.pass;
         const auth = config.auth;
+        const disableLogConnectError = config.disableLogConnectError;
         const debugLog = config.debugLog;
         const mqttEnabled = config.mqttEnabled;
         this.refreshInterval = config.refreshInterval;
@@ -66,7 +67,7 @@ class OPENWEBIF extends EventEmitter {
                 this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
                 this.emit('checkState');
             } catch (error) {
-                this.emit('error', `Info error: ${error}, reconnect in 15s.`);
+                const debug = disableLogConnectError ? false : this.emit('error', `Info error: ${error}, reconnect in 15s.`);
                 this.checkDeviceInfo();
             };
         })
@@ -96,7 +97,7 @@ class OPENWEBIF extends EventEmitter {
                     const mqtt1 = mqttEnabled ? this.emit('mqtt', 'State', JSON.stringify(devState, null, 2)) : false;
                     this.checkState();
                 } catch (error) {
-                    this.emit('error', `State error: ${error}, reconnect in 15s.`);
+                    const debug = disableLogConnectError ? false : this.emit('error', `State error: ${error}, reconnect in 15s.`);
                     const firstRun = this.checkStateOnFirstRun ? this.checkDeviceInfo() : this.emit('disconnect');
                 };
             })
@@ -125,7 +126,7 @@ class OPENWEBIF extends EventEmitter {
                 await this.axiosInstance(apiUrl);
                 resolve(true);
             } catch (error) {
-                this.emit('error', `Send command error: ${error}`);
+                this.emit('error', error);
                 reject(error);
             };
         });
