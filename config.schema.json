@@ -557,7 +557,7 @@
               "description": "This disable logging device info by every connections device to the network.",
               "required": false
             },
-            "disableConnectLogError": {
+            "disableLogConnectError": {
               "title": "Disable Log Connect Error",
               "type": "boolean",
               "default": false,
@@ -880,7 +880,7 @@
             "devices[].enableDebugMode",
             "devices[].disableLogInfo",
             "devices[].disableLogDeviceInfo",
-            "devices[].disableConnectLogError",
+            "devices[].disableLogConnectError",
             "devices[].infoButtonCommand",
             "devices[].volumeControl",
             "devices[].refreshInterval"
