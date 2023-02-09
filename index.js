@@ -809,34 +809,36 @@ class openwebIfTvDevice {
 				//get switch
 				const index = inputsSwitchesButtons[i];
 
-				//get switch reference
-				const inputReference = this.inputsReference[index];
-
 				//get switch name		
-				const inputName = this.inputsName[index];
+				const inputName = this.inputsName[index] || 'Not set';
+
+				//get switch reference
+				const inputReference = this.inputsReference[index] || 'Not set';
 
 				//get switch display type
-				const inputDisplayType = this.inputsDisplayType[index];
+				const inputDisplayType = this.inputsDisplayType[index] || -1;
 
-				const serviceType = [Service.Outlet, Service.Switch][inputDisplayType];
-				const characteristicType = [Characteristic.On, Characteristic.On][inputDisplayType];
-				const inputSwitchButtonService = new serviceType(`${accessoryName} ${inputName}`, `Switch ${i}`);
-				inputSwitchButtonService.getCharacteristic(characteristicType)
-					.onGet(async () => {
-						const state = this.power ? (inputReference === this.reference) : false;
-						return state;
-					})
-					.onSet(async (state) => {
-						try {
-							const setSwitchInput = (state && this.power) ? await this.openwebif.send(CONSTANS.ApiUrls.SetChannel + inputReference) : false;
-							const logInfo = this.disableLogInfo ? false : this.log(`Device: ${this.host} ${accessoryName}, set new Channel successful, name: ${inputName}, reference: ${inputReference}`);
-						} catch (error) {
-							this.log.error(`Device: ${this.host} ${accessoryName}, can not set new Channel. Might be due to a wrong settings in config, error: ${error}`);
-						};
-					});
+				if (inputDisplayType >= 0) {
+					const serviceType = [Service.Outlet, Service.Switch][inputDisplayType];
+					const characteristicType = [Characteristic.On, Characteristic.On][inputDisplayType];
+					const inputSwitchButtonService = new serviceType(`${accessoryName} ${inputName}`, `Switch ${i}`);
+					inputSwitchButtonService.getCharacteristic(characteristicType)
+						.onGet(async () => {
+							const state = this.power ? (inputReference === this.reference) : false;
+							return state;
+						})
+						.onSet(async (state) => {
+							try {
+								const setSwitchInput = (state && this.power) ? await this.openwebif.send(CONSTANS.ApiUrls.SetChannel + inputReference) : false;
+								const logInfo = this.disableLogInfo ? false : this.log(`Device: ${this.host} ${accessoryName}, set new Channel successful, name: ${inputName}, reference: ${inputReference}`);
+							} catch (error) {
+								this.log.error(`Device: ${this.host} ${accessoryName}, can not set new Channel. Might be due to a wrong settings in config, error: ${error}`);
+							};
+						});
 
-				this.inputSwitchButtonServices.push(inputSwitchButtonService);
-				accessory.addService(this.inputSwitchButtonServices[i]);
+					this.inputSwitchButtonServices.push(inputSwitchButtonService);
+					accessory.addService(this.inputSwitchButtonServices[i]);
+				}
 			}
 		}
 
@@ -853,10 +855,10 @@ class openwebIfTvDevice {
 				const sensorInput = sensorInputs[i];
 
 				//get sensor name		
-				const sensorInputName = sensorInput.name || 'Not set in config';
+				const sensorInputName = sensorInput.name || 'Not set';
 
 				//get sensor reference
-				const sensorInputReference = sensorInput.reference || 'Not set in config';
+				const sensorInputReference = sensorInput.reference || 'Not set';
 
 				//get sensor display type
 				const sensorInputDisplayType = sensorInput.displayType || -1;
@@ -888,16 +890,16 @@ class openwebIfTvDevice {
 			this.log.debug('prepareButtonsService');
 			for (const button of buttons) {
 				//get button name
-				const buttonName = button.name || 'Not set in config'
-
-				//get button reference
-				const buttonReference = button.reference || 'Not set in config'
+				const buttonName = button.name || 'Not set';
 
 				//get button mode
-				const buttonMode = button.mode || 'Not set in config'
+				const buttonMode = button.mode || 0;
+
+				//get button reference
+				const buttonReference = button.reference || 'Not set';
 
 				//get button command
-				const buttonCommand = button.command || 'Not set in config'
+				const buttonCommand = button.command || 'Not set';
 
 				//get button display type
 				const buttonDisplayType = button.displayType || -1;
