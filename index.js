@@ -184,7 +184,6 @@ class openwebIfTvDevice {
 				if (!fs.existsSync(this.devInfoFile)) {
 					await fsPromises.writeFile(this.devInfoFile, '');
 				}
-				await fsPromises.writeFile(this.devInfoFile, JSON.stringify(devInfo, null, 2));
 
 				// Create inputs file if it doesn't exist
 				if (!fs.existsSync(this.inputsFile)) {
@@ -205,18 +204,35 @@ class openwebIfTvDevice {
 				if (!fs.existsSync(this.channelsFile)) {
 					await fsPromises.writeFile(this.channelsFile, '');
 				}
-				await fsPromises.writeFile(this.channelsFile, JSON.stringify(channels, null, 2));
+
+				//save device info to the file
+				try {
+					const devInfo1 = JSON.stringify(devInfo, null, 2);
+					const writeDevInfo = await fsPromises.writeFile(this.devInfoFile, devInfo1);
+					const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, saved device info: ${devInfo1}`) : false;
+				} catch (error) {
+					this.log.error(`Device: ${this.host} ${this.name}, save device info error: ${error}`);
+				};
+
+				//save channels to the file
+				try {
+					const channels1 = JSON.stringify(channels, null, 2);
+					const writeChannels = await fsPromises.writeFile(this.channelsFile, channels1);
+					const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, saved channels: ${channels1}`) : false;
+				} catch (error) {
+					this.log.error(`Device: ${this.host} ${this.name}, save channels error: ${error}`);
+				};
 
 				//save inputs to the file
 				try {
 					const inputs = JSON.stringify(this.inputs, null, 2);
 					const writeInputs = await fsPromises.writeFile(this.inputsFile, inputs);
-					const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, save inputs succesful, inputs: ${inputs}`) : false;
+					const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, saved inputs: ${inputs}`) : false;
 				} catch (error) {
 					this.log.error(`Device: ${this.host} ${this.name}, save inputs error: ${error}`);
 				};
 			} catch (error) {
-				this.log.error(`Device: ${this.host} ${this.name}, ${this.zoneControl} create files, save devInfo or channels error: ${error}`);
+				this.log.error(`Device: ${this.host} ${this.name}, create files error: ${error}`);
 			};
 		})
 			.on('deviceInfo', (manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) => {
@@ -692,13 +708,13 @@ class openwebIfTvDevice {
 		//prepare inputs service
 		this.log.debug('prepareInputsService');
 		const savedInputs = fs.readFileSync(this.inputsFile).length > 0 ? JSON.parse(fs.readFileSync(this.inputsFile)) : this.inputs;
-		const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, read saved Inputs successful, inpits: ${JSON.stringify(savedInputs, null, 2)}`) : false;
+		const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, read saved Inputs: ${JSON.stringify(savedInputs, null, 2)}`) : false;
 
 		const savedInputsNames = fs.readFileSync(this.inputsNamesFile).length > 0 ? JSON.parse(fs.readFileSync(this.inputsNamesFile)) : {};
-		const debug1 = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, read savedInputsNames: ${JSON.stringify(savedInputsNames, null, 2)}`) : false;
+		const debug1 = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, read saved Inputs names: ${JSON.stringify(savedInputsNames, null, 2)}`) : false;
 
 		const savedInputsTargetVisibility = fs.readFileSync(this.inputsTargetVisibilityFile).length > 0 ? JSON.parse(fs.readFileSync(this.inputsTargetVisibilityFile)) : {};
-		const debug2 = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, read savedTargetVisibility: ${JSON.stringify(savedInputsTargetVisibility, null, 2)}`) : false;
+		const debug2 = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, read saved Inputs Target Visibility states: ${JSON.stringify(savedInputsTargetVisibility, null, 2)}`) : false;
 
 		//check available inputs and possible inputs count (max 80)
 		const inputs = savedInputs;
@@ -748,9 +764,9 @@ class openwebIfTvDevice {
 						const newCustomName = JSON.stringify(savedInputsNames, null, 2);
 
 						const writeNewCustomName = nameIdentifier ? await fsPromises.writeFile(this.inputsNamesFile, newCustomName) : false;
-						const logInfo = this.disableLogInfo ? false : this.log(`Device: ${this.host} ${accessoryName}, new Input name saved successful, name: ${name}, reference: ${inputReference}`);
+						const logInfo = this.disableLogInfo ? false : this.log(`Device: ${this.host} ${accessoryName}, saved new Input name: ${name}, reference: ${inputReference}`);
 					} catch (error) {
-						this.log.error(`Device: ${this.host} ${accessoryName}, new Input name saved failed, error: ${error}`);
+						this.log.error(`Device: ${this.host} ${accessoryName}, new Input name saved error: ${error}`);
 					}
 				});
 
@@ -763,10 +779,10 @@ class openwebIfTvDevice {
 						const newTargetVisibility = JSON.stringify(savedInputsTargetVisibility, null, 2);
 
 						const writeNewTargetVisibility = targetVisibilityIdentifier ? await fsPromises.writeFile(this.inputsTargetVisibilityFile, newTargetVisibility) : false;
-						const logInfo = this.disableLogInfo ? false : this.log(`Device: ${this.host} ${accessoryName}, Input: ${inputName}, saved target visibility state: ${state ? 'HIDEN' : 'SHOWN'}`);
+						const logInfo = this.disableLogInfo ? false : this.log(`Device: ${this.host} ${accessoryName}, saved new Input: ${inputName}, target visibility state: ${state ? 'HIDEN' : 'SHOWN'}`);
 						inputService.setCharacteristic(Characteristic.CurrentVisibilityState, state);
 					} catch (error) {
-						this.log.error(`Device: ${this.host} ${accessoryName}, saved target visibility state error: ${error}`);
+						this.log.error(`Device: ${this.host} ${accessoryName}, new target visibility state save error: ${error}`);
 					}
 				});
 
