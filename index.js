@@ -716,7 +716,7 @@ class openwebIfTvDevice {
 		const savedInputsTargetVisibility = fs.readFileSync(this.inputsTargetVisibilityFile).length > 0 ? JSON.parse(fs.readFileSync(this.inputsTargetVisibilityFile)) : {};
 		const debug2 = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, read saved Inputs Target Visibility states: ${JSON.stringify(savedInputsTargetVisibility, null, 2)}`) : false;
 
-		//check available inputs and possible inputs count (max 80)
+		//check possible inputs and possible inputs count (max 80)
 		const inputs = savedInputs;
 		const inputsCount = inputs.length;
 		const maxInputsCount = inputsCount < 80 ? inputsCount : 80;
@@ -801,8 +801,8 @@ class openwebIfTvDevice {
 		this.inputSwitchButtonServices = [];
 		const inputsSwitchesButtons = this.inputsSwitchesButtons;
 		const inputsSwitchesButtonsCount = inputsSwitchesButtons.length;
-		const availableInputsSwitchesButtonsCount = 80 - this.inputsReference.length;
-		const maxInputsSwitchesButtonsCount = (availableInputsSwitchesButtonsCount > 0) ? (availableInputsSwitchesButtonsCount > inputsSwitchesButtonsCount) ? inputsSwitchesButtonsCount : availableInputsSwitchesButtonsCount : 0;
+		const possibleInputsSwitchesButtonsCount = 80 - this.inputsReference.length;
+		const maxInputsSwitchesButtonsCount = (possibleInputsSwitchesButtonsCount > 0) ? (possibleInputsSwitchesButtonsCount > inputsSwitchesButtonsCount) ? inputsSwitchesButtonsCount : possibleInputsSwitchesButtonsCount : 0;
 		if (maxInputsSwitchesButtonsCount > 0) {
 			this.log.debug('prepareSwitchsService');
 			for (let i = 0; i < maxInputsSwitchesButtonsCount; i++) {
@@ -846,8 +846,8 @@ class openwebIfTvDevice {
 		this.sensorInputsServices = [];
 		const sensorInputs = this.sensorInputs;
 		const sensorInputsCount = sensorInputs.length;
-		const availableSensorInputsCount = 80 - (this.inputsReference.length + this.inputSwitchButtonServices.length);
-		const maxSensorInputsCount = (availableSensorInputsCount > 0) ? (availableSensorInputsCount > sensorInputsCount) ? sensorInputsCount : availableSensorInputsCount : 0;
+		const possibleSensorInputsCount = 80 - (this.inputsReference.length + this.inputSwitchButtonServices.length);
+		const maxSensorInputsCount = possibleSensorInputsCount >= sensorInputsCount ? sensorInputsCount : possibleSensorInputsCount;
 		if (maxSensorInputsCount > 0) {
 			this.log.debug('prepareSensorInputsServices');
 			for (let i = 0; i < maxSensorInputsCount; i++) {
@@ -861,12 +861,12 @@ class openwebIfTvDevice {
 				const sensorInputReference = sensorInput.reference || 'Not set';
 
 				//get sensor display type
-				const sensorInputDisplayType = sensorInput.displayType || -1;
+				const sensorInputDisplayType = sensorInput.displayType >= 0 ? sensorInput.displayType : -1;
 
 				if (sensorInputDisplayType >= 0) {
 					const serviceType = [Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][sensorInputDisplayType];
 					const characteristicType = [Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][sensorInputDisplayType];
-					const sensorInputsService = new serviceType(`${accessoryName} ${sensorInputName}`, `Sensor ${sensorInputName}`);
+					const sensorInputsService = new serviceType(`${accessoryName} ${sensorInputName}`, `Sensor ${i}`);
 					sensorInputsService.getCharacteristic(characteristicType)
 						.onGet(async () => {
 							const state = this.power ? (sensorInputReference === this.reference) : false;
@@ -884,11 +884,14 @@ class openwebIfTvDevice {
 		//prepare buttons service
 		const buttons = this.buttons;
 		const buttonsCount = buttons.length;
-		const availableButtonsCount = 80 - (this.inputsReference.length + this.inputSwitchButtonServices.length + this.sensorInputsServices.length);
-		const maxButtonsCount = (availableButtonsCount > 0) ? (availableButtonsCount > buttonsCount) ? buttonsCount : availableButtonsCount : 0;
+		const possibleButtonsCount = 80 - (this.inputsReference.length + this.inputSwitchButtonServices.length + this.sensorInputsServices.length);
+		const maxButtonsCount = possibleButtonsCount >= buttonsCount ? buttonsCount : possibleButtonsCount;
 		if (maxButtonsCount > 0) {
-			this.log.debug('prepareButtonsService');
-			for (const button of buttons) {
+			this.log.debug('prepareInputsButtonService');
+			for (let i = 0; i < maxButtonsCount; i++) {
+				//get button
+				const button = buttons[i];
+
 				//get button name
 				const buttonName = button.name || 'Not set';
 
@@ -902,11 +905,11 @@ class openwebIfTvDevice {
 				const buttonCommand = button.command || 'Not set';
 
 				//get button display type
-				const buttonDisplayType = button.displayType || -1;
+				const buttonDisplayType = button.displayType >= 0 ? button.displayType : -1;
 
 				if (buttonDisplayType >= 0) {
 					const serviceType = [Service.Outlet, Service.Switch][buttonDisplayType];
-					const buttonService = new serviceType(`${accessoryName} ${buttonName}`, `Button ${buttonName}`);
+					const buttonService = new serviceType(`${accessoryName} ${buttonName}`, `Button ${i}`);
 					buttonService.getCharacteristic(Characteristic.On)
 						.onGet(async () => {
 							let state = false;
@@ -941,7 +944,8 @@ class openwebIfTvDevice {
 								this.log.error(`Device: ${this.host} ${accessoryName}, set ${['Channel', 'Command'][buttonMode]} error: ${error}`);
 							};
 						});
-					accessory.addService(buttonService);
+					this.buttonsServices.push(buttonService);
+					accessory.addService(this.buttonsServices[i]);
 				}
 			};
 		}
