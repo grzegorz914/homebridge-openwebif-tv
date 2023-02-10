@@ -802,7 +802,7 @@ class openwebIfTvDevice {
 		const inputsSwitchesButtons = this.inputsSwitchesButtons;
 		const inputsSwitchesButtonsCount = inputsSwitchesButtons.length;
 		const possibleInputsSwitchesButtonsCount = 80 - this.inputsReference.length;
-		const maxInputsSwitchesButtonsCount = (possibleInputsSwitchesButtonsCount > 0) ? (possibleInputsSwitchesButtonsCount > inputsSwitchesButtonsCount) ? inputsSwitchesButtonsCount : possibleInputsSwitchesButtonsCount : 0;
+		const maxInputsSwitchesButtonsCount = possibleInputsSwitchesButtonsCount >= inputsSwitchesButtonsCount ? inputsSwitchesButtonsCount : possibleInputsSwitchesButtonsCount;
 		if (maxInputsSwitchesButtonsCount > 0) {
 			this.log.debug('prepareSwitchsService');
 			for (let i = 0; i < maxInputsSwitchesButtonsCount; i++) {
