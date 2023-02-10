@@ -87,7 +87,7 @@
                         ]
                       },
                       {
-                        "title": "Button",
+                        "title": "Outlet",
                         "enum": [
                           0
                         ]
@@ -441,7 +441,7 @@
                         ]
                       },
                       {
-                        "title": "Button",
+                        "title": "Outlet",
                         "enum": [
                           0
                         ]

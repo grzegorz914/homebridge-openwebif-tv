@@ -63,12 +63,12 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | `infoButtonCommand` | Here select the function of `I` button in RC app. |
 | `inputs.name` | Here set *Channel Name* which You want expose to the *Homebridge/HomeKit*. |
 | `inputs.reference` | Here set *Channel Reference*. All can be found in `homebridge_directory/openwebifTv/inputs_xxxx`. |
-| `inputs.displayType` | Here select display type in HomeKit app, possible `None`, `Button`, `Switch`.|
+| `inputs.displayType` | Here select display type in HomeKit app, possible `None`, `Outlet`, `Switch`.|
 | `buttons.name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*.| 
 | `buttons.mode` | Here select button mode, `Live TV Channel` or `Remote Control`. |
 | `buttons.reference` | Here set *Reference*, only for `Live TV Channel` mode, in other case leave empty. | 
 | `buttons.command` | Here select `Remote Control` command which will be assigned to the button. |
-| `buttons.displayType` | Here select display type in HomeKit app, possible `None`, `Switch`, `Button` - selectable in HomeKit app as Light, Fan, Outlet.|
+| `buttons.displayType` | Here select display type in HomeKit app, possible `None`, `Outlet`, `Switch`.|
 | `sensorPower`| If enabled, then the Power will be exposed as a `Motion Sensor` to use with automations. |
 | `sensorVolume`| If enabled, then the Volume will be exposed as a `Motion Sensor` to use with automations. |
 | `sensorMute`| If enabled, then the Mute will be exposed as a `Motion Sensor` to use with automations. |
@@ -89,7 +89,7 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | `mqttUser` | Here set the MQTT Broker user. |
 | `mqttPasswd` | Here set the MQTT Broker password. |
 | `mqttDebug` | If enabled, deep log will be present in homebridge console for MQTT. |
-| `Display Type Inputs/Buttons` | -1 - `None`, 0 - `Button`, 1 - `Switch`.|
+| `Display Type Inputs/Buttons` | -1 - `None`, 0 - `Outlet`, 1 - `Switch`.|
 | `Display Type Sensors` | -1 - `None`, 0 - `Motion Sensor`, 1 - `Occupancy Sensor`, 2 - `Contact Sensor`.|
 
 
