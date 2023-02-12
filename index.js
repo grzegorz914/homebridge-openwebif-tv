@@ -816,7 +816,7 @@ class openwebIfTvDevice {
 				const inputReference = this.inputsReference[index] || 'Not set';
 
 				//get switch display type
-				const inputDisplayType = this.inputsDisplayType[index] || -1;
+				const inputDisplayType = this.inputsDisplayType[index] >= 0 ? this.inputsDisplayType[index] : -1;
 
 				if (inputDisplayType >= 0) {
 					const serviceType = [Service.Outlet, Service.Switch][inputDisplayType];
