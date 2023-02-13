@@ -737,7 +737,7 @@ class openwebIfTvDevice {
 			const inputMode = 0;
 
 			//get input switch
-			const inputDisplayType = input.displayType || -1;
+			const inputDisplayType = input.displayType >= 0 ? input.displayType : -1;
 
 			//get input configured
 			const isConfigured = 1;
