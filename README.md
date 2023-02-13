@@ -59,23 +59,23 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | `auth` | If enabled, authorizatins credentials will be used for login. |
 | `user` | Here set the authorization *Username*. |
 | `pass` | Here set the authorization *Password*. |
-| `volumeControl` | Here select volume control mode `None`, `Slider`, `Fan`. |
+| `volumeControl` | Here select volume control mode `None/Disabled`, `Slider`, `Fan`. |
 | `infoButtonCommand` | Here select the function of `I` button in RC app. |
 | `inputs.name` | Here set *Channel Name* which You want expose to the *Homebridge/HomeKit*. |
 | `inputs.reference` | Here set *Channel Reference*. All can be found in `homebridge_directory/openwebifTv/inputs_xxxx`. |
-| `inputs.displayType` | Here select display type in HomeKit app, possible `None`, `Outlet`, `Switch`.|
+| `inputs.displayType` | Here select display type in HomeKit app, possible `None/Disabled`, `Outlet`, `Switch`.|
 | `buttons.name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*.| 
 | `buttons.mode` | Here select button mode, `Live TV Channel` or `Remote Control`. |
 | `buttons.reference` | Here set *Reference*, only for `Live TV Channel` mode, in other case leave empty. | 
 | `buttons.command` | Here select `Remote Control` command which will be assigned to the button. |
-| `buttons.displayType` | Here select display type in HomeKit app, possible `None`, `Outlet`, `Switch`.|
+| `buttons.displayType` | Here select display type in HomeKit app, possible `None/Disabled`, `Outlet`, `Switch`.|
 | `sensorPower`| If enabled, then the Power will be exposed as a `Motion Sensor` to use with automations. |
 | `sensorVolume`| If enabled, then the Volume will be exposed as a `Motion Sensor` to use with automations. |
 | `sensorMute`| If enabled, then the Mute will be exposed as a `Motion Sensor` to use with automations. |
 | `sensorChannel`| If enabled, then the Channel will be exposed as a `Motion Sensor` to use with automations. |
 | `sensorInputs.name` | Here set own *Name* which You want expose to the *Homebridge/HomeKit* for this sensor. |
 | `sensorInputs.reference` | Here set *Reference* like `1:0:1:3ABD:514:13E:820000:0:0:0:` to be exposed as sensor (active on switch to this Input). | 
-| `sensorInputs.displayType` | Here select sensor type to be exposed in HomeKit app, possible `None`, `Motion Sensor`, `Occupancy Sensor`, `Contact Sensor`. | 
+| `sensorInputs.displayType` | Here select sensor type to be exposed in HomeKit app, possible `None/Disabled`, `Motion Sensor`, `Occupancy Sensor`, `Contact Sensor`. | 
 | `enableDebugMode` | If enabled, deep log will be present in homebridge console. |
 | `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |
 | `disableLogDeviceInfo` | If enabled, add ability to disable log device info by every connections device to the network. |
@@ -89,8 +89,9 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | `mqttUser` | Here set the MQTT Broker user. |
 | `mqttPasswd` | Here set the MQTT Broker password. |
 | `mqttDebug` | If enabled, deep log will be present in homebridge console for MQTT. |
-| `Display Type Inputs/Buttons` | -1 - `None`, 0 - `Outlet`, 1 - `Switch`.|
-| `Display Type Sensors` | -1 - `None`, 0 - `Motion Sensor`, 1 - `Occupancy Sensor`, 2 - `Contact Sensor`.|
+| `Volume Control` | -1 - `None/Disabled`, 0 - `Slider`, 1 - `Fan`.|
+| `Display Type Inputs/Buttons` | -1 - `None/Disabled`, 0 - `Outlet`, 1 - `Switch`.|
+| `Display Type Sensors` | -1 - `None/Disabled`, 0 - `Motion Sensor`, 1 - `Occupancy Sensor`, 2 - `Contact Sensor`.|
 
 
 ```json
@@ -157,7 +158,7 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
         "disableLogDeviceInfo": false,
         "disableLogConnectError": false,
         "infoButtonCommand": "139",
-        "volumeControl": 0,
+        "volumeControl": -1,
         "refreshInterval": 5,
         "enableMqtt": false,
         "mqttHost": "192.168.1.33",

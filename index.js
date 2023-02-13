@@ -72,7 +72,7 @@ class openwebIfTvDevice {
 		this.sensorMute = config.sensorMute || false;
 		this.sensorChannel = config.sensorChannel || false;
 		this.sensorInputs = config.sensorInputs || [];
-		this.volumeControl = config.volumeControl || 0;
+		this.volumeControl = config.volumeControl || -1;
 		this.infoButtonCommand = config.infoButtonCommand || '139';
 		this.disableLogInfo = config.disableLogInfo || false;
 		this.disableLogDeviceInfo = config.disableLogDeviceInfo || false;
@@ -101,8 +101,6 @@ class openwebIfTvDevice {
 
 		this.inputsReference = [];
 		this.inputsName = [];
-		this.inputsType = [];
-		this.inputsMode = [];
 		this.inputsDisplayType = [];
 		this.inputsSwitchesButtons = [];
 
@@ -175,6 +173,9 @@ class openwebIfTvDevice {
 			this.log(`Device: ${this.host} ${this.name}, Connected.`);
 
 			try {
+				const object = JSON.stringify({});
+				const array = JSON.stringify([]);
+
 				// Create pref directory if it doesn't exist
 				if (!fs.existsSync(this.prefDir)) {
 					await fsPromises.mkdir(this.prefDir);
@@ -182,27 +183,27 @@ class openwebIfTvDevice {
 
 				// Create device info file if it doesn't exist
 				if (!fs.existsSync(this.devInfoFile)) {
-					await fsPromises.writeFile(this.devInfoFile, '');
+					await fsPromises.writeFile(this.devInfoFile, object);
 				}
 
 				// Create inputs file if it doesn't exist
 				if (!fs.existsSync(this.inputsFile)) {
-					await fsPromises.writeFile(this.inputsFile, '');
-				}
-
-				// Create inputs names file if it doesn't exist
-				if (!fs.existsSync(this.inputsNamesFile)) {
-					await fsPromises.writeFile(this.inputsNamesFile, '');
-				}
-
-				// Create inputs target visibility file if it doesn't exist
-				if (!fs.existsSync(this.inputsTargetVisibilityFile)) {
-					await fsPromises.writeFile(this.inputsTargetVisibilityFile, '');
+					await fsPromises.writeFile(this.inputsFile, array);
 				}
 
 				// Create channels file if it doesn't exist
 				if (!fs.existsSync(this.channelsFile)) {
-					await fsPromises.writeFile(this.channelsFile, '');
+					await fsPromises.writeFile(this.channelsFile, array);
+				}
+
+				// Create inputs names file if it doesn't exist
+				if (!fs.existsSync(this.inputsNamesFile)) {
+					await fsPromises.writeFile(this.inputsNamesFile, object);
+				}
+
+				// Create inputs target visibility file if it doesn't exist
+				if (!fs.existsSync(this.inputsTargetVisibilityFile)) {
+					await fsPromises.writeFile(this.inputsTargetVisibilityFile, object);
 				}
 
 				//save device info to the file
@@ -274,12 +275,12 @@ class openwebIfTvDevice {
 					this.speakerService
 						.updateCharacteristic(Characteristic.Volume, volume)
 						.updateCharacteristic(Characteristic.Mute, mute);
-					if (this.volumeService && this.volumeControl === 1) {
+					if (this.volumeService && this.volumeControl === 0) {
 						this.volumeService
 							.updateCharacteristic(Characteristic.Brightness, volume)
 							.updateCharacteristic(Characteristic.On, !mute);
 					}
-					if (this.volumeServiceFan && this.volumeControl === 2) {
+					if (this.volumeServiceFan && this.volumeControl === 1) {
 						this.volumeServiceFan
 							.updateCharacteristic(Characteristic.RotationSpeed, volume)
 							.updateCharacteristic(Characteristic.On, !mute);
@@ -613,9 +614,9 @@ class openwebIfTvDevice {
 		accessory.addService(this.speakerService);
 
 		//prepare volume service
-		if (this.volumeControl >= 1) {
+		if (this.volumeControl >= 0) {
 			this.log.debug('prepareVolumeService');
-			if (this.volumeControl === 1) {
+			if (this.volumeControl === 0) {
 				this.volumeService = new Service.Lightbulb(`${accessoryName} Volume`, 'Volume');
 				this.volumeService.getCharacteristic(Characteristic.Brightness)
 					.onGet(async () => {
@@ -637,7 +638,7 @@ class openwebIfTvDevice {
 				accessory.addService(this.volumeService);
 			}
 
-			if (this.volumeControl === 2) {
+			if (this.volumeControl === 1) {
 				this.volumeServiceFan = new Service.Fan(`${accessoryName} Volume`, 'Volume');
 				this.volumeServiceFan.getCharacteristic(Characteristic.RotationSpeed)
 					.onGet(async () => {
@@ -707,13 +708,13 @@ class openwebIfTvDevice {
 
 		//prepare inputs service
 		this.log.debug('prepareInputsService');
-		const savedInputs = fs.readFileSync(this.inputsFile).length > 0 ? JSON.parse(fs.readFileSync(this.inputsFile)) : this.inputs;
+		const savedInputs = fs.readFileSync(this.inputsFile).length > 2 ? JSON.parse(fs.readFileSync(this.inputsFile)) : this.inputs;
 		const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, read saved Inputs: ${JSON.stringify(savedInputs, null, 2)}`) : false;
 
-		const savedInputsNames = fs.readFileSync(this.inputsNamesFile).length > 0 ? JSON.parse(fs.readFileSync(this.inputsNamesFile)) : {};
+		const savedInputsNames = fs.readFileSync(this.inputsNamesFile).length > 2 ? JSON.parse(fs.readFileSync(this.inputsNamesFile)) : {};
 		const debug1 = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, read saved Inputs names: ${JSON.stringify(savedInputsNames, null, 2)}`) : false;
 
-		const savedInputsTargetVisibility = fs.readFileSync(this.inputsTargetVisibilityFile).length > 0 ? JSON.parse(fs.readFileSync(this.inputsTargetVisibilityFile)) : {};
+		const savedInputsTargetVisibility = fs.readFileSync(this.inputsTargetVisibilityFile).length > 2 ? JSON.parse(fs.readFileSync(this.inputsTargetVisibilityFile)) : {};
 		const debug2 = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, read saved Inputs Target Visibility states: ${JSON.stringify(savedInputsTargetVisibility, null, 2)}`) : false;
 
 		//check possible inputs and possible inputs count (max 80)
@@ -732,9 +733,6 @@ class openwebIfTvDevice {
 
 			//get input type
 			const inputType = 0;
-
-			//get input mode
-			const inputMode = 0;
 
 			//get input switch
 			const inputDisplayType = input.displayType >= 0 ? input.displayType : -1;
@@ -788,8 +786,6 @@ class openwebIfTvDevice {
 
 			this.inputsReference.push(inputReference);
 			this.inputsName.push(inputName);
-			this.inputsType.push(inputType);
-			this.inputsMode.push(inputMode);
 			this.inputsDisplayType.push(inputDisplayType);
 			const pushInputSwitchIndex = inputDisplayType >= 0 ? this.inputsSwitchesButtons.push(i) : false;
 

@@ -81,7 +81,7 @@
                     "type": "integer",
                     "oneOf": [
                       {
-                        "title": "None",
+                        "title": "None/Disabled",
                         "enum": [
                           -1
                         ]
@@ -435,7 +435,7 @@
                     "type": "integer",
                     "oneOf": [
                       {
-                        "title": "None",
+                        "title": "None/Disabled",
                         "enum": [
                           -1
                         ]
@@ -513,7 +513,7 @@
                     "type": "integer",
                     "oneOf": [
                       {
-                        "title": "None",
+                        "title": "None/Disabled",
                         "enum": [
                           -1
                         ]
@@ -660,26 +660,24 @@
             "volumeControl": {
               "title": "Volume Control",
               "type": "integer",
-              "minimum": 0,
-              "maximum": 2,
               "description": "Here select what a volume control mode You want to use. If select *None* only hardware buttons in RC app can be used to control volume.",
               "oneOf": [
                 {
-                  "title": "None",
+                  "title": "None/Disabled",
                   "enum": [
-                    0
+                    -1
                   ]
                 },
                 {
                   "title": "Slider",
                   "enum": [
-                    1
+                    0
                   ]
                 },
                 {
                   "title": "Fan",
                   "enum": [
-                    2
+                    1
                   ]
                 }
               ],

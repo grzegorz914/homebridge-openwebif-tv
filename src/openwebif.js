@@ -34,7 +34,6 @@ class OPENWEBIF extends EventEmitter {
         this.eventName = '';
         this.reference = '';
         this.volume = 0;
-        this.mute = true;
         this.devInfo = '';
 
         this.on('checkDeviceInfo', async () => {
@@ -90,7 +89,6 @@ class OPENWEBIF extends EventEmitter {
                     this.eventName = eventName;
                     this.reference = reference;
                     this.volume = volume;
-                    this.mute = mute;
 
                     this.emit('stateChanged', power, name, eventName, reference, volume, mute);
                     const mqtt = mqttEnabled ? this.emit('mqtt', 'Info', JSON.stringify(this.devInfo, null, 2)) : false;
