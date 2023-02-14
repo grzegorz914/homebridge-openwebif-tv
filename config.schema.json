@@ -32,30 +32,6 @@
               "placeholder": 80,
               "required": true
             },
-            "auth": {
-              "title": "Authorization",
-              "type": "boolean",
-              "default": false,
-              "required": true
-            },
-            "user": {
-              "title": "User",
-              "type": "string",
-              "placeholder": "User",
-              "required": false,
-              "condition": {
-                "functionBody": "return model.devices[arrayIndices].auth === true;"
-              }
-            },
-            "pass": {
-              "title": "Password",
-              "type": "string",
-              "placeholder": "Password",
-              "required": false,
-              "condition": {
-                "functionBody": "return model.devices[arrayIndices].auth === true;"
-              }
-            },
             "inputs": {
               "title": "Input",
               "type": "array",
@@ -543,6 +519,37 @@
                 }
               }
             },
+            "auth": {
+              "title": "Authorization",
+              "type": "boolean",
+              "default": false,
+              "required": true
+            },
+            "user": {
+              "title": "User",
+              "type": "string",
+              "placeholder": "User",
+              "required": false,
+              "condition": {
+                "functionBody": "return model.devices[arrayIndices].auth === true;"
+              }
+            },
+            "pass": {
+              "title": "Password",
+              "type": "string",
+              "placeholder": "Password",
+              "required": false,
+              "condition": {
+                "functionBody": "return model.devices[arrayIndices].auth === true;"
+              }
+            },
+            "enableDebugMode": {
+              "title": "Debug",
+              "type": "boolean",
+              "default": false,
+              "description": "This enable debug mode.",
+              "required": false
+            },
             "disableLogInfo": {
               "title": "Disable Log Info",
               "type": "boolean",
@@ -562,13 +569,6 @@
               "type": "boolean",
               "default": false,
               "description": "This disable logging device connect error.",
-              "required": false
-            },
-            "enableDebugMode": {
-              "title": "Debug",
-              "type": "boolean",
-              "default": false,
-              "description": "This enable debug mode.",
               "required": false
             },
             "infoButtonCommand": {
