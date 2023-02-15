@@ -62,8 +62,8 @@ class OPENWEBIF extends EventEmitter {
                 }
 
                 this.checkStateOnFirstRun = true;
-                this.emit('connected', devInfo, channels);
                 this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
+                await new Promise(resolve => setTimeout(resolve, 2000));
                 this.emit('checkState');
             } catch (error) {
                 const debug = disableLogConnectError ? false : this.emit('error', `Info error: ${error}, reconnect in 15s.`);

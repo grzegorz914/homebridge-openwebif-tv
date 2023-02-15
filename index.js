@@ -169,10 +169,34 @@ class openwebIfTvDevice {
 			mqttEnabled: this.mqttEnabled
 		});
 
-		this.openwebif.on('connected', async (devInfo, channels) => {
+		this.openwebif.on('deviceInfo', async (manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) => {
 			this.log(`Device: ${this.host} ${this.name}, Connected.`);
-
 			try {
+				if (!this.disableLogDeviceInfo) {
+					this.log('-------- %s --------', this.name);
+					this.log('Manufacturer: %s', manufacturer);
+					this.log('Model: %s', modelName);
+					this.log('Kernel: %s', kernelVer);
+					this.log('Chipset: %s', chipset);
+					this.log('Webif version: %s', serialNumber);
+					this.log('Firmware: %s', firmwareRevision);
+					this.log('----------------------------------');
+				}
+
+				if (this.informationService) {
+					this.informationService
+						.setCharacteristic(Characteristic.Manufacturer, manufacturer)
+						.setCharacteristic(Characteristic.Model, modelName)
+						.setCharacteristic(Characteristic.SerialNumber, serialNumber)
+						.setCharacteristic(Characteristic.FirmwareRevision, firmwareRevision);
+				};
+
+				this.manufacturer = manufacturer;
+				this.modelName = modelName;
+				this.serialNumber = serialNumber;
+				this.firmwareRevision = firmwareRevision;
+				this.mac = mac;
+
 				const object = JSON.stringify({});
 				const array = JSON.stringify([]);
 
@@ -236,32 +260,6 @@ class openwebIfTvDevice {
 				this.log.error(`Device: ${this.host} ${this.name}, create files error: ${error}`);
 			};
 		})
-			.on('deviceInfo', (manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) => {
-				if (!this.disableLogDeviceInfo) {
-					this.log('-------- %s --------', this.name);
-					this.log('Manufacturer: %s', manufacturer);
-					this.log('Model: %s', modelName);
-					this.log('Kernel: %s', kernelVer);
-					this.log('Chipset: %s', chipset);
-					this.log('Webif version: %s', serialNumber);
-					this.log('Firmware: %s', firmwareRevision);
-					this.log('----------------------------------');
-				}
-
-				if (this.informationService) {
-					this.informationService
-						.setCharacteristic(Characteristic.Manufacturer, manufacturer)
-						.setCharacteristic(Characteristic.Model, modelName)
-						.setCharacteristic(Characteristic.SerialNumber, serialNumber)
-						.setCharacteristic(Characteristic.FirmwareRevision, firmwareRevision);
-				};
-
-				this.manufacturer = manufacturer;
-				this.modelName = modelName;
-				this.serialNumber = serialNumber;
-				this.firmwareRevision = firmwareRevision;
-				this.mac = mac;
-			})
 			.on('stateChanged', (power, name, eventName, reference, volume, mute) => {
 				const inputIdentifier = this.inputsReference.includes(reference) ? this.inputsReference.findIndex(index => index === reference) : this.inputIdentifier;
 
@@ -726,7 +724,7 @@ class openwebIfTvDevice {
 			const input = inputs[i];
 
 			//get input reference
-			const inputReference = input.reference || 'Undefined';
+			const inputReference = input.reference;
 
 			//get input name		
 			const inputName = savedInputsNames[inputReference] || input.name;
@@ -757,12 +755,11 @@ class openwebIfTvDevice {
 				.getCharacteristic(Characteristic.ConfiguredName)
 				.onSet(async (name) => {
 					try {
-						const nameIdentifier = inputReference || false;
-						savedInputsNames[nameIdentifier] = name;
+						savedInputsNames[inputReference] = name;
 						const newCustomName = JSON.stringify(savedInputsNames, null, 2);
 
-						const writeNewCustomName = nameIdentifier ? await fsPromises.writeFile(this.inputsNamesFile, newCustomName) : false;
-						const logInfo = this.disableLogInfo ? false : this.log(`Device: ${this.host} ${accessoryName}, saved new Input name: ${name}, reference: ${inputReference}`);
+						fs.writeFileSync(this.inputsNamesFile, newCustomName);
+						const logInfo = this.enableDebugMode ? false : this.log(`Device: ${this.host} ${accessoryName}, saved new Input name: ${name}, reference: ${inputReference}`);
 					} catch (error) {
 						this.log.error(`Device: ${this.host} ${accessoryName}, new Input name save error: ${error}`);
 					}
@@ -772,12 +769,11 @@ class openwebIfTvDevice {
 				.getCharacteristic(Characteristic.TargetVisibilityState)
 				.onSet(async (state) => {
 					try {
-						const targetVisibilityIdentifier = inputReference || false;
-						savedInputsTargetVisibility[targetVisibilityIdentifier] = state;
+						savedInputsTargetVisibility[inputReference] = state;
 						const newTargetVisibility = JSON.stringify(savedInputsTargetVisibility, null, 2);
 
-						const writeNewTargetVisibility = targetVisibilityIdentifier ? await fsPromises.writeFile(this.inputsTargetVisibilityFile, newTargetVisibility) : false;
-						const logInfo = this.disableLogInfo ? false : this.log(`Device: ${this.host} ${accessoryName}, saved new Input: ${inputName}, target visibility state: ${state ? 'HIDEN' : 'SHOWN'}`);
+						fs.writeFileSync(this.inputsTargetVisibilityFile, newTargetVisibility);
+						const logInfo = this.enableDebugMode ? false : this.log(`Device: ${this.host} ${accessoryName}, saved new Input: ${inputName}, target visibility state: ${state ? 'HIDEN' : 'SHOWN'}`);
 						inputService.setCharacteristic(Characteristic.CurrentVisibilityState, state);
 					} catch (error) {
 						this.log.error(`Device: ${this.host} ${accessoryName}, new target visibility state save error: ${error}`);
@@ -826,7 +822,7 @@ class openwebIfTvDevice {
 						.onSet(async (state) => {
 							try {
 								const setSwitchInput = (state && this.power) ? await this.openwebif.send(CONSTANS.ApiUrls.SetChannel + inputReference) : false;
-								const logInfo = this.disableLogInfo ? false : this.log(`Device: ${this.host} ${accessoryName}, set new Channel successful, name: ${inputName}, reference: ${inputReference}`);
+								const logInfo = this.enableDebugMode ? false : this.log(`Device: ${this.host} ${accessoryName}, set new Channel successful, name: ${inputName}, reference: ${inputReference}`);
 							} catch (error) {
 								this.log.error(`Device: ${this.host} ${accessoryName}, can not set new Channel. Might be due to a wrong settings in config, error: ${error}`);
 							};
@@ -932,7 +928,7 @@ class openwebIfTvDevice {
 								};
 
 								const send = (state && this.power) ? await this.openwebif.send(url) : false;
-								const logInfo = this.disableLogInfo ? false : this.log(`Device: ${this.host} ${accessoryName}, set ${['Channel', 'Command'][buttonMode]} successful, name: ${buttonName}, reference: ${[buttonReference, buttonCommand][buttonMode]}`);
+								const logInfo = this.enableDebugMode ? false : this.log(`Device: ${this.host} ${accessoryName}, set ${['Channel', 'Command'][buttonMode]} successful, name: ${buttonName}, reference: ${[buttonReference, buttonCommand][buttonMode]}`);
 
 								await new Promise(resolve => setTimeout(resolve, 300));
 								const setChar = (state && this.power && buttonMode === 1) ? buttonService.updateCharacteristic(Characteristic.On, false) : false;
