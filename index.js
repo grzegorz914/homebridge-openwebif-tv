@@ -724,7 +724,7 @@ class openwebIfTvDevice {
 			const input = inputs[i];
 
 			//get input reference
-			const inputReference = input.reference;
+			const inputReference = input.reference || 'Not set';
 
 			//get input name		
 			const inputName = savedInputsNames[inputReference] || input.name;
@@ -745,14 +745,15 @@ class openwebIfTvDevice {
 			const inputService = new Service.InputSource(inputName, `Input ${i}`);
 			inputService
 				.setCharacteristic(Characteristic.Identifier, i)
-				.setCharacteristic(Characteristic.ConfiguredName, inputName)
+				.setCharacteristic(Characteristic.Name, inputName)
 				.setCharacteristic(Characteristic.IsConfigured, isConfigured)
 				.setCharacteristic(Characteristic.InputSourceType, inputType)
 				.setCharacteristic(Characteristic.CurrentVisibilityState, currentVisibility)
-				.setCharacteristic(Characteristic.TargetVisibilityState, targetVisibility);
 
-			inputService
-				.getCharacteristic(Characteristic.ConfiguredName)
+			inputService.getCharacteristic(Characteristic.ConfiguredName)
+				.onGet(async () => {
+					return inputName;
+				})
 				.onSet(async (name) => {
 					try {
 						savedInputsNames[inputReference] = name;
@@ -760,6 +761,7 @@ class openwebIfTvDevice {
 
 						await fsPromises.writeFile(this.inputsNamesFile, newCustomName);
 						const logDebug = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, saved new Input name: ${name}, reference: ${inputReference}`) : false;
+						inputService.setCharacteristic(Characteristic.Name, inputName);
 					} catch (error) {
 						this.log.error(`Device: ${this.host} ${accessoryName}, new Input name save error: ${error}`);
 					}
@@ -767,6 +769,9 @@ class openwebIfTvDevice {
 
 			inputService
 				.getCharacteristic(Characteristic.TargetVisibilityState)
+				.onGet(async () => {
+					return targetVisibility;
+				})
 				.onSet(async (state) => {
 					try {
 						savedInputsTargetVisibility[inputReference] = state;
