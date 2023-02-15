@@ -169,7 +169,7 @@ class openwebIfTvDevice {
 			mqttEnabled: this.mqttEnabled
 		});
 
-		this.openwebif.on('deviceInfo', async (devInfo, manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) => {
+		this.openwebif.on('deviceInfo', async (devInfo, channels, manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) => {
 			this.log(`Device: ${this.host} ${this.name}, Connected.`);
 			try {
 				if (!this.disableLogDeviceInfo) {

@@ -62,7 +62,7 @@ class OPENWEBIF extends EventEmitter {
                 }
 
                 this.checkStateOnFirstRun = true;
-                this.emit('deviceInfo', devInfo, manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
+                this.emit('deviceInfo', devInfo, channels, manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 this.emit('checkState');
             } catch (error) {
