@@ -120,6 +120,8 @@ class openwebIfTvDevice {
 		this.sensorInputState = false;
 
 		this.prefDir = path.join(api.user.storagePath(), 'openwebifTv');
+		this.devInfoFile = `${this.prefDir}/devInfo_${this.host.split('.').join('')}`;
+		this.inputsFile = `${this.prefDir}/inputs_${this.host.split('.').join('')}`;
 		this.inputsNamesFile = `${this.prefDir}/inputsNames_${this.host.split('.').join('')}`;
 		this.inputsTargetVisibilityFile = `${this.prefDir}/inputsTargetVisibility_${this.host.split('.').join('')}`;
 		this.channelsFile = `${this.prefDir}/channels_${this.host.split('.').join('')}`;
@@ -167,7 +169,7 @@ class openwebIfTvDevice {
 			mqttEnabled: this.mqttEnabled
 		});
 
-		this.openwebif.on('deviceInfo', async (channels, manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) => {
+		this.openwebif.on('deviceInfo', async (devInfo, channels, manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) => {
 			this.log(`Device: ${this.host} ${this.name}, Connected.`);
 			try {
 				if (!this.disableLogDeviceInfo) {
@@ -203,6 +205,15 @@ class openwebIfTvDevice {
 					await fsPromises.mkdir(this.prefDir);
 				}
 
+				// Create device info file if it doesn't exist
+				if (!fs.existsSync(this.devInfoFile)) {
+					await fsPromises.writeFile(this.devInfoFile, object);
+				}
+				// Create inputs file if it doesn't exist
+				if (!fs.existsSync(this.inputsFile)) {
+					await fsPromises.writeFile(this.inputsFile, array);
+				}
+
 				// Create channels file if it doesn't exist
 				if (!fs.existsSync(this.channelsFile)) {
 					await fsPromises.writeFile(this.channelsFile, array);
@@ -217,6 +228,24 @@ class openwebIfTvDevice {
 				if (!fs.existsSync(this.inputsTargetVisibilityFile)) {
 					await fsPromises.writeFile(this.inputsTargetVisibilityFile, object);
 				}
+
+				//save device info to the file
+				try {
+					const devInfo1 = JSON.stringify(devInfo, null, 2);
+					const writeDevInfo = await fsPromises.writeFile(this.devInfoFile, devInfo1);
+					const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, saved device info: ${devInfo1}`) : false;
+				} catch (error) {
+					this.log.error(`Device: ${this.host} ${this.name}, save device info error: ${error}`);
+				};
+
+				//save inputs to the file
+				try {
+					const inputs = JSON.stringify(this.inputs, null, 2);
+					const writeInputs = await fsPromises.writeFile(this.inputsFile, inputs);
+					const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, saved inputs: ${inputs}`) : false;
+				} catch (error) {
+					this.log.error(`Device: ${this.host} ${this.name}, save inputs error: ${error}`);
+				};
 
 				//save channels to the file
 				try {
@@ -679,6 +708,9 @@ class openwebIfTvDevice {
 		};
 
 		//prepare inputs service
+		const savedInputs = fs.readFileSync(this.inputsFile).length > 2 ? JSON.parse(fs.readFileSync(this.inputsFile)) : this.inputs;
+		const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, read saved Inputs: ${JSON.stringify(savedInputs, null, 2)}`) : false;
+
 		const savedInputsNames = fs.readFileSync(this.inputsNamesFile).length > 2 ? JSON.parse(fs.readFileSync(this.inputsNamesFile)) : {};
 		const debug1 = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, read saved Inputs names: ${JSON.stringify(savedInputsNames, null, 2)}`) : false;
 
@@ -686,7 +718,7 @@ class openwebIfTvDevice {
 		const debug2 = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, read saved Inputs Target Visibility states: ${JSON.stringify(savedInputsTargetVisibility, null, 2)}`) : false;
 
 		//check possible inputs and possible inputs count (max 80)
-		const inputs = this.inputs;
+		const inputs = savedInputs;
 		const inputsCount = inputs.length;
 		const maxInputsCount = inputsCount < 80 ? inputsCount : 80;
 		for (let i = 0; i < maxInputsCount; i++) {
@@ -764,7 +796,7 @@ class openwebIfTvDevice {
 				this.televisionService.addLinkedService(inputService);
 				accessory.addService(inputService);
 			} else {
-				this.log(`Device: ${this.host} ${accessoryName}, ${!inputName ? 'name: Missing' : 'name: OK'}, ${!inputReference ? 'reference: Missing' : 'reference: OK'}, check your Inputs config!!!`);
+				this.log(`Device: ${this.host} ${accessoryName}, Input name: ${inputName ? inputName : 'Missing'}, ${inputReference ? inputReference : 'Missing'}.`);
 
 			};
 		}
