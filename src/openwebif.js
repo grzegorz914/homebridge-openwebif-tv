@@ -62,7 +62,7 @@ class OPENWEBIF extends EventEmitter {
                 }
 
                 this.checkStateOnFirstRun = true;
-                this.emit('deviceInfo', devInfo, channels, manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
+                this.emit('deviceInfo', channels, manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 this.emit('checkState');
             } catch (error) {
@@ -121,6 +121,11 @@ class OPENWEBIF extends EventEmitter {
     send(apiUrl) {
         return new Promise(async (resolve, reject) => {
             try {
+                if (!this.power) {
+                    reject(`current power state OFF, send command skipped.`);
+                    return;
+                };
+
                 await this.axiosInstance(apiUrl);
                 resolve(true);
             } catch (error) {
