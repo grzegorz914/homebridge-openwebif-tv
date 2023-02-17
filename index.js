@@ -324,7 +324,7 @@ class openwebIfTvDevice {
 				if (this.sensorInputsServices) {
 					const servicesCount = this.sensorInputsServices.length;
 					for (let i = 0; i < servicesCount; i++) {
-						const state = this.power ? (this.sensorInputsReference[i] === reference) : false;
+						const state = power ? (this.sensorInputsReference[i] === reference) : false;
 						const displayType = this.sensorInputsDisplayType[i];
 						const characteristicType = [Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][displayType];
 						this.sensorInputsServices[i]
@@ -403,7 +403,7 @@ class openwebIfTvDevice {
 			.onSet(async (state) => {
 				try {
 					const newState = state ? '4' : '5';
-					const setPower = this.power !== state ? await this.openwebif.send(CONSTANS.ApiUrls.SetPower + newState) : false;
+					await this.openwebif.send(CONSTANS.ApiUrls.SetPower + newState);
 					const logInfo = this.disableLogInfo ? false : this.log(`Device: ${this.host} ${accessoryName}, set Power state successful, state: ${state ? 'ON' : 'OFF'}`);
 				} catch (error) {
 					this.log.error(`Device: ${this.host} ${accessoryName}, set Power error: ${error}`);
