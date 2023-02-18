@@ -223,13 +223,13 @@
                         ]
                       },
                       {
-                        "title": "Channel Up",
+                        "title": "Bouquet Up",
                         "enum": [
                           "402"
                         ]
                       },
                       {
-                        "title": "Channel Down",
+                        "title": "Bouquet Down",
                         "enum": [
                           "403"
                         ]
@@ -313,25 +313,25 @@
                         ]
                       },
                       {
-                        "title": "Fast Forward",
+                        "title": "Forward",
                         "enum": [
                           "208"
                         ]
                       },
                       {
-                        "title": "Fast Backward",
+                        "title": "Rewind",
                         "enum": [
                           "168"
                         ]
                       },
                       {
-                        "title": "Next Track",
+                        "title": "Next",
                         "enum": [
                           "407"
                         ]
                       },
                       {
-                        "title": "Previous Track",
+                        "title": "Previous",
                         "enum": [
                           "412"
                         ]
@@ -373,7 +373,7 @@
                         ]
                       },
                       {
-                        "title": "Wideo",
+                        "title": "Video",
                         "enum": [
                           "393"
                         ]
@@ -624,7 +624,7 @@
                   ]
                 },
                 {
-                  "title": "Wideo",
+                  "title": "Video",
                   "enum": [
                     "393"
                   ]
@@ -651,6 +651,12 @@
                   "title": "Text",
                   "enum": [
                     "388"
+                  ]
+                },
+                {
+                  "title": "Record",
+                  "enum": [
+                    "167"
                   ]
                 }
               ],

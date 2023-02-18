@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.20.0] - (18.02.2023)
+## Changes
+- added Play/Pause functionality in RC
+- added Record to selection list for I button in RC
+- config.schema updated
+- cleanup
+
+
 ## [3.19.0] - (13.02.2023)
 ## Changes
 - standarize function of display type and volume control, now volume control -1 None/Disabled, 0 Slider, 1 Fan, please see in readme
