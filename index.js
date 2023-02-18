@@ -866,7 +866,7 @@ class openwebIfTvDevice {
 		//prepare sonsor service
 		const sensorInputs = this.sensorInputs;
 		const sensorInputsCount = sensorInputs.length;
-		const possibleSensorInputsCount = 80 - (this.inputsReference.length + this.inputSwitchButtonServices.length);
+		const possibleSensorInputsCount = 80 - (this.inputsReference.length + this.inputSwitchesButtonServices.length);
 		const maxSensorInputsCount = possibleSensorInputsCount >= sensorInputsCount ? sensorInputsCount : possibleSensorInputsCount;
 		if (maxSensorInputsCount > 0) {
 			this.log.debug('prepareSensorInputsServices');
@@ -904,7 +904,7 @@ class openwebIfTvDevice {
 		//prepare buttons service
 		const buttons = this.buttons;
 		const buttonsCount = buttons.length;
-		const possibleButtonsCount = 80 - (this.inputsReference.length + this.inputSwitchButtonServices.length + this.sensorInputsServices.length);
+		const possibleButtonsCount = 80 - (this.inputsReference.length + this.inputSwitchesButtonServices.length + this.sensorInputsServices.length);
 		const maxButtonsCount = possibleButtonsCount >= buttonsCount ? buttonsCount : possibleButtonsCount;
 		if (maxButtonsCount > 0) {
 			this.log.debug('prepareInputsButtonService');
