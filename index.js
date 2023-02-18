@@ -775,7 +775,6 @@ class openwebIfTvDevice {
 
 			//get input visibility state
 			const currentVisibility = savedInputsTargetVisibility[inputReference] || 0;
-			const targetVisibility = currentVisibility;
 
 			if (inputReference && inputName) {
 				const inputService = new Service.InputSource(inputName, `Input ${i}`);
@@ -806,7 +805,7 @@ class openwebIfTvDevice {
 				inputService
 					.getCharacteristic(Characteristic.TargetVisibilityState)
 					.onGet(async () => {
-						return targetVisibility;
+						return currentVisibility;
 					})
 					.onSet(async (state) => {
 						try {
@@ -846,34 +845,38 @@ class openwebIfTvDevice {
 				const index = inputsSwitchesButtons[i];
 
 				//get switch name		
-				const inputName = this.inputsName[index] || 'Not set';
+				const inputName = this.inputsName[index];
 
 				//get switch reference
-				const inputReference = this.inputsReference[index] || 'Not set';
+				const inputReference = this.inputsReference[index];
 
 				//get switch display type
 				const inputDisplayType = this.inputsDisplayType[index] >= 0 ? this.inputsDisplayType[index] : -1;
 
 				if (inputDisplayType >= 0) {
-					const serviceType = [Service.Outlet, Service.Switch][inputDisplayType];
-					const characteristicType = [Characteristic.On, Characteristic.On][inputDisplayType];
-					const inputSwitchButtonService = new serviceType(`${accessoryName} ${inputName}`, `Switch ${i}`);
-					inputSwitchButtonService.getCharacteristic(characteristicType)
-						.onGet(async () => {
-							const state = this.power ? (inputReference === this.reference) : false;
-							return state;
-						})
-						.onSet(async (state) => {
-							try {
-								const setSwitchInput = state ? await this.openwebif.send(CONSTANS.ApiUrls.SetChannel + inputReference) : false;
-								const logDebug = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, set Channel Name: ${inputName}, Reference: ${inputReference}`) : false;
-							} catch (error) {
-								this.log.error(`Device: ${this.host} ${accessoryName}, set Channel error: ${error}`);
-							};
-						});
+					if (inputReference && inputName && inputMode) {
+						const serviceType = [Service.Outlet, Service.Switch][inputDisplayType];
+						const characteristicType = [Characteristic.On, Characteristic.On][inputDisplayType];
+						const inputSwitchButtonService = new serviceType(`${accessoryName} ${inputName}`, `Switch ${i}`);
+						inputSwitchButtonService.getCharacteristic(characteristicType)
+							.onGet(async () => {
+								const state = this.power ? (inputReference === this.reference) : false;
+								return state;
+							})
+							.onSet(async (state) => {
+								try {
+									const setSwitchInput = state ? await this.openwebif.send(CONSTANS.ApiUrls.SetChannel + inputReference) : false;
+									const logDebug = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, set Channel Name: ${inputName}, Reference: ${inputReference}`) : false;
+								} catch (error) {
+									this.log.error(`Device: ${this.host} ${accessoryName}, set Channel error: ${error}`);
+								};
+							});
 
-					this.inputSwitchesButtonServices.push(inputSwitchButtonService);
-					accessory.addService(this.inputSwitchesButtonServices[i]);
+						this.inputSwitchesButtonServices.push(inputSwitchButtonService);
+						accessory.addService(this.inputSwitchesButtonServices[i]);
+					} else {
+						this.log(`Device: ${this.host} ${accessoryName}, Input Button Name: ${inputName ? inputName : 'Missing'}, Reference: ${inputReference ? inputReference : 'Missing'}, Mode: ${inputMode ? inputMode : 'Missing'}.`);
+					};
 				}
 			}
 		}
@@ -890,28 +893,32 @@ class openwebIfTvDevice {
 				const sensorInput = sensorInputs[i];
 
 				//get sensor name		
-				const sensorInputName = sensorInput.name || 'Not set';
+				const sensorInputName = sensorInput.name;
 
 				//get sensor reference
-				const sensorInputReference = sensorInput.reference || 'Not set';
+				const sensorInputReference = sensorInput.reference;
 
 				//get sensor display type
 				const sensorInputDisplayType = sensorInput.displayType >= 0 ? sensorInput.displayType : -1;
 
 				if (sensorInputDisplayType >= 0) {
-					const serviceType = [Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][sensorInputDisplayType];
-					const characteristicType = [Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][sensorInputDisplayType];
-					const sensorInputsService = new serviceType(`${accessoryName} ${sensorInputName}`, `Sensor ${i}`);
-					sensorInputsService.getCharacteristic(characteristicType)
-						.onGet(async () => {
-							const state = this.power ? (sensorInputReference === this.reference) : false;
-							return state;
-						});
+					if (sensorInputName && sensorInputReference) {
+						const serviceType = [Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][sensorInputDisplayType];
+						const characteristicType = [Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][sensorInputDisplayType];
+						const sensorInputsService = new serviceType(`${accessoryName} ${sensorInputName}`, `Sensor ${i}`);
+						sensorInputsService.getCharacteristic(characteristicType)
+							.onGet(async () => {
+								const state = this.power ? (sensorInputReference === this.reference) : false;
+								return state;
+							});
 
-					this.sensorInputsReference.push(sensorInputReference);
-					this.sensorInputsDisplayType.push(sensorInputDisplayType);
-					this.sensorInputsServices.push(sensorInputsService);
-					accessory.addService(this.sensorInputsServices[i]);
+						this.sensorInputsReference.push(sensorInputReference);
+						this.sensorInputsDisplayType.push(sensorInputDisplayType);
+						this.sensorInputsServices.push(sensorInputsService);
+						accessory.addService(this.sensorInputsServices[i]);
+					} else {
+						this.log(`Device: ${this.host} ${accessoryName}, Sensor Name: ${sensorInputName ? sensorInputName : 'Missing'}, Reference: ${sensorInputReference ? sensorInputReference : 'Missing'}.`);
+					};
 				}
 			}
 		}
@@ -928,59 +935,67 @@ class openwebIfTvDevice {
 				const button = buttons[i];
 
 				//get button name
-				const buttonName = button.name || 'Not set';
+				const buttonName = button.name;
 
 				//get button mode
-				const buttonMode = button.mode || 0;
-
-				//get button reference
-				const buttonReference = button.reference || 'Not set';
+				const buttonMode = button.mode;
 
 				//get button command
-				const buttonCommand = button.command || 'Not set';
+				const buttonReference = button.reference;
+
+				//get button command
+				const buttonCommand = button.command;
+
+				//get button reference/command
+				const buttonReferenceCommand = buttonMode ? buttonCommand : buttonReference;
+
 
 				//get button display type
 				const buttonDisplayType = button.displayType >= 0 ? button.displayType : -1;
 
 				if (buttonDisplayType >= 0) {
-					const serviceType = [Service.Outlet, Service.Switch][buttonDisplayType];
-					const buttonService = new serviceType(`${accessoryName} ${buttonName}`, `Button ${i}`);
-					buttonService.getCharacteristic(Characteristic.On)
-						.onGet(async () => {
-							let state = false;
-							switch (buttonMode) {
-								case 0:
-									state = this.power ? (buttonReference === this.reference) : false;
-									break;
-								case 1:
-									state = false;
-									break;
-							};
-							return state;
-						})
-						.onSet(async (state) => {
-							try {
-								let url = '';
+					if (buttonName && buttonReferenceCommand && buttonMode) {
+						const serviceType = [Service.Outlet, Service.Switch][buttonDisplayType];
+						const buttonService = new serviceType(`${accessoryName} ${buttonName}`, `Button ${i}`);
+						buttonService.getCharacteristic(Characteristic.On)
+							.onGet(async () => {
+								let state = false;
 								switch (buttonMode) {
 									case 0:
-										url = CONSTANS.ApiUrls.SetChannel + buttonReference;
+										state = this.power ? (buttonReference === this.reference) : false;
 										break;
 									case 1:
-										url = CONSTANS.ApiUrls.SetRcCommand + buttonCommand;
+										state = false;
 										break;
 								};
+								return state;
+							})
+							.onSet(async (state) => {
+								try {
+									let url = '';
+									switch (buttonMode) {
+										case 0:
+											url = CONSTANS.ApiUrls.SetChannel + buttonReferenceCommand;
+											break;
+										case 1:
+											url = CONSTANS.ApiUrls.SetRcCommand + buttonReferenceCommand;
+											break;
+									};
 
-								const send = state ? await this.openwebif.send(url) : false;
-								const logDebug = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, set ${['Channel', 'Command'][buttonMode]} Name: ${buttonName}, Reference: ${[buttonReference, buttonCommand][buttonMode]}`) : false;
+									const send = state ? await this.openwebif.send(url) : false;
+									const logDebug = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, set ${['Channel', 'Command'][buttonMode]} Name: ${buttonName}, ${buttonMode ? 'Command:' : 'Reference:'} ${buttonReferenceCommand}`) : false;
 
-								await new Promise(resolve => setTimeout(resolve, 300));
-								const setChar = (state && buttonMode === 1) ? buttonService.updateCharacteristic(Characteristic.On, false) : false;
-							} catch (error) {
-								this.log.error(`Device: ${this.host} ${accessoryName}, set ${['Channel', 'Command'][buttonMode]} error: ${error}`);
-							};
-						});
-					this.buttonsServices.push(buttonService);
-					accessory.addService(this.buttonsServices[i]);
+									await new Promise(resolve => setTimeout(resolve, 300));
+									const setChar = (state && buttonMode === 1) ? buttonService.updateCharacteristic(Characteristic.On, false) : false;
+								} catch (error) {
+									this.log.error(`Device: ${this.host} ${accessoryName}, set ${['Channel', 'Command'][buttonMode]} error: ${error}`);
+								};
+							});
+						this.buttonsServices.push(buttonService);
+						accessory.addService(this.buttonsServices[i]);
+					} else {
+						this.log(`Device: ${this.host} ${accessoryName}, Button Name: ${buttonName ? buttonName : 'Missing'}, ${buttonMode ? 'Command:' : 'Reference:'} ${buttonReferenceCommand ? buttonReferenceCommand : 'Missing'}, Mode: ${buttonMode ? buttonMode : 'Missing'}..`);
+					};
 				}
 			};
 		}
