@@ -235,7 +235,7 @@ class openwebIfTvDevice {
 				//save device info to the file
 				try {
 					const devInfo1 = JSON.stringify(devInfo, null, 2);
-					const writeDevInfo = await fsPromises.writeFile(this.devInfoFile, devInfo1);
+					await fsPromises.writeFile(this.devInfoFile, devInfo1);
 					const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, saved device info: ${devInfo1}`) : false;
 				} catch (error) {
 					this.log.error(`Device: ${this.host} ${this.name}, save device info error: ${error}`);
@@ -244,7 +244,7 @@ class openwebIfTvDevice {
 				//save inputs to the file
 				try {
 					const inputs = JSON.stringify(this.inputs, null, 2);
-					const writeInputs = await fsPromises.writeFile(this.inputsFile, inputs);
+					await fsPromises.writeFile(this.inputsFile, inputs);
 					const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, saved inputs: ${inputs}`) : false;
 				} catch (error) {
 					this.log.error(`Device: ${this.host} ${this.name}, save inputs error: ${error}`);
@@ -253,7 +253,7 @@ class openwebIfTvDevice {
 				//save channels to the file
 				try {
 					const channels1 = JSON.stringify(channels, null, 2);
-					const writeChannels = await fsPromises.writeFile(this.channelsFile, channels1);
+					await fsPromises.writeFile(this.channelsFile, channels1);
 					const debug = this.enableDebugMode ? this.log(`Device: ${this.host} ${this.name}, saved channels: ${channels1}`) : false;
 				} catch (error) {
 					this.log.error(`Device: ${this.host} ${this.name}, save channels error: ${error}`);
@@ -264,6 +264,7 @@ class openwebIfTvDevice {
 		})
 			.on('stateChanged', (power, name, eventName, reference, volume, mute) => {
 				const inputIdentifier = this.inputsReference.includes(reference) ? this.inputsReference.findIndex(index => index === reference) : this.inputIdentifier;
+				mute = power ? mute : true;
 
 				if (this.televisionService) {
 					this.televisionService
@@ -273,13 +274,16 @@ class openwebIfTvDevice {
 
 				if (this.speakerService) {
 					this.speakerService
+						.updateCharacteristic(Characteristic.Active, power)
 						.updateCharacteristic(Characteristic.Volume, volume)
 						.updateCharacteristic(Characteristic.Mute, mute);
+
 					if (this.volumeService) {
 						this.volumeService
 							.updateCharacteristic(Characteristic.Brightness, volume)
 							.updateCharacteristic(Characteristic.On, !mute);
 					}
+
 					if (this.volumeServiceFan) {
 						this.volumeServiceFan
 							.updateCharacteristic(Characteristic.RotationSpeed, volume)
@@ -574,9 +578,20 @@ class openwebIfTvDevice {
 		//prepare speaker service
 		this.log.debug('prepareSpeakerService');
 		this.speakerService = new Service.TelevisionSpeaker(`${accessoryName} Speaker`, 'Speaker');
-		this.speakerService
-			.setCharacteristic(Characteristic.Active, Characteristic.Active.ACTIVE)
-			.setCharacteristic(Characteristic.VolumeControlType, Characteristic.VolumeControlType.ABSOLUTE);
+		this.speakerService.getCharacteristic(Characteristic.Active)
+			.onGet(async () => {
+				const state = this.power;
+				return state;
+			})
+			.onSet(async (state) => {
+			});
+
+		this.speakerService.getCharacteristic(Characteristic.VolumeControlType)
+			.onGet(async () => {
+				const state = 3; //none, relative, relative with current, absolute
+				return state;
+			});
+
 		this.speakerService.getCharacteristic(Characteristic.VolumeSelector)
 			.onSet(async (command) => {
 				try {
@@ -623,7 +638,7 @@ class openwebIfTvDevice {
 			})
 			.onSet(async (state) => {
 				try {
-					const toggleMute = this.mute !== state ? await this.openwebif.send(CONSTANS.ApiUrls.ToggleMute) : false;
+					await this.openwebif.send(CONSTANS.ApiUrls.ToggleMute);
 					const logInfo = this.disableLogInfo ? false : this.log(`Device: ${this.host} ${accessoryName}, set Mute: ${state ? 'ON' : 'OFF'}`);
 				} catch (error) {
 					this.log.error(`Device: ${this.host} ${accessoryName}, set Mute error: ${error}`);
@@ -781,10 +796,10 @@ class openwebIfTvDevice {
 							const newCustomName = JSON.stringify(savedInputsNames, null, 2);
 
 							await fsPromises.writeFile(this.inputsNamesFile, newCustomName);
-							const logDebug = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, saved Input Name: ${value}, Reference: ${inputReference}`) : false;
+							const logDebug = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, saved Input, Name: ${value}, Reference: ${inputReference}`) : false;
 							inputService.setCharacteristic(Characteristic.Name, inputName);
 						} catch (error) {
-							this.log.error(`Device: ${this.host} ${accessoryName}, save Input name error: ${error}`);
+							this.log.error(`Device: ${this.host} ${accessoryName}, save Input Name error: ${error}`);
 						}
 					});
 
@@ -814,7 +829,7 @@ class openwebIfTvDevice {
 				this.televisionService.addLinkedService(inputService);
 				accessory.addService(inputService);
 			} else {
-				this.log(`Device: ${this.host} ${accessoryName}, Input name: ${inputName ? inputName : 'Missing'}, ${inputReference ? inputReference : 'Missing'}.`);
+				this.log(`Device: ${this.host} ${accessoryName}, Input Name: ${inputName ? inputName : 'Missing'}, Reference: ${inputReference ? inputReference : 'Missing'}.`);
 
 			};
 		}

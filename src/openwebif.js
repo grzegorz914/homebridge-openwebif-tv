@@ -16,10 +16,10 @@ class OPENWEBIF extends EventEmitter {
         const mqttEnabled = config.mqttEnabled;
         this.refreshInterval = config.refreshInterval;
 
-        const url = `http://${host}:${port}`;
+        const baseUrl = `http://${host}:${port}`;
         this.axiosInstance = axios.create({
             method: 'GET',
-            baseURL: url,
+            baseURL: baseUrl,
             timeout: 10000,
             withCredentials: auth,
             auth: {
@@ -34,6 +34,7 @@ class OPENWEBIF extends EventEmitter {
         this.eventName = '';
         this.reference = '';
         this.volume = 0;
+        this.mute = false;
         this.devInfo = '';
 
         this.on('checkDeviceInfo', async () => {
@@ -56,7 +57,7 @@ class OPENWEBIF extends EventEmitter {
                 const mac = devInfo.ifaces[0].mac || false;
 
                 if (!mac) {
-                    const debug = debugLog ? this.emit('debug', `Mac address: ${mac}, reconnect in 15s.`) : false;
+                    const debug = debugLog ? this.emit('debug', `Missing Mac Address: ${mac}, reconnect in 15s.`) : false;
                     this.checkDeviceInfo();
                     return;
                 }
@@ -76,12 +77,12 @@ class OPENWEBIF extends EventEmitter {
                     const devState = deviceState.data;
                     const debug = debugLog ? this.emit('debug', `State: ${JSON.stringify(devState, null, 2)}`) : false;
 
-                    const power = (devState.inStandby == 'false');
+                    const power = devState.inStandby === 'false';
                     const name = devState.currservice_station;
                     const eventName = devState.currservice_name;
                     const reference = devState.currservice_serviceref;
                     const volume = devState.volume;
-                    const mute = power ? (devState.muted == true) : true;
+                    const mute = devState.muted;
 
                     this.checkStateOnFirstRun = false;
                     this.power = power;
@@ -89,6 +90,7 @@ class OPENWEBIF extends EventEmitter {
                     this.eventName = eventName;
                     this.reference = reference;
                     this.volume = volume;
+                    this.mute = mute;
 
                     this.emit('stateChanged', power, name, eventName, reference, volume, mute);
                     const mqtt = mqttEnabled ? this.emit('mqtt', 'Info', JSON.stringify(this.devInfo, null, 2)) : false;
@@ -100,7 +102,7 @@ class OPENWEBIF extends EventEmitter {
                 };
             })
             .on('disconnect', () => {
-                this.emit('stateChanged', false, this.name, this.eventName, this.reference, this.volume, true);
+                this.emit('stateChanged', false, this.name, this.eventName, this.reference, this.volume, this.mute);
                 this.emit('disconnected', 'Disconnected.');
                 this.checkDeviceInfo();
             });
@@ -122,7 +124,7 @@ class OPENWEBIF extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             try {
                 if (!this.power && !power) {
-                    reject(`current power state OFF, send command skipped.`);
+                    reject(`power OFF, send command skipped.`);
                     return;
                 };
 
