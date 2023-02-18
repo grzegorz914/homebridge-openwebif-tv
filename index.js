@@ -103,9 +103,12 @@ class openwebIfTvDevice {
 		this.inputsName = [];
 		this.inputsDisplayType = [];
 		this.inputsSwitchesButtons = [];
+		this.inputSwitchesButtonServices = [];
 
+		this.sensorInputsServices = [];
 		this.sensorInputsReference = [];
 		this.sensorInputsDisplayType = [];
+		this.buttonsServices = [];
 
 		this.power = false;
 		this.reference = '';
@@ -384,7 +387,7 @@ class openwebIfTvDevice {
 		this.televisionService = new Service.Television(`${accessoryName} Television`, 'Television');
 		this.televisionService.getCharacteristic(Characteristic.ConfiguredName)
 			.onGet(async () => {
-				const logInfo = this.disableLogInfo ? false : this.log(`Device: ${this.host} ${accessoryName}.}`);
+				const logInfo = this.disableLogInfo ? false : this.log(`Device: ${this.host} ${accessoryName}.`);
 				return accessoryName;
 			})
 			.onSet(async (value) => {
@@ -817,7 +820,6 @@ class openwebIfTvDevice {
 		}
 
 		//prepare inputs switch sensor service
-		this.inputSwitchButtonServices = [];
 		const inputsSwitchesButtons = this.inputsSwitchesButtons;
 		const inputsSwitchesButtonsCount = inputsSwitchesButtons.length;
 		const possibleInputsSwitchesButtonsCount = 80 - this.inputsReference.length;
@@ -855,14 +857,13 @@ class openwebIfTvDevice {
 							};
 						});
 
-					this.inputSwitchButtonServices.push(inputSwitchButtonService);
-					accessory.addService(this.inputSwitchButtonServices[i]);
+					this.inputSwitchesButtonServices.push(inputSwitchButtonService);
+					accessory.addService(this.inputSwitchesButtonServices[i]);
 				}
 			}
 		}
 
 		//prepare sonsor service
-		this.sensorInputsServices = [];
 		const sensorInputs = this.sensorInputs;
 		const sensorInputsCount = sensorInputs.length;
 		const possibleSensorInputsCount = 80 - (this.inputsReference.length + this.inputSwitchButtonServices.length);

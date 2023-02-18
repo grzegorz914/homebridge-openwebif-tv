@@ -100,8 +100,8 @@ class OPENWEBIF extends EventEmitter {
                 };
             })
             .on('disconnect', () => {
-                this.emit('disconnected', 'Disconnected.');
                 this.emit('stateChanged', false, this.name, this.eventName, this.reference, this.volume, true);
+                this.emit('disconnected', 'Disconnected.');
                 this.checkDeviceInfo();
             });
 
@@ -129,7 +129,6 @@ class OPENWEBIF extends EventEmitter {
                 await this.axiosInstance(apiUrl);
                 resolve(true);
             } catch (error) {
-                this.emit('error', error);
                 reject(error);
             };
         });
