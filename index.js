@@ -796,7 +796,7 @@ class openwebIfTvDevice {
 
 							await fsPromises.writeFile(this.inputsNamesFile, newCustomName);
 							const logDebug = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, saved Input, Name: ${value}, Reference: ${inputReference}`) : false;
-							inputService.setCharacteristic(Characteristic.Name, inputName);
+							inputService.setCharacteristic(Characteristic.Name, value);
 						} catch (error) {
 							this.log.error(`Device: ${this.host} ${accessoryName}, save Input Name error: ${error}`);
 						}
@@ -854,7 +854,7 @@ class openwebIfTvDevice {
 				const inputDisplayType = this.inputsDisplayType[index] >= 0 ? this.inputsDisplayType[index] : -1;
 
 				if (inputDisplayType >= 0) {
-					if (inputReference && inputName && inputMode) {
+					if (inputReference && inputName) {
 						const serviceType = [Service.Outlet, Service.Switch][inputDisplayType];
 						const characteristicType = [Characteristic.On, Characteristic.On][inputDisplayType];
 						const inputSwitchButtonService = new serviceType(`${accessoryName} ${inputName}`, `Switch ${i}`);
@@ -875,7 +875,7 @@ class openwebIfTvDevice {
 						this.inputSwitchesButtonServices.push(inputSwitchButtonService);
 						accessory.addService(this.inputSwitchesButtonServices[i]);
 					} else {
-						this.log(`Device: ${this.host} ${accessoryName}, Input Button Name: ${inputName ? inputName : 'Missing'}, Reference: ${inputReference ? inputReference : 'Missing'}, Mode: ${inputMode ? inputMode : 'Missing'}.`);
+						this.log(`Device: ${this.host} ${accessoryName}, Input Button Name: ${inputName ? inputName : 'Missing'}, Reference: ${inputReference ? inputReference : 'Missing'}.`);
 					};
 				}
 			}
@@ -948,7 +948,6 @@ class openwebIfTvDevice {
 
 				//get button reference/command
 				const buttonReferenceCommand = buttonMode ? buttonCommand : buttonReference;
-
 
 				//get button display type
 				const buttonDisplayType = button.displayType >= 0 ? button.displayType : -1;
