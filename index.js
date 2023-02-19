@@ -99,6 +99,7 @@ class openwebIfTvDevice {
 		//setup variables
 		this.startPrepareAccessory = true;
 
+		this.services = [];
 		this.inputsReference = [];
 		this.inputsName = [];
 		this.inputsDisplayType = [];
@@ -293,26 +294,26 @@ class openwebIfTvDevice {
 
 				if (this.sensorPowerService) {
 					this.sensorPowerService
-						.updateCharacteristic(Characteristic.MotionDetected, power)
+						.updateCharacteristic(Characteristic.ContactSensorState, power)
 				}
 
 				if (this.sensorVolumeService) {
 					const state = power ? (this.volume !== volume) : false;
 					this.sensorVolumeService
-						.updateCharacteristic(Characteristic.MotionDetected, state)
+						.updateCharacteristic(Characteristic.ContactSensorState, state)
 					this.sensorVolumeState = state;
 				}
 
 				if (this.sensorMuteService) {
 					const state = power ? this.mute : false;
 					this.sensorMuteService
-						.updateCharacteristic(Characteristic.MotionDetected, state)
+						.updateCharacteristic(Characteristic.ContactSensorState, state)
 				}
 
 				if (this.sensorInputService) {
 					const state = power ? (this.inputIdentifier !== inputIdentifier) : false;
 					this.sensorInputService
-						.updateCharacteristic(Characteristic.MotionDetected, state)
+						.updateCharacteristic(Characteristic.ContactSensorState, state)
 					this.sensorInputState = state;
 				}
 
@@ -383,6 +384,7 @@ class openwebIfTvDevice {
 			.setCharacteristic(Characteristic.Model, this.modelName)
 			.setCharacteristic(Characteristic.SerialNumber, this.serialNumber)
 			.setCharacteristic(Characteristic.FirmwareRevision, this.firmwareRevision);
+		this.services.push(this.informationService);
 
 		//prepare television service
 		this.log.debug('prepareTelevisionService');
@@ -571,6 +573,7 @@ class openwebIfTvDevice {
 				};
 			});
 
+		this.services.push(this.televisionService);
 		accessory.addService(this.televisionService);
 
 		//prepare speaker service
@@ -643,6 +646,7 @@ class openwebIfTvDevice {
 				};
 			});
 
+		this.services.push(this.tvSpeakerService);
 		accessory.addService(this.speakerService);
 
 		//prepare volume service
@@ -667,6 +671,7 @@ class openwebIfTvDevice {
 						this.speakerService.setCharacteristic(Characteristic.Mute, !state);
 					});
 
+				this.services.push(this.volumeService);
 				accessory.addService(this.volumeService);
 			}
 
@@ -689,6 +694,7 @@ class openwebIfTvDevice {
 						this.speakerService.setCharacteristic(Characteristic.Mute, !state);
 					});
 
+				this.services.push(this.volumeServiceFan);
 				accessory.addService(this.volumeServiceFan);
 			}
 		}
@@ -696,45 +702,49 @@ class openwebIfTvDevice {
 		//prepare sensor service
 		if (this.sensorPower) {
 			this.log.debug('prepareSensorPowerService')
-			this.sensorPowerService = new Service.MotionSensor(`${accessoryName} Power Sensor`, `Power Sensor`);
-			this.sensorPowerService.getCharacteristic(Characteristic.MotionDetected)
+			this.sensorPowerService = new Service.ContactSensor(`${accessoryName} Power Sensor`, `Power Sensor`);
+			this.sensorPowerService.getCharacteristic(Characteristic.ContactSensorState)
 				.onGet(async () => {
 					const state = this.power;
 					return state;
 				});
+			this.services.push(this.sensorPowerService);
 			accessory.addService(this.sensorPowerService);
 		};
 
 		if (this.sensorVolume) {
 			this.log.debug('prepareSensorVolumeService')
-			this.sensorVolumeService = new Service.MotionSensor(`${accessoryName} Volume Sensor`, `Volume Sensor`);
-			this.sensorVolumeService.getCharacteristic(Characteristic.MotionDetected)
+			this.sensorVolumeService = new Service.ContactSensor(`${accessoryName} Volume Sensor`, `Volume Sensor`);
+			this.sensorVolumeService.getCharacteristic(Characteristic.ContactSensorState)
 				.onGet(async () => {
 					const state = this.sensorVolumeState;
 					return state;
 				});
+			this.services.push(this.sensorVolumeService);
 			accessory.addService(this.sensorVolumeService);
 		};
 
 		if (this.sensorMute) {
 			this.log.debug('prepareSensorMuteService')
-			this.sensorMuteService = new Service.MotionSensor(`${accessoryName} Mute Sensor`, `Mute Sensor`);
-			this.sensorMuteService.getCharacteristic(Characteristic.MotionDetected)
+			this.sensorMuteService = new Service.ContactSensor(`${accessoryName} Mute Sensor`, `Mute Sensor`);
+			this.sensorMuteService.getCharacteristic(Characteristic.ContactSensorState)
 				.onGet(async () => {
 					const state = this.power ? this.mute : false;
 					return state;
 				});
+			this.services.push(this.sensorMuteService);
 			accessory.addService(this.sensorMuteService);
 		};
 
 		if (this.sensorInput) {
 			this.log.debug('prepareSensorInputService')
-			this.sensorInputService = new Service.MotionSensor(`${accessoryName} Input Sensor`, `Input Sensor`);
-			this.sensorInputService.getCharacteristic(Characteristic.MotionDetected)
+			this.sensorInputService = new Service.ContactSensor(`${accessoryName} Input Sensor`, `Input Sensor`);
+			this.sensorInputService.getCharacteristic(Characteristic.ContactSensorState)
 				.onGet(async () => {
 					const state = this.sensorInputState;
 					return state;
 				});
+			this.services.push(this.sensorInputService);
 			accessory.addService(this.sensorInputService);
 		};
 
@@ -751,7 +761,8 @@ class openwebIfTvDevice {
 		//check possible inputs and possible inputs count (max 80)
 		const inputs = savedInputs;
 		const inputsCount = inputs.length;
-		const maxInputsCount = inputsCount < 80 ? inputsCount : 80;
+		const possibleInputsCount = 90 - this.services.length;
+		const maxInputsCount = inputsCount >= possibleInputsCount ? possibleInputsCount : inputsCount;
 		for (let i = 0; i < maxInputsCount; i++) {
 			//input
 			const input = inputs[i];
@@ -824,6 +835,7 @@ class openwebIfTvDevice {
 				const pushInputSwitchIndex = inputDisplayType >= 0 ? this.inputsSwitchesButtons.push(i) : false;
 
 				this.televisionService.addLinkedService(inputService);
+				this.services.push(inputService);
 				accessory.addService(inputService);
 			} else {
 				this.log(`Device: ${this.host} ${accessoryName}, Input Name: ${inputName ? inputName : 'Missing'}, Reference: ${inputReference ? inputReference : 'Missing'}.`);
@@ -834,8 +846,8 @@ class openwebIfTvDevice {
 		//prepare inputs switch sensor service
 		const inputsSwitchesButtons = this.inputsSwitchesButtons;
 		const inputsSwitchesButtonsCount = inputsSwitchesButtons.length;
-		const possibleInputsSwitchesButtonsCount = 80 - this.inputsReference.length;
-		const maxInputsSwitchesButtonsCount = possibleInputsSwitchesButtonsCount >= inputsSwitchesButtonsCount ? inputsSwitchesButtonsCount : possibleInputsSwitchesButtonsCount;
+		const possibleInputsSwitchesButtonsCount = 90 - this.services.length;
+		const maxInputsSwitchesButtonsCount = inputsSwitchesButtonsCount >= possibleInputsSwitchesButtonsCount ? possibleInputsSwitchesButtonsCount : inputsSwitchesButtonsCount;
 		if (maxInputsSwitchesButtonsCount > 0) {
 			this.log.debug('prepareSwitchsService');
 			for (let i = 0; i < maxInputsSwitchesButtonsCount; i++) {
@@ -870,6 +882,7 @@ class openwebIfTvDevice {
 							});
 
 						this.inputSwitchesButtonServices.push(inputSwitchButtonService);
+						this.services.push(inputSwitchButtonService);
 						accessory.addService(this.inputSwitchesButtonServices[i]);
 					} else {
 						this.log(`Device: ${this.host} ${accessoryName}, Input Button Name: ${inputName ? inputName : 'Missing'}, Reference: ${inputReference ? inputReference : 'Missing'}.`);
@@ -881,8 +894,8 @@ class openwebIfTvDevice {
 		//prepare sonsor service
 		const sensorInputs = this.sensorInputs;
 		const sensorInputsCount = sensorInputs.length;
-		const possibleSensorInputsCount = 80 - (this.inputsReference.length + this.inputSwitchesButtonServices.length);
-		const maxSensorInputsCount = possibleSensorInputsCount >= sensorInputsCount ? sensorInputsCount : possibleSensorInputsCount;
+		const possibleSensorInputsCount = 90 - this.services.length;
+		const maxSensorInputsCount = sensorInputsCount >= possibleSensorInputsCount ? possibleSensorInputsCount : sensorInputsCount;
 		if (maxSensorInputsCount > 0) {
 			this.log.debug('prepareSensorInputsServices');
 			for (let i = 0; i < maxSensorInputsCount; i++) {
@@ -912,6 +925,7 @@ class openwebIfTvDevice {
 						this.sensorInputsReference.push(sensorInputReference);
 						this.sensorInputsDisplayType.push(sensorInputDisplayType);
 						this.sensorInputsServices.push(sensorInputsService);
+						this.services.push(sensorInputService);
 						accessory.addService(this.sensorInputsServices[i]);
 					} else {
 						this.log(`Device: ${this.host} ${accessoryName}, Sensor Name: ${sensorInputName ? sensorInputName : 'Missing'}, Reference: ${sensorInputReference ? sensorInputReference : 'Missing'}.`);
@@ -923,8 +937,8 @@ class openwebIfTvDevice {
 		//prepare buttons service
 		const buttons = this.buttons;
 		const buttonsCount = buttons.length;
-		const possibleButtonsCount = 80 - (this.inputsReference.length + this.inputSwitchesButtonServices.length + this.sensorInputsServices.length);
-		const maxButtonsCount = possibleButtonsCount >= buttonsCount ? buttonsCount : possibleButtonsCount;
+		const possibleButtonsCount = 90 - this.services.length;
+		const maxButtonsCount = buttonsCount >= possibleButtonsCount ? possibleButtonsCount : buttonsCount;
 		if (maxButtonsCount > 0) {
 			this.log.debug('prepareInputsButtonService');
 			for (let i = 0; i < maxButtonsCount; i++) {
@@ -988,6 +1002,7 @@ class openwebIfTvDevice {
 								};
 							});
 						this.buttonsServices.push(buttonService);
+						this.services.push(buttonService);
 						accessory.addService(this.buttonsServices[i]);
 					} else {
 						this.log(`Device: ${this.host} ${accessoryName}, Button Name: ${buttonName ? buttonName : 'Missing'}, ${buttonMode ? 'Command:' : 'Reference:'} ${buttonReferenceCommand ? buttonReferenceCommand : 'Missing'}, Mode: ${buttonMode ? buttonMode : 'Missing'}..`);
