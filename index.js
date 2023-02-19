@@ -321,10 +321,8 @@ class openwebIfTvDevice {
 					for (let i = 0; i < switchServicesCount; i++) {
 						const index = this.inputsSwitchesButtons[i];
 						const state = power ? (this.inputsReference[index] === reference) : false;
-						const displayType = this.inputsDisplayType[index];
-						const characteristicType = [Characteristic.On, Characteristic.On][displayType];
 						this.inputSwitchButtonServices[i]
-							.updateCharacteristic(characteristicType, state);
+							.updateCharacteristic(Characteristic.On, state);
 					}
 				}
 
@@ -856,9 +854,8 @@ class openwebIfTvDevice {
 				if (inputDisplayType >= 0) {
 					if (inputReference && inputName) {
 						const serviceType = [Service.Outlet, Service.Switch][inputDisplayType];
-						const characteristicType = [Characteristic.On, Characteristic.On][inputDisplayType];
 						const inputSwitchButtonService = new serviceType(`${accessoryName} ${inputName}`, `Switch ${i}`);
-						inputSwitchButtonService.getCharacteristic(characteristicType)
+						inputSwitchButtonService.getCharacteristic(Characteristic.On)
 							.onGet(async () => {
 								const state = this.power ? (inputReference === this.reference) : false;
 								return state;
@@ -985,7 +982,7 @@ class openwebIfTvDevice {
 									const logDebug = this.enableDebugMode ? this.log(`Device: ${this.host} ${accessoryName}, set ${['Channel', 'Command'][buttonMode]} Name: ${buttonName}, ${buttonMode ? 'Command:' : 'Reference:'} ${buttonReferenceCommand}`) : false;
 
 									await new Promise(resolve => setTimeout(resolve, 300));
-									const setChar = (state && buttonMode === 1) ? buttonService.updateCharacteristic(Characteristic.On, false) : false;
+									const setChar = buttonMode === 1 ? buttonService.updateCharacteristic(Characteristic.On, false) : false;
 								} catch (error) {
 									this.log.error(`Device: ${this.host} ${accessoryName}, set ${['Channel', 'Command'][buttonMode]} error: ${error}`);
 								};
