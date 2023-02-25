@@ -348,7 +348,11 @@ class openwebIfTvDevice {
 
 				//start prepare accessory
 				if (this.startPrepareAccessory) {
-					this.prepareAccessory();
+					try {
+						this.prepareAccessory();
+					} catch (error) {
+						this.log.error(`Device: ${this.host} ${this.name}, prepare accessory error: ${error}`);
+					};
 				};
 			})
 			.on('error', (error) => {
