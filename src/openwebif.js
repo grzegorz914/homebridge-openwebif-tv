@@ -123,11 +123,6 @@ class OPENWEBIF extends EventEmitter {
     send(apiUrl, power) {
         return new Promise(async (resolve, reject) => {
             try {
-                if (!this.power && !power) {
-                    reject(`power OFF, send command skipped.`);
-                    return;
-                };
-
                 await this.axiosInstance(apiUrl);
                 resolve(true);
             } catch (error) {

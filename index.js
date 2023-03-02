@@ -431,7 +431,7 @@ class openwebIfTvDevice {
 					.onSet(async (state) => {
 						try {
 							const newState = state ? '4' : '5';
-							await this.openwebif.send(CONSTANS.ApiUrls.SetPower + newState, true);
+							await this.openwebif.send(CONSTANS.ApiUrls.SetPower + newState);
 							const logInfo = this.disableLogInfo ? false : this.log(`Device: ${this.host} ${accessoryName}, set Power: ${state ? 'ON' : 'OFF'}`);
 						} catch (error) {
 							this.log.error(`Device: ${this.host} ${accessoryName}, set Power error: ${error}`);
