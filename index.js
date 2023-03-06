@@ -852,7 +852,7 @@ class openwebIfTvDevice {
 				//prepare inputs switch sensor service
 				const inputsSwitchesButtons = this.inputsSwitchesButtons;
 				const inputsSwitchesButtonsCount = inputsSwitchesButtons.length;
-				const possibleInputsSwitchesButtonsCount = 90 - this.services.length;
+				const possibleInputsSwitchesButtonsCount = 99 - this.services.length;
 				const maxInputsSwitchesButtonsCount = inputsSwitchesButtonsCount >= possibleInputsSwitchesButtonsCount ? possibleInputsSwitchesButtonsCount : inputsSwitchesButtonsCount;
 				if (maxInputsSwitchesButtonsCount > 0) {
 					this.log.debug('prepareSwitchsService');
@@ -900,7 +900,7 @@ class openwebIfTvDevice {
 				//prepare sonsor service
 				const sensorInputs = this.sensorInputs;
 				const sensorInputsCount = sensorInputs.length;
-				const possibleSensorInputsCount = 90 - this.services.length;
+				const possibleSensorInputsCount = 99 - this.services.length;
 				const maxSensorInputsCount = sensorInputsCount >= possibleSensorInputsCount ? possibleSensorInputsCount : sensorInputsCount;
 				if (maxSensorInputsCount > 0) {
 					this.log.debug('prepareSensorInputsServices');
@@ -943,7 +943,7 @@ class openwebIfTvDevice {
 				//prepare buttons service
 				const buttons = this.buttons;
 				const buttonsCount = buttons.length;
-				const possibleButtonsCount = 90 - this.services.length;
+				const possibleButtonsCount = 99 - this.services.length;
 				const maxButtonsCount = buttonsCount >= possibleButtonsCount ? possibleButtonsCount : buttonsCount;
 				if (maxButtonsCount > 0) {
 					this.log.debug('prepareInputsButtonService');
