@@ -1,4 +1,6 @@
 {
+    "PlatformName": "OpenWebIfTv",
+    "PluginName": "homebridge-openwebif-tv",
     "ApiUrls": {
         "DeviceInfo": "/api/deviceinfo",
         "DeviceStatus": "/api/statusinfo",
