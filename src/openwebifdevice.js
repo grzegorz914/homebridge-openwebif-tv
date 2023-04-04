@@ -1,5 +1,4 @@
 'use strict';
-const path = require('path');
 const fs = require('fs');
 const fsPromises = fs.promises;
 const EventEmitter = require('events');
@@ -9,7 +8,7 @@ const CONSTANS = require('./constans.json');
 let Accessory, Characteristic, Service, Categories, UUID;
 
 class OpenWebIfDevice extends EventEmitter {
-    constructor(api, config) {
+    constructor(api, prefDir, config) {
         super();
 
         Accessory = api.platformAccessory;
@@ -81,12 +80,11 @@ class OpenWebIfDevice extends EventEmitter {
         this.sensorInputState = false;
         this.playPause = false;
 
-        this.prefDir = path.join(api.user.storagePath(), 'openwebifTv');
-        this.devInfoFile = `${this.prefDir}/devInfo_${this.host.split('.').join('')}`;
-        this.inputsFile = `${this.prefDir}/inputs_${this.host.split('.').join('')}`;
-        this.inputsNamesFile = `${this.prefDir}/inputsNames_${this.host.split('.').join('')}`;
-        this.inputsTargetVisibilityFile = `${this.prefDir}/inputsTargetVisibility_${this.host.split('.').join('')}`;
-        this.channelsFile = `${this.prefDir}/channels_${this.host.split('.').join('')}`;
+        this.devInfoFile = `${prefDir}/devInfo_${this.host.split('.').join('')}`;
+        this.inputsFile = `${prefDir}/inputs_${this.host.split('.').join('')}`;
+        this.inputsNamesFile = `${prefDir}/inputsNames_${this.host.split('.').join('')}`;
+        this.inputsTargetVisibilityFile = `${prefDir}/inputsTargetVisibility_${this.host.split('.').join('')}`;
+        this.channelsFile = `${prefDir}/channels_${this.host.split('.').join('')}`;
 
         //mqtt client
         if (this.mqttEnabled) {
@@ -152,34 +150,21 @@ class OpenWebIfDevice extends EventEmitter {
                 this.firmwareRevision = firmwareRevision;
                 this.mac = mac;
 
-                // Create pref directory or files if it doesn't exist
+                // Create files if it doesn't exist
                 const object = JSON.stringify({});
                 const array = JSON.stringify([]);
-
-                if (!fs.existsSync(this.prefDir)) {
-                    await fsPromises.mkdir(this.prefDir);
-                }
-
-                // Create device info file if it doesn't exist
                 if (!fs.existsSync(this.devInfoFile)) {
                     await fsPromises.writeFile(this.devInfoFile, object);
                 }
-                // Create inputs file if it doesn't exist
                 if (!fs.existsSync(this.inputsFile)) {
                     await fsPromises.writeFile(this.inputsFile, array);
                 }
-
-                // Create channels file if it doesn't exist
                 if (!fs.existsSync(this.channelsFile)) {
                     await fsPromises.writeFile(this.channelsFile, array);
                 }
-
-                // Create inputs names file if it doesn't exist
                 if (!fs.existsSync(this.inputsNamesFile)) {
                     await fsPromises.writeFile(this.inputsNamesFile, object);
                 }
-
-                // Create inputs target visibility file if it doesn't exist
                 if (!fs.existsSync(this.inputsTargetVisibilityFile)) {
                     await fsPromises.writeFile(this.inputsTargetVisibilityFile, object);
                 }
