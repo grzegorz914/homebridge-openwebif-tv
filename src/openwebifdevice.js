@@ -55,6 +55,7 @@ class OpenWebIfDevice extends EventEmitter {
 
         //setup variables
         this.startPrepareAccessory = true;
+        this.mqttConnected = false;
 
         this.services = [];
         this.inputsReference = [];
@@ -100,6 +101,7 @@ class OpenWebIfDevice extends EventEmitter {
 
             this.mqtt.on('connected', (message) => {
                 this.emit('message', message);
+                this.mqttConnected = true;
             })
                 .on('debug', (debug) => {
                     this.emit('debug', debug);
@@ -303,7 +305,7 @@ class OpenWebIfDevice extends EventEmitter {
                 this.emit('error', error);
             })
             .on('mqtt', (topic, message) => {
-                this.mqtt.send(topic, message);
+                const mqtt = this.mqttConnected ? this.mqtt.send(topic, message) : false;
             })
             .on('disconnected', (message) => {
                 this.emit('message', message);
