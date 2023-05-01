@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/main/homebridge-openwebif-tv.png" width="640"></a>
+  <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/main/graphics/homebridge-openwebif-tv.png" width="640"></a>
 </p>
 
 <span align="center">
