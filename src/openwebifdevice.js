@@ -595,106 +595,6 @@ class OpenWebIfDevice extends EventEmitter {
                 this.services.push(this.tvSpeakerService);
                 accessory.addService(this.speakerService);
 
-                //prepare volume service
-                if (this.volumeControl >= 0) {
-                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare volume service`);
-
-                    if (this.volumeControl === 0) {
-                        this.volumeService = new Service.Lightbulb(`${accessoryName} Volume`, 'Volume');
-                        this.volumeService.getCharacteristic(Characteristic.Brightness)
-                            .onGet(async () => {
-                                const volume = this.volume;
-                                return volume;
-                            })
-                            .onSet(async (volume) => {
-                                this.speakerService.setCharacteristic(Characteristic.Volume, volume);
-                            });
-                        this.volumeService.getCharacteristic(Characteristic.On)
-                            .onGet(async () => {
-                                const state = !this.mute;
-                                return state;
-                            })
-                            .onSet(async (state) => {
-                                this.speakerService.setCharacteristic(Characteristic.Mute, !state);
-                            });
-
-                        this.services.push(this.volumeService);
-                        accessory.addService(this.volumeService);
-                    }
-
-                    if (this.volumeControl === 1) {
-                        this.volumeServiceFan = new Service.Fan(`${accessoryName} Volume`, 'Volume');
-                        this.volumeServiceFan.getCharacteristic(Characteristic.RotationSpeed)
-                            .onGet(async () => {
-                                const volume = this.volume;
-                                return volume;
-                            })
-                            .onSet(async (volume) => {
-                                this.speakerService.setCharacteristic(Characteristic.Volume, volume);
-                            });
-                        this.volumeServiceFan.getCharacteristic(Characteristic.On)
-                            .onGet(async () => {
-                                const state = !this.mute;
-                                return state;
-                            })
-                            .onSet(async (state) => {
-                                this.speakerService.setCharacteristic(Characteristic.Mute, !state);
-                            });
-
-                        this.services.push(this.volumeServiceFan);
-                        accessory.addService(this.volumeServiceFan);
-                    }
-                }
-
-                //prepare sensor service
-                if (this.sensorPower) {
-                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare power sensor service`);
-                    this.sensorPowerService = new Service.ContactSensor(`${accessoryName} Power Sensor`, `Power Sensor`);
-                    this.sensorPowerService.getCharacteristic(Characteristic.ContactSensorState)
-                        .onGet(async () => {
-                            const state = this.power;
-                            return state;
-                        });
-                    this.services.push(this.sensorPowerService);
-                    accessory.addService(this.sensorPowerService);
-                };
-
-                if (this.sensorVolume) {
-                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare volume sensor service`);
-                    this.sensorVolumeService = new Service.ContactSensor(`${accessoryName} Volume Sensor`, `Volume Sensor`);
-                    this.sensorVolumeService.getCharacteristic(Characteristic.ContactSensorState)
-                        .onGet(async () => {
-                            const state = this.sensorVolumeState;
-                            return state;
-                        });
-                    this.services.push(this.sensorVolumeService);
-                    accessory.addService(this.sensorVolumeService);
-                };
-
-                if (this.sensorMute) {
-                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare mute sensor service`);
-                    this.sensorMuteService = new Service.ContactSensor(`${accessoryName} Mute Sensor`, `Mute Sensor`);
-                    this.sensorMuteService.getCharacteristic(Characteristic.ContactSensorState)
-                        .onGet(async () => {
-                            const state = this.power ? this.mute : false;
-                            return state;
-                        });
-                    this.services.push(this.sensorMuteService);
-                    accessory.addService(this.sensorMuteService);
-                };
-
-                if (this.sensorInput) {
-                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare input sensor service`);
-                    this.sensorInputService = new Service.ContactSensor(`${accessoryName} Input Sensor`, `Input Sensor`);
-                    this.sensorInputService.getCharacteristic(Characteristic.ContactSensorState)
-                        .onGet(async () => {
-                            const state = this.sensorInputState;
-                            return state;
-                        });
-                    this.services.push(this.sensorInputService);
-                    accessory.addService(this.sensorInputService);
-                };
-
                 //prepare inputs service
                 const savedInputs = fs.readFileSync(this.inputsFile).length > 2 ? JSON.parse(fs.readFileSync(this.inputsFile)) : this.inputs;
                 const debug4 = this.enableDebugMode ? this.emit('debug', `Read saved Inputs: ${JSON.stringify(savedInputs, null, 2)}`) : false;
@@ -790,6 +690,118 @@ class OpenWebIfDevice extends EventEmitter {
                     };
                 }
 
+                //prepare volume service
+                if (this.volumeControl >= 0) {
+                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare volume service`);
+
+                    if (this.volumeControl === 0) {
+                        this.volumeService = new Service.Lightbulb(`${accessoryName} Volume`, 'Volume');
+                        this.volumeService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                        this.volumeService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Volume`);
+                        this.volumeService.getCharacteristic(Characteristic.Brightness)
+                            .onGet(async () => {
+                                const volume = this.volume;
+                                return volume;
+                            })
+                            .onSet(async (volume) => {
+                                this.speakerService.setCharacteristic(Characteristic.Volume, volume);
+                            });
+                        this.volumeService.getCharacteristic(Characteristic.On)
+                            .onGet(async () => {
+                                const state = !this.mute;
+                                return state;
+                            })
+                            .onSet(async (state) => {
+                                this.speakerService.setCharacteristic(Characteristic.Mute, !state);
+                            });
+
+                        this.services.push(this.volumeService);
+                        accessory.addService(this.volumeService);
+                    }
+
+                    if (this.volumeControl === 1) {
+                        this.volumeServiceFan = new Service.Fan(`${accessoryName} Volume`, 'Volume');
+                        this.volumeServiceFan.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                        this.volumeServiceFan.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Volume`);
+                        this.volumeServiceFan.getCharacteristic(Characteristic.RotationSpeed)
+                            .onGet(async () => {
+                                const volume = this.volume;
+                                return volume;
+                            })
+                            .onSet(async (volume) => {
+                                this.speakerService.setCharacteristic(Characteristic.Volume, volume);
+                            });
+                        this.volumeServiceFan.getCharacteristic(Characteristic.On)
+                            .onGet(async () => {
+                                const state = !this.mute;
+                                return state;
+                            })
+                            .onSet(async (state) => {
+                                this.speakerService.setCharacteristic(Characteristic.Mute, !state);
+                            });
+
+                        this.services.push(this.volumeServiceFan);
+                        accessory.addService(this.volumeServiceFan);
+                    }
+                }
+
+                //prepare sensor service
+                if (this.sensorPower) {
+                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare power sensor service`);
+                    this.sensorPowerService = new Service.ContactSensor(`${accessoryName} Power Sensor`, `Power Sensor`);
+                    this.sensorPowerService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                    this.sensorPowerService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Power Sensor`);
+                    this.sensorPowerService.getCharacteristic(Characteristic.ContactSensorState)
+                        .onGet(async () => {
+                            const state = this.power;
+                            return state;
+                        });
+                    this.services.push(this.sensorPowerService);
+                    accessory.addService(this.sensorPowerService);
+                };
+
+                if (this.sensorVolume) {
+                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare volume sensor service`);
+                    this.sensorVolumeService = new Service.ContactSensor(`${accessoryName} Volume Sensor`, `Volume Sensor`);
+                    this.sensorVolumeService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                    this.sensorVolumeService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Volume Sensor`);
+                    this.sensorVolumeService.getCharacteristic(Characteristic.ContactSensorState)
+                        .onGet(async () => {
+                            const state = this.sensorVolumeState;
+                            return state;
+                        });
+                    this.services.push(this.sensorVolumeService);
+                    accessory.addService(this.sensorVolumeService);
+                };
+
+                if (this.sensorMute) {
+                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare mute sensor service`);
+                    this.sensorMuteService = new Service.ContactSensor(`${accessoryName} Mute Sensor`, `Mute Sensor`);
+                    this.sensorMuteService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                    this.sensorMuteService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Mute Sensor`);
+                    this.sensorMuteService.getCharacteristic(Characteristic.ContactSensorState)
+                        .onGet(async () => {
+                            const state = this.power ? this.mute : false;
+                            return state;
+                        });
+                    this.services.push(this.sensorMuteService);
+                    accessory.addService(this.sensorMuteService);
+                };
+
+                if (this.sensorInput) {
+                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare input sensor service`);
+                    this.sensorInputService = new Service.ContactSensor(`${accessoryName} Input Sensor`, `Input Sensor`);
+                    this.sensorInputService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                    this.sensorInputService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Input Sensor`);
+                    this.sensorInputService.getCharacteristic(Characteristic.ContactSensorState)
+                        .onGet(async () => {
+                            const state = this.sensorInputState;
+                            return state;
+                        });
+                    this.services.push(this.sensorInputService);
+                    accessory.addService(this.sensorInputService);
+                };
+
                 //prepare inputs switch sensor service
                 const inputsSwitchesButtons = this.inputsSwitchesButtons;
                 const inputsSwitchesButtonsCount = inputsSwitchesButtons.length;
@@ -814,6 +826,8 @@ class OpenWebIfDevice extends EventEmitter {
                             if (inputReference && inputName) {
                                 const serviceType = [Service.Outlet, Service.Switch][inputDisplayType];
                                 const inputSwitchButtonService = new serviceType(`${accessoryName} ${inputName}`, `Switch ${i}`);
+                                inputSwitchButtonService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                                inputSwitchButtonService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} ${inputName}`);
                                 inputSwitchButtonService.getCharacteristic(Characteristic.On)
                                     .onGet(async () => {
                                         const state = this.power ? (inputReference === this.reference) : false;
@@ -862,8 +876,10 @@ class OpenWebIfDevice extends EventEmitter {
                             if (sensorInputName && sensorInputReference) {
                                 const serviceType = [Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][sensorInputDisplayType];
                                 const characteristicType = [Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][sensorInputDisplayType];
-                                const sensorInputsService = new serviceType(`${accessoryName} ${sensorInputName}`, `Sensor ${i}`);
-                                sensorInputsService.getCharacteristic(characteristicType)
+                                const sensorInputService = new serviceType(`${accessoryName} ${sensorInputName}`, `Sensor ${i}`);
+                                sensorInputService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                                sensorInputService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} ${sensorInputName}`);
+                                sensorInputService.getCharacteristic(characteristicType)
                                     .onGet(async () => {
                                         const state = this.power ? (sensorInputReference === this.reference) : false;
                                         return state;
@@ -871,7 +887,7 @@ class OpenWebIfDevice extends EventEmitter {
 
                                 this.sensorInputsReference.push(sensorInputReference);
                                 this.sensorInputsDisplayType.push(sensorInputDisplayType);
-                                this.sensorInputsServices.push(sensorInputsService);
+                                this.sensorInputsServices.push(sensorInputService);
                                 this.services.push(sensorInputService);
                                 accessory.addService(this.sensorInputsServices[i]);
                             } else {
@@ -914,6 +930,8 @@ class OpenWebIfDevice extends EventEmitter {
                             if (buttonName && buttonReferenceCommand && buttonMode) {
                                 const serviceType = [Service.Outlet, Service.Switch][buttonDisplayType];
                                 const buttonService = new serviceType(`${accessoryName} ${buttonName}`, `Button ${i}`);
+                                buttonService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                                buttonService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} ${buttonName}`);
                                 buttonService.getCharacteristic(Characteristic.On)
                                     .onGet(async () => {
                                         let state = false;
