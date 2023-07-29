@@ -99,8 +99,8 @@ class OPENWEBIF extends EventEmitter {
                     this.mute = mute;
 
                     this.emit('stateChanged', power, name, eventName, reference, volume, mute);
-                    const mqtt = mqttEnabled ? this.emit('mqtt', 'Info', JSON.stringify(this.devInfo, null, 2)) : false;
-                    const mqtt1 = mqttEnabled ? this.emit('mqtt', 'State', JSON.stringify(devState, null, 2)) : false;
+                    const mqtt = mqttEnabled ? this.emit('mqtt', 'Info', this.devInfo) : false;
+                    const mqtt1 = mqttEnabled ? this.emit('mqtt', 'State', devState) : false;
                     this.checkState();
                 } catch (error) {
                     const debug = disableLogConnectError ? false : this.emit('error', `State error: ${error}, reconnect in 15s.`);
