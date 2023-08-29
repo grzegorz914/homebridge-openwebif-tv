@@ -834,29 +834,70 @@
         {
           "key": "devices[]",
           "type": "section",
-          "title": "Sensors",
+          "title": "Advanced Settings",
           "expandable": true,
           "expanded": false,
           "items": [
-            "devices[].sensorPower",
-            "devices[].sensorVolume",
-            "devices[].sensorMute",
-            "devices[].sensorChannel",
             {
               "key": "devices[]",
-              "type": "section",
-              "title": "Custom Inputs",
-              "expandable": true,
-              "expanded": false,
+              "type": "tabarray",
+              "title": "{{ value.title }}",
               "items": [
                 {
-                  "key": "devices[].sensorInputs",
-                  "type": "tabarray",
-                  "title": "{{ value.name || 'new input sensor' }}",
+                  "key": "devices[]",
+                  "title": "Sensors",
                   "items": [
-                    "devices[].sensorInputs[].name",
-                    "devices[].sensorInputs[].reference",
-                    "devices[].sensorInputs[].displayType"
+                    "devices[].sensorPower",
+                    "devices[].sensorVolume",
+                    "devices[].sensorMute",
+                    "devices[].sensorChannel",
+                    {
+                      "key": "devices[]",
+                      "type": "section",
+                      "title": "Custom Inputs",
+                      "expandable": true,
+                      "expanded": false,
+                      "items": [
+                        {
+                          "key": "devices[].sensorInputs",
+                          "type": "tabarray",
+                          "title": "{{ value.name || 'new input sensor' }}",
+                          "items": [
+                            "devices[].sensorInputs[].name",
+                            "devices[].sensorInputs[].reference",
+                            "devices[].sensorInputs[].displayType"
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "key": "devices[]",
+                  "title": "Authorization",
+                  "items": [
+                    "devices[].auth",
+                    "devices[].user",
+                    "devices[].pass"
+                  ]
+                },
+                {
+                  "key": "devices[]",
+                  "title": "Device",
+                  "items": [
+                    "devices[].infoButtonCommand",
+                    "devices[].volumeControl",
+                    "devices[].refreshInterval"
+                  ]
+                },
+                {
+                  "key": "devices[]",
+                  "title": "System",
+                  "items": [
+                    "devices[].enableDebugMode",
+                    "devices[].disableLogInfo",
+                    "devices[].disableLogDeviceInfo",
+                    "devices[].disableLogConnectError"
                   ]
                 }
               ]
@@ -866,46 +907,31 @@
         {
           "key": "devices[]",
           "type": "section",
-          "title": "Authorization",
+          "title": "External Integrations",
           "expandable": true,
           "expanded": false,
           "items": [
-            "devices[].auth",
-            "devices[].user",
-            "devices[].pass"
-          ]
-        },
-        {
-          "key": "devices[]",
-          "type": "section",
-          "title": "Advanced Settings",
-          "expandable": true,
-          "expanded": false,
-          "items": [
-            "devices[].enableDebugMode",
-            "devices[].disableLogInfo",
-            "devices[].disableLogDeviceInfo",
-            "devices[].disableLogConnectError",
-            "devices[].infoButtonCommand",
-            "devices[].volumeControl",
-            "devices[].refreshInterval"
-          ]
-        },
-        {
-          "key": "devices[]",
-          "type": "section",
-          "title": "MQTT",
-          "expandable": true,
-          "expanded": false,
-          "items": [
-            "devices[].enableMqtt",
-            "devices[].mqttHost",
-            "devices[].mqttPort",
-            "devices[].mqttPrefix",
-            "devices[].mqttAuth",
-            "devices[].mqttUser",
-            "devices[].mqttPasswd",
-            "devices[].mqttDebug"
+            {
+              "key": "devices[]",
+              "type": "tabarray",
+              "title": "{{ value.title }}",
+              "items": [
+                {
+                  "key": "devices[]",
+                  "title": "MQTT",
+                  "items": [
+                    "devices[].enableMqtt",
+                    "devices[].mqttDebug",
+                    "devices[].mqttHost",
+                    "devices[].mqttPort",
+                    "devices[].mqttPrefix",
+                    "devices[].mqttAuth",
+                    "devices[].mqttUser",
+                    "devices[].mqttPasswd"
+                  ]
+                }
+              ]
+            }
           ]
         }
       ]
