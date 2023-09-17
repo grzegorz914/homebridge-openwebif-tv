@@ -372,8 +372,8 @@ class OpenWebIfDevice extends EventEmitter {
                     .onSet(async (state) => {
                         try {
                             const newState = state ? '4' : '5';
-                            await this.openwebif.send(CONSTANS.ApiUrls.SetPower + newState);
-                            const info = this.disableLogInfo ? false : this.emit('message', `set Power: ${state ? 'ON' : 'OFF'}`);
+                            const setPower = state != this.power ? await this.openwebif.send(CONSTANS.ApiUrls.SetPower + newState) : false;
+                            const info = this.disableLogInfo && (state != this.power) ? false : this.emit('message', `set Power: ${state ? 'ON' : 'OFF'}`);
                         } catch (error) {
                             this.emit('error', `set Power error: ${error}`);
                         };
