@@ -391,6 +391,11 @@ class OpenWebIfDevice extends EventEmitter {
                         try {
                             const inputName = this.inputsName[inputIdentifier];
                             const inputReference = this.inputsReference[inputIdentifier];
+
+                            if (!this.power) {
+                                await new Promise(resolve => setTimeout(resolve, 3000));
+                            }
+
                             await this.openwebif.send(CONSTANS.ApiUrls.SetChannel + inputReference);
                             const info = this.disableLogInfo ? false : this.emit('message', `set Channel: ${inputName}, Reference: ${inputReference}`);
                         } catch (error) {
