@@ -373,7 +373,7 @@ class OpenWebIfDevice extends EventEmitter {
                         try {
                             const newState = state ? '4' : '5';
                             const setPower = state != this.power ? await this.openwebif.send(CONSTANS.ApiUrls.SetPower + newState) : false;
-                            const info = this.disableLogInfo && (state != this.power) ? false : this.emit('message', `set Power: ${state ? 'ON' : 'OFF'}`);
+                            const info = this.disableLogInfo || (state === this.power) ? false : this.emit('message', `set Power: ${state ? 'ON' : 'OFF'}`);
                         } catch (error) {
                             this.emit('error', `set Power error: ${error}`);
                         };
@@ -395,17 +395,8 @@ class OpenWebIfDevice extends EventEmitter {
 
                             switch (this.power) {
                                 case false:
-                                    this.inputSet = false;
-
-                                    setInterval(async () => {
-                                        if (this.inputSet) {
-                                            return;
-                                        }
-
-                                        const setInput = this.power ? await this.openwebif.send(CONSTANS.ApiUrls.SetChannel + inputReference) : false;
-                                        this.inputSet = this.power;
-                                        const info = this.disableLogInfo || this.firstRun || !this.power ? false : this.emit('message', `set Channel: ${inputName}, Reference: ${inputReference}`);
-                                    }, 3000);
+                                    await new Promise(resolve => setTimeout(resolve, 3000));
+                                    this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
                                     break;
                                 case true:
                                     await this.openwebif.send(CONSTANS.ApiUrls.SetChannel + inputReference);
