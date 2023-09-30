@@ -39,13 +39,14 @@ class OpenWebIfDevice extends EventEmitter {
         this.volumeControl = config.volumeControl >= 0 ? config.volumeControl : -1;
         this.refreshInterval = config.refreshInterval || 5;
         this.mqttEnabled = config.enableMqtt || false;
-        this.mqttDebug = config.mqttDebug || false;
         this.mqttHost = config.mqttHost;
         this.mqttPort = config.mqttPort || 1883;
+        this.mqttClientId = config.mqttClientId || `openwebif_${Math.random().toString(16).slice(3)}`;
         this.mqttPrefix = config.mqttPrefix;
         this.mqttAuth = config.mqttAuth || false;
         this.mqttUser = config.mqttUser;
         this.mqttPasswd = config.mqttPasswd;
+        this.mqttDebug = config.mqttDebug || false;
 
         //get config info
         this.manufacturer = 'Manufacturer';
@@ -93,10 +94,10 @@ class OpenWebIfDevice extends EventEmitter {
             this.mqtt = new Mqtt({
                 host: this.mqttHost,
                 port: this.mqttPort,
-                prefix: `${this.mqttPrefix}/${this.name}`,
-                auth: this.mqttAuth,
+                clientId: this.mqttClientId,
                 user: this.mqttUser,
                 passwd: this.mqttPasswd,
+                prefix: `${this.mqttPrefix}/${this.name}`,
                 debug: this.mqttDebug
             });
 

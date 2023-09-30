@@ -727,6 +727,16 @@
                 "functionBody": "return model.devices[arrayIndices].enableMqtt === true;"
               }
             },
+            "mqttClientId": {
+              "title": "Client ID",
+              "type": "string",
+              "placeholder": "client id",
+              "required": false,
+              "description": "Here optional set the Client ID of MQTT Broker.",
+              "condition": {
+                "functionBody": "return model.devices[arrayIndices].enableMqtt === true"
+              }
+            },
             "mqttPrefix": {
               "title": "Prefix",
               "type": "string",
@@ -899,35 +909,33 @@
                     "devices[].disableLogDeviceInfo",
                     "devices[].disableLogConnectError"
                   ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "key": "devices[]",
-          "type": "section",
-          "title": "External Integrations",
-          "expandable": true,
-          "expanded": false,
-          "items": [
-            {
-              "key": "devices[]",
-              "type": "tabarray",
-              "title": "{{ value.title }}",
-              "items": [
+                },
                 {
                   "key": "devices[]",
-                  "title": "MQTT",
+                  "title": "External Integrations",
                   "items": [
-                    "devices[].enableMqtt",
-                    "devices[].mqttDebug",
-                    "devices[].mqttHost",
-                    "devices[].mqttPort",
-                    "devices[].mqttPrefix",
-                    "devices[].mqttAuth",
-                    "devices[].mqttUser",
-                    "devices[].mqttPasswd"
+                    {
+                      "key": "devices[]",
+                      "type": "tabarray",
+                      "title": "{{ value.title }}",
+                      "items": [
+                        {
+                          "key": "devices[]",
+                          "title": "MQTT",
+                          "items": [
+                            "devices[].enableMqtt",
+                            "devices[].mqttDebug",
+                            "devices[].mqttHost",
+                            "devices[].mqttPort",
+                            "devices[].mqttClientId",
+                            "devices[].mqttPrefix",
+                            "devices[].mqttAuth",
+                            "devices[].mqttUser",
+                            "devices[].mqttPasswd"
+                          ]
+                        }
+                      ]
+                    }
                   ]
                 }
               ]

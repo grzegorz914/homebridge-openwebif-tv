@@ -33,7 +33,7 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 * Automations can be used for all functions, some times need create legacy buttons/switches/sensors.
 * MQTT publisch topic *Info* and *State* as payload JSON data.
 
-<p align="left">
+<p align="center">
   <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/main/graphics/homekit.png" width="382"></a>
   <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/main/graphics/inputs.png" width="135"></a>
   <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/main/graphics/rc1.png" width="135"></a>
@@ -46,7 +46,7 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 * The `sample-config.json` can be edited and used as an alternative. 
 * Be sure to always make a backup copy of your config.json file before making any changes to it.
 
-<p align="left">
+<p align="center">
   <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/main/graphics/ustawienia.png" width="840"></a>
 </p>
 
@@ -83,6 +83,7 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | `refreshInterval` | Here set the data refresh interval. |
 | `mqttHost` | Here set the *IP Address* or *Hostname* for MQTT Broker.) |
 | `mqttPort` | Here set the *Port* for MQTT Broker, default 1883. |
+| `mqttClientId` | Here optional set the `Client Id` of MQTT Broker. |
 | `mqttPrefix` | Here set the *Prefix* for *Topic* or leave empty. |
 | `mqttAuth` | If enabled, MQTT Broker will use authorization credentials. |
 | `mqttUser` | Here set the MQTT Broker user. |
