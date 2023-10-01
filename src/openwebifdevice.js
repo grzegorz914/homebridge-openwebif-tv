@@ -629,7 +629,7 @@ class OpenWebIfDevice extends EventEmitter {
                     const inputReference = input.reference;
 
                     //get input name		
-                    const inputName = savedInputsNames[inputReference] || input.name;
+                    const inputName = savedInputsNames[inputReference] ?? input.name;
 
                     //get input switch
                     const inputDisplayType = input.displayType >= 0 ? input.displayType : -1;
@@ -641,7 +641,8 @@ class OpenWebIfDevice extends EventEmitter {
                     const isConfigured = 1;
 
                     //get input visibility state
-                    const currentVisibility = savedInputsTargetVisibility[inputReference] || 0;
+                    const currentVisibility = savedInputsTargetVisibility[inputReference] ?? 0;
+                    const targetVisibility = currentVisibility;
 
                     if (inputReference && inputName) {
                         const inputService = new Service.InputSource(inputName, `Input ${i}`);
@@ -653,9 +654,6 @@ class OpenWebIfDevice extends EventEmitter {
                             .setCharacteristic(Characteristic.CurrentVisibilityState, currentVisibility)
 
                         inputService.getCharacteristic(Characteristic.ConfiguredName)
-                            .onGet(async () => {
-                                return inputName;
-                            })
                             .onSet(async (value) => {
                                 try {
                                     savedInputsNames[inputReference] = value;
@@ -672,7 +670,7 @@ class OpenWebIfDevice extends EventEmitter {
                         inputService
                             .getCharacteristic(Characteristic.TargetVisibilityState)
                             .onGet(async () => {
-                                return currentVisibility;
+                                return targetVisibility;
                             })
                             .onSet(async (state) => {
                                 try {
