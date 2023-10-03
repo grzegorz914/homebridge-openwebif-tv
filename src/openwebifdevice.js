@@ -93,7 +93,6 @@ class OpenWebIfDevice extends EventEmitter {
 
         try {
             const files = [
-                this.keyFile,
                 this.devInfoFile,
                 this.inputsFile,
                 this.inputsNamesFile,
