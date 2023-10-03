@@ -83,11 +83,32 @@ class OpenWebIfDevice extends EventEmitter {
         this.sensorInputState = false;
         this.playPause = false;
 
-        this.devInfoFile = `${prefDir}/devInfo_${this.host.split('.').join('')}`;
-        this.inputsFile = `${prefDir}/inputs_${this.host.split('.').join('')}`;
-        this.inputsNamesFile = `${prefDir}/inputsNames_${this.host.split('.').join('')}`;
-        this.inputsTargetVisibilityFile = `${prefDir}/inputsTargetVisibility_${this.host.split('.').join('')}`;
-        this.channelsFile = `${prefDir}/channels_${this.host.split('.').join('')}`;
+        //check files exists, if not then create it
+        const postFix = this.host.split('.').join('');
+        this.devInfoFile = `${prefDir}/devInfo_${postFix}`;
+        this.inputsFile = `${prefDir}/inputs_${postFix}`;
+        this.inputsNamesFile = `${prefDir}/inputsNames_${postFix}`;
+        this.inputsTargetVisibilityFile = `${prefDir}/inputsTargetVisibility_${postFix}`;
+        this.channelsFile = `${prefDir}/channels_${postFix}`;
+
+        try {
+            const files = [
+                this.keyFile,
+                this.devInfoFile,
+                this.inputsFile,
+                this.inputsNamesFile,
+                this.inputsTargetVisibilityFile,
+                this.channelsFile
+            ];
+
+            files.forEach((file) => {
+                if (!fs.existsSync(file)) {
+                    fs.writeFileSync(file, ' ');
+                }
+            });
+        } catch (error) {
+            this.emit('error', `prepare files error: ${error}`);
+        }
 
         //mqtt client
         if (this.mqttEnabled) {
@@ -154,25 +175,6 @@ class OpenWebIfDevice extends EventEmitter {
                 this.firmwareRevision = firmwareRevision;
                 this.mac = mac;
 
-                // Create files if it doesn't exist
-                const object = JSON.stringify({});
-                const array = JSON.stringify([]);
-                if (!fs.existsSync(this.devInfoFile)) {
-                    await fsPromises.writeFile(this.devInfoFile, object);
-                }
-                if (!fs.existsSync(this.inputsFile)) {
-                    await fsPromises.writeFile(this.inputsFile, array);
-                }
-                if (!fs.existsSync(this.channelsFile)) {
-                    await fsPromises.writeFile(this.channelsFile, array);
-                }
-                if (!fs.existsSync(this.inputsNamesFile)) {
-                    await fsPromises.writeFile(this.inputsNamesFile, object);
-                }
-                if (!fs.existsSync(this.inputsTargetVisibilityFile)) {
-                    await fsPromises.writeFile(this.inputsTargetVisibilityFile, object);
-                }
-
                 //save device info to the file
                 try {
                     const devInfo1 = JSON.stringify(devInfo, null, 2);
@@ -204,13 +206,18 @@ class OpenWebIfDevice extends EventEmitter {
             };
         })
             .on('stateChanged', async (power, name, eventName, reference, volume, mute) => {
-                const inputIdentifier = this.inputsReference.includes(reference) ? this.inputsReference.findIndex(index => index === reference) : this.inputIdentifier;
+                const inputIdentifier = this.inputsReference.includes(reference) ? this.inputsReference.findIndex(index => index === reference) : undefined;
                 mute = power ? mute : true;
 
                 if (this.televisionService) {
                     this.televisionService
                         .updateCharacteristic(Characteristic.Active, power)
-                        .updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
+                }
+
+                if (this.televisionService && inputIdentifier !== undefined) {
+                    this.televisionService
+                        .updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier)
+                    this.inputIdentifier = inputIdentifier;
                 }
 
                 if (this.speakerService) {
@@ -255,6 +262,7 @@ class OpenWebIfDevice extends EventEmitter {
                     this.sensorInputService
                         .updateCharacteristic(Characteristic.ContactSensorState, state)
                     this.sensorInputState = state;
+                    this.inputIdentifier = inputIdentifier;
                 }
 
                 if (this.inputSwitchButtonServices) {
@@ -284,7 +292,6 @@ class OpenWebIfDevice extends EventEmitter {
                 this.reference = reference;
                 this.volume = volume;
                 this.mute = mute;
-                this.inputIdentifier = inputIdentifier;
 
                 //start prepare accessory
                 if (this.startPrepareAccessory) {
@@ -371,10 +378,14 @@ class OpenWebIfDevice extends EventEmitter {
                         return state;
                     })
                     .onSet(async (state) => {
+                        if (this.power == state) {
+                            return;
+                        }
+
                         try {
                             const newState = state ? '4' : '5';
-                            const setPower = state != this.power ? await this.openwebif.send(CONSTANS.ApiUrls.SetPower + newState) : false;
-                            const info = this.disableLogInfo || (state === this.power) ? false : this.emit('message', `set Power: ${state ? 'ON' : 'OFF'}`);
+                            await this.openwebif.send(CONSTANS.ApiUrls.SetPower + newState);
+                            const info = this.disableLogInfo ? false : this.emit('message', `set Power: ${state ? 'ON' : 'OFF'}`);
                         } catch (error) {
                             this.emit('error', `set Power error: ${error}`);
                         };
