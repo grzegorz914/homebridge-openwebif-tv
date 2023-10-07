@@ -22,7 +22,7 @@ class OpenWebIfPlatform {
 		api.on('didFinishLaunching', () => {
 			for (const device of config.devices) {
 				if (!device.name || !device.host || !device.port) {
-					log.warn('Device name, host or port missing!');
+					log.warn(`Name: ${device.name ? 'OK' : device.name}, host: ${device.host ? 'OK' : device.host}, port: ${device.port ? 'OK' : device.port}, in config missing.`);
 					return;
 				}
 				const debug = device.enableDebugMode ? log(`Device: ${device.host} ${device.name}, did finish launching.`) : false;
