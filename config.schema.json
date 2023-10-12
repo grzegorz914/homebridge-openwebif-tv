@@ -44,14 +44,14 @@
               "title": "Bouquet Name",
               "type": "string",
               "placeholder": "Bouquet name",
-              "description": "Here set which bouquet should be loaded, only first 90 services will be used.",
+              "description": "Here set *Bouquet Name* which should be loaded from device, only first 90 channels will be used.",
               "required": true,
               "condition": {
                 "functionBody": "return model.devices[arrayIndices].getInputsFromDevice === true;"
               }
             },
             "inputs": {
-              "title": "Input",
+              "title": "Channels",
               "type": "array",
               "items": {
                 "type": "object",
@@ -59,7 +59,7 @@
                   "name": {
                     "title": "Name",
                     "type": "string",
-                    "placeholder": "Input name",
+                    "placeholder": "Channel name",
                     "description": "Here set Your own name.",
                     "required": true
                   },
@@ -824,7 +824,7 @@
         {
           "key": "devices[]",
           "type": "section",
-          "title": "Inputs",
+          "title": "Channels",
           "expandable": true,
           "expanded": false,
           "items": [

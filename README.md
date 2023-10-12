@@ -65,8 +65,8 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | `volumeControl` | Here select volume control mode `None/Disabled`, `Slider`, `Fan`. |
 | `infoButtonCommand` | Here select the function of `I` button in RC app. |
 | `getInputsFromDevice` | This function get channels by *Bouquet* direct from device, manually configured channels will be skipped. |
-| `bouquetName` | Here set *Bouquet  Name* which be loaded, only first 90 services will be used. |
-| `inputs.name` | Here set *Channel Name* which You want expose to the *Homebridge/HomeKit*. |
+| `bouquetName` | Here set *Bouquet Name* which should be loaded from device, only first 90 services will be used. |
+| `inputs.name` | Here set *Channel Name* which should be exposed in the *Homebridge/HomeKit* |
 | `inputs.reference` | Here set *Channel Reference*. All can be found in `homebridge_directory/openwebifTv/inputs_xxxx`. |
 | `inputs.displayType` | Here select display type in HomeKit app, possible `None/Disabled`, `Outlet`, `Switch`.|
 | `buttons.name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*.|
