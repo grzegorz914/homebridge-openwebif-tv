@@ -44,10 +44,6 @@ class OPENWEBIF extends EventEmitter {
                 const debug = debugLog ? this.emit('debug', `Info: ${JSON.stringify(devInfo, null, 2)}`) : false;
                 this.devInfo = devInfo;
 
-                const channelsInfo = await this.axiosInstance(CONSTANS.ApiUrls.GetAllServices);
-                const channels = channelsInfo.data;
-                const debu1g = debugLog ? this.emit('debug', `Channels info: ${JSON.stringify(devInfo, null, 2)}`) : false;
-
                 const manufacturer = devInfo.brand || 'undefined';
                 const modelName = devInfo.model || 'undefined';
                 const serialNumber = devInfo.webifver || 'undefined';
@@ -62,7 +58,12 @@ class OPENWEBIF extends EventEmitter {
                     return;
                 }
 
-                this.emit('deviceInfo', devInfo, channels, manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
+                const channelsInfo = await this.axiosInstance(CONSTANS.ApiUrls.GetAllServices);
+                const allChannels = channelsInfo.data;
+                const bouquets = allChannels.services;
+                const debu1g = debugLog ? this.emit('debug', `Channels info: ${JSON.stringify(channelsInfo, null, 2)}`) : false;
+
+                this.emit('deviceInfo', devInfo, allChannels, bouquets, manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 this.checkStateOnFirstRun = true;
                 this.emit('checkState');

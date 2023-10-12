@@ -25,6 +25,8 @@
           "auth": false,
           "user": "user",
           "pass": "pass",
+          "getInputsFromDevice": false,
+          "bouquetName": "bouquet name",
           "inputs": [
             {
               "name": "Das Erste HD",
