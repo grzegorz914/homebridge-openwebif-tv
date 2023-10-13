@@ -150,95 +150,88 @@ class OpenWebIfDevice extends EventEmitter {
 
         this.openwebif.on('deviceInfo', async (devInfo, allChannels, manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) => {
             this.emit('message', `Connected.`);
+            if (!this.disableLogDeviceInfo) {
+                this.emit('devInfo', `-------- ${this.name} --------`);
+                this.emit('devInfo', `Manufacturer: ${manufacturer}`);
+                this.emit('devInfo', `Model: ${modelName}`);
+                this.emit('devInfo', `Kernel: ${kernelVer}`);
+                this.emit('devInfo', `Chipset: ${chipset}`);
+                this.emit('devInfo', `Webif version: ${serialNumber}`);
+                this.emit('devInfo', `Firmware: ${firmwareRevision}`);
+                this.emit('devInfo', `----------------------------------`)
+            }
+
+            if (this.informationService) {
+                this.informationService
+                    .setCharacteristic(Characteristic.Manufacturer, manufacturer)
+                    .setCharacteristic(Characteristic.Model, modelName)
+                    .setCharacteristic(Characteristic.SerialNumber, serialNumber)
+                    .setCharacteristic(Characteristic.FirmwareRevision, firmwareRevision);
+            };
+
+            this.manufacturer = manufacturer;
+            this.modelName = modelName;
+            this.serialNumber = serialNumber;
+            this.firmwareRevision = firmwareRevision;
+            this.mac = mac;
+
+            //save device info to the file
             try {
-                if (!this.disableLogDeviceInfo) {
-                    this.emit('devInfo', `-------- ${this.name} --------`);
-                    this.emit('devInfo', `Manufacturer: ${manufacturer}`);
-                    this.emit('devInfo', `Model: ${modelName}`);
-                    this.emit('devInfo', `Kernel: ${kernelVer}`);
-                    this.emit('devInfo', `Chipset: ${chipset}`);
-                    this.emit('devInfo', `Webif version: ${serialNumber}`);
-                    this.emit('devInfo', `Firmware: ${firmwareRevision}`);
-                    this.emit('devInfo', `----------------------------------`)
-                }
+                const devInfo1 = JSON.stringify(devInfo, null, 2);
+                await fsPromises.writeFile(this.devInfoFile, devInfo1);
+                const debug = this.enableDebugMode ? this.emit('debug', `Saved device info: ${devInfo1}`) : false;
+            } catch (error) {
+                this.emit('error', `save device info error: ${error}`);
+            };
 
-                if (this.informationService) {
-                    this.informationService
-                        .setCharacteristic(Characteristic.Manufacturer, manufacturer)
-                        .setCharacteristic(Characteristic.Model, modelName)
-                        .setCharacteristic(Characteristic.SerialNumber, serialNumber)
-                        .setCharacteristic(Characteristic.FirmwareRevision, firmwareRevision);
-                };
+            //save all channels to the file
+            try {
+                const channels = JSON.stringify(allChannels, null, 2);
+                await fsPromises.writeFile(this.channelsFile, channels);
+                const debug = this.enableDebugMode ? this.emit('debug', `Saved all channels: ${channels}`) : false;
+            } catch (error) {
+                this.emit('error', `Save all channels error: ${error}`);
+            };
 
-                this.manufacturer = manufacturer;
-                this.modelName = modelName;
-                this.serialNumber = serialNumber;
-                this.firmwareRevision = firmwareRevision;
-                this.mac = mac;
-
-                //save device info to the file
-                try {
-                    const devInfo1 = JSON.stringify(devInfo, null, 2);
-                    await fsPromises.writeFile(this.devInfoFile, devInfo1);
-                    const debug = this.enableDebugMode ? this.emit('debug', `Saved device info: ${devInfo1}`) : false;
-                } catch (error) {
-                    this.emit('error', `save device info error: ${error}`);
-                };
-
-                //save all channels to the file
-                try {
-                    const channels = JSON.stringify(allChannels, null, 2);
-                    await fsPromises.writeFile(this.channelsFile, channels);
-                    const debug = this.enableDebugMode ? this.emit('debug', `Saved all channels: ${channels}`) : false;
-                } catch (error) {
-                    this.emit('error', `save channels error: ${error}`);
-                };
-
-                if (!this.getInputsFromDevice) {
-                    try {
-                        const channels = JSON.stringify(this.inputs, null, 2);
-                        await fsPromises.writeFile(this.inputsFile, channels);
-                        const debug = this.enableDebugMode ? this.emit('debug', `Saved channels: ${channels}.`) : false;
-                    } catch (error) {
-                        this.emit('error', `Save channels error: ${error}`);
-                    };
-                    return;
-                };
-
-                //save channels by bouquet to the file
-                const bouquet = allChannels.services.find(service => service.servicename === this.bouquetName);
-                if (!bouquet) {
-                    this.emit('error', `Bouquet: ${this.bouquetName}, was not found.`);
-                    return;
-                }
+            //save channels by bouquet to the file
+            const bouquet = allChannels.services.find(service => service.servicename === this.bouquetName);
+            if (!bouquet) {
+                this.emit('message', `Bouquet: ${this.bouquetName}, was not found.`);
 
                 try {
-                    const bouquetChannelsArr = [];
-                    const bouquetChannels = bouquet.subservices;
-                    for (const channel of bouquetChannels) {
-                        const pos = channel.pos;
-                        const name = channel.servicename;
-                        const reference = channel.servicereference;
-                        const displayType = -1;
-
-                        const obj = {
-                            'pos': pos,
-                            'name': name,
-                            'reference': reference,
-                            'displayType': displayType
-                        }
-                        bouquetChannelsArr.push(obj);
-                    };
-
-
-                    const channels = JSON.stringify(bouquetChannelsArr, null, 2);
+                    const channels = JSON.stringify(this.inputs, null, 2);
                     await fsPromises.writeFile(this.inputsFile, channels);
                     const debug = this.enableDebugMode ? this.emit('debug', `Saved channels: ${channels}.`) : false;
                 } catch (error) {
-                    this.emit('error', `save channels error: ${error}`);
+                    this.emit('error', `Save channels error: ${error}`);
                 };
+                return;
+            }
+
+            try {
+                const bouquetChannelsArr = [];
+                const bouquetChannels = bouquet.subservices;
+                for (const channel of bouquetChannels) {
+                    const pos = channel.pos;
+                    const name = channel.servicename;
+                    const reference = channel.servicereference;
+                    const displayType = -1;
+
+                    const obj = {
+                        'pos': pos,
+                        'name': name,
+                        'reference': reference,
+                        'displayType': displayType
+                    }
+                    bouquetChannelsArr.push(obj);
+                };
+
+
+                const channels = JSON.stringify(bouquetChannelsArr, null, 2);
+                await fsPromises.writeFile(this.inputsFile, channels);
+                const debug = this.enableDebugMode ? this.emit('debug', `Saved channels by bouquet: ${this.bouquetName}, channels: ${channels}.,`) : false;
             } catch (error) {
-                this.emit('error', `create files error: ${error}`);
+                this.emit('error', `Save channels by bouquet: ${this.bouquetName}, error: ${error}`);
             };
         })
             .on('stateChanged', async (power, name, eventName, reference, volume, mute) => {
