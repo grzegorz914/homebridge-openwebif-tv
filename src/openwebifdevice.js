@@ -22,7 +22,7 @@ class OpenWebIfDevice extends EventEmitter {
         this.host = config.host;
         this.port = config.port;
         this.getInputsFromDevice = config.getInputsFromDevice || false;
-        this.bouquetName = config.bouquetName;
+        this.bouquets = config.bouquets || [];
         this.inputs = config.inputs || [];
         this.buttons = config.buttons || [];
         this.sensorPower = config.sensorPower || false;
@@ -193,11 +193,46 @@ class OpenWebIfDevice extends EventEmitter {
                 this.emit('error', `Save all channels error: ${error}`);
             };
 
-            //save channels by bouquet to the file
-            const bouquet = allChannels.services.find(service => service.servicename === this.bouquetName);
-            if (!bouquet) {
-                this.emit('message', `Bouquet: ${this.bouquetName}, was not found.`);
+            if (!this.getInputsFromDevice) {
+                try {
+                    const channels = JSON.stringify(this.inputs, null, 2);
+                    await fsPromises.writeFile(this.inputsFile, channels);
+                    const debug = this.enableDebugMode ? this.emit('debug', `Saved channels: ${channels}.`) : false;
+                } catch (error) {
+                    this.emit('error', `Save channels error: ${error}`);
 
+                };
+                return;
+            };
+
+            //save channels by bouquet to the file
+            const bouquetChannelsArr = [];
+            for (let i = 0; i < this.bouquets.length; i++) {
+                const bouquet = this.bouquets[i];
+                const bouquetName = bouquet.name;
+                const displayType = bouquet.displayType;
+                const bouquetChannels = allChannels.services.find(service => service.servicename === bouquetName);
+
+                if (bouquetChannels) {
+                    for (const channel of bouquetChannels.subservices) {
+                        const pos = channel.pos;
+                        const name = channel.servicename;
+                        const reference = channel.servicereference;
+
+                        const obj = {
+                            'pos': pos,
+                            'name': name,
+                            'reference': reference,
+                            'displayType': displayType
+                        }
+                        bouquetChannelsArr.push(obj);
+                    };
+                } else {
+                    this.emit('message', `Bouquet: ${bouquetName}, was not found.`);
+                }
+            }
+
+            if (bouquetChannelsArr.length === 0) {
                 try {
                     const channels = JSON.stringify(this.inputs, null, 2);
                     await fsPromises.writeFile(this.inputsFile, channels);
@@ -209,24 +244,6 @@ class OpenWebIfDevice extends EventEmitter {
             }
 
             try {
-                const bouquetChannelsArr = [];
-                const bouquetChannels = bouquet.subservices;
-                for (const channel of bouquetChannels) {
-                    const pos = channel.pos;
-                    const name = channel.servicename;
-                    const reference = channel.servicereference;
-                    const displayType = -1;
-
-                    const obj = {
-                        'pos': pos,
-                        'name': name,
-                        'reference': reference,
-                        'displayType': displayType
-                    }
-                    bouquetChannelsArr.push(obj);
-                };
-
-
                 const channels = JSON.stringify(bouquetChannelsArr, null, 2);
                 await fsPromises.writeFile(this.inputsFile, channels);
                 const debug = this.enableDebugMode ? this.emit('debug', `Saved channels by bouquet: ${this.bouquetName}, channels: ${channels}.,`) : false;

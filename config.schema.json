@@ -40,12 +40,47 @@
               "description": "This function get channels by bouquet direct from device, manually configured channels will be skipped.",
               "required": false
             },
-            "bouquetName": {
+            "bouquets": {
               "title": "Bouquet Name",
-              "type": "string",
-              "placeholder": "Bouquet name",
-              "description": "Here set *Bouquet Name* which should be loaded from device, only first 90 channels will be used.",
-              "required": true,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "title": "Name",
+                    "type": "string",
+                    "placeholder": "Bouquet name",
+                    "description": "Here set *Bouquet Name* which should be loaded from device, only first 90 channels will be used.",
+                    "required": true
+                  },
+                  "displayType": {
+                    "title": "Extra Tile",
+                    "type": "integer",
+                    "oneOf": [
+                      {
+                        "title": "None/Disabled",
+                        "enum": [
+                          -1
+                        ]
+                      },
+                      {
+                        "title": "Outlet",
+                        "enum": [
+                          0
+                        ]
+                      },
+                      {
+                        "title": "Switch",
+                        "enum": [
+                          1
+                        ]
+                      }
+                    ],
+                    "description": "Here select extra tile for all channels of this bouquet to be exposed in HomeKit app.",
+                    "required": true
+                  }
+                }
+              },
               "condition": {
                 "functionBody": "return model.devices[arrayIndices].getInputsFromDevice === true;"
               }
@@ -93,7 +128,7 @@
                         ]
                       }
                     ],
-                    "description": "Here select extra function/tile to be exposed in HomeKit app.",
+                    "description": "Here select extra tile to be exposed in HomeKit app.",
                     "required": true
                   }
                 }
@@ -829,11 +864,19 @@
           "expanded": false,
           "items": [
             "devices[].getInputsFromDevice",
-            "devices[].bouquetName",
+            {
+              "key": "devices[].bouquets",
+              "type": "tabarray",
+              "title": "{{ value.name || 'new bouquet' }}",
+              "items": [
+                "devices[].bouquets[].name",
+                "devices[].bouquets[].displayType"
+              ]
+            },
             {
               "key": "devices[].inputs",
               "type": "tabarray",
-              "title": "{{ value.name || 'new input' }}",
+              "title": "{{ value.name || 'new channel' }}",
               "items": [
                 "devices[].inputs[].name",
                 "devices[].inputs[].reference",

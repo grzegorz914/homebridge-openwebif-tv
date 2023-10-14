@@ -26,7 +26,12 @@
           "user": "user",
           "pass": "pass",
           "getInputsFromDevice": false,
-          "bouquetName": "bouquet name",
+          "bouquets": [
+            {
+              "name": "My bouquet name",
+              "displayType": -1
+            }
+          ],
           "inputs": [
             {
               "name": "Das Erste HD",
@@ -80,11 +85,11 @@
           "sensorChannel": false,
           "sensorInputs": [
             {
-                "name": "RTL HD",
-                "reference": "1:0:19:EF10:421:1:C00000:0:0:0:",
-                "displayType": -1
+              "name": "RTL HD",
+              "reference": "1:0:19:EF10:421:1:C00000:0:0:0:",
+              "displayType": -1
             }
-       ],
+          ],
           "enableDebugMode": false,
           "disableLogInfo": false,
           "disableLogDeviceInfo": false,

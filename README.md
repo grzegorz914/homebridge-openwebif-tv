@@ -65,10 +65,11 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | `volumeControl` | Here select volume control mode `None/Disabled`, `Slider`, `Fan`. |
 | `infoButtonCommand` | Here select the function of `I` button in RC app. |
 | `getInputsFromDevice` | This function get channels by *Bouquet* direct from device, manually configured channels will be skipped. |
-| `bouquetName` | Here set *Bouquet Name* which should be loaded from device, only first 90 services will be used. |
+| `bouquets.name` | Here set *Bouquet Name* which should be loaded from device, only first 90 services will be used. |
+| `bouquets.displayType` | Here select display extra tile for all channels of this bouquet to be exposed in HomeKit app, possible `None/Disabled`, `Outlet`, `Switch`.|
 | `inputs.name` | Here set *Channel Name* which should be exposed in the *Homebridge/HomeKit* |
 | `inputs.reference` | Here set *Channel Reference*. All can be found in `homebridge_directory/openwebifTv/inputs_xxxx`. |
-| `inputs.displayType` | Here select display type in HomeKit app, possible `None/Disabled`, `Outlet`, `Switch`.|
+| `inputs.displayType` | Here select display extra tile for this channel to be exposed in HomeKit app, possible `None/Disabled`, `Outlet`, `Switch`.|
 | `buttons.name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*.|
 | `buttons.mode` | Here select button mode, `Live TV Channel` or `Remote Control`. |
 | `buttons.reference` | Here set *Reference*, only for `Live TV Channel` mode, in other case leave empty. |
