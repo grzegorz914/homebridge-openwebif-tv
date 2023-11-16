@@ -946,7 +946,7 @@ class OpenWebIfDevice extends EventEmitter {
 
                                 this.inputSwitchesButtonServices.push(inputSwitchButtonService);
                                 this.allServices.push(inputSwitchButtonService);
-                                accessory.addService(this.inputSwitchesButtonServices[i]);
+                                accessory.addService(inputSwitchButtonService);
                             } else {
                                 this.emit('message', `Input Button Name: ${inputName ? inputName : 'Missing'}, Reference: ${inputReference ? inputReference : 'Missing'}.`);
                             };
@@ -991,7 +991,7 @@ class OpenWebIfDevice extends EventEmitter {
                                 this.sensorInputsDisplayType.push(sensorInputDisplayType);
                                 this.sensorInputsServices.push(sensorInputService);
                                 this.allServices.push(sensorInputService);
-                                accessory.addService(this.sensorInputsServices[i]);
+                                accessory.addService(sensorInputService);
                             } else {
                                 this.emit('message', `Sensor Name: ${sensorInputName ? sensorInputName : 'Missing'}, Reference: ${sensorInputReference ? sensorInputReference : 'Missing'}.`);
                             };
@@ -1070,7 +1070,7 @@ class OpenWebIfDevice extends EventEmitter {
                                     });
                                 this.buttonsServices.push(buttonService);
                                 this.allServices.push(buttonService);
-                                accessory.addService(this.buttonsServices[i]);
+                                accessory.addService(buttonService);
                             } else {
                                 this.emit('message', `Button Name: ${buttonName ? buttonName : 'Missing'}, ${buttonMode ? 'Command:' : 'Reference:'} ${buttonReferenceCommand ? buttonReferenceCommand : 'Missing'}, Mode: ${buttonMode ? buttonMode : 'Missing'}..`);
                             };
