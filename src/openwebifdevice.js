@@ -419,32 +419,8 @@ class OpenWebIfDevice extends EventEmitter {
                 //prepare television service
                 const debug2 = !this.enableDebugMode ? false : this.emit('debug', `Prepare television service`);
                 this.televisionService = new Service.Television(`${accessoryName} Television`, 'Television');
-                this.televisionService.getCharacteristic(Characteristic.ConfiguredName)
-                    .onGet(async () => {
-                        const info = this.disableLogInfo ? false : this.emit('message', `Accessory Name: ${accessoryName}.`);
-                        return accessoryName;
-                    })
-                    .onSet(async (value) => {
-                        try {
-                            this.name = value;
-                            const info = this.disableLogInfo ? false : this.emit('message', `set Accessory Name: ${value}`);
-                        } catch (error) {
-                            this.emit('error', `set Brightness error: ${error}`);
-                        };
-                    });
-                this.televisionService.getCharacteristic(Characteristic.SleepDiscoveryMode)
-                    .onGet(async () => {
-                        const state = 1;
-                        const info = this.disableLogInfo ? false : this.emit('message', `Discovery Mode: ${state ? 'Always discoverable' : 'Not discoverable'}`);
-                        return state;
-                    })
-                    .onSet(async (state) => {
-                        try {
-                            const info = this.disableLogInfo ? false : this.emit('message', `set Discovery Mode: ${state ? 'Always discoverable' : 'Not discoverable'}`);
-                        } catch (error) {
-                            this.emit('error', `set Discovery Mode error: ${error}`);
-                        };
-                    });
+                this.televisionService.setCharacteristic(Characteristic.ConfiguredName, accessoryName)
+                    .setCharacteristic(Characteristic.SleepDiscoveryMode, 1);
 
                 this.televisionService.getCharacteristic(Characteristic.Active)
                     .onGet(async () => {
@@ -699,6 +675,7 @@ class OpenWebIfDevice extends EventEmitter {
                 const inputsCount = inputs.length;
                 const possibleInputsCount = 90 - this.allServices.length;
                 const maxInputsCount = inputsCount >= possibleInputsCount ? possibleInputsCount : inputsCount;
+                inputs.sort((a, b) => a.name.localeCompare(b.name));
                 for (let i = 0; i < maxInputsCount; i++) {
                     //input
                     const input = inputs[i];
@@ -706,8 +683,9 @@ class OpenWebIfDevice extends EventEmitter {
                     //get input reference
                     const inputReference = input.reference;
 
-                    //get input name		
-                    const inputName = this.savedInputsNames[inputReference] ?? input.name;
+                    //get input name
+                    const name = input.name ?? 'Channel';		
+                    const inputName = this.savedInputsNames[inputReference] ?? name;
 
                     //get input switch
                     const inputDisplayType = input.displayType >= 0 ? input.displayType : -1;
