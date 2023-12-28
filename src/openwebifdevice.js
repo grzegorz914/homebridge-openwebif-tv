@@ -5,7 +5,7 @@ const EventEmitter = require('events');
 const Mqtt = require('./mqtt.js');
 const OpenWebIf = require('./openwebif.js')
 const CONSTANS = require('./constans.json');
-let Accessory, Characteristic, Service, Categories, UUID;
+let Accessory, Characteristic, Service, Categories, Encode, UUID;
 
 class OpenWebIfDevice extends EventEmitter {
     constructor(api, prefDir, config) {
@@ -15,6 +15,7 @@ class OpenWebIfDevice extends EventEmitter {
         Characteristic = api.hap.Characteristic;
         Service = api.hap.Service;
         Categories = api.hap.Categories;
+        Encode = api.hap.encode;
         UUID = api.hap.uuid;
 
         //device configuration
@@ -67,6 +68,7 @@ class OpenWebIfDevice extends EventEmitter {
         this.inputsDisplayType = [];
         this.inputsSwitchesButtons = [];
         this.inputSwitchesButtonServices = [];
+        this.displayOrder = [];
 
         this.sensorInputsServices = [];
         this.sensorInputsReference = [];
@@ -374,6 +376,10 @@ class OpenWebIfDevice extends EventEmitter {
                         const accessory = await this.prepareAccessory();
                         this.emit('publishAccessory', accessory);
                         this.startPrepareAccessory = false;
+
+                        if (this.televisionService) {
+                            this.televisionService.updateCharacteristic(Characteristic.DisplayOrder, Encode(1, this.displayOrder).toString('base64'));
+                        }
                     } catch (error) {
                         this.emit('error', `Prepare accessory error: ${error}`);
                     };
@@ -684,7 +690,7 @@ class OpenWebIfDevice extends EventEmitter {
                     const inputReference = input.reference;
 
                     //get input name
-                    const name = input.name ?? 'Channel';		
+                    const name = input.name ?? 'Channel';
                     const inputName = this.savedInputsNames[inputReference] ?? name;
 
                     //get input switch
@@ -756,6 +762,7 @@ class OpenWebIfDevice extends EventEmitter {
                                 }
                             });
 
+                        this.displayOrder.push(i + 1);
                         this.inputsReference.push(inputReference);
                         this.inputsName.push(inputName);
                         this.inputsDisplayType.push(inputDisplayType);
