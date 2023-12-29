@@ -26,6 +26,7 @@
           "user": "user",
           "pass": "pass",
           "getInputsFromDevice": false,
+          "inputsDisplayOrder": 0,
           "bouquets": [
             {
               "name": "My bouquet name",

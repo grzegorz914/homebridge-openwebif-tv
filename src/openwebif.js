@@ -28,7 +28,7 @@ class OPENWEBIF extends EventEmitter {
             }
         });
 
-        this.checkStateOnFirstRun = false;
+        this.startPrepareAccessory = true;
         this.power = false;
         this.name = '';
         this.eventName = '';
@@ -64,7 +64,6 @@ class OPENWEBIF extends EventEmitter {
 
                 this.emit('deviceInfo', devInfo, allChannels, manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
                 await new Promise(resolve => setTimeout(resolve, 2000));
-                this.checkStateOnFirstRun = true;
                 this.emit('checkState');
             } catch (error) {
                 const debug = disableLogConnectError ? false : this.emit('error', `Info error: ${error}, reconnect in 15s.`);
@@ -84,13 +83,6 @@ class OPENWEBIF extends EventEmitter {
                     const volume = devState.volume;
                     const mute = devState.muted;
 
-                    //update only if value change
-                    if (!this.checkStateOnFirstRun && power === this.power && name === this.name && eventName === this.eventName && reference === this.reference && volume === this.volume && mute === this.mute) {
-                        this.checkState();
-                        return;
-                    };
-
-                    this.checkStateOnFirstRun = false;
                     this.power = power;
                     this.name = name;
                     this.eventName = eventName;
@@ -101,10 +93,14 @@ class OPENWEBIF extends EventEmitter {
                     this.emit('stateChanged', power, name, eventName, reference, volume, mute);
                     const mqtt = mqttEnabled ? this.emit('mqtt', 'Info', this.devInfo) : false;
                     const mqtt1 = mqttEnabled ? this.emit('mqtt', 'State', devState) : false;
+
+                    const prepareAccessory = this.startPrepareAccessory ? this.emit('prepareAccessory') : false;
+                    this.startPrepareAccessory = false;
+
                     this.checkState();
                 } catch (error) {
                     const debug = disableLogConnectError ? false : this.emit('error', `State error: ${error}, reconnect in 15s.`);
-                    const firstRun = this.checkStateOnFirstRun ? this.checkDeviceInfo() : this.emit('disconnect');
+                    this.checkState();
                 };
             })
             .on('disconnect', () => {
