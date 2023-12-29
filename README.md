@@ -67,7 +67,7 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | `getInputsFromDevice` | This function get channels by *Bouquet* direct from device, manually configured channels will be skipped. |
 | `bouquets.name` | Here set *Bouquet Name* which should be loaded from device, only first 90 services will be used. |
 | `bouquets.displayType` | Here select display extra tile for all channels of this bouquet to be exposed in HomeKit app, possible `None/Disabled`, `Outlet`, `Switch`.|
-| `inputsDisplayOrder` | Here select display order of the inputs list, `None`, `Alphabetically Name`, `Alphabetically Reference`. |
+| `inputsDisplayOrder` | Here select display order of the channels list, `None`, `Alphabetically Name`, `Alphabetically Reference`. |
 | `inputs.name` | Here set *Channel Name* which should be exposed in the *Homebridge/HomeKit* |
 | `inputs.reference` | Here set *Channel Reference*. All can be found in `homebridge_directory/openwebifTv/inputs_xxxx`. |
 | `inputs.displayType` | Here select display extra tile for this channel to be exposed in HomeKit app, possible `None/Disabled`, `Outlet`, `Switch`.|
