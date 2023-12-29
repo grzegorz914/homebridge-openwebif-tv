@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.24.0] - (29.12.2023)
 ## Changes
-- added possibility to select display inputs order, possible by `None`, `Alphabetically Name`, `Alphabetically Reference`
+- added possibility to select display channels order, possible by `None`, `Alphabetically Name`, `Alphabetically Reference`
 - config.schema updated
 - cleanup
 
