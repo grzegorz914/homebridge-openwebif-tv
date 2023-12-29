@@ -251,7 +251,7 @@ class OpenWebIfDevice extends EventEmitter {
             };
         })
             .on('stateChanged', (power, name, eventName, reference, volume, mute) => {
-                const inputIdentifier = this.inputsConfigured.findIndex(index => index.reference === reference) + 1;
+                const inputIdentifier = this.inputsConfigured.findIndex(index => index.reference === reference) + 1 ?? 0;
                 mute = power ? mute : true;
 
                 if (this.televisionService) {
@@ -259,10 +259,9 @@ class OpenWebIfDevice extends EventEmitter {
                         .updateCharacteristic(Characteristic.Active, power)
                 }
 
-                if (this.televisionService && inputIdentifier !== 0) {
+                if (this.televisionService && inputIdentifier > 0) {
                     this.televisionService
                         .updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier)
-                    this.inputIdentifier = inputIdentifier;
                 }
 
                 if (this.speakerService) {
@@ -302,12 +301,11 @@ class OpenWebIfDevice extends EventEmitter {
                         .updateCharacteristic(Characteristic.ContactSensorState, state)
                 }
 
-                if (this.sensorInputService) {
-                    const state = power ? (this.inputIdentifier !== 0) : false;
+                if (this.sensorInputService && inputIdentifier > 0) {
+                    const state = power ? (this.inputIdentifier !== inputIdentifier) : false;
                     this.sensorInputService
                         .updateCharacteristic(Characteristic.ContactSensorState, state)
                     this.sensorInputState = state;
-                    this.inputIdentifier = inputIdentifier;
                 }
 
                 if (this.inputSwitchButtonServices) {
@@ -320,21 +318,24 @@ class OpenWebIfDevice extends EventEmitter {
                     }
                 }
 
-                if (this.sensorInputsServices) {
-                    const servicesCount = this.sensorInputsServices.length;
-                    for (let i = 0; i < servicesCount; i++) {
-                        const state = power ? (this.sensorInputs[i].reference === reference) : false;
-                        const displayType = this.sensorInputs[i].displayType;
-                        const characteristicType = [Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][displayType];
-                        this.sensorInputsServices[i]
-                            .updateCharacteristic(characteristicType, state);
+                if (reference !== undefined) {
+                    this.reference = reference;
+                    if (this.sensorInputsServices) {
+                        const servicesCount = this.sensorInputsServices.length;
+                        for (let i = 0; i < servicesCount; i++) {
+                            const state = power ? (this.sensorInputs[i].reference === reference) : false;
+                            const displayType = this.sensorInputs[i].displayType;
+                            const characteristicType = [Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][displayType];
+                            this.sensorInputsServices[i]
+                                .updateCharacteristic(characteristicType, state);
+                        }
                     }
                 }
 
+                this.inputIdentifier = inputIdentifier > 0 ? inputIdentifier : this.inputIdentifier;
                 this.power = power;
                 this.channelName = name;
                 this.channelEventName = eventName;
-                this.reference = reference;
                 this.volume = volume;
                 this.mute = mute;
             })
@@ -450,8 +451,9 @@ class OpenWebIfDevice extends EventEmitter {
                     })
                     .onSet(async (inputIdentifier) => {
                         try {
-                            const inputName = this.inputsConfigured[inputIdentifier].name;
-                            const inputReference = this.inputsConfigured[inputIdentifier].reference;
+                            const identifier = inputIdentifier - 1;
+                            const inputName = this.inputsConfigured[identifier].name;
+                            const inputReference = this.inputsConfigured[identifier].reference;
 
                             switch (this.power) {
                                 case false:
