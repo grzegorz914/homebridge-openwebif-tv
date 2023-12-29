@@ -41,7 +41,7 @@
               "required": false
             },
             "inputsDisplayOrder": {
-              "title": "Inputs Display Order",
+              "title": "Channels Display Order",
               "type": "integer",
               "minimum": 0,
               "maximum": 2,
