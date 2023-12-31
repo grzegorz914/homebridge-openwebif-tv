@@ -62,14 +62,13 @@ class OpenWebIfDevice extends EventEmitter {
         this.mqttConnected = false;
         this.firstRun = true;
 
-        this.allServices = [];
         this.inputsConfigured = [];
         this.inputsSwitchesButtons = [];
-        this.inputSwitchesButtonServices = [];
-        this.displayOrder = [];
-
-        this.sensorInputsServices = [];
         this.sensorInputs = [];
+
+        this.allServices = [];
+        this.inputsSwitchesButtonsService = [];
+        this.sensorsInputsServices = [];
         this.buttonsServices = [];
 
         this.power = false;
@@ -77,8 +76,6 @@ class OpenWebIfDevice extends EventEmitter {
         this.volume = 0;
         this.mute = true;
         this.inputIdentifier = 0;
-        this.channelName = '';
-        this.channelEventName = '';
         this.brightness = 0;
         this.sensorVolumeState = false;
         this.sensorInputState = false;
@@ -103,7 +100,7 @@ class OpenWebIfDevice extends EventEmitter {
 
             files.forEach((file) => {
                 if (!fs.existsSync(file)) {
-                    fs.writeFileSync(file, ' ');
+                    fs.writeFileSync(file, '');
                 }
             });
         } catch (error) {
@@ -148,7 +145,6 @@ class OpenWebIfDevice extends EventEmitter {
         });
 
         this.openwebif.on('deviceInfo', async (devInfo, allChannels, manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) => {
-            this.emit('message', `Connected.`);
             if (!this.disableLogDeviceInfo) {
                 this.emit('devInfo', `-------- ${this.name} --------`);
                 this.emit('devInfo', `Manufacturer: ${manufacturer}`);
@@ -159,14 +155,6 @@ class OpenWebIfDevice extends EventEmitter {
                 this.emit('devInfo', `Firmware: ${firmwareRevision}`);
                 this.emit('devInfo', `----------------------------------`)
             }
-
-            if (this.informationService) {
-                this.informationService
-                    .setCharacteristic(Characteristic.Manufacturer, manufacturer)
-                    .setCharacteristic(Characteristic.Model, modelName)
-                    .setCharacteristic(Characteristic.SerialNumber, serialNumber)
-                    .setCharacteristic(Characteristic.FirmwareRevision, firmwareRevision);
-            };
 
             this.manufacturer = manufacturer;
             this.modelName = modelName;
@@ -251,7 +239,8 @@ class OpenWebIfDevice extends EventEmitter {
             };
         })
             .on('stateChanged', (power, name, eventName, reference, volume, mute) => {
-                const inputIdentifier = this.inputsConfigured.findIndex(index => index.reference === reference) + 1 ?? 0;
+                const index = this.inputsConfigured.findIndex(input => input.reference === reference) ?? -1;
+                const inputIdentifier = index !== -1 ? this.inputsConfigured[index].identifier : this.inputIdentifier;
                 mute = power ? mute : true;
 
                 if (this.televisionService) {
@@ -259,7 +248,7 @@ class OpenWebIfDevice extends EventEmitter {
                         .updateCharacteristic(Characteristic.Active, power)
                 }
 
-                if (this.televisionService && inputIdentifier > 0) {
+                if (this.televisionService && inputIdentifier !== -1) {
                     this.televisionService
                         .updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier)
                 }
@@ -301,7 +290,7 @@ class OpenWebIfDevice extends EventEmitter {
                         .updateCharacteristic(Characteristic.ContactSensorState, state)
                 }
 
-                if (this.sensorInputService && inputIdentifier > 0) {
+                if (this.sensorInputService && inputIdentifier !== -1) {
                     const state = power ? (this.inputIdentifier !== inputIdentifier) : false;
                     this.sensorInputService
                         .updateCharacteristic(Characteristic.ContactSensorState, state)
@@ -320,33 +309,29 @@ class OpenWebIfDevice extends EventEmitter {
 
                 if (reference !== undefined) {
                     this.reference = reference;
-                    if (this.sensorInputsServices) {
-                        const servicesCount = this.sensorInputsServices.length;
+                    if (this.sensorsInputsServices) {
+                        const servicesCount = this.sensorsInputsServices.length;
                         for (let i = 0; i < servicesCount; i++) {
                             const state = power ? (this.sensorInputs[i].reference === reference) : false;
                             const displayType = this.sensorInputs[i].displayType;
                             const characteristicType = [Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][displayType];
-                            this.sensorInputsServices[i]
+                            this.sensorsInputsServices[i]
                                 .updateCharacteristic(characteristicType, state);
                         }
                     }
                 }
 
-                this.inputIdentifier = inputIdentifier > 0 ? inputIdentifier : this.inputIdentifier;
+                this.inputIdentifier = inputIdentifier;
                 this.power = power;
-                this.channelName = name;
-                this.channelEventName = eventName;
                 this.volume = volume;
                 this.mute = mute;
             })
             .on('prepareAccessory', async () => {
                 try {
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-
                     //read inputs file
                     try {
                         const data = await fsPromises.readFile(this.inputsFile);
-                        this.savedInputs = data.length > 5 ? JSON.parse(data) : this.inputs;
+                        this.savedInputs = data.length > 0 ? JSON.parse(data) : this.inputs;
                         const debug = this.enableDebugMode ? this.emit('debug', `Read saved Inputs/Channels: ${JSON.stringify(this.savedInputs, null, 2)}`) : false;
                     } catch (error) {
                         this.emit('error', `Read saved Inputs error: ${error}`);
@@ -355,7 +340,7 @@ class OpenWebIfDevice extends EventEmitter {
                     //read inputs names from file
                     try {
                         const data = await fsPromises.readFile(this.inputsNamesFile);
-                        this.savedInputsNames = data.length > 5 ? JSON.parse(data) : {};
+                        this.savedInputsNames = data.length > 0 ? JSON.parse(data) : {};
                         const debug = this.enableDebugMode ? this.emit('debug', `Read saved Inputs/Channels: Names: ${JSON.stringify(this.savedInputsNames, null, 2)}`) : false;
                     } catch (error) {
                         this.emit('error', `Read saved Inputs/Channels Names error: ${error}`);
@@ -364,7 +349,7 @@ class OpenWebIfDevice extends EventEmitter {
                     //read inputs visibility from file
                     try {
                         const data = await fsPromises.readFile(this.inputsTargetVisibilityFile);
-                        this.savedInputsTargetVisibility = data.length > 5 ? JSON.parse(data) : {};
+                        this.savedInputsTargetVisibility = data.length > 0 ? JSON.parse(data) : {};
                         const debug = this.enableDebugMode ? this.emit('debug', `Read saved Inputs/Channels: Target Visibility: ${JSON.stringify(this.savedInputsTargetVisibility, null, 2)}`) : false;
                     } catch (error) {
                         this.emit('error', `Read saved Inputs/Channels Target Visibility error: ${error}`);
@@ -417,9 +402,8 @@ class OpenWebIfDevice extends EventEmitter {
                 //prepare television service
                 const debug2 = !this.enableDebugMode ? false : this.emit('debug', `Prepare television service`);
                 this.televisionService = new Service.Television(`${accessoryName} Television`, 'Television');
-                this.televisionService.setCharacteristic(Characteristic.ConfiguredName, accessoryName)
-                    .setCharacteristic(Characteristic.SleepDiscoveryMode, 1);
-
+                this.televisionService.setCharacteristic(Characteristic.ConfiguredName, accessoryName);
+                this.televisionService.setCharacteristic(Characteristic.SleepDiscoveryMode, 1);
                 this.televisionService.getCharacteristic(Characteristic.Active)
                     .onGet(async () => {
                         const state = this.power;
@@ -443,22 +427,21 @@ class OpenWebIfDevice extends EventEmitter {
                 this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
                     .onGet(async () => {
                         const inputIdentifier = this.inputIdentifier;
-                        const channelEventName = this.channelEventName;
                         const inputName = this.inputsConfigured[inputIdentifier].name;
                         const inputReference = this.inputsConfigured[inputIdentifier].reference;
-                        const info = this.disableLogInfo ? false : this.emit('message', `Channel: ${inputName}, Event: ${channelEventName}, Reference: ${inputReference}`);
+                        const info = this.disableLogInfo ? false : this.emit('message', `Channel: ${inputName}, Reference: ${inputReference}`);
                         return inputIdentifier;
                     })
                     .onSet(async (inputIdentifier) => {
                         try {
-                            const identifier = inputIdentifier - 1;
-                            const inputName = this.inputsConfigured[identifier].name;
-                            const inputReference = this.inputsConfigured[identifier].reference;
+                            const index = this.inputsConfigured.findIndex(input => input.identifier === inputIdentifier) ?? this.inputIdentifier;
+                            const inputName = this.inputsConfigured[index].name;
+                            const inputReference = this.inputsConfigured[index].reference;
 
                             switch (this.power) {
                                 case false:
                                     await new Promise(resolve => setTimeout(resolve, 3000));
-                                    this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
+                                    const tryAgain = this.power ? false : this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
                                     break;
                                 case true:
                                     await this.openwebif.send(CONSTANS.ApiUrls.SetChannel + inputReference);
@@ -669,23 +652,13 @@ class OpenWebIfDevice extends EventEmitter {
 
                 //prepare inputs service
                 const debug4 = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs service`);
-                //check possible inputs and possible inputs count (max 90)
-                let inputs = this.getInputsFromDevice ? this.savedInputs : this.inputs;
-                switch (this.inputsDisplayOrder) {
-                    case 0:
-                        inputs = inputs
-                        break;
-                    case 1:
-                        inputs.sort((a, b) => a.name.localeCompare(b.name));
-                        break;
-                    case 2:
-                        inputs.sort((a, b) => a.reference.localeCompare(b.reference));
-                        break;
-                }
 
+                 //check possible inputs count (max 85)
+                const inputs = this.getInputsFromDevice ? this.savedInputs : this.inputs;
                 const inputsCount = inputs.length;
-                const possibleInputsCount = 90 - this.allServices.length;
+                const possibleInputsCount = 85 - this.allServices.length;
                 const maxInputsCount = inputsCount >= possibleInputsCount ? possibleInputsCount : inputsCount;
+                let inputIdentifier = 0;
                 for (let i = 0; i < maxInputsCount; i++) {
                     //input
                     const input = inputs[i];
@@ -694,8 +667,47 @@ class OpenWebIfDevice extends EventEmitter {
                     const inputReference = input.reference;
 
                     //get input name
-                    const name = input.name ?? 'Channel';
-                    const inputName = this.savedInputsNames[inputReference] ?? name;
+                    const name = input.name ?? 'App/Input';
+                    const savedInputsNames = this.savedInputsNames[inputReference] ?? false;
+                    const inputName = !savedInputsNames ? name : savedInputsNames;
+
+                    //get visibility
+                    const currentVisibility = this.savedInputsTargetVisibility[inputReference] ?? 0;
+
+                    input.identifier = inputIdentifier++;
+                    input.name = inputName;
+                    input.visibility = currentVisibility;
+                    this.inputsConfigured.push(input);
+                }
+
+                //sort inputs list
+                switch (this.inputsDisplayOrder) {
+                    case 0:
+                        this.inputsConfigured = this.inputsConfigured;
+                        break;
+                    case 1:
+                        this.inputsConfigured.sort((a, b) => a.name.localeCompare(b.name));
+                        break;
+                    case 2:
+                        this.inputsConfigured.sort((a, b) => b.name.localeCompare(a.name));
+                        break;
+                    case 3:
+                        this.inputsConfigured.sort((a, b) => a.reference.localeCompare(b.reference));
+                        break;
+                    case 4:
+                        this.inputsConfigured.sort((a, b) => b.reference.localeCompare(a.reference));
+                        break;
+                }
+
+                for (const input of this.inputsConfigured) {
+                    //get identifier
+                    const inputIdentifier = input.identifier;
+
+                    //get input reference
+                    const inputReference = input.reference;
+
+                    //get input name
+                    const inputName = input.name;
 
                     //get input switch
                     const inputDisplayType = input.displayType >= 0 ? input.displayType : -1;
@@ -707,13 +719,13 @@ class OpenWebIfDevice extends EventEmitter {
                     const isConfigured = 1;
 
                     //get input visibility state
-                    const currentVisibility = this.savedInputsTargetVisibility[inputReference] ?? 0;
+                    const currentVisibility = input.visibility;
                     const targetVisibility = currentVisibility;
 
                     if (inputReference && inputName) {
-                        const inputService = new Service.InputSource(`${inputName} ${i}`, `Input ${i}`);
+                        const inputService = new Service.InputSource(`${inputName} ${inputIdentifier}`, `Input ${inputIdentifier}`);
                         inputService
-                            .setCharacteristic(Characteristic.Identifier, i + 1)
+                            .setCharacteristic(Characteristic.Identifier, inputIdentifier)
                             .setCharacteristic(Characteristic.Name, inputName)
                             .setCharacteristic(Characteristic.IsConfigured, isConfigured)
                             .setCharacteristic(Characteristic.InputSourceType, inputType)
@@ -724,19 +736,14 @@ class OpenWebIfDevice extends EventEmitter {
                                 return inputName;
                             })
                             .onSet(async (value) => {
-                                const valueExist = value === inputName;
-                                if (valueExist) {
+                                if (value === this.savedInputsNames[inputReference]) {
                                     return;
-                                };
+                                }
 
                                 try {
                                     this.savedInputsNames[inputReference] = value;
-                                    const newCustomName = JSON.stringify(this.savedInputsNames, null, 2);
-
-                                    await fsPromises.writeFile(this.inputsNamesFile, newCustomName);
+                                    await fsPromises.writeFile(this.inputsNamesFile, JSON.stringify(this.savedInputsNames, null, 2));
                                     const debug = this.enableDebugMode ? this.emit('debug', `Saved Input, Name: ${value}, Reference: ${inputReference}`) : false;
-                                    inputService.updateCharacteristic(Characteristic.Name, value);
-                                    inputService.updateCharacteristic(Characteristic.ConfiguredName, value);
                                 } catch (error) {
                                     this.emit('error', `save Input Name error: ${error}`);
                                 }
@@ -748,27 +755,19 @@ class OpenWebIfDevice extends EventEmitter {
                                 return targetVisibility;
                             })
                             .onSet(async (state) => {
-                                const stateExist = state === currentVisibility;
-                                if (stateExist) {
+                                if (state === this.savedInputsTargetVisibility[inputReference]) {
                                     return;
-                                };
+                                }
 
                                 try {
                                     this.savedInputsTargetVisibility[inputReference] = state;
-                                    const newTargetVisibility = JSON.stringify(this.savedInputsTargetVisibility, null, 2);
-
-                                    await fsPromises.writeFile(this.inputsTargetVisibilityFile, newTargetVisibility);
+                                    await fsPromises.writeFile(this.inputsTargetVisibilityFile, JSON.stringify(this.savedInputsTargetVisibility, null, 2));
                                     const debug = this.enableDebugMode ? this.emit('debug', `Saved Input: ${inputName}, Target Visibility: ${state ? 'HIDEN' : 'SHOWN'}`) : false;
-                                    inputService.updateCharacteristic(Characteristic.CurrentVisibilityState, state);
-                                    inputService.updateCharacteristic(Characteristic.TargetVisibilityState, state);
                                 } catch (error) {
                                     this.emit('error', `save Target Visibility error: ${error}`);
                                 }
                             });
-
-                        this.displayOrder.push(i + 1);
-                        this.inputsConfigured.push(input);
-                        const pushInputSwitchIndex = inputDisplayType >= 0 ? this.inputsSwitchesButtons.push(i + 1) : false;
+                        const pushInputSwitchIndex = inputDisplayType >= 0 ? this.inputsSwitchesButtons.push(inputIdentifier - 1) : false;
 
                         this.televisionService.addLinkedService(inputService);
                         this.allServices.push(inputService);
@@ -778,7 +777,10 @@ class OpenWebIfDevice extends EventEmitter {
 
                     };
                 }
-                this.televisionService.setCharacteristic(Characteristic.DisplayOrder, Encode(1, this.displayOrder).toString('base64'));
+
+                //sort inputs list
+                const displayOrder = this.inputsConfigured.map(input => input.identifier);
+                this.televisionService.setCharacteristic(Characteristic.DisplayOrder, Encode(1, displayOrder).toString('base64'));
 
                 //prepare volume service
                 if (this.volumeControl >= 0) {
@@ -932,7 +934,7 @@ class OpenWebIfDevice extends EventEmitter {
                                         };
                                     });
 
-                                this.inputSwitchesButtonServices.push(inputSwitchButtonService);
+                                this.inputsSwitchesButtonsService.push(inputSwitchButtonService);
                                 this.allServices.push(inputSwitchButtonService);
                                 accessory.addService(inputSwitchButtonService);
                             } else {
@@ -976,7 +978,7 @@ class OpenWebIfDevice extends EventEmitter {
                                     });
 
                                 this.sensorInputs.push(sensorInput);
-                                this.sensorInputsServices.push(sensorInputService);
+                                this.sensorsInputsServices.push(sensorInputService);
                                 this.allServices.push(sensorInputService);
                                 accessory.addService(sensorInputService);
                             } else {
