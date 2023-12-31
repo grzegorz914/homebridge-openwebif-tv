@@ -101,6 +101,8 @@ class OPENWEBIF extends EventEmitter {
 
                     const emitConnected = !this.connected ? this.emit('message', `Connected.`) : false;
                     this.connected = true;
+
+                    //emit state changed
                     this.emit('stateChanged', power, name, eventName, reference, volume, mute);
                     const mqtt = mqttEnabled ? this.emit('mqtt', 'Info', this.devInfo) : false;
                     const mqtt1 = mqttEnabled ? this.emit('mqtt', 'State', devState) : false;
@@ -112,7 +114,7 @@ class OPENWEBIF extends EventEmitter {
                 };
             })
             .on('disconnect', () => {
-                this.emit('stateChanged', this.name, this.eventName, this.reference, this.volume, this.mute);
+                this.emit('stateChanged', false, this.name, this.eventName, this.reference, this.volume, this.mute);
                 this.emit('disconnected', 'Disconnected.');
                 this.connected = false;
                 this.checkState();
