@@ -109,7 +109,7 @@ class OPENWEBIF extends EventEmitter {
 
                     this.checkState();
                 } catch (error) {
-                    const debug = disableLogConnectError ? false : this.emit('error', `State error: ${error}, reconnect in 15s.`);
+                    const debug = disableLogConnectError ? false : this.emit('error', `State error: ${error}, reconnect in ${this.refreshInterval}s.`);
                     this.emit('disconnect');
                 };
             })
