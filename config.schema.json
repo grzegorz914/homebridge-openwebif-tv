@@ -41,12 +41,12 @@
               "required": false
             },
             "inputsDisplayOrder": {
-              "title": "Inputs Display Order",
+              "title": "Channels Display Order",
               "type": "integer",
               "minimum": 0,
               "maximum": 4,
               "default": 0,
-              "description": "Here select display order of the inputs list.",
+              "description": "Here select display order of the channels list.",
               "oneOf": [
                 {
                   "title": "None",
@@ -563,9 +563,9 @@
             "sensorInputs": {
               "type": "array",
               "items": {
-                "title": "Inputs",
+                "title": "Channels",
                 "type": "object",
-                "description": "Here create Input/App Sensors based on reference, sensor will active if switch to it.",
+                "description": "Here create Channels Sensors based on reference, sensor will active if switch to it.",
                 "properties": {
                   "name": {
                     "title": "Name",
@@ -577,8 +577,8 @@
                   "reference": {
                     "title": "Reference",
                     "type": "string",
-                    "placeholder": "Input/Channel reference",
-                    "description": "Here set the Input/Channel reference.",
+                    "placeholder": "Channel reference",
+                    "description": "Here set the Channel reference.",
                     "required": true
                   },
                   "displayType": {
@@ -892,7 +892,7 @@
     {
       "key": "devices",
       "type": "tabarray",
-      "title": "{{ value.name || 'new device' }}",
+      "title": "{{ value.name || 'device' }}",
       "items": [
         "devices[].name",
         "devices[].host",
@@ -918,7 +918,7 @@
             {
               "key": "devices[].inputs",
               "type": "tabarray",
-              "title": "{{ value.name || 'new channel' }}",
+              "title": "{{ value.name || 'channel' }}",
               "items": [
                 "devices[].inputs[].name",
                 "devices[].inputs[].reference",
@@ -937,7 +937,7 @@
             {
               "key": "devices[].buttons",
               "type": "tabarray",
-              "title": "{{ value.name || 'new button' }}",
+              "title": "{{ value.name || 'button' }}",
               "items": [
                 "devices[].buttons[].name",
                 "devices[].buttons[].mode",
@@ -971,14 +971,14 @@
                     {
                       "key": "devices[]",
                       "type": "section",
-                      "title": "Custom Inputs",
+                      "title": "Custom Channels",
                       "expandable": true,
                       "expanded": false,
                       "items": [
                         {
                           "key": "devices[].sensorInputs",
                           "type": "tabarray",
-                          "title": "{{ value.name || 'new input sensor' }}",
+                          "title": "{{ value.name || 'sensor' }}",
                           "items": [
                             "devices[].sensorInputs[].name",
                             "devices[].sensorInputs[].reference",
