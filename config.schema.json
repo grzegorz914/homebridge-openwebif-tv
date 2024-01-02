@@ -533,7 +533,7 @@
                     "title": "Prefix",
                     "type": "boolean",
                     "default": false,
-                    "description": "Here enable/disable the accessory name as a prefix for sensor name.",
+                    "description": "Here enable/disable the accessory name as a prefix for button name.",
                     "required": true
                   }
                 }
