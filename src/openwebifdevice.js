@@ -427,21 +427,22 @@ class OpenWebIfDevice extends EventEmitter {
                 this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
                     .onGet(async () => {
                         const inputIdentifier = this.inputIdentifier;
-                        const inputName = this.inputsConfigured[inputIdentifier].name;
-                        const inputReference = this.inputsConfigured[inputIdentifier].reference;
+                        const index = this.inputsConfigured.findIndex(input => input.identifier === inputIdentifier);
+                        const inputName = this.inputsConfigured[index].name;
+                        const inputReference = this.inputsConfigured[index].reference;
                         const info = this.disableLogInfo ? false : this.emit('message', `Channel: ${inputName}, Reference: ${inputReference}`);
                         return inputIdentifier;
                     })
-                    .onSet(async (inputIdentifier) => {
+                    .onSet(async (activeIdentifier) => {
                         try {
-                            const index = this.inputsConfigured.findIndex(input => input.identifier === inputIdentifier) ?? this.inputIdentifier;
+                            const index = this.inputsConfigured.findIndex(input => input.identifier === activeIdentifier);
                             const inputName = this.inputsConfigured[index].name;
                             const inputReference = this.inputsConfigured[index].reference;
 
                             switch (this.power) {
                                 case false:
-                                    await new Promise(resolve => setTimeout(resolve, 3000));
-                                    const tryAgain = this.power ? false : this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
+                                    await new Promise(resolve => setTimeout(resolve, 4000));
+                                    const tryAgain = this.power ? this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, activeIdentifier) : false;
                                     break;
                                 case true:
                                     await this.openwebif.send(CONSTANS.ApiUrls.SetChannel + inputReference);
@@ -702,11 +703,11 @@ class OpenWebIfDevice extends EventEmitter {
                     //get identifier
                     const inputIdentifier = input.identifier;
 
-                    //get input reference
-                    const inputReference = input.reference;
-
                     //get input name
                     const inputName = input.name;
+
+                    //get input reference
+                    const inputReference = input.reference
 
                     //get input switch
                     const inputDisplayType = input.displayType >= 0 ? input.displayType : -1;
@@ -735,7 +736,7 @@ class OpenWebIfDevice extends EventEmitter {
                                 return inputName;
                             })
                             .onSet(async (value) => {
-                                if (value === this.savedInputsNames[inputReference]) {
+                                if (value === inputName) {
                                     return;
                                 }
 
@@ -754,7 +755,7 @@ class OpenWebIfDevice extends EventEmitter {
                                 return targetVisibility;
                             })
                             .onSet(async (state) => {
-                                if (state === this.savedInputsTargetVisibility[inputReference]) {
+                                if (state === targetVisibility) {
                                     return;
                                 }
 
