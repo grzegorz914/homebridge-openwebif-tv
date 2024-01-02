@@ -653,30 +653,29 @@ class OpenWebIfDevice extends EventEmitter {
                 //prepare inputs service
                 const debug4 = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs service`);
 
-                 //check possible inputs count (max 85)
+                //check possible inputs count (max 85)
                 const inputs = this.getInputsFromDevice ? this.savedInputs : this.inputs;
                 const inputsCount = inputs.length;
                 const possibleInputsCount = 85 - this.allServices.length;
                 const maxInputsCount = inputsCount >= possibleInputsCount ? possibleInputsCount : inputsCount;
-                let inputIdentifier = 0;
                 for (let i = 0; i < maxInputsCount; i++) {
                     //input
                     const input = inputs[i];
+                    input.identifier = i + 1;
+
+                    //get input name
+                    const name = input.name ?? 'App/Input';
+                    const savedInputsNames = this.savedInputsNames[input.reference] ?? false;
+                    const inputName = !savedInputsNames ? name : savedInputsNames;
+                    input.name = inputName;
 
                     //get input reference
                     const inputReference = input.reference;
 
-                    //get input name
-                    const name = input.name ?? 'App/Input';
-                    const savedInputsNames = this.savedInputsNames[inputReference] ?? false;
-                    const inputName = !savedInputsNames ? name : savedInputsNames;
-
                     //get visibility
                     const currentVisibility = this.savedInputsTargetVisibility[inputReference] ?? 0;
-
-                    input.identifier = inputIdentifier++;
-                    input.name = inputName;
                     input.visibility = currentVisibility;
+
                     this.inputsConfigured.push(input);
                 }
 
