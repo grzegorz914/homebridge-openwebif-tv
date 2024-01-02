@@ -92,6 +92,12 @@ class OPENWEBIF extends EventEmitter {
                     const volume = devState.volume;
                     const mute = devState.muted;
 
+                    //update only if value change
+                    if (power === this.power && name === this.name && eventName === this.eventName && reference === this.reference && volume === this.volume && mute === this.mute) {
+                        this.checkState();
+                        return;
+                    };
+
                     this.power = power;
                     this.name = name;
                     this.eventName = eventName;

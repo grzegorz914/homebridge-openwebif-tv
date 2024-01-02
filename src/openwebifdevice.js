@@ -75,7 +75,7 @@ class OpenWebIfDevice extends EventEmitter {
         this.reference = '';
         this.volume = 0;
         this.mute = true;
-        this.inputIdentifier = 0;
+        this.inputIdentifier = 1;
         this.brightness = 0;
         this.sensorVolumeState = false;
         this.sensorInputState = false;
@@ -233,7 +233,7 @@ class OpenWebIfDevice extends EventEmitter {
             try {
                 const channels = JSON.stringify(bouquetChannelsArr, null, 2);
                 await fsPromises.writeFile(this.inputsFile, channels);
-                const debug = this.enableDebugMode ? this.emit('debug', `Saved channels by bouquet: ${this.bouquetName}, channels: ${channels}.,`) : false;
+                const debug = this.enableDebugMode ? this.emit('debug', `Saved channels by bouquet: ${this.bouquetName}, channels: ${channels}.`) : false;
             } catch (error) {
                 this.emit('error', `Save channels by bouquet: ${this.bouquetName}, error: ${error}`);
             };
