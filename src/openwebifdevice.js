@@ -963,13 +963,17 @@ class OpenWebIfDevice extends EventEmitter {
                         //get sensor display type
                         const sensorInputDisplayType = sensorInput.displayType >= 0 ? sensorInput.displayType : -1;
 
+                        //get sensor name prefix
+                        const namePrefix = sensorInput.namePrefix ?? false;
+
                         if (sensorInputDisplayType >= 0) {
                             if (sensorInputName && sensorInputReference) {
+                                const name = namePrefix ? `${accessoryName} ${sensorInputName}` : sensorInputName;
                                 const serviceType = [Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][sensorInputDisplayType];
                                 const characteristicType = [Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][sensorInputDisplayType];
                                 const sensorInputService = new serviceType(`${accessoryName} ${sensorInputName}`, `Sensor ${i}`);
                                 sensorInputService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                                sensorInputService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} ${sensorInputName}`);
+                                sensorInputService.setCharacteristic(Characteristic.ConfiguredName, name);
                                 sensorInputService.getCharacteristic(characteristicType)
                                     .onGet(async () => {
                                         const state = this.power ? (sensorInputReference === this.reference) : false;
@@ -1016,12 +1020,16 @@ class OpenWebIfDevice extends EventEmitter {
                         //get button display type
                         const buttonDisplayType = button.displayType >= 0 ? button.displayType : -1;
 
+                        //get button name prefix
+                        const namePrefix = button.namePrefix ?? false;
+
                         if (buttonDisplayType >= 0) {
                             if (buttonName && buttonReferenceCommand && buttonMode) {
                                 const serviceType = [Service.Outlet, Service.Switch][buttonDisplayType];
+                                const name = namePrefix ? `${accessoryName} ${buttonName}` : buttonName;
                                 const buttonService = new serviceType(`${accessoryName} ${buttonName}`, `Button ${i}`);
                                 buttonService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                                buttonService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} ${buttonName}`);
+                                buttonService.setCharacteristic(Characteristic.ConfiguredName, name);
                                 buttonService.getCharacteristic(Characteristic.On)
                                     .onGet(async () => {
                                         let state = false;

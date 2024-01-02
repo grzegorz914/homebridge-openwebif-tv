@@ -60,13 +60,15 @@
               "name": "Das Erste HD",
               "mode": 0,
               "reference": "1:0:19:283D:3FB:1:C00000:0:0:0:",
-              "displayType": 0
+              "displayType": 0,
+              "namePrefix": false
             },
             {
               "name": "ZDF HD",
               "mode": 0,
               "reference": "1:0:19:2B66:3F3:1:C00000:0:0:0:",
-              "displayType": 0
+              "displayType": 0,
+              "namePrefix": false
             },
             {
               "name": "RTL HD",
@@ -77,7 +79,8 @@
               "name": "Menu Up",
               "mode": 1,
               "command": "115",
-              "displayType": 0
+              "displayType": 0,
+              "namePrefix": false
             }
           ],
           "sensorPower": false,
@@ -88,7 +91,8 @@
             {
               "name": "RTL HD",
               "reference": "1:0:19:EF10:421:1:C00000:0:0:0:",
-              "displayType": -1
+              "displayType": -1,
+              "namePrefix": false
             }
           ],
           "enableDebugMode": false,

@@ -76,6 +76,7 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | `buttons.reference` | Here set *Reference*, only for `Live TV Channel` mode, in other case leave empty. |
 | `buttons.command` | Here select `Remote Control` command which will be assigned to the button. |
 | `buttons.displayType` | Here select display type in HomeKit app, possible `None/Disabled`, `Outlet`, `Switch`.|
+| `buttons.namePrefix` | Here enable/disable the accessory name as a prefix for button name.|
 | `sensorPower`| If enabled, then the Power will be exposed as a `Motion Sensor` to use with automations. |
 | `sensorVolume`| If enabled, then the Volume will be exposed as a `Motion Sensor` to use with automations. |
 | `sensorMute`| If enabled, then the Mute will be exposed as a `Motion Sensor` to use with automations. |
@@ -83,6 +84,7 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | `sensorInputs.name` | Here set own *Name* which You want expose to the *Homebridge/HomeKit* for this sensor. |
 | `sensorInputs.reference` | Here set *Reference* like `1:0:1:3ABD:514:13E:820000:0:0:0:` to be exposed as sensor (active on switch to this Input). |
 | `sensorInputs.displayType` | Here select sensor type to be exposed in HomeKit app, possible `None/Disabled`, `Motion Sensor`, `Occupancy Sensor`, `Contact Sensor`. |
+| `sensorInputs.namePrefix` | Here enable/disable the accessory name as a prefix for sensor name.|
 | `enableDebugMode` | If enabled, deep log will be present in homebridge console. |
 | `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |
 | `disableLogDeviceInfo` | If enabled, add ability to disable log device info by every connections device to the network. |
