@@ -665,25 +665,38 @@ class OpenWebIfDevice extends EventEmitter {
                     input.identifier = i + 1;
 
                     //get input name
-                    const name = input.name ?? 'App/Input';
+                    const name = input.name ?? `Channel ${i + 1}`;
                     const savedInputsNames = this.savedInputsNames[input.reference] ?? false;
-                    const inputName = !savedInputsNames ? name : savedInputsNames;
+                    const inputName = savedInputsNames ? savedInputsNames : name;
                     input.name = inputName;
 
                     //get input reference
                     const inputReference = input.reference;
 
+                    //get input display rype
+                    const inputDisplayType = input.displayType >= 0 ? input.displayType : -1;
+                    input.displayType = inputDisplayType;
+
                     //get visibility
                     const currentVisibility = this.savedInputsTargetVisibility[inputReference] ?? 0;
                     input.visibility = currentVisibility;
 
-                    this.inputsConfigured.push(input);
+                    if (inputName && inputReference) {
+                        this.inputsConfigured.push(input);
+                    } else {
+                        this.emit('message', `Input Name: ${inputName ? inputName : 'Missing'}, Reference: ${inputReference ? inputReference : 'Missing'}.`);
+                    };
+                }
+
+                if (this.inputsConfigured.length === 0) {
+                    this.emit('message', `No any inputs are configured, check your config and settings.`);
+                    return;
                 }
 
                 //sort inputs list
                 switch (this.inputsDisplayOrder) {
                     case 0:
-                        this.inputsConfigured = this.inputsConfigured;
+                        this.inputsConfigured.sort((a, b) => a.identifier - b.identifier);
                         break;
                     case 1:
                         this.inputsConfigured.sort((a, b) => a.name.localeCompare(b.name));
@@ -709,73 +722,68 @@ class OpenWebIfDevice extends EventEmitter {
                     //get input reference
                     const inputReference = input.reference
 
-                    //get input switch
-                    const inputDisplayType = input.displayType >= 0 ? input.displayType : -1;
+                    //get input display type
+                    const inputDisplayType = input.displayType;
 
                     //get input type
-                    const inputType = 0;
+                    const inputSourceType = 0;
 
                     //get input configured
                     const isConfigured = 1;
 
                     //get input visibility state
                     const currentVisibility = input.visibility;
-                    const targetVisibility = currentVisibility;
 
-                    if (inputReference && inputName) {
-                        const inputService = new Service.InputSource(`${inputName} ${inputIdentifier}`, `Input ${inputIdentifier}`);
-                        inputService
-                            .setCharacteristic(Characteristic.Identifier, inputIdentifier)
-                            .setCharacteristic(Characteristic.Name, inputName)
-                            .setCharacteristic(Characteristic.IsConfigured, isConfigured)
-                            .setCharacteristic(Characteristic.InputSourceType, inputType)
-                            .setCharacteristic(Characteristic.CurrentVisibilityState, currentVisibility)
+                    //input service
+                    const inputService = new Service.InputSource(`${inputName} ${inputIdentifier}`, `Input ${inputIdentifier}`);
+                    inputService
+                        .setCharacteristic(Characteristic.Identifier, inputIdentifier)
+                        .setCharacteristic(Characteristic.Name, inputName)
+                        .setCharacteristic(Characteristic.IsConfigured, isConfigured)
+                        .setCharacteristic(Characteristic.InputSourceType, inputSourceType)
+                        .setCharacteristic(Characteristic.CurrentVisibilityState, currentVisibility)
 
-                        inputService.getCharacteristic(Characteristic.ConfiguredName)
-                            .onGet(async () => {
-                                return inputName;
-                            })
-                            .onSet(async (value) => {
-                                if (value === inputName) {
-                                    return;
-                                }
+                    inputService.getCharacteristic(Characteristic.ConfiguredName)
+                        .onGet(async () => {
+                            return inputName;
+                        })
+                        .onSet(async (value) => {
+                            if (value === inputName) {
+                                return;
+                            }
 
-                                try {
-                                    this.savedInputsNames[inputReference] = value;
-                                    await fsPromises.writeFile(this.inputsNamesFile, JSON.stringify(this.savedInputsNames, null, 2));
-                                    const debug = this.enableDebugMode ? this.emit('debug', `Saved Input, Name: ${value}, Reference: ${inputReference}`) : false;
-                                } catch (error) {
-                                    this.emit('error', `save Input Name error: ${error}`);
-                                }
-                            });
+                            try {
+                                this.savedInputsNames[inputReference] = value;
+                                await fsPromises.writeFile(this.inputsNamesFile, JSON.stringify(this.savedInputsNames, null, 2));
+                                const debug = this.enableDebugMode ? this.emit('debug', `Saved Input, Name: ${value}, Reference: ${inputReference}`) : false;
+                            } catch (error) {
+                                this.emit('error', `save Input Name error: ${error}`);
+                            }
+                        });
 
-                        inputService
-                            .getCharacteristic(Characteristic.TargetVisibilityState)
-                            .onGet(async () => {
-                                return targetVisibility;
-                            })
-                            .onSet(async (state) => {
-                                if (state === targetVisibility) {
-                                    return;
-                                }
+                    inputService
+                        .getCharacteristic(Characteristic.TargetVisibilityState)
+                        .onGet(async () => {
+                            return currentVisibility;
+                        })
+                        .onSet(async (state) => {
+                            if (state === currentVisibility) {
+                                return;
+                            }
 
-                                try {
-                                    this.savedInputsTargetVisibility[inputReference] = state;
-                                    await fsPromises.writeFile(this.inputsTargetVisibilityFile, JSON.stringify(this.savedInputsTargetVisibility, null, 2));
-                                    const debug = this.enableDebugMode ? this.emit('debug', `Saved Input: ${inputName}, Target Visibility: ${state ? 'HIDEN' : 'SHOWN'}`) : false;
-                                } catch (error) {
-                                    this.emit('error', `save Target Visibility error: ${error}`);
-                                }
-                            });
-                        const pushInputSwitchIndex = inputDisplayType >= 0 ? this.inputsSwitchesButtons.push(inputIdentifier - 1) : false;
+                            try {
+                                this.savedInputsTargetVisibility[inputReference] = state;
+                                await fsPromises.writeFile(this.inputsTargetVisibilityFile, JSON.stringify(this.savedInputsTargetVisibility, null, 2));
+                                const debug = this.enableDebugMode ? this.emit('debug', `Saved Input: ${inputName}, Target Visibility: ${state ? 'HIDEN' : 'SHOWN'}`) : false;
+                            } catch (error) {
+                                this.emit('error', `save Target Visibility error: ${error}`);
+                            }
+                        });
+                    const pushInputSwitchIndex = inputDisplayType >= 0 ? this.inputsSwitchesButtons.push(inputIdentifier - 1) : false;
 
-                        this.televisionService.addLinkedService(inputService);
-                        this.allServices.push(inputService);
-                        accessory.addService(inputService);
-                    } else {
-                        this.emit('message', `Input Name: ${inputName ? inputName : 'Missing'}, Reference: ${inputReference ? inputReference : 'Missing'}.`);
-
-                    };
+                    this.televisionService.addLinkedService(inputService);
+                    this.allServices.push(inputService);
+                    accessory.addService(inputService);
                 }
 
                 //sort inputs list
