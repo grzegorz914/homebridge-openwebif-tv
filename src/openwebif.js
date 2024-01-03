@@ -62,7 +62,7 @@ class OPENWEBIF extends EventEmitter {
 
                 const channelsInfo = await this.axiosInstance(CONSTANS.ApiUrls.GetAllServices);
                 const allChannels = channelsInfo.data;
-                const debu1g = debugLog ? this.emit('debug', `Channels info: ${JSON.stringify(channelsInfo, null, 2)}`) : false;
+                const debug1 = debugLog ? this.emit('debug', `Channels info: ${channelsInfo}`) : false;
 
                 //emit device info
                 const emitDeviceInfo = this.emitDeviceInfo ? this.emit('deviceInfo', devInfo, allChannels, manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) : false;
