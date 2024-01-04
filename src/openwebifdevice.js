@@ -54,7 +54,6 @@ class OpenWebIfDevice extends EventEmitter {
 
         //setup variables
         this.mqttConnected = false;
-        this.firstRun = true;
 
         //get config info
         this.manufacturer = 'Manufacturer';
@@ -333,6 +332,17 @@ class OpenWebIfDevice extends EventEmitter {
                 this.power = power;
                 this.volume = volume;
                 this.mute = mute;
+
+                if (!this.disableLogInfo) {
+                    this.emit('message', `Power: ${power ? 'ON' : 'OFF'}`);
+                    this.emit('message', `Channel Name: ${name}`);
+                    this.emit('message', `Event Name: ${eventName}`);
+                    this.emit('message', `Reference: ${reference}`);
+                    this.emit('message', `Volume: ${volume} %`);
+                    this.emit('message', `Mute: ${mute ? 'ON' : 'OFF'}`);
+                    this.emit('message', `Closed Captions: 0`);
+                    this.emit('message', `Media State: ${['PLAY', 'PAUSE', 'STOPPED', 'LOADING', 'INTERRUPTED'][2]}`);
+                };
             })
             .on('prepareAccessory', async () => {
                 try {
@@ -340,7 +350,7 @@ class OpenWebIfDevice extends EventEmitter {
                     try {
                         const data = await fsPromises.readFile(this.inputsFile);
                         this.savedInputs = data.length > 0 ? JSON.parse(data) : this.inputs;
-                        const debug = this.enableDebugMode ? this.emit('debug', `Read saved Inputs/Channels: ${JSON.stringify(this.savedInputs, null, 2)}`) : false;
+                        const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs/Channels: ${JSON.stringify(this.savedInputs, null, 2)}`);
                     } catch (error) {
                         this.emit('error', `Read saved Inputs error: ${error}`);
                     };
@@ -349,7 +359,7 @@ class OpenWebIfDevice extends EventEmitter {
                     try {
                         const data = await fsPromises.readFile(this.inputsNamesFile);
                         this.savedInputsNames = data.length > 0 ? JSON.parse(data) : {};
-                        const debug = this.enableDebugMode ? this.emit('debug', `Read saved Inputs/Channels: Names: ${JSON.stringify(this.savedInputsNames, null, 2)}`) : false;
+                        const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs/Channels: Names: ${JSON.stringify(this.savedInputsNames, null, 2)}`);
                     } catch (error) {
                         this.emit('error', `Read saved Inputs/Channels Names error: ${error}`);
                     };
@@ -358,7 +368,7 @@ class OpenWebIfDevice extends EventEmitter {
                     try {
                         const data = await fsPromises.readFile(this.inputsTargetVisibilityFile);
                         this.savedInputsTargetVisibility = data.length > 0 ? JSON.parse(data) : {};
-                        const debug = this.enableDebugMode ? this.emit('debug', `Read saved Inputs/Channels: Target Visibility: ${JSON.stringify(this.savedInputsTargetVisibility, null, 2)}`) : false;
+                        const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs/Channels: Target Visibility: ${JSON.stringify(this.savedInputsTargetVisibility, null, 2)}`);
                     } catch (error) {
                         this.emit('error', `Read saved Inputs/Channels Target Visibility error: ${error}`);
                     };
@@ -410,7 +420,7 @@ class OpenWebIfDevice extends EventEmitter {
                         this.inputsConfigured.sort((a, b) => b.reference.localeCompare(a.reference));
                         break;
                 }
-                const debug = this.enableDebugMode ? this.emit('debug', `Inputs display order: ${JSON.stringify(this.inputsConfigured, null, 2)}`) : false;
+                const debug = !this.enableDebugMode ? false : this.emit('debug', `Inputs display order: ${JSON.stringify(this.inputsConfigured, null, 2)}`);
 
                 const displayOrder = this.inputsConfigured.map(input => input.identifier);
                 this.televisionService.setCharacteristic(Characteristic.DisplayOrder, Encode(1, displayOrder).toString('base64'));
@@ -449,7 +459,6 @@ class OpenWebIfDevice extends EventEmitter {
                 this.televisionService.getCharacteristic(Characteristic.Active)
                     .onGet(async () => {
                         const state = this.power;
-                        const info = this.disableLogInfo ? false : this.emit('message', `Power: ${state ? 'ON' : 'OFF'}`);
                         return state;
                     })
                     .onSet(async (state) => {
@@ -469,10 +478,6 @@ class OpenWebIfDevice extends EventEmitter {
                 this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
                     .onGet(async () => {
                         const inputIdentifier = this.inputIdentifier;
-                        const index = this.inputsConfigured.findIndex(input => input.identifier === inputIdentifier);
-                        const inputName = this.inputsConfigured[index].name;
-                        const inputReference = this.inputsConfigured[index].reference;
-                        const info = this.disableLogInfo ? false : this.emit('message', `Channel: ${inputName}, Reference: ${inputReference}`);
                         return inputIdentifier;
                     })
                     .onSet(async (activeIdentifier) => {
@@ -488,7 +493,7 @@ class OpenWebIfDevice extends EventEmitter {
                                     break;
                                 case true:
                                     await this.openwebif.send(CONSTANS.ApiUrls.SetChannel + inputReference);
-                                    const info = this.disableLogInfo || this.firstRun ? false : this.emit('message', `set Channel: ${inputName}, Reference: ${inputReference}`);
+                                    const info = this.disableLogInfo ? false : this.emit('message', `set Channel: ${inputName}, Reference: ${inputReference}`);
                                     break;
                             }
                         } catch (error) {
@@ -543,7 +548,7 @@ class OpenWebIfDevice extends EventEmitter {
                             }
 
                             await this.openwebif.send(CONSTANS.ApiUrls.SetRcCommand + command);
-                            const info = this.disableLogInfo || this.firstRun ? false : this.emit('message', `set Remote Key: ${command}`);
+                            const info = this.disableLogInfo ? false : this.emit('message', `set Remote Key: ${command}`);
                         } catch (error) {
                             this.emit('error', `set Remote Key error: ${error}`);
                         };
@@ -559,7 +564,7 @@ class OpenWebIfDevice extends EventEmitter {
                         try {
                             const brightness = value;
                             const setBrightness = false
-                            const info = this.disableLogInfo || this.firstRun ? false : this.emit('message', `set Brightness: ${value}`);
+                            const info = this.disableLogInfo ? false : this.emit('message', `set Brightness: ${value}`);
                         } catch (error) {
                             this.emit('error', `set Brightness error: ${error}`);
                         };
@@ -568,31 +573,28 @@ class OpenWebIfDevice extends EventEmitter {
                 this.televisionService.getCharacteristic(Characteristic.ClosedCaptions)
                     .onGet(async () => {
                         const state = 0;
-                        const info = this.disableLogInfo || this.firstRun ? false : this.emit('message', `Closed Captions: ${state}`);
                         return state;
                     })
                     .onSet(async (state) => {
-                        const info = this.disableLogInfo || this.firstRun ? false : this.emit('message', `set Closed Ccaptions: ${state}`);
+                        const info = this.disableLogInfo ? false : this.emit('message', `set Closed Ccaptions: ${state}`);
                     });
 
                 this.televisionService.getCharacteristic(Characteristic.CurrentMediaState)
                     .onGet(async () => {
                         //apple, 0 - PLAY, 1 - PAUSE, 2 - STOP, 3 - LOADING, 4 - INTERRUPTED
                         const value = 0;
-                        const info = this.disableLogInfo || this.firstRun ? false : this.emit('message', `Current Media State: ${['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]}`);
                         return value;
                     });
 
                 this.televisionService.getCharacteristic(Characteristic.TargetMediaState)
                     .onGet(async () => {
                         const value = 0;
-                        const info = this.disableLogInfo || this.firstRun ? false : this.emit('message', `Target Media State: ${['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]}`);
                         return value;
                     })
                     .onSet(async (value) => {
                         try {
                             const newMediaState = value;
-                            const info = this.disableLogInfo || this.firstRun ? false : this.emit('message', `set Target Media State: ${['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]}`);
+                            const info = this.disableLogInfo ? false : this.emit('message', `set Target Media State: ${['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]}`);
                         } catch (error) {
                             this.emit('error', `set Target Media state error: ${error}`);
                         };
@@ -611,7 +613,7 @@ class OpenWebIfDevice extends EventEmitter {
                             }
 
                             await this.openwebif.send(CONSTANS.ApiUrls.SetRcCommand + command);
-                            const info = this.disableLogInfo || this.firstRun ? false : this.emit('message', `set Power Mode Selection: ${command === '139' ? 'SHOW' : 'HIDE'}`);
+                            const info = this.disableLogInfo ? false : this.emit('message', `set Power Mode Selection: ${command === '139' ? 'SHOW' : 'HIDE'}`);
                         } catch (error) {
                             this.emit('error', `set Power Mode Selection error: ${error}`);
                         };
@@ -650,7 +652,7 @@ class OpenWebIfDevice extends EventEmitter {
                             }
 
                             await this.openwebif.send(CONSTANS.ApiUrls.SetRcCommand + command);
-                            const info = this.disableLogInfo || this.firstRun ? false : this.emit('message', `set Volume Selector: ${command}`);
+                            const info = this.disableLogInfo ? false : this.emit('message', `set Volume Selector: ${command}`);
                         } catch (error) {
                             this.emit('error', `set Volume Selector command error: ${error}`);
                         };
@@ -659,7 +661,6 @@ class OpenWebIfDevice extends EventEmitter {
                 this.speakerService.getCharacteristic(Characteristic.Volume)
                     .onGet(async () => {
                         const volume = this.volume;
-                        const info = this.disableLogInfo || this.firstRun ? false : this.emit('message', `Volume: ${volume}`);
                         return volume;
                     })
                     .onSet(async (value) => {
@@ -669,7 +670,7 @@ class OpenWebIfDevice extends EventEmitter {
                             }
 
                             await this.openwebif.send(CONSTANS.ApiUrls.SetVolume + value);
-                            const info = this.disableLogInfo || this.firstRun ? false : this.emit('message', `set Volume: ${value}`);
+                            const info = this.disableLogInfo ? false : this.emit('message', `set Volume: ${value}`);
                         } catch (error) {
                             this.emit('error', `set Volume level error: ${error}`);
                         };
@@ -678,13 +679,12 @@ class OpenWebIfDevice extends EventEmitter {
                 this.speakerService.getCharacteristic(Characteristic.Mute)
                     .onGet(async () => {
                         const state = this.mute;
-                        const info = this.disableLogInfo || this.firstRun ? false : this.emit('message', `Mute: ${state ? 'ON' : 'OFF'}`);
                         return state;
                     })
                     .onSet(async (state) => {
                         try {
                             await this.openwebif.send(CONSTANS.ApiUrls.ToggleMute);
-                            const info = this.disableLogInfo || this.firstRun ? false : this.emit('message', `set Mute: ${state ? 'ON' : 'OFF'}`);
+                            const info = this.disableLogInfo ? false : this.emit('message', `set Mute: ${state ? 'ON' : 'OFF'}`);
                         } catch (error) {
                             this.emit('error', `set Mute error: ${error}`);
                         };
@@ -694,7 +694,7 @@ class OpenWebIfDevice extends EventEmitter {
                 accessory.addService(this.speakerService);
 
                 //prepare inputs service
-                const debug4 = this.enableDebugMode ? false : this.emit('debug', `Prepare inputs service`);
+                const debug4 = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs service`);
 
                 //check possible inputs count (max 85)
                 const inputs = this.getInputsFromDevice ? this.savedInputs : this.inputs;
@@ -754,7 +754,7 @@ class OpenWebIfDevice extends EventEmitter {
                                 try {
                                     this.savedInputsNames[inputReference] = value;
                                     await fsPromises.writeFile(this.inputsNamesFile, JSON.stringify(this.savedInputsNames, null, 2));
-                                    const debug = this.enableDebugMode ? this.emit('debug', `Saved Input, Name: ${value}, Reference: ${inputReference}`) : false;
+                                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved Input, Name: ${value}, Reference: ${inputReference}`);
 
                                     //sort inputs
                                     const index = this.inputsConfigured.findIndex(input => input.reference === inputReference);
@@ -778,7 +778,7 @@ class OpenWebIfDevice extends EventEmitter {
                                 try {
                                     this.savedInputsTargetVisibility[inputReference] = state;
                                     await fsPromises.writeFile(this.inputsTargetVisibilityFile, JSON.stringify(this.savedInputsTargetVisibility, null, 2));
-                                    const debug = this.enableDebugMode ? this.emit('debug', `Saved Input: ${inputName}, Target Visibility: ${state ? 'HIDEN' : 'SHOWN'}`) : false;
+                                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved Input: ${inputName}, Target Visibility: ${state ? 'HIDEN' : 'SHOWN'}`);
                                 } catch (error) {
                                     this.emit('error', `save Target Visibility error: ${error}`);
                                 }
@@ -945,7 +945,7 @@ class OpenWebIfDevice extends EventEmitter {
                                     .onSet(async (state) => {
                                         try {
                                             const setSwitchInput = state ? await this.openwebif.send(CONSTANS.ApiUrls.SetChannel + inputReference) : false;
-                                            const debug = this.enableDebugMode ? this.emit('debug', `Set Channel Name: ${inputName}, Reference: ${inputReference}`) : false;
+                                            const debug = !this.enableDebugMode ? false : this.emit('debug', `Set Channel Name: ${inputName}, Reference: ${inputReference}`);
                                         } catch (error) {
                                             this.emit('error', `set Channel error: ${error}`);
                                         };
@@ -1074,7 +1074,7 @@ class OpenWebIfDevice extends EventEmitter {
                                             };
 
                                             const send = state ? await this.openwebif.send(url) : false;
-                                            const debug = this.enableDebugMode ? this.emit('debug', `set ${['Channel', 'Command'][buttonMode]} Name: ${buttonName}, ${buttonMode ? 'Command:' : 'Reference:'} ${buttonReferenceCommand}`) : false;
+                                            const debug = !this.enableDebugMode ? false : this.emit('debug', `set ${['Channel', 'Command'][buttonMode]} Name: ${buttonName}, ${buttonMode ? 'Command:' : 'Reference:'} ${buttonReferenceCommand}`);
 
                                             await new Promise(resolve => setTimeout(resolve, 300));
                                             const setChar = buttonMode === 1 ? buttonService.updateCharacteristic(Characteristic.On, false) : false;
@@ -1094,7 +1094,6 @@ class OpenWebIfDevice extends EventEmitter {
                     };
                 }
 
-                this.firstRun = false;
                 resolve(accessory);
             } catch (error) {
                 reject(error)
