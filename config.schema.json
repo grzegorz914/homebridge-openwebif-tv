@@ -142,7 +142,7 @@
                   "reference": {
                     "title": "Reference",
                     "type": "string",
-                    "placeholder": "Input reference",
+                    "placeholder": "Channel reference",
                     "description": "Here set the reference.",
                     "required": true
                   },
