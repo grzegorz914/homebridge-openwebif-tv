@@ -368,7 +368,7 @@ class OpenWebIfDevice extends EventEmitter {
                     this.emit('publishAccessory', accessory);
 
                     //sort inputs list
-                    const sortInputsDisplayOrder = this.televisionService ? await this.inputsDisplayOrder() : false;
+                    const sortInputsDisplayOrder = this.televisionService ? await this.displayOrder() : false;
                 } catch (error) {
                     this.emit('error', `Prepare accessory error: ${error}`);
                 };
@@ -390,7 +390,7 @@ class OpenWebIfDevice extends EventEmitter {
             });
     }
 
-    inputsDisplayOrder() {
+    displayOrder() {
         return new Promise(async (resolve, reject) => {
             try {
                 switch (this.inputsDisplayOrder) {
@@ -759,7 +759,7 @@ class OpenWebIfDevice extends EventEmitter {
                                     //sort inputs
                                     const index = this.inputsConfigured.findIndex(input => input.reference === inputReference);
                                     this.inputsConfigured[index].name = value;
-                                    await this.inputsDisplayOrder();
+                                    await this.displayOrder();
                                 } catch (error) {
                                     this.emit('error', `save Input Name error: ${error}`);
                                 }
