@@ -923,7 +923,7 @@
             {
               "key": "devices[].bouquets",
               "type": "tabarray",
-              "title": "{{ value.name || 'new bouquet' }}",
+              "title": "{{ value.name || 'bouquet' }}",
               "items": [
                 "devices[].bouquets[].name",
                 "devices[].bouquets[].displayType"
