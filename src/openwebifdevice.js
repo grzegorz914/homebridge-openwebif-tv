@@ -391,7 +391,7 @@ class OpenWebIfDevice extends EventEmitter {
     }
 
     displayOrder() {
-        return new Promise(async (resolve, reject) => {
+        return new Promise((resolve, reject) => {
             try {
                 switch (this.inputsDisplayOrder) {
                     case 0:
@@ -706,14 +706,14 @@ class OpenWebIfDevice extends EventEmitter {
                     const input = inputs[i];
                     const inputIdentifier = i + 1;
 
+                    //get input reference
+                    const inputReference = input.reference;
+
                     //get input name
                     const name = input.name ?? `Channel ${inputIdentifier}`;
-                    const savedInputsNames = this.savedInputsNames[input.reference] ?? false;
+                    const savedInputsNames = this.savedInputsNames[inputReference] ?? false;
                     const inputName = savedInputsNames ? savedInputsNames : name;
                     input.name = inputName;
-
-                    //get input reference
-                    const inputReference = input.reference
 
                     //get input display rype
                     const inputDisplayType = input.displayType >= 0 ? input.displayType : -1;
