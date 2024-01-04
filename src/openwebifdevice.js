@@ -338,7 +338,7 @@ class OpenWebIfDevice extends EventEmitter {
                     this.emit('message', `Channel Name: ${name}`);
                     this.emit('message', `Event Name: ${eventName}`);
                     this.emit('message', `Reference: ${reference}`);
-                    this.emit('message', `Volume: ${volume} %`);
+                    this.emit('message', `Volume: ${volume}%`);
                     this.emit('message', `Mute: ${mute ? 'ON' : 'OFF'}`);
                     this.emit('message', `Closed Captions: 0`);
                     this.emit('message', `Media State: ${['PLAY', 'PAUSE', 'STOPPED', 'LOADING', 'INTERRUPTED'][2]}`);
