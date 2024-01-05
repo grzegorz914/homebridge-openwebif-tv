@@ -145,13 +145,19 @@ class OpenWebIfDevice extends EventEmitter {
             user: this.user,
             pass: this.pass,
             auth: this.auth,
+            inputs: this.inputs,
+            bouquets: this.bouquets,
+            devInfoFile: this.devInfoFile,
+            channelsFile: this.channelsFile,
+            inputsFile: this.inputsFile,
+            getInputsFromDevice: this.getInputsFromDevice,
             disableLogConnectError: this.disableLogConnectError,
             debugLog: this.enableDebugMode,
             refreshInterval: this.refreshInterval,
             mqttEnabled: this.mqttEnabled
         });
 
-        this.openwebif.on('deviceInfo', async (devInfo, allChannels, manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) => {
+        this.openwebif.on('deviceInfo', (manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) => {
             if (!this.disableLogDeviceInfo) {
                 this.emit('devInfo', `-------- ${this.name} --------`);
                 this.emit('devInfo', `Manufacturer: ${manufacturer}`);
@@ -168,82 +174,6 @@ class OpenWebIfDevice extends EventEmitter {
             this.serialNumber = serialNumber;
             this.firmwareRevision = firmwareRevision;
             this.mac = mac;
-
-            //save device info to the file
-            try {
-                const devInfo1 = JSON.stringify(devInfo, null, 2);
-                await fsPromises.writeFile(this.devInfoFile, devInfo1);
-                const debug = this.enableDebugMode ? this.emit('debug', `Saved device info: ${devInfo1}`) : false;
-            } catch (error) {
-                this.emit('error', `save device info error: ${error}`);
-            };
-
-            //save all channels to the file
-            try {
-                const channels = JSON.stringify(allChannels, null, 2);
-                await fsPromises.writeFile(this.channelsFile, channels);
-                const debug = this.enableDebugMode ? this.emit('debug', `Saved all channels: ${channels}`) : false;
-            } catch (error) {
-                this.emit('error', `Save all channels error: ${error}`);
-            };
-
-            if (!this.getInputsFromDevice) {
-                try {
-                    const channels = JSON.stringify(this.inputs, null, 2);
-                    await fsPromises.writeFile(this.inputsFile, channels);
-                    const debug = this.enableDebugMode ? this.emit('debug', `Saved channels: ${channels}.`) : false;
-                } catch (error) {
-                    this.emit('error', `Save channels error: ${error}`);
-
-                };
-                return;
-            };
-
-            //save channels by bouquet to the file
-            const bouquetChannelsArr = [];
-            for (let i = 0; i < this.bouquets.length; i++) {
-                const bouquet = this.bouquets[i];
-                const bouquetName = bouquet.name;
-                const displayType = bouquet.displayType;
-                const bouquetChannels = allChannels.services.find(service => service.servicename === bouquetName);
-
-                if (bouquetChannels) {
-                    for (const channel of bouquetChannels.subservices) {
-                        const pos = channel.pos;
-                        const name = channel.servicename;
-                        const reference = channel.servicereference;
-
-                        const obj = {
-                            'pos': pos,
-                            'name': name,
-                            'reference': reference,
-                            'displayType': displayType
-                        }
-                        bouquetChannelsArr.push(obj);
-                    };
-                } else {
-                    this.emit('message', `Bouquet: ${bouquetName}, was not found.`);
-                }
-            }
-
-            if (bouquetChannelsArr.length === 0) {
-                try {
-                    const channels = JSON.stringify(this.inputs, null, 2);
-                    await fsPromises.writeFile(this.inputsFile, channels);
-                    const debug = this.enableDebugMode ? this.emit('debug', `Saved channels: ${channels}.`) : false;
-                } catch (error) {
-                    this.emit('error', `Save channels error: ${error}`);
-                };
-                return;
-            }
-
-            try {
-                const channels = JSON.stringify(bouquetChannelsArr, null, 2);
-                await fsPromises.writeFile(this.inputsFile, channels);
-                const debug = this.enableDebugMode ? this.emit('debug', `Saved channels by bouquet: ${this.bouquetName}, channels: ${channels}.`) : false;
-            } catch (error) {
-                this.emit('error', `Save channels by bouquet: ${this.bouquetName}, error: ${error}`);
-            };
         })
             .on('stateChanged', (power, name, eventName, reference, volume, mute) => {
                 const index = this.inputsConfigured.findIndex(input => input.reference === reference) ?? -1;
@@ -255,7 +185,7 @@ class OpenWebIfDevice extends EventEmitter {
                         .updateCharacteristic(Characteristic.Active, power)
                 }
 
-                if (this.televisionService && inputIdentifier) {
+                if (this.televisionService) {
                     this.televisionService
                         .updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier)
                 }
@@ -297,7 +227,7 @@ class OpenWebIfDevice extends EventEmitter {
                         .updateCharacteristic(Characteristic.ContactSensorState, state)
                 }
 
-                if (this.sensorInputService && inputIdentifier) {
+                if (this.sensorInputService) {
                     const state = power ? (this.inputIdentifier !== inputIdentifier) : false;
                     this.sensorInputService
                         .updateCharacteristic(Characteristic.ContactSensorState, state)
@@ -352,7 +282,7 @@ class OpenWebIfDevice extends EventEmitter {
                         this.savedInputs = data.length > 0 ? JSON.parse(data) : this.inputs;
                         const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs/Channels: ${JSON.stringify(this.savedInputs, null, 2)}`);
                     } catch (error) {
-                        this.emit('error', `Read saved Inputs error: ${error}`);
+                        this.emit('error', `Read saved Channels error: ${error}`);
                     };
 
                     //read inputs names from file
@@ -361,7 +291,7 @@ class OpenWebIfDevice extends EventEmitter {
                         this.savedInputsNames = data.length > 0 ? JSON.parse(data) : {};
                         const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs/Channels: Names: ${JSON.stringify(this.savedInputsNames, null, 2)}`);
                     } catch (error) {
-                        this.emit('error', `Read saved Inputs/Channels Names error: ${error}`);
+                        this.emit('error', `Read saved Channels Names error: ${error}`);
                     };
 
                     //read inputs visibility from file
@@ -370,7 +300,7 @@ class OpenWebIfDevice extends EventEmitter {
                         this.savedInputsTargetVisibility = data.length > 0 ? JSON.parse(data) : {};
                         const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs/Channels: Target Visibility: ${JSON.stringify(this.savedInputsTargetVisibility, null, 2)}`);
                     } catch (error) {
-                        this.emit('error', `Read saved Inputs/Channels Target Visibility error: ${error}`);
+                        this.emit('error', `Read saved Channels Target Visibility error: ${error}`);
                     };
 
                     await new Promise(resolve => setTimeout(resolve, 2000));
