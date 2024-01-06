@@ -119,6 +119,12 @@
                     ],
                     "description": "Here select extra tile for all channels of this bouquet to be exposed in HomeKit app.",
                     "required": true
+                  },
+                  "namePrefix": {
+                    "title": "Prefix",
+                    "type": "boolean",
+                    "description": "Here enable/disable the accessory name as a prefix for extra tile name.",
+                    "required": true
                   }
                 }
               },
@@ -170,6 +176,12 @@
                       }
                     ],
                     "description": "Here select extra tile to be exposed in HomeKit app.",
+                    "required": true
+                  },
+                  "namePrefix": {
+                    "title": "Prefix",
+                    "type": "boolean",
+                    "description": "Here enable/disable the accessory name as a prefix for extra tile name.",
                     "required": true
                   }
                 }
@@ -532,7 +544,6 @@
                   "namePrefix": {
                     "title": "Prefix",
                     "type": "boolean",
-                    "default": false,
                     "description": "Here enable/disable the accessory name as a prefix for button name.",
                     "required": true
                   }
@@ -623,7 +634,6 @@
                   "namePrefix": {
                     "title": "Prefix",
                     "type": "boolean",
-                    "default": false,
                     "description": "Here enable/disable the accessory name as a prefix for sensor name.",
                     "required": true
                   }
@@ -926,7 +936,8 @@
               "title": "{{ value.name || 'bouquet' }}",
               "items": [
                 "devices[].bouquets[].name",
-                "devices[].bouquets[].displayType"
+                "devices[].bouquets[].displayType",
+                "devices[].bouquets[].namePrefix"
               ]
             },
             {
@@ -936,7 +947,8 @@
               "items": [
                 "devices[].inputs[].name",
                 "devices[].inputs[].reference",
-                "devices[].inputs[].displayType"
+                "devices[].inputs[].displayType",
+                "devices[].inputs[].namePrefix"
               ]
             }
           ]

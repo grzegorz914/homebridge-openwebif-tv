@@ -57,13 +57,13 @@ class OpenWebIfDevice extends EventEmitter {
 
         //services
         this.allServices = [];
-        this.inputsSwitchesButtonsService = [];
+        this.inputsSwitchesButtonsServices = [];
         this.sensorsInputsServices = [];
         this.buttonsServices = [];
 
         //inputs 
         this.inputsConfigured = [];
-        this.inputsSwitchesButtons = [];
+        this.inputsSwitchesButtonsConfigured = [];
         this.inputIdentifier = 1;
 
         //sensors
@@ -228,18 +228,16 @@ class OpenWebIfDevice extends EventEmitter {
                     this.sensorInputState = state;
                 }
 
-                if (this.inputSwitchButtonServices) {
-                    const switchServicesCount = this.inputSwitchButtonServices.length;
-                    for (let i = 0; i < switchServicesCount; i++) {
-                        const index = this.inputsSwitchesButtons[i];
-                        const state = power ? (this.inputsConfigured[index].reference === reference) : false;
-                        this.inputSwitchButtonServices[i]
-                            .updateCharacteristic(Characteristic.On, state);
-                    }
-                }
-
                 if (reference !== undefined) {
-                    this.reference = reference;
+                    if (this.inputsSwitchesButtonsServices) {
+                        const switchServicesCount = this.inputsSwitchesButtonsServices.length;
+                        for (let i = 0; i < switchServicesCount; i++) {
+                            const state = power ? (this.inputsSwitchesButtonsConfigured[i].reference === reference) : false;
+                            this.inputsSwitchesButtonsServices[i]
+                                .updateCharacteristic(Characteristic.On, state);
+                        }
+                    }
+
                     if (this.sensorsInputsServices) {
                         const servicesCount = this.sensorsInputsServices.length;
                         for (let i = 0; i < servicesCount; i++) {
@@ -250,6 +248,7 @@ class OpenWebIfDevice extends EventEmitter {
                                 .updateCharacteristic(characteristicType, state);
                         }
                     }
+                    this.reference = reference;
                 }
 
                 this.inputIdentifier = inputIdentifier;
@@ -640,7 +639,7 @@ class OpenWebIfDevice extends EventEmitter {
                     input.name = inputName;
 
                     //get input display rype
-                    const inputDisplayType = input.displayType >= 0 ? input.displayType : -1;
+                    const inputDisplayType = input.displayType ?? -1;
                     input.displayType = inputDisplayType;
 
                     //get input type
@@ -707,7 +706,6 @@ class OpenWebIfDevice extends EventEmitter {
                                     this.emit('error', `save Target Visibility error: ${error}`);
                                 }
                             });
-                        const pushInputSwitchIndex = inputDisplayType >= 0 ? this.inputsSwitchesButtons.push(i) : false;
 
                         this.inputsConfigured.push(input);
                         this.televisionService.addLinkedService(inputService);
@@ -836,7 +834,11 @@ class OpenWebIfDevice extends EventEmitter {
                 };
 
                 //prepare inputs switch sensor service
-                const inputsSwitchesButtons = this.inputsSwitchesButtons;
+                const inputsSwitchesButtons = [i];
+                for (const inputSwitchButton of this.inputsConfigured) {
+                    const pushInputSwitchIndex = inputSwitchButton.displayType >= 0 ? inputsSwitchesButtons.push(inputSwitchButton) : false;
+                };
+
                 const inputsSwitchesButtonsCount = inputsSwitchesButtons.length;
                 const possibleInputsSwitchesButtonsCount = 99 - this.allServices.length;
                 const maxInputsSwitchesButtonsCount = inputsSwitchesButtonsCount >= possibleInputsSwitchesButtonsCount ? possibleInputsSwitchesButtonsCount : inputsSwitchesButtonsCount;
@@ -844,23 +846,27 @@ class OpenWebIfDevice extends EventEmitter {
                     const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare button service`);
                     for (let i = 0; i < maxInputsSwitchesButtonsCount; i++) {
                         //get switch
-                        const index = inputsSwitchesButtons[i];
+                        const inputSwitchButton = inputsSwitchesButtons[i];
 
                         //get switch name		
-                        const inputName = this.inputsConfigured[index].name;
+                        const inputName = inputSwitchButton.name;
 
                         //get switch reference
-                        const inputReference = this.inputsConfigured[index].reference;
+                        const inputReference = inputSwitchButton.reference;
 
                         //get switch display type
-                        const inputDisplayType = this.inputsConfigured[index].displayType >= 0 ? this.inputsConfigured[index].displayType : -1;
+                        const inputDisplayType = inputSwitchButton.displayType >= 0 ? inputSwitchButton.displayType : -1;
+
+                        //get sensor name prefix
+                        const namePrefix = inputSwitchButton.namePrefix ?? false
 
                         if (inputDisplayType >= 0) {
                             if (inputReference && inputName) {
+                                const serviceName = namePrefix ? `${accessoryName} ${inputName}` : inputName;
                                 const serviceType = [Service.Outlet, Service.Switch][inputDisplayType];
-                                const inputSwitchButtonService = new serviceType(`${accessoryName} ${inputName}`, `Switch ${i}`);
+                                const inputSwitchButtonService = new serviceType(serviceName, `Switch ${i}`);
                                 inputSwitchButtonService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                                inputSwitchButtonService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} ${inputName}`);
+                                inputSwitchButtonService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
                                 inputSwitchButtonService.getCharacteristic(Characteristic.On)
                                     .onGet(async () => {
                                         const state = this.power ? (inputReference === this.reference) : false;
@@ -875,7 +881,8 @@ class OpenWebIfDevice extends EventEmitter {
                                         };
                                     });
 
-                                this.inputsSwitchesButtonsService.push(inputSwitchButtonService);
+                                this.inputsSwitchesButtonsConfigured.push(inputSwitchButton)
+                                this.inputsSwitchesButtonsServices.push(inputSwitchButtonService);
                                 this.allServices.push(inputSwitchButtonService);
                                 accessory.addService(inputSwitchButtonService);
                             } else {
@@ -910,12 +917,12 @@ class OpenWebIfDevice extends EventEmitter {
 
                         if (sensorInputDisplayType >= 0) {
                             if (sensorInputName && sensorInputReference) {
-                                const name = namePrefix ? `${accessoryName} ${sensorInputName}` : sensorInputName;
+                                const serviceName = namePrefix ? `${accessoryName} ${sensorInputName}` : sensorInputName;
                                 const serviceType = [Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][sensorInputDisplayType];
                                 const characteristicType = [Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][sensorInputDisplayType];
-                                const sensorInputService = new serviceType(`${accessoryName} ${sensorInputName}`, `Sensor ${i}`);
+                                const sensorInputService = new serviceType(serviceName, `Sensor ${i}`);
                                 sensorInputService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                                sensorInputService.setCharacteristic(Characteristic.ConfiguredName, name);
+                                sensorInputService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
                                 sensorInputService.getCharacteristic(characteristicType)
                                     .onGet(async () => {
                                         const state = this.power ? (sensorInputReference === this.reference) : false;
@@ -967,11 +974,11 @@ class OpenWebIfDevice extends EventEmitter {
 
                         if (buttonDisplayType >= 0) {
                             if (buttonName && buttonReferenceCommand && buttonMode) {
+                                const serviceName = namePrefix ? `${accessoryName} ${buttonName}` : buttonName;
                                 const serviceType = [Service.Outlet, Service.Switch][buttonDisplayType];
-                                const name = namePrefix ? `${accessoryName} ${buttonName}` : buttonName;
-                                const buttonService = new serviceType(`${accessoryName} ${buttonName}`, `Button ${i}`);
+                                const buttonService = new serviceType(serviceName, `Button ${i}`);
                                 buttonService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                                buttonService.setCharacteristic(Characteristic.ConfiguredName, name);
+                                buttonService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
                                 buttonService.getCharacteristic(Characteristic.On)
                                     .onGet(async () => {
                                         let state = false;
