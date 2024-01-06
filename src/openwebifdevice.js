@@ -279,7 +279,7 @@ class OpenWebIfDevice extends EventEmitter {
                     //read inputs file
                     try {
                         const data = await fsPromises.readFile(this.inputsFile);
-                        this.savedInputs = data.length > 0 ? JSON.parse(data) : this.inputs;
+                        this.savedInputs = data.toString().trim() ? JSON.parse(data) : this.inputs;
                         const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs/Channels: ${JSON.stringify(this.savedInputs, null, 2)}`);
                     } catch (error) {
                         this.emit('error', `Read saved Channels error: ${error}`);
@@ -288,7 +288,7 @@ class OpenWebIfDevice extends EventEmitter {
                     //read inputs names from file
                     try {
                         const data = await fsPromises.readFile(this.inputsNamesFile);
-                        this.savedInputsNames = data.length > 0 ? JSON.parse(data) : {};
+                        this.savedInputsNames = data.toString().trim() !== '' ? JSON.parse(data) : {};
                         const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs/Channels: Names: ${JSON.stringify(this.savedInputsNames, null, 2)}`);
                     } catch (error) {
                         this.emit('error', `Read saved Channels Names error: ${error}`);
@@ -297,7 +297,7 @@ class OpenWebIfDevice extends EventEmitter {
                     //read inputs visibility from file
                     try {
                         const data = await fsPromises.readFile(this.inputsTargetVisibilityFile);
-                        this.savedInputsTargetVisibility = data.length > 0 ? JSON.parse(data) : {};
+                        this.savedInputsTargetVisibility = data.toString().trim() !== '' ? JSON.parse(data) : {};
                         const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs/Channels: Target Visibility: ${JSON.stringify(this.savedInputsTargetVisibility, null, 2)}`);
                     } catch (error) {
                         this.emit('error', `Read saved Channels Target Visibility error: ${error}`);
