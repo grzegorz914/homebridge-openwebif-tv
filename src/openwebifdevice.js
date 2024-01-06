@@ -834,7 +834,7 @@ class OpenWebIfDevice extends EventEmitter {
                 };
 
                 //prepare inputs switch sensor service
-                const inputsSwitchesButtons = [i];
+                const inputsSwitchesButtons = [];
                 for (const inputSwitchButton of this.inputsConfigured) {
                     const pushInputSwitchIndex = inputSwitchButton.displayType >= 0 ? inputsSwitchesButtons.push(inputSwitchButton) : false;
                 };
