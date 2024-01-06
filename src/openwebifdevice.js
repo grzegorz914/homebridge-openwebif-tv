@@ -52,25 +52,27 @@ class OpenWebIfDevice extends EventEmitter {
         this.mqttPasswd = config.mqttPasswd;
         this.mqttDebug = config.mqttDebug || false;
 
-        //setup variables
+        //external integrations
         this.mqttConnected = false;
 
-        //get config info
-        this.manufacturer = 'Manufacturer';
-        this.modelName = 'Model Name';
-        this.serialNumber = 'Serial Number';
-        this.firmwareRevision = 'Firmware Revision';
-
-        //accessory services
+        //services
         this.allServices = [];
         this.inputsSwitchesButtonsService = [];
         this.sensorsInputsServices = [];
         this.buttonsServices = [];
 
-        //add configured inputs to the default inputs
+        //inputs 
         this.inputsConfigured = [];
         this.inputsSwitchesButtons = [];
         this.inputIdentifier = 1;
+
+        //sensors
+        this.sensorsInputsConfigured = [];
+        this.sensorVolumeState = false;
+        this.sensorInputState = false;
+
+        //buttons
+        this.buttonsConfigured = [];
 
         //state variable
         this.power = false;
@@ -79,14 +81,6 @@ class OpenWebIfDevice extends EventEmitter {
         this.mute = true;
         this.brightness = 0;
         this.playPause = false;
-
-        //sensors variable
-        this.sensorsInputsConfigured = [];
-        this.sensorVolumeState = false;
-        this.sensorInputState = false;
-
-        //buttons variable
-        this.buttonsConfigured = [];
 
         //check files exists, if not then create it
         const postFix = this.host.split('.').join('');
@@ -169,10 +163,10 @@ class OpenWebIfDevice extends EventEmitter {
                 this.emit('devInfo', `----------------------------------`)
             }
 
-            this.manufacturer = manufacturer;
-            this.modelName = modelName;
-            this.serialNumber = serialNumber;
-            this.firmwareRevision = firmwareRevision;
+            this.manufacturer = manufacturer || 'Manufacturer';
+            this.modelName = modelName || 'Model Name';
+            this.serialNumber = serialNumber || 'Serial Number';
+            this.firmwareRevision = firmwareRevision || 'Firmware Revision';
             this.mac = mac;
         })
             .on('stateChanged', (power, name, eventName, reference, volume, mute) => {
@@ -279,7 +273,7 @@ class OpenWebIfDevice extends EventEmitter {
                     //read inputs file
                     try {
                         const data = await fsPromises.readFile(this.inputsFile);
-                        this.savedInputs = data.toString().trim() ? JSON.parse(data) : this.inputs;
+                        this.savedInputs = data.toString().trim() !== '' ? JSON.parse(data) : this.inputs;
                         const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs/Channels: ${JSON.stringify(this.savedInputs, null, 2)}`);
                     } catch (error) {
                         this.emit('error', `Read saved Channels error: ${error}`);
