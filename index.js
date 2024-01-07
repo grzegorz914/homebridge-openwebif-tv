@@ -25,7 +25,10 @@ class OpenWebIfPlatform {
 					log.warn(`Name: ${device.name ? 'OK' : device.name}, host: ${device.host ? 'OK' : device.host}, port: ${device.port ? 'OK' : device.port}, in config missing.`);
 					return;
 				}
+
+				//debug config
 				const debug = device.enableDebugMode ? log(`Device: ${device.host} ${device.name}, did finish launching.`) : false;
+				const debug1 = device.enableDebugMode ? log(`Device: ${device.host} ${device.name}, Config: ${JSON.stringify(device, null, 2)}`) : false;
 
 				//openwebif device
 				const openWebIfDevice = new OpenWebIfDevice(api, prefDir, device);
