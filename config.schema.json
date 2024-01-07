@@ -36,7 +36,7 @@
             "getInputsFromDevice": {
               "title": "Load Channels From Device",
               "type": "boolean",
-              "default": true,
+              "default": false,
               "description": "This function get channels by bouquet direct from device, manually configured channels will be skipped.",
               "required": false
             },
@@ -91,7 +91,7 @@
                     "title": "Name",
                     "type": "string",
                     "placeholder": "Bouquet name",
-                    "description": "Here set *Bouquet Name* which should be loaded from device, only first 90 channels will be used.",
+                    "description": "Here set bouquet name which should be loaded from device, only first 85 channels will be used.",
                     "required": true
                   },
                   "displayType": {
@@ -996,7 +996,7 @@
                     "devices[].sensorMute",
                     "devices[].sensorChannel",
                     {
-                      "key": "devices[]",
+                      "key": "devices[].sensorInputs",
                       "type": "section",
                       "title": "Custom Channels",
                       "expandable": true,

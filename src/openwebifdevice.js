@@ -57,13 +57,13 @@ class OpenWebIfDevice extends EventEmitter {
 
         //services
         this.allServices = [];
-        this.inputsSwitchesButtonsServices = [];
+        this.inputsButtonsServices = [];
         this.sensorsInputsServices = [];
         this.buttonsServices = [];
 
         //inputs 
         this.inputsConfigured = [];
-        this.inputsSwitchesButtonsConfigured = [];
+        this.inputsButtonsConfigured = [];
         this.inputIdentifier = 1;
 
         //sensors
@@ -229,11 +229,11 @@ class OpenWebIfDevice extends EventEmitter {
                 }
 
                 if (reference !== undefined) {
-                    if (this.inputsSwitchesButtonsServices) {
-                        const switchServicesCount = this.inputsSwitchesButtonsServices.length;
-                        for (let i = 0; i < switchServicesCount; i++) {
-                            const state = power ? (this.inputsSwitchesButtonsConfigured[i].reference === reference) : false;
-                            this.inputsSwitchesButtonsServices[i]
+                    if (this.inputsButtonsServices) {
+                        const servicesCount = this.inputsButtonsServices.length;
+                        for (let i = 0; i < servicesCount; i++) {
+                            const state = power ? (this.inputsButtonsConfigured[i].reference === reference) : false;
+                            this.inputsButtonsServices[i]
                                 .updateCharacteristic(Characteristic.On, state);
                         }
                     }
@@ -617,7 +617,7 @@ class OpenWebIfDevice extends EventEmitter {
                 accessory.addService(this.speakerService);
 
                 //prepare inputs service
-                const debug4 = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs service`);
+                const debug4 = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs servics`);
 
                 //check possible inputs count (max 85)
                 const inputs = this.getInputsFromDevice ? this.savedInputs : this.inputs;
@@ -834,36 +834,36 @@ class OpenWebIfDevice extends EventEmitter {
                 };
 
                 //prepare inputs switch sensor service
-                const inputsSwitchesButtons = this.inputsConfigured;
-                const inputsSwitchesButtonsCount = inputsSwitchesButtons.length;
-                const possibleInputsSwitchesButtonsCount = 99 - this.allServices.length;
-                const maxInputsSwitchesButtonsCount = inputsSwitchesButtonsCount >= possibleInputsSwitchesButtonsCount ? possibleInputsSwitchesButtonsCount : inputsSwitchesButtonsCount;
+                const inputsButtons = this.inputsConfigured;
+                const inputsButtonsCount = inputsButtons.length;
+                const possibleInputsButtonsCount = 99 - this.allServices.length;
+                const maxInputsSwitchesButtonsCount = inputsButtonsCount >= possibleInputsButtonsCount ? possibleInputsButtonsCount : inputsButtonsCount;
                 if (maxInputsSwitchesButtonsCount > 0) {
-                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare button service`);
+                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs buttons services`);
                     for (let i = 0; i < maxInputsSwitchesButtonsCount; i++) {
                         //get switch
-                        const inputSwitchButton = inputsSwitchesButtons[i];
+                        const inputButton = inputsButtons[i];
 
                         //get switch name		
-                        const inputName = inputSwitchButton.name;
+                        const inputName = inputButton.name;
 
                         //get switch reference
-                        const inputReference = inputSwitchButton.reference;
+                        const inputReference = inputButton.reference;
 
                         //get switch display type
-                        const inputDisplayType = inputSwitchButton.displayType >= 0 ? inputSwitchButton.displayType : -1;
+                        const inputDisplayType = inputButton.displayType >= 0 ? inputButton.displayType : -1;
 
                         //get sensor name prefix
-                        const namePrefix = inputSwitchButton.namePrefix ?? false
+                        const namePrefix = inputButton.namePrefix ?? false
 
                         if (inputDisplayType >= 0) {
                             if (inputReference && inputName) {
                                 const serviceName = namePrefix ? `${accessoryName} ${inputName}` : inputName;
                                 const serviceType = [Service.Outlet, Service.Switch][inputDisplayType];
-                                const inputSwitchButtonService = new serviceType(serviceName, `Switch ${i}`);
-                                inputSwitchButtonService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                                inputSwitchButtonService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
-                                inputSwitchButtonService.getCharacteristic(Characteristic.On)
+                                const inputButtonService = new serviceType(serviceName, `Switch ${i}`);
+                                inputButtonService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                                inputButtonService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
+                                inputButtonService.getCharacteristic(Characteristic.On)
                                     .onGet(async () => {
                                         const state = this.power ? (inputReference === this.reference) : false;
                                         return state;
@@ -877,10 +877,10 @@ class OpenWebIfDevice extends EventEmitter {
                                         };
                                     });
 
-                                this.inputsSwitchesButtonsConfigured.push(inputSwitchButton)
-                                this.inputsSwitchesButtonsServices.push(inputSwitchButtonService);
-                                this.allServices.push(inputSwitchButtonService);
-                                accessory.addService(inputSwitchButtonService);
+                                this.inputsButtonsConfigured.push(inputButton)
+                                this.inputsButtonsServices.push(inputButtonService);
+                                this.allServices.push(inputButtonService);
+                                accessory.addService(inputButtonService);
                             } else {
                                 this.emit('message', `Input Button Name: ${inputName ? inputName : 'Missing'}, Reference: ${inputReference ? inputReference : 'Missing'}.`);
                             };
@@ -894,7 +894,7 @@ class OpenWebIfDevice extends EventEmitter {
                 const possibleSensorInputsCount = 99 - this.allServices.length;
                 const maxSensorInputsCount = sensorInputsCount >= possibleSensorInputsCount ? possibleSensorInputsCount : sensorInputsCount;
                 if (maxSensorInputsCount > 0) {
-                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs sensor service`);
+                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs sensors services`);
                     for (let i = 0; i < maxSensorInputsCount; i++) {
                         //get sensor
                         const sensorInput = sensorInputs[i];
@@ -942,7 +942,7 @@ class OpenWebIfDevice extends EventEmitter {
                 const possibleButtonsCount = 99 - this.allServices.length;
                 const maxButtonsCount = buttonsCount >= possibleButtonsCount ? possibleButtonsCount : buttonsCount;
                 if (maxButtonsCount > 0) {
-                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs button service`);
+                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs buttons services`);
                     for (let i = 0; i < maxButtonsCount; i++) {
                         //get button
                         const button = buttons[i];

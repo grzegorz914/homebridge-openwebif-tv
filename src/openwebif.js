@@ -128,6 +128,8 @@ class OPENWEBIF extends EventEmitter {
 
                     //emit state changed
                     this.emit('stateChanged', power, name, eventName, reference, volume, mute);
+
+                    //mqtt
                     const mqtt = mqttEnabled ? this.emit('mqtt', 'Info', this.devInfo) : false;
                     const mqtt1 = mqttEnabled ? this.emit('mqtt', 'State', devState) : false;
 
@@ -251,6 +253,8 @@ class OPENWEBIF extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             try {
                 await this.axiosInstance(apiUrl);
+
+                await new Promise(resolve => setTimeout(resolve, 250));
                 resolve();
             } catch (error) {
                 reject(error);
