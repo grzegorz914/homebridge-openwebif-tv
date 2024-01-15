@@ -996,7 +996,7 @@
                     "devices[].sensorMute",
                     "devices[].sensorChannel",
                     {
-                      "key": "devices[].sensorInputs",
+                      "key": "devices[]",
                       "type": "section",
                       "title": "Custom Channels",
                       "expandable": true,
