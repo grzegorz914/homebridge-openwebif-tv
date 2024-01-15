@@ -946,7 +946,7 @@ class OpenWebIfDevice extends EventEmitter {
                         const buttonName = button.name;
 
                         //get button mode
-                        const buttonMode = button.mode ?? false;
+                        const buttonMode = button.mode;
 
                         //get button command
                         const buttonReference = button.reference;
@@ -964,7 +964,7 @@ class OpenWebIfDevice extends EventEmitter {
                         const namePrefix = button.namePrefix || false;
 
                         if (buttonDisplayType) {
-                            if (buttonName && buttonReferenceCommand && buttonMode) {
+                            if (buttonName && buttonReferenceCommand && buttonMode >= 0) {
                                 const serviceName = namePrefix ? `${accessoryName} ${buttonName}` : buttonName;
                                 const serviceType = ['', Service.Outlet, Service.Switch][buttonDisplayType];
                                 const buttonService = new serviceType(serviceName, `Button ${i}`);
