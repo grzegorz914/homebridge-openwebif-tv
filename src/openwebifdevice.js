@@ -946,7 +946,7 @@ class OpenWebIfDevice extends EventEmitter {
                         const buttonName = button.name;
 
                         //get button mode
-                        const buttonMode = button.mode;
+                        const buttonMode = button.mode ?? false;
 
                         //get button command
                         const buttonReference = button.reference;

@@ -101,19 +101,19 @@
                       {
                         "title": "None/Disabled",
                         "enum": [
-                          -1
+                          0
                         ]
                       },
                       {
                         "title": "Outlet",
                         "enum": [
-                          0
+                          1
                         ]
                       },
                       {
                         "title": "Switch",
                         "enum": [
-                          1
+                          2
                         ]
                       }
                     ],
