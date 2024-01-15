@@ -99,6 +99,6 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | `mqttUser` | Here set the MQTT Broker user. |
 | `mqttPasswd` | Here set the MQTT Broker password. |
 | `mqttDebug` | If enabled, deep log will be present in homebridge console for MQTT. |
-| `Volume Control` | -1 - `None/Disabled`, 0 - `Slider`, 1 - `Fan`.|
-| `Display Type Inputs/Buttons` | -1 - `None/Disabled`, 0 - `Outlet`, 1 - `Switch`.|
-| `Display Type Sensors` | -1 - `None/Disabled`, 0 - `Motion Sensor`, 1 - `Occupancy Sensor`, 2 - `Contact Sensor`.|
+| `Volume Control` | 0 - `None/Disabled`, 1 - `Slider`, 2 - `Fan`.|
+| `Display Type Inputs/Buttons` | 0 - `None/Disabled`, 1 - `Outlet`, 2 - `Switch`.|
+| `Display Type Sensors` | 0 - `None/Disabled`, 1 - `Motion Sensor`, 2 - `Occupancy Sensor`, 3 - `Contact Sensor`.|

@@ -159,19 +159,19 @@
                       {
                         "title": "None/Disabled",
                         "enum": [
-                          -1
+                          0
                         ]
                       },
                       {
                         "title": "Outlet",
                         "enum": [
-                          0
+                          1
                         ]
                       },
                       {
                         "title": "Switch",
                         "enum": [
-                          1
+                          2
                         ]
                       }
                     ],
@@ -522,19 +522,19 @@
                       {
                         "title": "None/Disabled",
                         "enum": [
-                          -1
+                          0
                         ]
                       },
                       {
                         "title": "Outlet",
                         "enum": [
-                          0
+                          1
                         ]
                       },
                       {
                         "title": "Switch",
                         "enum": [
-                          1
+                          2
                         ]
                       }
                     ],
@@ -606,25 +606,25 @@
                       {
                         "title": "None/Disabled",
                         "enum": [
-                          -1
+                          0
                         ]
                       },
                       {
                         "title": "Motion Sensor",
                         "enum": [
-                          0
+                          1
                         ]
                       },
                       {
                         "title": "Occupancy Sensor",
                         "enum": [
-                          1
+                          2
                         ]
                       },
                       {
                         "title": "Contact Sensor",
                         "enum": [
-                          2
+                          3
                         ]
                       }
                     ],
@@ -792,19 +792,19 @@
                 {
                   "title": "None/Disabled",
                   "enum": [
-                    -1
+                    0
                   ]
                 },
                 {
                   "title": "Slider",
                   "enum": [
-                    0
+                    1
                   ]
                 },
                 {
                   "title": "Fan",
                   "enum": [
-                    1
+                    2
                   ]
                 }
               ],

@@ -40,7 +40,7 @@ class OpenWebIfDevice extends EventEmitter {
         this.disableLogDeviceInfo = config.disableLogDeviceInfo || false;
         this.disableLogConnectError = config.disableLogConnectError || false;
         this.infoButtonCommand = config.infoButtonCommand || '139';
-        this.volumeControl = config.volumeControl >= 0 ? config.volumeControl : -1;
+        this.volumeControl = config.volumeControl || false;
         this.refreshInterval = config.refreshInterval || 5;
         this.mqttEnabled = config.enableMqtt || false;
         this.mqttHost = config.mqttHost;
@@ -639,7 +639,7 @@ class OpenWebIfDevice extends EventEmitter {
                     input.name = inputName;
 
                     //get input display rype
-                    const inputDisplayType = input.displayType ?? -1;
+                    const inputDisplayType = input.displayType ?? 0;
                     input.displayType = inputDisplayType;
 
                     //get input type
@@ -717,10 +717,10 @@ class OpenWebIfDevice extends EventEmitter {
                 }
 
                 //prepare volume service
-                if (this.volumeControl >= 0) {
+                if (this.volumeControl) {
                     const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare volume service`);
 
-                    if (this.volumeControl === 0) {
+                    if (this.volumeControl === 1) {
                         this.volumeService = new Service.Lightbulb(`${accessoryName} Volume`, 'Volume');
                         this.volumeService.addOptionalCharacteristic(Characteristic.ConfiguredName);
                         this.volumeService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Volume`);
@@ -745,7 +745,7 @@ class OpenWebIfDevice extends EventEmitter {
                         accessory.addService(this.volumeService);
                     }
 
-                    if (this.volumeControl === 1) {
+                    if (this.volumeControl === 2) {
                         this.volumeServiceFan = new Service.Fan(`${accessoryName} Volume`, 'Volume');
                         this.volumeServiceFan.addOptionalCharacteristic(Characteristic.ConfiguredName);
                         this.volumeServiceFan.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Volume`);
@@ -846,12 +846,12 @@ class OpenWebIfDevice extends EventEmitter {
                         const inputReference = inputButton.reference;
 
                         //get switch display type
-                        const inputDisplayType = inputButton.displayType >= 0 ? inputButton.displayType : -1;
+                        const inputDisplayType = inputButton.displayType || false;
 
                         //get sensor name prefix
-                        const namePrefix = inputButton.namePrefix ?? false
+                        const namePrefix = inputButton.namePrefix || false
 
-                        if (inputDisplayType >= 0) {
+                        if (inputDisplayType) {
                             if (inputReference && inputName) {
                                 const serviceName = namePrefix ? `${accessoryName} ${inputName}` : inputName;
                                 const serviceType = [Service.Outlet, Service.Switch][inputDisplayType];
@@ -901,12 +901,12 @@ class OpenWebIfDevice extends EventEmitter {
                         const sensorInputReference = sensorInput.reference;
 
                         //get sensor display type
-                        const sensorInputDisplayType = sensorInput.displayType >= 0 ? sensorInput.displayType : -1;
+                        const sensorInputDisplayType = sensorInput.displayType || false;
 
                         //get sensor name prefix
-                        const namePrefix = sensorInput.namePrefix ?? false;
+                        const namePrefix = sensorInput.namePrefix || false;
 
-                        if (sensorInputDisplayType >= 0) {
+                        if (sensorInputDisplayType) {
                             if (sensorInputName && sensorInputReference) {
                                 const serviceName = namePrefix ? `${accessoryName} ${sensorInputName}` : sensorInputName;
                                 const serviceType = [Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][sensorInputDisplayType];
@@ -958,12 +958,12 @@ class OpenWebIfDevice extends EventEmitter {
                         const buttonReferenceCommand = buttonMode ? buttonCommand : buttonReference;
 
                         //get button display type
-                        const buttonDisplayType = button.displayType >= 0 ? button.displayType : -1;
+                        const buttonDisplayType = button.displayType || false;
 
                         //get button name prefix
-                        const namePrefix = button.namePrefix ?? false;
+                        const namePrefix = button.namePrefix || false;
 
-                        if (buttonDisplayType >= 0) {
+                        if (buttonDisplayType) {
                             if (buttonName && buttonReferenceCommand && buttonMode) {
                                 const serviceName = namePrefix ? `${accessoryName} ${buttonName}` : buttonName;
                                 const serviceType = [Service.Outlet, Service.Switch][buttonDisplayType];
