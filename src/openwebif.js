@@ -40,7 +40,6 @@ class OPENWEBIF extends EventEmitter {
             }
         });
 
-        this.connected = false;
         this.startPrepareAccessory = true;
         this.emitDeviceInfo = true;
         this.power = false;
@@ -123,9 +122,6 @@ class OPENWEBIF extends EventEmitter {
                     this.volume = volume;
                     this.mute = mute;
 
-                    const emitConnected = !this.connected ? this.emit('message', `Connected.`) : false;
-                    this.connected = true;
-
                     //emit state changed
                     this.emit('stateChanged', power, name, eventName, reference, volume, mute);
 
@@ -141,8 +137,7 @@ class OPENWEBIF extends EventEmitter {
             })
             .on('disconnect', () => {
                 this.emit('stateChanged', false, this.name, this.eventName, this.reference, this.volume, this.mute);
-                this.emit('disconnected', 'Disconnected.');
-                this.connected = false;
+                const debug = disableLogConnectError ? false : this.emit('disconnected', 'Disconnected.');
                 this.checkState();
             });
 
