@@ -179,62 +179,48 @@ class OPENWEBIF extends EventEmitter {
                     this.emit('error', `Save all channels error: ${error}`);
                 };
 
-                if (!this.getInputsFromDevice) {
-                    try {
-                        const channels = JSON.stringify(inputs, null, 2);
-                        await fsPromises.writeFile(inputsFile, channels);
-                        const debug = this.debugLog ? this.emit('debug', `Saved channels: ${channels}.`) : false;
-                    } catch (error) {
-                        this.emit('error', `Save channels error: ${error}`);
-
-                    };
-                    resolve();
-                };
-
-                //save channels by bouquet to the file
-                const bouquetChannelsArr = [];
-                for (const bouquet of bouquets) {
-                    const bouquetName = bouquet.name;
-                    const displayType = bouquet.displayType;
-                    const bouquetChannels = allChannels.services.find(service => service.servicename === bouquetName);
-
-                    if (bouquetChannels) {
-                        for (const channel of bouquetChannels.subservices) {
-                            const pos = channel.pos;
-                            const name = channel.servicename;
-                            const reference = channel.servicereference;
-
-                            const obj = {
-                                'pos': pos,
-                                'name': name,
-                                'reference': reference,
-                                'displayType': displayType
-                            }
-                            bouquetChannelsArr.push(obj);
-                        };
-                        this.bouquetName = bouquetName;
-                    } else {
-                        this.emit('message', `Bouquet: ${bouquetName}, was not found.`);
-                    }
-                }
-
-                if (bouquetChannelsArr.length === 0) {
-                    try {
-                        const channels = JSON.stringify(inputs, null, 2);
-                        await fsPromises.writeFile(inputsFile, channels);
-                        const debug = this.debugLog ? this.emit('debug', `Saved channels: ${channels}.`) : false;
-                    } catch (error) {
-                        this.emit('error', `Save channels error: ${error}`);
-                    };
-                    resolve();
-                }
-
+                //save channels to the file
                 try {
-                    const channels = JSON.stringify(bouquetChannelsArr, null, 2);
+                    const bouquetChannelsArr = [];
+                    for (const bouquet of bouquets) {
+                        const bouquetName = bouquet.name;
+                        const displayType = bouquet.displayType;
+                        const bouquetChannels = allChannels.services.find(service => service.servicename === bouquetName);
+
+                        if (bouquetChannels) {
+                            for (const channel of bouquetChannels.subservices) {
+                                const pos = channel.pos;
+                                const name = channel.servicename;
+                                const reference = channel.servicereference;
+
+                                const obj = {
+                                    'pos': pos,
+                                    'name': name,
+                                    'reference': reference,
+                                    'displayType': displayType
+                                }
+                                bouquetChannelsArr.push(obj);
+                            };
+                            this.bouquetName = bouquetName;
+                        } else {
+                            this.emit('message', `Bouquet: ${bouquetName}, was not found.`);
+                        }
+                    }
+
+                    //chack duplicated channels
+                    const channelsArr = !this.getInputsFromDevice || bouquetChannelsArr.length === 0 ? inputs : bouquetChannelsArr;
+                    const channelArr = [];
+                    for (const input of channelsArr) {
+                        const inputReference = input.reference;
+                        const duplicatedInput = channelArr.some(input => input.reference === inputReference);
+                        const push = !duplicatedInput ? channelArr.push(input) : false;
+                    };
+
+                    const channels = JSON.stringify(channelArr, null, 2);
                     await fsPromises.writeFile(inputsFile, channels);
-                    const debug = this.debugLog ? this.emit('debug', `Saved channels by bouquet: ${this.bouquetName}, channels: ${channels}.`) : false;
+                    const debug = this.debugLog ? this.emit('debug', `Saved channels: ${channels}.`) : false;
                 } catch (error) {
-                    this.emit('error', `Save channels by bouquet: ${this.bouquetName}, error: ${error}`);
+                    this.emit('error', `Save channels error: ${error}`);
                 };
 
                 resolve();
