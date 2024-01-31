@@ -269,8 +269,6 @@ class OpenWebIfDevice extends EventEmitter {
             })
             .on('prepareAccessory', async (channels) => {
                 try {
-                    this.channels = channels;
-
                     //read inputs names from file
                     try {
                         const data = await fsPromises.readFile(this.inputsNamesFile);
@@ -290,7 +288,7 @@ class OpenWebIfDevice extends EventEmitter {
                     };
 
                     await new Promise(resolve => setTimeout(resolve, 1500));
-                    const accessory = await this.prepareAccessory();
+                    const accessory = await this.prepareAccessory(channels);
                     this.emit('publishAccessory', accessory);
 
                     //sort inputs list
@@ -348,7 +346,7 @@ class OpenWebIfDevice extends EventEmitter {
     }
 
     //prepare accessory
-    prepareAccessory() {
+    prepareAccessory(channels) {
         return new Promise((resolve, reject) => {
             try {
                 //accessory
@@ -613,7 +611,7 @@ class OpenWebIfDevice extends EventEmitter {
                 const debug4 = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs servics`);
 
                 //check possible inputs count (max 85)
-                const inputs = this.channels;
+                const inputs = channels;
                 const inputsCount = inputs.length;
                 const possibleInputsCount = 85 - this.allServices.length;
                 const maxInputsCount = inputsCount >= possibleInputsCount ? possibleInputsCount : inputsCount;
@@ -627,8 +625,8 @@ class OpenWebIfDevice extends EventEmitter {
 
                     //get input name
                     const name = input.name;
-                    const savedInputsNames = this.savedInputsNames[inputReference] ?? false;
-                    const inputName = savedInputsNames ? savedInputsNames : name;
+                    const savedInputName = this.savedInputsNames[inputReference] ?? false;
+                    const inputName = savedInputName ? savedInputName : name;
                     input.name = inputName;
 
                     //get input type
@@ -658,40 +656,35 @@ class OpenWebIfDevice extends EventEmitter {
                             return inputName;
                         })
                         .onSet(async (value) => {
-                            if (value === this.savedInputsNames[inputReference]) {
-                                return;
-                            }
+                            if (value && value !== this.savedInputsNames[inputReference]) {
+                                try {
+                                    this.savedInputsNames[inputReference] = value;
+                                    await fsPromises.writeFile(this.inputsNamesFile, JSON.stringify(this.savedInputsNames, null, 2));
+                                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved Input, Name: ${value}, Reference: ${inputReference}`);
 
-                            try {
-                                this.savedInputsNames[inputReference] = value;
-                                await fsPromises.writeFile(this.inputsNamesFile, JSON.stringify(this.savedInputsNames, null, 2));
-                                const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved Input, Name: ${value}, Reference: ${inputReference}`);
-
-                                //sort inputs
-                                const index = this.inputsConfigured.findIndex(input => input.reference === inputReference);
-                                this.inputsConfigured[index].name = value;
-                                await this.displayOrder();
-                            } catch (error) {
-                                this.emit('error', `save Input Name error: ${error}`);
+                                    //sort inputs
+                                    const index = this.inputsConfigured.findIndex(input => input.reference === inputReference);
+                                    this.inputsConfigured[index].name = value;
+                                    await this.displayOrder();
+                                } catch (error) {
+                                    this.emit('error', `save Input Name error: ${error}`);
+                                }
                             }
                         });
 
-                    inputService
-                        .getCharacteristic(Characteristic.TargetVisibilityState)
+                    inputService.getCharacteristic(Characteristic.TargetVisibilityState)
                         .onGet(async () => {
                             return currentVisibility;
                         })
                         .onSet(async (state) => {
-                            if (state === this.savedInputsTargetVisibility[inputReference]) {
-                                return;
-                            }
-
-                            try {
-                                this.savedInputsTargetVisibility[inputReference] = state;
-                                await fsPromises.writeFile(this.inputsTargetVisibilityFile, JSON.stringify(this.savedInputsTargetVisibility, null, 2));
-                                const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved Input: ${inputName}, Target Visibility: ${state ? 'HIDEN' : 'SHOWN'}`);
-                            } catch (error) {
-                                this.emit('error', `save Target Visibility error: ${error}`);
+                            if (state !== this.savedInputsTargetVisibility[inputReference]) {
+                                try {
+                                    this.savedInputsTargetVisibility[inputReference] = state;
+                                    await fsPromises.writeFile(this.inputsTargetVisibilityFile, JSON.stringify(this.savedInputsTargetVisibility, null, 2));
+                                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved Input: ${inputName}, Target Visibility: ${state ? 'HIDEN' : 'SHOWN'}`);
+                                } catch (error) {
+                                    this.emit('error', `save Target Visibility error: ${error}`);
+                                }
                             }
                         });
 
