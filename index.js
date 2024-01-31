@@ -19,12 +19,13 @@ class OpenWebIfPlatform {
 			fs.mkdirSync(prefDir);
 		};
 
-		api.on('didFinishLaunching', () => {
+		api.on('didFinishLaunching', async () => {
 			for (const device of config.devices) {
 				if (!device.name || !device.host || !device.port) {
 					log.warn(`Name: ${device.name ? 'OK' : device.name}, host: ${device.host ? 'OK' : device.host}, port: ${device.port ? 'OK' : device.port}, in config missing.`);
 					return;
 				}
+				await new Promise(resolve => setTimeout(resolve, 500))
 
 				//debug config
 				const debug = device.enableDebugMode ? log(`Device: ${device.host} ${device.name}, did finish launching.`) : false;

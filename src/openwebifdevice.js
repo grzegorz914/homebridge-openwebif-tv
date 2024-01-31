@@ -270,24 +270,16 @@ class OpenWebIfDevice extends EventEmitter {
             .on('prepareAccessory', async (channels) => {
                 try {
                     //read inputs names from file
-                    try {
-                        const data = await fsPromises.readFile(this.inputsNamesFile);
-                        this.savedInputsNames = data.toString().trim() !== '' ? JSON.parse(data) : {};
-                        const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs/Channels: Names: ${JSON.stringify(this.savedInputsNames, null, 2)}`);
-                    } catch (error) {
-                        this.emit('error', `Read saved Channels Names error: ${error}`);
-                    };
+                    const savedInputsNames = await this.readData(this.inputsNamesFile);
+                    this.savedInputsNames = savedInputsNames.toString().trim() !== '' ? JSON.parse(savedInputsNames) : {};
+                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs/Channels: Names: ${JSON.stringify(this.savedInputsNames, null, 2)}`);
 
                     //read inputs visibility from file
-                    try {
-                        const data = await fsPromises.readFile(this.inputsTargetVisibilityFile);
-                        this.savedInputsTargetVisibility = data.toString().trim() !== '' ? JSON.parse(data) : {};
-                        const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs/Channels: Target Visibility: ${JSON.stringify(this.savedInputsTargetVisibility, null, 2)}`);
-                    } catch (error) {
-                        this.emit('error', `Read saved Channels Target Visibility error: ${error}`);
-                    };
+                    const savedInputsTargetVisibility = await this.readData(this.inputsTargetVisibilityFile);
+                    this.savedInputsTargetVisibility = savedInputsTargetVisibility.toString().trim() !== '' ? JSON.parse(savedInputsTargetVisibility) : {};
+                    const debug1 = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs/Channels: Target Visibility: ${JSON.stringify(this.savedInputsTargetVisibility, null, 2)}`);
 
-                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    //prepare accessory
                     const accessory = await this.prepareAccessory(channels);
                     this.emit('publishAccessory', accessory);
 
@@ -341,6 +333,30 @@ class OpenWebIfDevice extends EventEmitter {
                 resolve();
             } catch (error) {
                 reject(error);
+            };
+        });
+    }
+
+    saveData(path, data) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                await fsPromises.writeFile(path, JSON.stringify(data, null, 2));
+                const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved data: ${JSON.stringify(data, null, 2)}`);
+                resolve();
+            } catch (error) {
+                reject(error);
+            };
+        });
+    }
+
+    readData(path) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const data = await fsPromises.readFile(path);
+                const debug = !this.enableDebugMode ? false : this.emit('debug', `Read data: ${JSON.stringify(data, null, 2)}`);
+                resolve(data);
+            } catch (error) {
+                reject(`Read saved data error: ${error}`);
             };
         });
     }
@@ -662,7 +678,7 @@ class OpenWebIfDevice extends EventEmitter {
 
                             try {
                                 this.savedInputsNames[inputReference] = value;
-                                await fsPromises.writeFile(this.inputsNamesFile, JSON.stringify(this.savedInputsNames, null, 2));
+                                await this.saveData(this.inputsNamesFile, this.savedInputsNames);
                                 const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved Input, Name: ${value}, Reference: ${inputReference}`);
 
                                 //sort inputs
@@ -685,7 +701,7 @@ class OpenWebIfDevice extends EventEmitter {
 
                             try {
                                 this.savedInputsTargetVisibility[inputReference] = state;
-                                await fsPromises.writeFile(this.inputsTargetVisibilityFile, JSON.stringify(this.savedInputsTargetVisibility, null, 2));
+                                await this.saveData(this.inputsTargetVisibilityFile, this.savedInputsTargetVisibility);
                                 const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved Input: ${inputName}, Target Visibility: ${state ? 'HIDEN' : 'SHOWN'}`);
                             } catch (error) {
                                 this.emit('error', `save Target Visibility error: ${error}`);
