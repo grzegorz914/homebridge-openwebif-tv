@@ -29,7 +29,14 @@ class OpenWebIfPlatform {
 
 				//debug config
 				const debug = device.enableDebugMode ? log(`Device: ${device.host} ${device.name}, did finish launching.`) : false;
-				const debug1 = device.enableDebugMode ? log(`Device: ${device.host} ${device.name}, Config: ${JSON.stringify(device, null, 2)}`) : false;
+				const config = {
+					...device,
+					user: 'removed',
+					pass: 'removed',
+					mqttUser: 'removed',
+					mqttPasswd: 'removed'
+				};
+				const debug1 = device.enableDebugMode ? log(`Device: ${device.host} ${device.name}, Config: ${JSON.stringify(config, null, 2)}`) : false;
 
 				//openwebif device
 				const openWebIfDevice = new OpenWebIfDevice(api, prefDir, device);
