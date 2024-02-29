@@ -210,7 +210,7 @@ class OpenWebIfDevice extends EventEmitter {
                 }
 
                 if (this.sensorVolumeService && volume !== this.volume) {
-                    for (let i = 0; i < 1; i++) {
+                    for (let i = 0; i < 2; i++) {
                         const state = power ? [true, false][i] : false;
                         this.sensorVolumeService
                             .updateCharacteristic(Characteristic.ContactSensorState, state)
@@ -225,7 +225,7 @@ class OpenWebIfDevice extends EventEmitter {
                 }
 
                 if (this.sensorInputService && reference !== this.reference) {
-                    for (let i = 0; i < 1; i++) {
+                    for (let i = 0; i < 2; i++) {
                         const state = power ? [true, false][i] : false;
                         this.sensorInputService
                             .updateCharacteristic(Characteristic.ContactSensorState, state)

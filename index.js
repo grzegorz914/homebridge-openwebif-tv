@@ -21,14 +21,19 @@ class OpenWebIfPlatform {
 
 		api.on('didFinishLaunching', async () => {
 			for (const device of config.devices) {
-				if (!device.name || !device.host || !device.port) {
-					log.warn(`Name: ${device.name ? 'OK' : device.name}, host: ${device.host ? 'OK' : device.host}, port: ${device.port ? 'OK' : device.port}, in config missing.`);
+				const deviceName = device.name;
+				const host = device.host;
+				const port = device.port;
+
+				if (!deviceName || !host || !port) {
+					log.warn(`Name: ${deviceName ? 'OK' : deviceName}, host: ${host ? 'OK' : host}, port: ${port ? 'OK' : port}, in config missing.`);
 					return;
 				}
 				await new Promise(resolve => setTimeout(resolve, 500))
 
 				//debug config
-				const debug = device.enableDebugMode ? log(`Device: ${device.host} ${device.name}, did finish launching.`) : false;
+				const enableDebugMode = device.enableDebugMode || false;
+				const debug = enableDebugMode ? log(`Device: ${host} ${deviceName}, did finish launching.`) : false;
 				const config = {
 					...device,
 					user: 'removed',
@@ -36,25 +41,25 @@ class OpenWebIfPlatform {
 					mqttUser: 'removed',
 					mqttPasswd: 'removed'
 				};
-				const debug1 = device.enableDebugMode ? log(`Device: ${device.host} ${device.name}, Config: ${JSON.stringify(config, null, 2)}`) : false;
+				const debug1 = enableDebugMode ? log(`Device: ${host} ${deviceName}, Config: ${JSON.stringify(config, null, 2)}`) : false;
 
 				//openwebif device
 				const openWebIfDevice = new OpenWebIfDevice(api, prefDir, device);
 				openWebIfDevice.on('publishAccessory', (accessory) => {
 					api.publishExternalAccessories(CONSTANS.PluginName, [accessory]);
-					const debug = device.enableDebugMode ? log(`Device: ${device.host} ${device.name}, published as external accessory.`) : false;
+					const debug = enableDebugMode ? log(`Device: ${host} ${deviceName}, published as external accessory.`) : false;
 				})
 					.on('devInfo', (devInfo) => {
 						log(devInfo);
 					})
 					.on('message', (message) => {
-						log(`Device: ${device.host} ${device.name}, ${message}`);
+						log(`Device: ${host} ${deviceName}, ${message}`);
 					})
 					.on('debug', (debug) => {
-						log(`Device: ${device.host} ${device.name}, debug: ${debug}`);
+						log(`Device: ${host} ${deviceName}, debug: ${debug}`);
 					})
 					.on('error', (error) => {
-						log.error(`Device: ${device.host} ${device.name}, ${error}`);
+						log.error(`Device: ${host} ${deviceName}, ${error}`);
 					});
 			}
 		});
