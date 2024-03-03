@@ -5,7 +5,7 @@ const EventEmitter = require('events');
 const Mqtt = require('./mqtt.js');
 const OpenWebIf = require('./openwebif.js')
 const CONSTANS = require('./constans.json');
-let Accessory, Characteristic, Service, Categories, Encode, UUID;
+let Accessory, Characteristic, Service, Categories, Encode, AccessoryUUID;
 
 class OpenWebIfDevice extends EventEmitter {
     constructor(api, prefDir, config) {
@@ -16,7 +16,7 @@ class OpenWebIfDevice extends EventEmitter {
         Service = api.hap.Service;
         Categories = api.hap.Categories;
         Encode = api.hap.encode;
-        UUID = api.hap.uuid;
+        AccessoryUUID = api.hap.uuid;
 
         //device configuration
         this.name = config.name;
@@ -42,15 +42,6 @@ class OpenWebIfDevice extends EventEmitter {
         this.infoButtonCommand = config.infoButtonCommand || '139';
         this.volumeControl = config.volumeControl || false;
         this.refreshInterval = config.refreshInterval || 5;
-        this.mqttEnabled = config.enableMqtt || false;
-        this.mqttHost = config.mqttHost;
-        this.mqttPort = config.mqttPort || 1883;
-        this.mqttClientId = config.mqttClientId || `openwebif_${Math.random().toString(16).slice(3)}`;
-        this.mqttPrefix = config.mqttPrefix;
-        this.mqttAuth = config.mqttAuth || false;
-        this.mqttUser = config.mqttUser;
-        this.mqttPasswd = config.mqttPasswd;
-        this.mqttDebug = config.mqttDebug || false;
 
         //external integrations
         this.mqttConnected = false;
@@ -109,21 +100,39 @@ class OpenWebIfDevice extends EventEmitter {
         }
 
         //mqtt client
-        if (this.mqttEnabled) {
+        const mqttEnabled = config.enableMqtt || false;
+        if (mqttEnabled) {
             this.mqtt = new Mqtt({
-                host: this.mqttHost,
-                port: this.mqttPort,
-                clientId: this.mqttClientId,
-                user: this.mqttUser,
-                passwd: this.mqttPasswd,
-                prefix: `${this.mqttPrefix}/${this.name}`,
-                debug: this.mqttDebug
+                host: config.mqttHost,
+                port: config.mqttPort || 1883,
+                clientId: config.mqttClientId || `openwebif_${Math.random().toString(16).slice(3)}`,
+                prefix: `${config.mqttPrefix}/${this.name}`,
+                user: config.mqttUser,
+                passwd: config.mqttPasswd,
+                debug: config.mqttDebug || false
             });
 
             this.mqtt.on('connected', (message) => {
                 this.emit('message', message);
                 this.mqttConnected = true;
             })
+                .on('changeState', (data) => {
+                    const key = Object.keys(data)[0];
+                    const value = Object.values(data)[0];
+                    switch (key) {
+                        case 'Power':
+                            break;
+                        case 'Channel':
+                            break;
+                        case 'Volume':
+                            break;
+                        case 'Mute':
+                            break;
+                        default:
+                            this.emit('message', `MQTT Received unknown key: ${key}, value: ${value}`);
+                            break;
+                    };
+                })
                 .on('debug', (debug) => {
                     this.emit('debug', debug);
                 })
@@ -372,7 +381,7 @@ class OpenWebIfDevice extends EventEmitter {
                 //accessory
                 const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare accessory`);
                 const accessoryName = this.name;
-                const accessoryUUID = UUID.generate(this.mac);
+                const accessoryUUID = AccessoryUUID.generate(this.mac);
                 const accessoryCategory = Categories.TV_SET_TOP_BOX;
                 const accessory = new Accessory(accessoryName, accessoryUUID, accessoryCategory);
 
