@@ -47,14 +47,12 @@ class OPENWEBIF extends EventEmitter {
         this.reference = '';
         this.volume = 0;
         this.mute = false;
-        this.devInfo = '';
 
         this.on('checkDeviceInfo', async () => {
             try {
                 const deviceInfo = await this.axiosInstance(CONSTANS.ApiUrls.DeviceInfo);
                 const devInfo = deviceInfo.data;
                 const debug = debugLog ? this.emit('debug', `Info: ${JSON.stringify(devInfo, null, 2)}`) : false;
-                this.devInfo = devInfo;
 
                 const manufacturer = devInfo.brand || 'undefined';
                 const modelName = devInfo.model || 'undefined';
@@ -84,10 +82,14 @@ class OPENWEBIF extends EventEmitter {
                 const emitDeviceInfo = this.emitDeviceInfo ? this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) : false;
                 this.emitDeviceInfo = false;
 
+
                 //prepare accessory
                 const prepareAccessory = this.startPrepareAccessory ? this.emit('prepareAccessory', channels) : false;
                 const awaitPrepareAccessory = this.startPrepareAccessory ? await new Promise(resolve => setTimeout(resolve, 2500)) : false;
                 this.startPrepareAccessory = false;
+
+                //mqtt
+                const mqtt = mqttEnabled ? this.emit('mqtt', 'Info', devInfo) : false;
 
                 this.emit('checkState');
             } catch (error) {
@@ -100,6 +102,9 @@ class OPENWEBIF extends EventEmitter {
                     const deviceState = await this.axiosInstance(CONSTANS.ApiUrls.DeviceStatus);
                     const devState = deviceState.data;
                     const debug = debugLog ? this.emit('debug', `State: ${JSON.stringify(devState, null, 2)}`) : false;
+
+                    //mqtt
+                    const mqtt1 = mqttEnabled ? this.emit('mqtt', 'State', devState) : false;
 
                     const power = devState.inStandby === 'false';
                     const name = devState.currservice_station;
@@ -123,10 +128,6 @@ class OPENWEBIF extends EventEmitter {
 
                     //emit state changed
                     this.emit('stateChanged', power, name, eventName, reference, volume, mute);
-
-                    //mqtt
-                    const mqtt = mqttEnabled ? this.emit('mqtt', 'Info', this.devInfo) : false;
-                    const mqtt1 = mqttEnabled ? this.emit('mqtt', 'State', devState) : false;
 
                     this.checkState();
                 } catch (error) {
