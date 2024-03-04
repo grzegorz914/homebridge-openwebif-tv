@@ -99,48 +99,6 @@ class OpenWebIfDevice extends EventEmitter {
             this.emit('error', `prepare files error: ${error}`);
         }
 
-        //mqtt client
-        const mqttEnabled = config.enableMqtt || false;
-        if (mqttEnabled) {
-            this.mqtt = new Mqtt({
-                host: config.mqttHost,
-                port: config.mqttPort || 1883,
-                clientId: config.mqttClientId || `openwebif_${Math.random().toString(16).slice(3)}`,
-                prefix: `${config.mqttPrefix}/${this.name}`,
-                user: config.mqttUser,
-                passwd: config.mqttPasswd,
-                debug: config.mqttDebug || false
-            });
-
-            this.mqtt.on('connected', (message) => {
-                this.emit('message', message);
-                this.mqttConnected = true;
-            })
-                .on('changeState', (data) => {
-                    const key = Object.keys(data)[0];
-                    const value = Object.values(data)[0];
-                    switch (key) {
-                        case 'Power':
-                            break;
-                        case 'Channel':
-                            break;
-                        case 'Volume':
-                            break;
-                        case 'Mute':
-                            break;
-                        default:
-                            this.emit('message', `MQTT Received unknown key: ${key}, value: ${value}`);
-                            break;
-                    };
-                })
-                .on('debug', (debug) => {
-                    this.emit('debug', debug);
-                })
-                .on('error', (error) => {
-                    this.emit('error', error);
-                });
-        };
-
         //openwebif client
         this.openwebif = new OpenWebIf({
             host: this.host,
@@ -281,6 +239,57 @@ class OpenWebIfDevice extends EventEmitter {
                 };
             })
             .on('prepareAccessory', async (channels) => {
+                //mqtt client
+                const mqttEnabled = config.enableMqtt || false;
+                if (mqttEnabled) {
+                    this.mqtt = new Mqtt({
+                        host: config.mqttHost,
+                        port: config.mqttPort || 1883,
+                        clientId: config.mqttClientId || `openwebif_${Math.random().toString(16).slice(3)}`,
+                        prefix: `${config.mqttPrefix}/${this.name}`,
+                        user: config.mqttUser,
+                        passwd: config.mqttPasswd,
+                        debug: config.mqttDebug || false
+                    });
+
+                    this.mqtt.on('connected', (message) => {
+                        this.emit('message', message);
+                        this.mqttConnected = true;
+                    })
+                        .on('changeState', async (data) => {
+                            const key = Object.keys(data)[0];
+                            const value = Object.values(data)[0];
+                            try {
+                                switch (key) {
+                                    case 'Power':
+                                        const state = value ? '4' : '5';
+                                        await this.openwebif.send(CONSTANS.ApiUrls.SetPower + state);
+                                        break;
+                                    case 'Channel':
+                                        await this.openwebif.send(CONSTANS.ApiUrls.SetChannel + value);
+                                        break;
+                                    case 'Volume':
+                                        await this.openwebif.send(CONSTANS.ApiUrls.SetVolume + value);
+                                        break;
+                                    case 'Mute':
+                                        await this.openwebif.send(CONSTANS.ApiUrls.ToggleMute);
+                                        break;
+                                    default:
+                                        this.emit('message', `MQTT Received unknown key: ${key}, value: ${value}`);
+                                        break;
+                                };
+                            } catch (error) {
+                                this.emit('error', `set: ${key}, over MQTT, error: ${error}`);
+                            };
+                        })
+                        .on('debug', (debug) => {
+                            this.emit('debug', debug);
+                        })
+                        .on('error', (error) => {
+                            this.emit('error', error);
+                        });
+                };
+
                 try {
                     //read inputs names from file
                     const savedInputsNames = await this.readData(this.inputsNamesFile);

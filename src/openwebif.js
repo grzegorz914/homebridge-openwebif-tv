@@ -235,7 +235,6 @@ class OPENWEBIF extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             try {
                 await this.axiosInstance(apiUrl);
-
                 await new Promise(resolve => setTimeout(resolve, 250));
                 resolve();
             } catch (error) {

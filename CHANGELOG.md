@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.26.0] - (04.03.2024)
+## Changes
+- added support to subscribe MQTT and control device
+- config schema updated
+- cleanup
+
 ## [3.25.0] - (02.01.2024)
 ## Changes
 - added possibility to disable prefix name for buttons and sensors

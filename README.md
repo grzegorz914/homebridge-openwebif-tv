@@ -34,7 +34,7 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 * Channels can be changed using Channels selector in HomeKit.app, additionally can create separate tile.
 * Siri can be used for all functions, some times need create legacy buttons/switches/sensors.
 * Automations can be used for all functions, some times need create legacy buttons/switches/sensors.
-* MQTT publisch topic *Info* and *State* as payload JSON data.
+* Support external integration [MQTT](https://github.com/grzegorz914/homebridge-openwebif-tv?tab=readme-ov-file#mqtt-integration).
 
 <p align="center">
   <a href="https://github.com/grzegorz914/homebridge-openwebif-tv"><img src="https://raw.githubusercontent.com/grzegorz914/homebridge-openwebif-tv/main/graphics/homekit.png" width="382"></a>
@@ -100,3 +100,18 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | `mqttUser` | Here set the MQTT Broker user. |
 | `mqttPasswd` | Here set the MQTT Broker password. |
 | `mqttDebug` | If enabled, deep log will be present in homebridge console for MQTT. |
+
+### MQTT Integration
+
+| Direction | Topic | Message | Payload Data |
+| --- | --- | --- | --- |
+|  Publish   | `Info`, `State` | `{"inStandby": true, "volume": 100}` | JSON object. |
+|  Subscribe   | `Set` | `{"Power": true}` | JSON object. |
+
+| Subscribe | Key | Value | Type | Description |
+| --- | --- | --- | --- | --- |
+| OpenWebIf |     |     |     |      |
+|     | `Power` | `true`, `false` | boolean | Power state. |
+|     | `Channel` | `1:0:1:3DD3:640:13E:820000:0:0:0:` | string | Set channel. |
+|     | `Volume` | `55` | integer | Set volume. |
+|     | `Mute` | `true` | boolean | Toggle mute. |
