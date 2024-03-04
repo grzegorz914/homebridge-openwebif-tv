@@ -4,7 +4,7 @@ const fsPromises = fs.promises;
 const EventEmitter = require('events');
 const Mqtt = require('./mqtt.js');
 const OpenWebIf = require('./openwebif.js')
-const CONSTANS = require('./constans.json');
+const CONSTANTS = require('./constants.json');
 let Accessory, Characteristic, Service, Categories, Encode, AccessoryUUID;
 
 class OpenWebIfDevice extends EventEmitter {
@@ -262,16 +262,19 @@ class OpenWebIfDevice extends EventEmitter {
                                 switch (key) {
                                     case 'Power':
                                         const state = value ? '4' : '5';
-                                        await this.openwebif.send(CONSTANS.ApiUrls.SetPower + state);
+                                        await this.openwebif.send(CONSTANTS.ApiUrls.SetPower + state);
                                         break;
                                     case 'Channel':
-                                        await this.openwebif.send(CONSTANS.ApiUrls.SetChannel + value);
+                                        await this.openwebif.send(CONSTANTS.ApiUrls.SetChannel + value);
                                         break;
                                     case 'Volume':
-                                        await this.openwebif.send(CONSTANS.ApiUrls.SetVolume + value);
+                                        await this.openwebif.send(CONSTANTS.ApiUrls.SetVolume + value);
                                         break;
                                     case 'Mute':
-                                        await this.openwebif.send(CONSTANS.ApiUrls.ToggleMute);
+                                        await this.openwebif.send(CONSTANTS.ApiUrls.ToggleMute);
+                                        break;
+                                    case 'RcControl':
+                                        await this.openwebif.send(CONSTANTS.ApiUrls.SetRcCommand + value);
                                         break;
                                     default:
                                         this.emit('message', `MQTT Received unknown key: ${key}, value: ${value}`);
@@ -419,7 +422,7 @@ class OpenWebIfDevice extends EventEmitter {
 
                         try {
                             const newState = state ? '4' : '5';
-                            await this.openwebif.send(CONSTANS.ApiUrls.SetPower + newState);
+                            await this.openwebif.send(CONSTANTS.ApiUrls.SetPower + newState);
                             const info = this.disableLogInfo ? false : this.emit('message', `set Power: ${state ? 'ON' : 'OFF'}`);
                         } catch (error) {
                             this.emit('error', `set Power error: ${error}`);
@@ -443,7 +446,7 @@ class OpenWebIfDevice extends EventEmitter {
                                     const tryAgain = this.power ? this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, activeIdentifier) : false;
                                     break;
                                 case true:
-                                    await this.openwebif.send(CONSTANS.ApiUrls.SetChannel + inputReference);
+                                    await this.openwebif.send(CONSTANTS.ApiUrls.SetChannel + inputReference);
                                     const info = this.disableLogInfo ? false : this.emit('message', `set Channel: ${inputName}, Reference: ${inputReference}`);
                                     break;
                             }
@@ -498,7 +501,7 @@ class OpenWebIfDevice extends EventEmitter {
                                     break;
                             }
 
-                            await this.openwebif.send(CONSTANS.ApiUrls.SetRcCommand + command);
+                            await this.openwebif.send(CONSTANTS.ApiUrls.SetRcCommand + command);
                             const info = this.disableLogInfo ? false : this.emit('message', `set Remote Key: ${command}`);
                         } catch (error) {
                             this.emit('error', `set Remote Key error: ${error}`);
@@ -563,7 +566,7 @@ class OpenWebIfDevice extends EventEmitter {
                                     break;
                             }
 
-                            await this.openwebif.send(CONSTANS.ApiUrls.SetRcCommand + command);
+                            await this.openwebif.send(CONSTANTS.ApiUrls.SetRcCommand + command);
                             const info = this.disableLogInfo ? false : this.emit('message', `set Power Mode Selection: ${command === '139' ? 'SHOW' : 'HIDE'}`);
                         } catch (error) {
                             this.emit('error', `set Power Mode Selection error: ${error}`);
@@ -600,7 +603,7 @@ class OpenWebIfDevice extends EventEmitter {
                                     break;
                             }
 
-                            await this.openwebif.send(CONSTANS.ApiUrls.SetRcCommand + command);
+                            await this.openwebif.send(CONSTANTS.ApiUrls.SetRcCommand + command);
                             const info = this.disableLogInfo ? false : this.emit('message', `set Volume Selector: ${command}`);
                         } catch (error) {
                             this.emit('error', `set Volume Selector command error: ${error}`);
@@ -618,7 +621,7 @@ class OpenWebIfDevice extends EventEmitter {
                                 value = this.volume;
                             }
 
-                            await this.openwebif.send(CONSTANS.ApiUrls.SetVolume + value);
+                            await this.openwebif.send(CONSTANTS.ApiUrls.SetVolume + value);
                             const info = this.disableLogInfo ? false : this.emit('message', `set Volume: ${value}`);
                         } catch (error) {
                             this.emit('error', `set Volume level error: ${error}`);
@@ -632,7 +635,7 @@ class OpenWebIfDevice extends EventEmitter {
                     })
                     .onSet(async (state) => {
                         try {
-                            await this.openwebif.send(CONSTANS.ApiUrls.ToggleMute);
+                            await this.openwebif.send(CONSTANTS.ApiUrls.ToggleMute);
                             const info = this.disableLogInfo ? false : this.emit('message', `set Mute: ${state ? 'ON' : 'OFF'}`);
                         } catch (error) {
                             this.emit('error', `set Mute error: ${error}`);
@@ -871,7 +874,7 @@ class OpenWebIfDevice extends EventEmitter {
                                     })
                                     .onSet(async (state) => {
                                         try {
-                                            const setSwitchInput = state ? await this.openwebif.send(CONSTANS.ApiUrls.SetChannel + inputReference) : false;
+                                            const setSwitchInput = state ? await this.openwebif.send(CONSTANTS.ApiUrls.SetChannel + inputReference) : false;
                                             const debug = !this.enableDebugMode ? false : this.emit('debug', `Set Channel Name: ${inputName}, Reference: ${inputReference}`);
                                         } catch (error) {
                                             this.emit('error', `set Channel error: ${error}`);
@@ -990,10 +993,10 @@ class OpenWebIfDevice extends EventEmitter {
                                             let url = '';
                                             switch (buttonMode) {
                                                 case 0:
-                                                    url = CONSTANS.ApiUrls.SetChannel + buttonReferenceCommand;
+                                                    url = CONSTANTS.ApiUrls.SetChannel + buttonReferenceCommand;
                                                     break;
                                                 case 1:
-                                                    url = CONSTANS.ApiUrls.SetRcCommand + buttonReferenceCommand;
+                                                    url = CONSTANTS.ApiUrls.SetRcCommand + buttonReferenceCommand;
                                                     break;
                                             };
 

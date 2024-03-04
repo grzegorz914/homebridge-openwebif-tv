@@ -113,5 +113,6 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | OpenWebIf |     |     |     |      |
 |     | `Power` | `true`, `false` | boolean | Power state. |
 |     | `Channel` | `1:0:1:3DD3:640:13E:820000:0:0:0:` | string | Set channel. |
+|     | `RcControl` | `168` | string | Send RC command. |
 |     | `Volume` | `55` | integer | Set volume. |
 |     | `Mute` | `true` | boolean | Toggle mute. |

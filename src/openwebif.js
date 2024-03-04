@@ -3,7 +3,7 @@ const fs = require('fs');
 const fsPromises = fs.promises;
 const axios = require('axios');
 const EventEmitter = require('events');
-const CONSTANS = require('./constans.json');
+const CONSTANTS = require('./constants.json');
 
 class OPENWEBIF extends EventEmitter {
     constructor(config) {
@@ -50,7 +50,7 @@ class OPENWEBIF extends EventEmitter {
 
         this.on('checkDeviceInfo', async () => {
             try {
-                const deviceInfo = await this.axiosInstance(CONSTANS.ApiUrls.DeviceInfo);
+                const deviceInfo = await this.axiosInstance(CONSTANTS.ApiUrls.DeviceInfo);
                 const devInfo = deviceInfo.data;
                 const debug = debugLog ? this.emit('debug', `Info: ${JSON.stringify(devInfo, null, 2)}`) : false;
                 this.devInfo = devInfo;
@@ -69,7 +69,7 @@ class OPENWEBIF extends EventEmitter {
                     return;
                 }
 
-                const channelsInfo = await this.axiosInstance(CONSTANS.ApiUrls.GetAllServices);
+                const channelsInfo = await this.axiosInstance(CONSTANTS.ApiUrls.GetAllServices);
                 const allChannels = channelsInfo.data.services;
                 const debug1 = debugLog ? this.emit('debug', `Channels info: ${channelsInfo}`) : false;
 
@@ -97,7 +97,7 @@ class OPENWEBIF extends EventEmitter {
         })
             .on('checkState', async () => {
                 try {
-                    const deviceState = await this.axiosInstance(CONSTANS.ApiUrls.DeviceStatus);
+                    const deviceState = await this.axiosInstance(CONSTANTS.ApiUrls.DeviceStatus);
                     const devState = deviceState.data;
                     const debug = debugLog ? this.emit('debug', `State: ${JSON.stringify(devState, null, 2)}`) : false;
 
