@@ -105,8 +105,8 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 
 | Direction | Topic | Message | Payload Data |
 | --- | --- | --- | --- |
-|  Publish   | `Info`, `State` | `{"inStandby": true, "volume": 100}` | JSON object. |
-|  Subscribe   | `Set` | `{"Power": true}` | JSON object. |
+|  Publish   | `Info`, `State` | `{inStandby: true, volume: 100}` | JSON object. |
+|  Subscribe   | `Set` | `{Power: true}` | JSON object. |
 
 | Subscribe | Key | Value | Type | Description |
 | --- | --- | --- | --- | --- |
