@@ -22,7 +22,6 @@ class OPENWEBIF extends EventEmitter {
         const disableLogConnectError = config.disableLogConnectError;
         const refreshInterval = config.refreshInterval;
         const debugLog = config.debugLog;
-        const mqttEnabled = config.mqttEnabled;
 
         this.debugLog = debugLog;
         this.refreshInterval = refreshInterval;
@@ -47,12 +46,14 @@ class OPENWEBIF extends EventEmitter {
         this.reference = '';
         this.volume = 0;
         this.mute = false;
+        this.devInfo = '';
 
         this.on('checkDeviceInfo', async () => {
             try {
                 const deviceInfo = await this.axiosInstance(CONSTANS.ApiUrls.DeviceInfo);
                 const devInfo = deviceInfo.data;
                 const debug = debugLog ? this.emit('debug', `Info: ${JSON.stringify(devInfo, null, 2)}`) : false;
+                this.devInfo = devInfo;
 
                 const manufacturer = devInfo.brand || 'undefined';
                 const modelName = devInfo.model || 'undefined';
@@ -88,9 +89,6 @@ class OPENWEBIF extends EventEmitter {
                 const awaitPrepareAccessory = this.startPrepareAccessory ? await new Promise(resolve => setTimeout(resolve, 2500)) : false;
                 this.startPrepareAccessory = false;
 
-                //mqtt
-                const mqtt = mqttEnabled ? this.emit('mqtt', 'Info', devInfo) : false;
-
                 this.emit('checkState');
             } catch (error) {
                 const debug = disableLogConnectError ? false : this.emit('error', `Info error: ${error}, reconnect in 15s.`);
@@ -104,7 +102,8 @@ class OPENWEBIF extends EventEmitter {
                     const debug = debugLog ? this.emit('debug', `State: ${JSON.stringify(devState, null, 2)}`) : false;
 
                     //mqtt
-                    const mqtt1 = mqttEnabled ? this.emit('mqtt', 'State', devState) : false;
+                    this.emit('mqtt', 'Info', this.devInfo);
+                    this.emit('mqtt', 'State', devState);
 
                     const power = devState.inStandby === 'false';
                     const name = devState.currservice_station;

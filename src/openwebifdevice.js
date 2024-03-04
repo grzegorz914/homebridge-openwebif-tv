@@ -8,7 +8,7 @@ const CONSTANS = require('./constans.json');
 let Accessory, Characteristic, Service, Categories, Encode, AccessoryUUID;
 
 class OpenWebIfDevice extends EventEmitter {
-    constructor(api, prefDir, config) {
+    constructor(api, prefDir, device) {
         super();
 
         Accessory = api.platformAccessory;
@@ -19,29 +19,29 @@ class OpenWebIfDevice extends EventEmitter {
         AccessoryUUID = api.hap.uuid;
 
         //device configuration
-        this.name = config.name;
-        this.host = config.host;
-        this.port = config.port;
-        this.getInputsFromDevice = config.getInputsFromDevice || false;
-        this.bouquets = config.bouquets || [];
-        this.inputsDisplayOrder = config.inputsDisplayOrder || 0;
-        this.inputs = config.inputs || [];
-        this.buttons = config.buttons || [];
-        this.sensorPower = config.sensorPower || false;
-        this.sensorVolume = config.sensorVolume || false;
-        this.sensorMute = config.sensorMute || false;
-        this.sensorChannel = config.sensorChannel || false;
-        this.sensorInputs = config.sensorInputs || [];
-        this.auth = config.auth || false;
-        this.user = config.user || '';
-        this.pass = config.pass || '';
-        this.enableDebugMode = config.enableDebugMode || false;
-        this.disableLogInfo = config.disableLogInfo || false;
-        this.disableLogDeviceInfo = config.disableLogDeviceInfo || false;
-        this.disableLogConnectError = config.disableLogConnectError || false;
-        this.infoButtonCommand = config.infoButtonCommand || '139';
-        this.volumeControl = config.volumeControl || false;
-        this.refreshInterval = config.refreshInterval || 5;
+        this.name = device.name;
+        this.host = device.host;
+        this.port = device.port;
+        this.getInputsFromDevice = device.getInputsFromDevice || false;
+        this.bouquets = device.bouquets || [];
+        this.inputsDisplayOrder = device.inputsDisplayOrder || 0;
+        this.inputs = device.inputs || [];
+        this.buttons = device.buttons || [];
+        this.sensorPower = device.sensorPower || false;
+        this.sensorVolume = device.sensorVolume || false;
+        this.sensorMute = device.sensorMute || false;
+        this.sensorChannel = device.sensorChannel || false;
+        this.sensorInputs = device.sensorInputs || [];
+        this.auth = device.auth || false;
+        this.user = device.user || '';
+        this.pass = device.pass || '';
+        this.enableDebugMode = device.enableDebugMode || false;
+        this.disableLogInfo = device.disableLogInfo || false;
+        this.disableLogDeviceInfo = device.disableLogDeviceInfo || false;
+        this.disableLogConnectError = device.disableLogConnectError || false;
+        this.infoButtonCommand = device.infoButtonCommand || '139';
+        this.volumeControl = device.volumeControl || false;
+        this.refreshInterval = device.refreshInterval || 5;
 
         //external integrations
         this.mqttConnected = false;
@@ -101,21 +101,20 @@ class OpenWebIfDevice extends EventEmitter {
 
         //openwebif client
         this.openwebif = new OpenWebIf({
-            host: this.host,
-            port: this.port,
-            user: this.user,
-            pass: this.pass,
-            auth: this.auth,
-            inputs: this.inputs,
-            bouquets: this.bouquets,
+            host: device.host,
+            port: device.port,
+            user: device.user,
+            pass: device.pass,
+            auth: device.auth,
+            inputs: device.inputs,
+            bouquets: device.bouquets,
             devInfoFile: this.devInfoFile,
             channelsFile: this.channelsFile,
             inputsFile: this.inputsFile,
-            getInputsFromDevice: this.getInputsFromDevice,
-            disableLogConnectError: this.disableLogConnectError,
-            debugLog: this.enableDebugMode,
-            refreshInterval: this.refreshInterval,
-            mqttEnabled: this.mqttEnabled
+            getInputsFromDevice: device.getInputsFromDevice,
+            disableLogConnectError: device.disableLogConnectError,
+            debugLog: device.enableDebugMode,
+            refreshInterval: device.refreshInterval,
         });
 
         this.openwebif.on('deviceInfo', (manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) => {
@@ -240,16 +239,16 @@ class OpenWebIfDevice extends EventEmitter {
             })
             .on('prepareAccessory', async (channels) => {
                 //mqtt client
-                const mqttEnabled = config.enableMqtt || false;
+                const mqttEnabled = device.enableMqtt || false;
                 if (mqttEnabled) {
                     this.mqtt = new Mqtt({
-                        host: config.mqttHost,
-                        port: config.mqttPort || 1883,
-                        clientId: config.mqttClientId || `openwebif_${Math.random().toString(16).slice(3)}`,
-                        prefix: `${config.mqttPrefix}/${this.name}`,
-                        user: config.mqttUser,
-                        passwd: config.mqttPasswd,
-                        debug: config.mqttDebug || false
+                        host: device.mqttHost,
+                        port: device.mqttPort || 1883,
+                        clientId: device.mqttClientId || `openwebif_${Math.random().toString(16).slice(3)}`,
+                        prefix: `${device.mqttPrefix}/${device.name}`,
+                        user: device.mqttUser,
+                        passwd: device.mqttPasswd,
+                        debug: device.mqttDebug || false
                     });
 
                     this.mqtt.on('connected', (message) => {
