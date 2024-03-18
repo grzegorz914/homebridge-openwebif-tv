@@ -101,20 +101,20 @@ class OpenWebIfDevice extends EventEmitter {
 
         //openwebif client
         this.openwebif = new OpenWebIf({
-            host: device.host,
-            port: device.port,
-            user: device.user,
-            pass: device.pass,
-            auth: device.auth,
-            inputs: device.inputs,
-            bouquets: device.bouquets,
+            host: this.host,
+            port: this.port,
+            user: this.user,
+            pass: this.pass,
+            auth: this.auth,
+            inputs: this.inputs,
+            bouquets: this.bouquets,
             devInfoFile: this.devInfoFile,
             channelsFile: this.channelsFile,
             inputsFile: this.inputsFile,
-            getInputsFromDevice: device.getInputsFromDevice,
-            disableLogConnectError: device.disableLogConnectError,
-            debugLog: device.enableDebugMode,
-            refreshInterval: device.refreshInterval,
+            getInputsFromDevice: this.getInputsFromDevice,
+            disableLogConnectError: this.disableLogConnectError,
+            debugLog: this.enableDebugMode,
+            refreshInterval: this.refreshInterval,
         });
 
         this.openwebif.on('deviceInfo', (manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) => {
