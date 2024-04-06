@@ -268,7 +268,8 @@ class OpenWebIfDevice extends EventEmitter {
                                         await this.openwebif.send(CONSTANTS.ApiUrls.SetChannel + value);
                                         break;
                                     case 'Volume':
-                                        await this.openwebif.send(CONSTANTS.ApiUrls.SetVolume + value);
+                                        const volume = (value < 0 || value > 100) ? this.volume : value;
+                                        await this.openwebif.send(CONSTANTS.ApiUrls.SetVolume + volume);
                                         break;
                                     case 'Mute':
                                         await this.openwebif.send(CONSTANTS.ApiUrls.ToggleMute);
@@ -615,14 +616,11 @@ class OpenWebIfDevice extends EventEmitter {
                         const volume = this.volume;
                         return volume;
                     })
-                    .onSet(async (value) => {
+                    .onSet(async (volume) => {
                         try {
-                            if (value === 0 || value === 100) {
-                                value = this.volume;
-                            }
-
-                            await this.openwebif.send(CONSTANTS.ApiUrls.SetVolume + value);
-                            const info = this.disableLogInfo ? false : this.emit('message', `set Volume: ${value}`);
+                            volume = (volume <= 0 || volume >= 100) ? this.volume : volume;
+                            await this.openwebif.send(CONSTANTS.ApiUrls.SetVolume + volume);
+                            const info = this.disableLogInfo ? false : this.emit('message', `set Volume: ${volume}`);
                         } catch (error) {
                             this.emit('error', `set Volume level error: ${error}`);
                         };
@@ -855,12 +853,12 @@ class OpenWebIfDevice extends EventEmitter {
                         const inputReference = inputButton.reference;
 
                         //get switch display type
-                        const inputDisplayType = inputButton.displayType || false;
+                        const inputDisplayType = inputButton.displayType || 0;
 
                         //get sensor name prefix
                         const namePrefix = inputButton.namePrefix || false
 
-                        if (inputDisplayType) {
+                        if (inputDisplayType > 0) {
                             if (inputReference && inputName) {
                                 const serviceName = namePrefix ? `${accessoryName} ${inputName}` : inputName;
                                 const serviceType = ['', Service.Outlet, Service.Switch][inputDisplayType];
@@ -908,12 +906,12 @@ class OpenWebIfDevice extends EventEmitter {
                         const sensorInputReference = sensorInput.reference;
 
                         //get sensor display type
-                        const sensorInputDisplayType = sensorInput.displayType || false;
+                        const sensorInputDisplayType = sensorInput.displayType || 0;
 
                         //get sensor name prefix
                         const namePrefix = sensorInput.namePrefix || false;
 
-                        if (sensorInputDisplayType) {
+                        if (sensorInputDisplayType > 0) {
                             if (sensorInputName && sensorInputReference) {
                                 const serviceName = namePrefix ? `${accessoryName} ${sensorInputName}` : sensorInputName;
                                 const characteristicType = ['', Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][sensorInputDisplayType];
@@ -966,9 +964,9 @@ class OpenWebIfDevice extends EventEmitter {
                         const buttonDisplayType = button.displayType || false;
 
                         //get button name prefix
-                        const namePrefix = button.namePrefix || false;
+                        const namePrefix = button.namePrefix || 0;
 
-                        if (buttonDisplayType) {
+                        if (buttonDisplayType > 0) {
                             if (buttonName && buttonReferenceCommand && buttonMode >= 0) {
                                 const serviceName = namePrefix ? `${accessoryName} ${buttonName}` : buttonName;
                                 const serviceType = ['', Service.Outlet, Service.Switch][buttonDisplayType];
