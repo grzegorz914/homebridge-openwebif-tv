@@ -30,7 +30,7 @@ class OPENWEBIF extends EventEmitter {
         this.axiosInstance = axios.create({
             method: 'GET',
             baseURL: baseUrl,
-            timeout: 10000,
+            timeout: 15000,
             withCredentials: auth,
             auth: {
                 username: user,
