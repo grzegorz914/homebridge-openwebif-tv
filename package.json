@@ -36,7 +36,9 @@
     "homebridge-plugin",
     "homekit",
     "openwebif",
-    "enigma2"
+    "enigma2",
+    "mqtt",
+    "restful"
   ],
   "funding": {
     "type": "github",
