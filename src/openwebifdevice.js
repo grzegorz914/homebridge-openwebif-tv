@@ -60,8 +60,8 @@ class OpenWebIfDevice extends EventEmitter {
         //sensors variable
         this.sensorsInputsConfigured = [];
         for (const sensor of this.sensorInputs) {
-            const sensorInputName = sensor.name;
-            const sensorInputReference = sensor.reference;
+            const sensorInputName = sensor.name ?? false;
+            const sensorInputReference = sensor.reference ?? false;
             const sensorInputDisplayType = sensor.displayType ?? 0;
             if (sensorInputName && sensorInputReference >= 0 && sensorInputDisplayType > 0) {
                 sensor.serviceType = ['', Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][sensorInputDisplayType];
@@ -79,8 +79,8 @@ class OpenWebIfDevice extends EventEmitter {
         //buttons variable
         this.buttonsConfigured = [];
         for (const button of this.buttons) {
-            const buttonName = button.name;
-            const buttonMode = button.mode;
+            const buttonName = button.name ?? false;
+            const buttonMode = button.mode ?? -1;
             const buttonReferenceCommand = [button.reference, button.command][buttonMode] ?? false;
             const buttonDisplayType = button.displayType ?? 0;
             if (buttonName && buttonReferenceCommand && buttonMode >= 0 && buttonDisplayType > 0) {
@@ -923,13 +923,10 @@ class OpenWebIfDevice extends EventEmitter {
                     const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs sensors services`);
                     for (let i = 0; i < maxSensorInputsCount; i++) {
                         //get sensor
-                        const sensorInput = sensorInputs[i];
+                        const sensorInput = this.sensorsInputsConfigured[i];
 
                         //get sensor name		
                         const sensorInputName = sensorInput.name;
-
-                        //get sensor reference
-                        const sensorInputReference = sensorInput.reference;
 
                         //get sensor name prefix
                         const namePrefix = sensorInput.namePrefix || false;
