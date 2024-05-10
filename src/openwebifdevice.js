@@ -1008,6 +1008,7 @@ class OpenWebIfDevice extends EventEmitter {
                                     };
                                 } catch (error) {
                                     this.emit('error', `set ${['Channel', 'Command'][buttonMode]} error: ${error}`);
+                                    buttonService.updateCharacteristic(Characteristic.On, false);
                                 };
                             });
                         this.buttonsServices.push(buttonService);
