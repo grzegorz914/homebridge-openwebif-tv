@@ -54,8 +54,8 @@ class OpenWebIfDevice extends EventEmitter {
 
         //inputs variable
         this.inputsConfigured = [];
-        this.inputsButtonsConfigured = [];
         this.inputIdentifier = 1;
+        this.inputsButtonsConfigured = [];
 
         //sensors variable
         this.sensorsInputsConfigured = [];
@@ -234,6 +234,16 @@ class OpenWebIfDevice extends EventEmitter {
                         const characteristicType = this.sensorsInputsConfigured[i].characteristicType;
                         this.sensorsInputsServices[i]
                             .updateCharacteristic(characteristicType, state);
+                    }
+                }
+
+                //inputs buttons
+                if (this.inputsButtonsServices) {
+                    for (let i = 0; i < this.inputsButtonsConfigured.length; i++) {
+                        const state = power ? this.inputsButtonsConfigured[i].reference === reference : false;
+                        this.inputsButtonsConfigured[i].state = state;
+                        this.inputsButtonsServices[i]
+                            .updateCharacteristic(Characteristic.On, state);
                     }
                 }
 
@@ -864,55 +874,55 @@ class OpenWebIfDevice extends EventEmitter {
                 };
 
                 //prepare inputs switch sensor service
-                const inputsButtons = this.inputsConfigured;
-                const inputsButtonsCount = inputsButtons.length;
                 const possibleInputsButtonsCount = 99 - this.allServices.length;
-                const maxInputsSwitchesButtonsCount = inputsButtonsCount >= possibleInputsButtonsCount ? possibleInputsButtonsCount : inputsButtonsCount;
+                const maxInputsSwitchesButtonsCount = this.inputsConfigured.length >= possibleInputsButtonsCount ? possibleInputsButtonsCount : this.inputsConfigured.length;
                 if (maxInputsSwitchesButtonsCount > 0) {
                     const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs buttons services`);
                     for (let i = 0; i < maxInputsSwitchesButtonsCount; i++) {
                         //get switch
-                        const inputButton = inputsButtons[i];
+                        const inputButton = this.inputsConfigured[i];
 
                         //get switch name		
-                        const inputName = inputButton.name;
+                        const inputName = inputButton.name ?? false;
 
                         //get switch reference
-                        const inputReference = inputButton.reference;
+                        const inputReference = inputButton.reference ?? false;
 
                         //get switch display type
                         const inputDisplayType = inputButton.displayType || 0;
 
                         //get sensor name prefix
-                        const namePrefix = inputButton.namePrefix || false
+                        const namePrefix = inputButton.namePrefix || false;
 
-                        if (inputDisplayType > 0) {
-                            if (inputReference && inputName) {
-                                const serviceName = namePrefix ? `${accessoryName} ${inputName}` : inputName;
-                                const serviceType = ['', Service.Outlet, Service.Switch][inputDisplayType];
-                                const inputButtonService = accessory.addService(serviceType, serviceName, `Switch ${i}`);
-                                inputButtonService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                                inputButtonService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
-                                inputButtonService.getCharacteristic(Characteristic.On)
-                                    .onGet(async () => {
-                                        const state = this.power ? (inputReference === this.reference) : false;
-                                        return state;
-                                    })
-                                    .onSet(async (state) => {
-                                        try {
-                                            const setSwitchInput = state ? await this.openwebif.send(CONSTANTS.ApiUrls.SetChannel + inputReference) : false;
-                                            const debug = !this.enableDebugMode ? false : this.emit('debug', `Set Channel Name: ${inputName}, Reference: ${inputReference}`);
-                                        } catch (error) {
-                                            this.emit('error', `set Channel error: ${error}`);
-                                        };
-                                    });
-                                this.inputsButtonsConfigured.push(inputButton)
-                                this.inputsButtonsServices.push(inputButtonService);
-                                this.allServices.push(inputButtonService);
-                            } else {
-                                this.emit('message', `Input Button Name: ${inputName ? inputName : 'Missing'}, Reference: ${inputReference ? inputReference : 'Missing'}.`);
-                            };
-                        }
+                        //add state to the input
+                        inputButton.state = false;
+
+                        if (inputReference && inputName && inputDisplayType > 0) {
+                            const serviceName = namePrefix ? `${accessoryName} ${inputName}` : inputName;
+                            const serviceType = ['', Service.Outlet, Service.Switch][inputDisplayType];
+                            const inputButtonService = accessory.addService(serviceType, serviceName, `Switch ${i}`);
+                            inputButtonService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                            inputButtonService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
+                            inputButtonService.getCharacteristic(Characteristic.On)
+                                .onGet(async () => {
+                                    const state = inputButton.state;
+                                    return state;
+                                })
+                                .onSet(async (state) => {
+                                    try {
+                                        const setSwitchInput = state ? await this.openwebif.send(CONSTANTS.ApiUrls.SetChannel + inputReference) : false;
+                                        const debug = !this.enableDebugMode ? false : this.emit('debug', `Set Channel Name: ${inputName}, Reference: ${inputReference}`);
+                                    } catch (error) {
+                                        this.emit('error', `set Channel error: ${error}`);
+                                    };
+                                });
+                            this.inputsButtonsConfigured.push(inputButton);
+                            this.inputsButtonsServices.push(inputButtonService);
+                            this.allServices.push(inputButtonService);
+                            accessory.addService(inputButtonService);
+                        } else {
+                            const log = inputDisplayType === 0 ? false : this.emit('message', `Input Button Name: ${inputName ? inputName : 'Missing'}, Reference: ${inputReference ? inputReference : 'Missing'}.`);
+                        };
                     }
                 }
 
