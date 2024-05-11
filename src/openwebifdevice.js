@@ -63,7 +63,7 @@ class OpenWebIfDevice extends EventEmitter {
             const sensorInputName = sensor.name ?? false;
             const sensorInputReference = sensor.reference ?? false;
             const sensorInputDisplayType = sensor.displayType ?? 0;
-            if (sensorInputName && sensorInputReference >= 0 && sensorInputDisplayType > 0) {
+            if (sensorInputName && sensorInputReference && sensorInputDisplayType > 0) {
                 sensor.serviceType = ['', Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][sensorInputDisplayType];
                 sensor.characteristicType = ['', Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][sensorInputDisplayType];
                 sensor.state = false;
@@ -83,7 +83,7 @@ class OpenWebIfDevice extends EventEmitter {
             const buttonMode = button.mode ?? -1;
             const buttonReferenceCommand = [button.reference, button.command][buttonMode] ?? false;
             const buttonDisplayType = button.displayType ?? 0;
-            if (buttonName && buttonReferenceCommand && buttonMode >= 0 && buttonDisplayType > 0) {
+            if (buttonName && buttonMode >= 0 && buttonReferenceCommand && buttonDisplayType > 0) {
                 button.serviceType = ['', Service.Outlet, Service.Switch][buttonDisplayType];
                 button.state = false;
                 this.buttonsConfigured.push(button);
@@ -103,19 +103,19 @@ class OpenWebIfDevice extends EventEmitter {
 
         //check files exists, if not then create it
         const postFix = this.host.split('.').join('');
-        this.devInfoFile = `${prefDir}/devInfo_${postFix}`;
-        this.inputsFile = `${prefDir}/inputs_${postFix}`;
+        const devInfoFile = `${prefDir}/devInfo_${postFix}`;
+        const inputsFile = `${prefDir}/inputs_${postFix}`;
+        const channelsFile = `${prefDir}/channels_${postFix}`;
         this.inputsNamesFile = `${prefDir}/inputsNames_${postFix}`;
         this.inputsTargetVisibilityFile = `${prefDir}/inputsTargetVisibility_${postFix}`;
-        this.channelsFile = `${prefDir}/channels_${postFix}`;
 
         try {
             const files = [
-                this.devInfoFile,
-                this.inputsFile,
+                devInfoFile,
+                inputsFile,
+                channelsFile,
                 this.inputsNamesFile,
-                this.inputsTargetVisibilityFile,
-                this.channelsFile
+                this.inputsTargetVisibilityFile
             ];
 
             files.forEach((file) => {
@@ -136,9 +136,9 @@ class OpenWebIfDevice extends EventEmitter {
             auth: this.auth,
             inputs: this.inputs,
             bouquets: this.bouquets,
-            devInfoFile: this.devInfoFile,
-            channelsFile: this.channelsFile,
-            inputsFile: this.inputsFile,
+            devInfoFile: devInfoFile,
+            inputsFile: inputsFile,
+            channelsFile: channelsFile,
             getInputsFromDevice: this.getInputsFromDevice,
             disableLogConnectError: this.disableLogConnectError,
             debugLog: this.enableDebugMode,
