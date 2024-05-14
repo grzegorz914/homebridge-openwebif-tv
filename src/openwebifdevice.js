@@ -900,7 +900,7 @@ class OpenWebIfDevice extends EventEmitter {
                         if (inputReference && inputName && inputDisplayType > 0) {
                             const serviceName = namePrefix ? `${accessoryName} ${inputName}` : inputName;
                             const serviceType = ['', Service.Outlet, Service.Switch][inputDisplayType];
-                            const inputButtonService = accessory.addService(serviceType, serviceName, `Switch ${i}`);
+                            const inputButtonService = new serviceType(serviceName, `Switch ${i}`);
                             inputButtonService.addOptionalCharacteristic(Characteristic.ConfiguredName);
                             inputButtonService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
                             inputButtonService.getCharacteristic(Characteristic.On)
@@ -948,7 +948,7 @@ class OpenWebIfDevice extends EventEmitter {
                         const characteristicType = sensorInput.characteristicType;
 
                         const serviceName = namePrefix ? `${accessoryName} ${sensorInputName}` : sensorInputName;
-                        const sensorInputService = accessory.addService(serviceType, serviceName, `Sensor ${i}`);
+                        const sensorInputService = new serviceType(serviceName, `Sensor ${i}`);
                         sensorInputService.addOptionalCharacteristic(Characteristic.ConfiguredName);
                         sensorInputService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
                         sensorInputService.getCharacteristic(characteristicType)
