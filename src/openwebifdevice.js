@@ -917,6 +917,7 @@ class OpenWebIfDevice extends EventEmitter {
                                         const debug = !this.enableDebugMode ? false : this.emit('debug', `Set Channel Name: ${inputName}, Reference: ${inputReference}`);
                                     } catch (error) {
                                         this.emit('error', `set Channel error: ${error}`);
+                                        inputButton.state = false;
                                     };
                                 });
                             this.inputsButtonsConfigured.push(inputButton);
@@ -1012,16 +1013,16 @@ class OpenWebIfDevice extends EventEmitter {
                                         case 1: //RC Control
                                             const send1 = state ? await this.openwebif.send(CONSTANTS.ApiUrls.SetRcCommand + buttonCommand) : false;
                                             const debug1 = state && this.enableDebugMode ? this.emit('debug', `Set Command, Name: ${buttonName}, Reference: ${buttonCommand}`) : false;
-                                            buttonService.updateCharacteristic(Characteristic.On, false);
+                                             button.state = false;
                                             break;
                                         default:
                                             const debug2 = this.enableDebugMode ? this.emit('debug', `Set Unknown Button Mode: ${buttonMode}.`) : false;
-                                            buttonService.updateCharacteristic(Characteristic.On, false);
+                                             button.state = false;
                                             break;
                                     };
                                 } catch (error) {
                                     this.emit('error', `set ${['Channel', 'Command'][buttonMode]} error: ${error}`);
-                                    buttonService.updateCharacteristic(Characteristic.On, false);
+                                     button.state = false;
                                 };
                             });
                         this.buttonsServices.push(buttonService);
