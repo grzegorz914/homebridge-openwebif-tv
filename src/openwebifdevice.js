@@ -1004,7 +1004,6 @@ class OpenWebIfDevice extends EventEmitter {
                             })
                             .onSet(async (state) => {
                                 try {
-                                    let url = '';
                                     switch (buttonMode) {
                                         case 0: //Channel control
                                             const send = this.power && state ? await this.openwebif.send(CONSTANTS.ApiUrls.SetChannel + buttonReference) : false;
