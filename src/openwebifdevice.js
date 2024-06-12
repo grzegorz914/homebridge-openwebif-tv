@@ -659,7 +659,6 @@ class OpenWebIfDevice extends EventEmitter {
                     })
                     .onSet(async (volume) => {
                         try {
-                            volume = (volume <= 0 || volume >= 100) ? this.volume : volume;
                             await this.openwebif.send(CONSTANTS.ApiUrls.SetVolume + volume);
                             const info = this.disableLogInfo ? false : this.emit('message', `set Volume: ${volume}`);
                         } catch (error) {
@@ -1021,7 +1020,6 @@ class OpenWebIfDevice extends EventEmitter {
                                     };
                                 } catch (error) {
                                     this.emit('error', `set ${['Channel', 'Command'][buttonMode]} error: ${error}`);
-                                     button.state = false;
                                 };
                             });
                         this.buttonsServices.push(buttonService);
