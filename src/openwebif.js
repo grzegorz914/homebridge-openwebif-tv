@@ -3,6 +3,7 @@ const fs = require('fs');
 const fsPromises = fs.promises;
 const axios = require('axios');
 const EventEmitter = require('events');
+const ImpulseGenerator = require('./impulsegenerator.js');
 const CONSTANTS = require('./constants.json');
 
 class OPENWEBIF extends EventEmitter {
@@ -22,9 +23,7 @@ class OPENWEBIF extends EventEmitter {
         const disableLogConnectError = config.disableLogConnectError;
         const refreshInterval = config.refreshInterval;
         const debugLog = config.debugLog;
-
         this.debugLog = debugLog;
-        this.refreshInterval = refreshInterval;
 
         const baseUrl = `http://${host}:${port}`;
         this.axiosInstance = axios.create({
@@ -48,7 +47,17 @@ class OPENWEBIF extends EventEmitter {
         this.mute = false;
         this.devInfo = '';
 
-        this.on('checkDeviceInfo', async () => {
+        const timers = [
+            { name: 'checkDeviceInfo', interval: 30000 },
+            { name: 'checkState', interval: refreshInterval },
+        ];
+
+        const impulseGenerator = new ImpulseGenerator(timers);
+        impulseGenerator.on('checkDeviceInfo', async () => {
+            if (!this.startPrepareAccessory) {
+                return;
+            }
+
             try {
                 const deviceInfo = await this.axiosInstance(CONSTANTS.ApiUrls.DeviceInfo);
                 const devInfo = deviceInfo.data;
@@ -65,7 +74,6 @@ class OPENWEBIF extends EventEmitter {
 
                 if (!mac) {
                     const debug = debugLog ? this.emit('debug', `Missing Mac Address: ${mac}, reconnect in 15s.`) : false;
-                    this.checkDeviceInfo();
                     return;
                 }
 
@@ -88,14 +96,15 @@ class OPENWEBIF extends EventEmitter {
                 const prepareAccessory = this.startPrepareAccessory ? this.emit('prepareAccessory', channels) : false;
                 const awaitPrepareAccessory = this.startPrepareAccessory ? await new Promise(resolve => setTimeout(resolve, 2500)) : false;
                 this.startPrepareAccessory = false;
-
-                this.emit('checkState');
             } catch (error) {
                 const debug = disableLogConnectError ? false : this.emit('error', `Info error: ${error}, reconnect in 15s.`);
-                this.checkDeviceInfo();
             };
         })
             .on('checkState', async () => {
+                if (this.startPrepareAccessory) {
+                    return;
+                }
+
                 try {
                     const deviceState = await this.axiosInstance(CONSTANTS.ApiUrls.DeviceStatus);
                     const devState = deviceState.data;
@@ -114,7 +123,6 @@ class OPENWEBIF extends EventEmitter {
 
                     //update only if value change
                     if (power === this.power && name === this.name && eventName === this.eventName && reference === this.reference && volume === this.volume && mute === this.mute) {
-                        this.checkState();
                         return;
                     };
 
@@ -127,31 +135,18 @@ class OPENWEBIF extends EventEmitter {
 
                     //emit state changed
                     this.emit('stateChanged', power, name, eventName, reference, volume, mute);
-
-                    this.checkState();
                 } catch (error) {
-                    const debug = disableLogConnectError ? false : this.emit('error', `State error: ${error}, reconnect in ${this.refreshInterval}s.`);
+                    const debug = disableLogConnectError ? false : this.emit('error', `State error: ${error}, reconnect in ${refreshInterval / 1000}s.`);
                     this.emit('disconnect');
                 };
             })
             .on('disconnect', () => {
                 this.emit('stateChanged', false, this.name, this.eventName, this.reference, this.volume, this.mute);
                 const debug = disableLogConnectError ? false : this.emit('disconnected', 'Disconnected.');
-                this.checkState();
             });
 
-        this.emit('checkDeviceInfo');
+        impulseGenerator.start();
     };;
-
-    async checkDeviceInfo() {
-        await new Promise(resolve => setTimeout(resolve, 15000));
-        this.emit('checkDeviceInfo');
-    };
-
-    async checkState() {
-        await new Promise(resolve => setTimeout(resolve, this.refreshInterval * 1000));
-        this.emit('checkState');
-    };
 
     saveDevInfo(path, devInfo) {
         return new Promise(async (resolve, reject) => {
@@ -235,7 +230,6 @@ class OPENWEBIF extends EventEmitter {
         return new Promise(async (resolve, reject) => {
             try {
                 await this.axiosInstance(apiUrl);
-                this.emit('checkState');
                 resolve();
             } catch (error) {
                 reject(error);

@@ -41,7 +41,7 @@ class OpenWebIfDevice extends EventEmitter {
         this.disableLogConnectError = device.disableLogConnectError || false;
         this.infoButtonCommand = device.infoButtonCommand || '139';
         this.volumeControl = device.volumeControl || false;
-        this.refreshInterval = device.refreshInterval || 5;
+        this.refreshInterval = device.refreshInterval * 1000 || 5000;
 
         //external integrations
         this.mqttConnected = false;
@@ -916,7 +916,6 @@ class OpenWebIfDevice extends EventEmitter {
                                         const debug = !this.enableDebugMode ? false : this.emit('debug', `Set Channel Name: ${inputName}, Reference: ${inputReference}`);
                                     } catch (error) {
                                         this.emit('error', `set Channel error: ${error}`);
-                                        inputButton.state = false;
                                     };
                                 });
                             this.inputsButtonsConfigured.push(inputButton);
@@ -1011,11 +1010,11 @@ class OpenWebIfDevice extends EventEmitter {
                                         case 1: //RC Control
                                             const send1 = state ? await this.openwebif.send(CONSTANTS.ApiUrls.SetRcCommand + buttonCommand) : false;
                                             const debug1 = state && this.enableDebugMode ? this.emit('debug', `Set Command, Name: ${buttonName}, Reference: ${buttonCommand}`) : false;
-                                             button.state = false;
+                                            button.state = false;
                                             break;
                                         default:
                                             const debug2 = this.enableDebugMode ? this.emit('debug', `Set Unknown Button Mode: ${buttonMode}.`) : false;
-                                             button.state = false;
+                                            button.state = false;
                                             break;
                                     };
                                 } catch (error) {
