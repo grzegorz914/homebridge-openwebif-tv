@@ -440,8 +440,9 @@ class OpenWebIfDevice extends EventEmitter {
 
                 //information service
                 const debug1 = !this.enableDebugMode ? false : this.emit('debug', `Prepare information service`);
+                const manufacturer = this.manufacturer.replace(/[^a-zA-Z0-9\s']/g, '');
                 this.informationService = accessory.getService(Service.AccessoryInformation)
-                    .setCharacteristic(Characteristic.Manufacturer, this.manufacturer)
+                    .setCharacteristic(Characteristic.Manufacturer, manufacturer)
                     .setCharacteristic(Characteristic.Model, this.modelName)
                     .setCharacteristic(Characteristic.SerialNumber, this.serialNumber)
                     .setCharacteristic(Characteristic.FirmwareRevision, this.firmwareRevision);
