@@ -668,34 +668,6 @@
               },
               "required": false
             },
-            "enableDebugMode": {
-              "title": "Debug",
-              "type": "boolean",
-              "default": false,
-              "description": "This enable debug mode.",
-              "required": false
-            },
-            "disableLogInfo": {
-              "title": "Disable Log Info",
-              "type": "boolean",
-              "default": false,
-              "description": "This disable logging values and states on every it change.",
-              "required": false
-            },
-            "disableLogDeviceInfo": {
-              "title": "Disable Log Device Info",
-              "type": "boolean",
-              "default": false,
-              "description": "This disable logging device info by every connections device to the network.",
-              "required": false
-            },
-            "disableLogConnectError": {
-              "title": "Disable Log Connect Error",
-              "type": "boolean",
-              "default": false,
-              "description": "This disable logging device connect error.",
-              "required": false
-            },
             "infoButtonCommand": {
               "title": "Info Button",
               "type": "string",
@@ -827,6 +799,34 @@
               "multipleOf": 0.5,
               "description": "Here set the background data refresh interval.",
               "required": true
+            },
+            "enableDebugMode": {
+              "title": "Debug",
+              "type": "boolean",
+              "default": false,
+              "description": "This enable debug mode.",
+              "required": false
+            },
+            "disableLogInfo": {
+              "title": "Disable Log Info",
+              "type": "boolean",
+              "default": false,
+              "description": "This disable logging values and states on every it change.",
+              "required": false
+            },
+            "disableLogDeviceInfo": {
+              "title": "Disable Log Device Info",
+              "type": "boolean",
+              "default": false,
+              "description": "This disable logging device info by every connections device to the network.",
+              "required": false
+            },
+            "disableLogConnectError": {
+              "title": "Disable Log Connect Error",
+              "type": "boolean",
+              "default": false,
+              "description": "This disable logging device connect error.",
+              "required": false
             },
             "enableMqtt": {
               "title": "Enable",
