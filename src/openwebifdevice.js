@@ -22,6 +22,9 @@ class OpenWebIfDevice extends EventEmitter {
         this.name = device.name;
         this.host = device.host;
         this.port = device.port;
+        this.auth = device.auth || false;
+        this.user = device.user || '';
+        this.pass = device.pass || '';
         this.getInputsFromDevice = device.getInputsFromDevice || false;
         this.bouquets = device.bouquets || [];
         this.inputsDisplayOrder = device.inputsDisplayOrder || 0;
@@ -32,9 +35,6 @@ class OpenWebIfDevice extends EventEmitter {
         this.sensorMute = device.sensorMute || false;
         this.sensorChannel = device.sensorChannel || false;
         this.sensorInputs = device.sensorInputs || [];
-        this.auth = device.auth || false;
-        this.user = device.user || '';
-        this.pass = device.pass || '';
         this.enableDebugMode = device.enableDebugMode || false;
         this.disableLogInfo = device.disableLogInfo || false;
         this.disableLogDeviceInfo = device.disableLogDeviceInfo || false;
