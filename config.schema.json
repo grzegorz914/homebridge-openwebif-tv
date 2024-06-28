@@ -648,7 +648,7 @@
               "title": "Authorization",
               "type": "boolean",
               "default": false,
-              "required": true
+              "required": false
             },
             "user": {
               "title": "User",
@@ -759,7 +759,7 @@
                 }
               ],
               "description": "Here select the function of info button in RC.",
-              "required": true
+              "required": false
             },
             "volumeControl": {
               "title": "Volume Control",
@@ -788,7 +788,7 @@
                   ]
                 }
               ],
-              "required": true
+              "required": false
             },
             "refreshInterval": {
               "title": "Refresh interval (sec)",
@@ -798,7 +798,7 @@
               "maximum": 30,
               "multipleOf": 0.5,
               "description": "Here set the background data refresh interval.",
-              "required": true
+              "required": false
             },
             "enableDebugMode": {
               "title": "Debug",
