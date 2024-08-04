@@ -998,6 +998,15 @@
               "items": [
                 {
                   "key": "devices[]",
+                  "title": "Volume",
+                  "items": [
+                    "devices[].volumeControlNamePrefix",
+                    "devices[].volumeControlName",
+                    "devices[].volumeControl"
+                  ]
+                },
+                {
+                  "key": "devices[]",
                   "title": "Sensors",
                   "items": [
                     "devices[].sensorPower",
@@ -1040,7 +1049,6 @@
                   "title": "Device",
                   "items": [
                     "devices[].infoButtonCommand",
-                    "devices[].volumeControl",
                     "devices[].refreshInterval"
                   ]
                 },

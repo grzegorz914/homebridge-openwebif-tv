@@ -95,13 +95,15 @@
               "namePrefix": false
             }
           ],
+          "infoButtonCommand": "139",
+          "volumeControlNamePrefix": false,
+          "volumeControlName": "Volume",
+          "volumeControl": 0,
+          "refreshInterval": 5,
           "enableDebugMode": false,
           "disableLogInfo": false,
           "disableLogDeviceInfo": false,
           "disableLogConnectError": false,
-          "infoButtonCommand": "139",
-          "volumeControl": 0,
-          "refreshInterval": 5,
           "enableMqtt": false,
           "mqttHost": "192.168.1.33",
           "mqttPort": 1883,

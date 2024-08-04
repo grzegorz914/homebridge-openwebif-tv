@@ -62,8 +62,6 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | `auth` | If enabled, authorizatins credentials will be used for login. |
 | `user` | Here set the authorization *Username*. |
 | `pass` | Here set the authorization *Password*. |
-| `volumeControl` | Here select volume control mode `0 -None/Disabled`, `1 - Slider`, `2 - Fan`. |
-| `infoButtonCommand` | Here select the function of `I` button in RC app. |
 | `getInputsFromDevice` | This function get channels by *Bouquet* direct from device, manually configured channels will be skipped. |
 | `bouquets.name` | Here set *Bouquet Name* which should be loaded from device, only first 90 services will be used. |
 | `bouquets.displayType` | Here select display extra tile for all channels of this bouquet to be exposed in HomeKit app, possible `0 - None/Disabled`, `1 - Outlet`, `2 - Switch`.|
@@ -86,12 +84,16 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | `sensorInputs.reference` | Here set *Reference* like `1:0:1:3ABD:514:13E:820000:0:0:0:` to be exposed as sensor (active on switch to this Input). |
 | `sensorInputs.displayType` | Here select sensor type to be exposed in HomeKit app, possible `0 - None/Disabled`, `1 - Motion Sensor`, `2 - Occupancy Sensor`, `3 - Contact Sensor`. |
 | `sensorInputs.namePrefix` | Here enable/disable the accessory name as a prefix for sensor name.|
+| `volumeControlNamePrefix` | Here enable/disable the accessory name as a prefix for volume control name. |
+| `volumeControlName` | Here set Your own volume control name or leave empty. |
+| `volumeControl` | Here select volume control mode `0 -None/Disabled`, `1 - Slider`, `2 - Fan`. |
+| `infoButtonCommand` | Here select the function of `I` button in RC app. |
+| `refreshInterval` | Here set the data refresh interval. |
 | `enableDebugMode` | If enabled, deep log will be present in homebridge console. |
 | `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |
 | `disableLogDeviceInfo` | If enabled, add ability to disable log device info by every connections device to the network. |
 | `disableLogConnectError` | If enabled, disable logging device connect error. |
 | `enableMqtt` | If enabled, MQTT Broker will start automatically and publish all awailable PV installation data. |
-| `refreshInterval` | Here set the data refresh interval. |
 | `mqttHost` | Here set the *IP Address* or *Hostname* for MQTT Broker.) |
 | `mqttPort` | Here set the *Port* for MQTT Broker, default 1883. |
 | `mqttClientId` | Here optional set the `Client Id` of MQTT Broker. |
