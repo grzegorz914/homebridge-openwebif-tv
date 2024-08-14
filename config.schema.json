@@ -663,6 +663,7 @@
               "title": "Password",
               "type": "string",
               "placeholder": "Password",
+              "format": "password",
               "condition": {
                 "functionBody": "return model.devices[arrayIndices].auth === true;"
               },
@@ -842,93 +843,99 @@
               "description": "This disable logging device connect error.",
               "required": false
             },
-            "enableMqtt": {
-              "title": "Enable",
-              "type": "boolean",
-              "default": false,
-              "required": false,
-              "description": "This enable MQTT client."
-            },
-            "mqttHost": {
-              "title": "IP/Hostname",
-              "type": "string",
-              "placeholder": "ip or hostname",
-              "format": "hostname",
-              "description": "Here set the IP/Hostname of MQTT Broker.",
-              "condition": {
-                "functionBody": "return model.devices[arrayIndices].enableMqtt === true;"
-              },
-              "required": false
-            },
-            "mqttPort": {
-              "title": "Port",
-              "type": "integer",
-              "placeholder": 1883,
-              "description": "Here set the port of MQTT Broker.",
-              "condition": {
-                "functionBody": "return model.devices[arrayIndices].enableMqtt === true;"
-              },
-              "required": false
-            },
-            "mqttClientId": {
-              "title": "Client ID",
-              "type": "string",
-              "placeholder": "client id",
-              "description": "Here optional set the Client ID of MQTT Broker.",
-              "condition": {
-                "functionBody": "return model.devices[arrayIndices].enableMqtt === true"
-              },
-              "required": false
-            },
-            "mqttPrefix": {
-              "title": "Prefix",
-              "type": "string",
-              "placeholder": "home/openwebif",
-              "description": "Here set the prefix.",
-              "condition": {
-                "functionBody": "return model.devices[arrayIndices].enableMqtt === true;"
-              },
-              "required": false
-            },
-            "mqttAuth": {
-              "title": "Authorization",
-              "type": "boolean",
-              "default": false,
-              "description": "This enable authorization for MQTT Broker.",
-              "condition": {
-                "functionBody": "return model.devices[arrayIndices].enableMqtt === true;"
-              },
-              "required": false
-            },
-            "mqttUser": {
-              "title": "User",
-              "type": "string",
-              "placeholder": "user",
-              "description": "Here set the user of MQTT Broker.",
-              "condition": {
-                "functionBody": "return model.devices[arrayIndices].enableMqtt === true && model.devices[arrayIndices].mqttAuth === true;"
-              },
-              "required": false
-            },
-            "mqttPasswd": {
-              "title": "Password",
-              "type": "string",
-              "placeholder": "password",
-              "description": "Here set the password of MQTT Broker.",
-              "condition": {
-                "functionBody": "return model.devices[arrayIndices].enableMqtt === true && model.devices[arrayIndices].mqttAuth === true;"
-              },
-              "required": false
-            },
-            "mqttDebug": {
-              "title": "Debug",
-              "type": "boolean",
-              "default": false,
-              "description": "This enable debug mode for MQTT.",
-              "condition": {
-                "functionBody": "return model.devices[arrayIndices].enableMqtt === true;"
-              },
-              "required": false
+            "mqtt": {
+              "title": "MQTT",
+              "type": "object",
+              "properties": {
+                "enable": {
+                  "title": "Enable",
+                  "type": "boolean",
+                  "default": false,
+                  "description": "This enable MQTT client."
+                },
+                "debug": {
+                  "title": "Debug",
+                  "type": "boolean",
+                  "default": false,
+                  "description": "This enable debug mode for MQTT.",
+                  "condition": {
+                    "functionBody": "return model.devices[arrayIndices].mqtt.enable === true;"
+                  },
+                  "required": false
+                },
+                "host": {
+                  "title": "IP/Hostname",
+                  "type": "string",
+                  "placeholder": "ip or hostname",
+                  "format": "hostname",
+                  "description": "Here set the IP/Hostname of MQTT Broker.",
+                  "condition": {
+                    "functionBody": "return model.devices[arrayIndices].mqtt.enable === true;"
+                  },
+                  "required": true
+                },
+                "port": {
+                  "title": "Port",
+                  "type": "integer",
+                  "placeholder": 1883,
+                  "description": "Here set the port of MQTT Broker.",
+                  "condition": {
+                    "functionBody": "return model.devices[arrayIndices].mqtt.enable === true;"
+                  },
+                  "required": false
+                },
+                "clientId": {
+                  "title": "Client ID",
+                  "type": "string",
+                  "placeholder": "client id",
+                  "description": "Here optional set the Client ID of MQTT Broker.",
+                  "condition": {
+                    "functionBody": "return model.devices[arrayIndices].mqtt.enable === true"
+                  },
+                  "required": false
+                },
+                "prefix": {
+                  "title": "Prefix",
+                  "type": "string",
+                  "placeholder": "home/envoy",
+                  "description": "Here set the prefix.",
+                  "condition": {
+                    "functionBody": "return model.devices[arrayIndices].mqtt.enable === true;"
+                  },
+                  "required": false
+                },
+                "auth": {
+                  "title": "Authorization",
+                  "type": "boolean",
+                  "default": false,
+                  "description": "This enable authorization for MQTT Broker.",
+                  "condition": {
+                    "functionBody": "return model.devices[arrayIndices].mqtt.enable === true;"
+                  },
+                  "required": false
+                },
+                "user": {
+                  "title": "User",
+                  "type": "string",
+                  "placeholder": "user",
+                  "description": "Here set the user of MQTT Broker.",
+                  "condition": {
+                    "functionBody": "return model.devices[arrayIndices].mqtt.enable === true && model.devices[arrayIndices].mqtt.auth === true;"
+                  },
+                  "required": false
+                },
+                "passwd": {
+                  "title": "Password",
+                  "type": "string",
+                  "placeholder": "password",
+                  "description": "Here set the password of MQTT Broker.",
+                  "format": "password",
+                  "condition": {
+                    "functionBody": "return model.devices[arrayIndices].mqtt.enable === true && model.devices[arrayIndices].mqtt.auth === true;"
+                  },
+                  "required": false
+                }
+              }
             }
           }
         }
@@ -1055,7 +1062,10 @@
                   "items": [
                     "devices[].auth",
                     "devices[].user",
-                    "devices[].pass"
+                    {
+                      "key": "devices[].pass",
+                      "type": "password"
+                    }
                   ]
                 },
                 {
@@ -1086,18 +1096,21 @@
                       "title": "{{ value.title }}",
                       "items": [
                         {
-                          "key": "devices[]",
+                          "key": "devices[].mqtt",
                           "title": "MQTT",
                           "items": [
-                            "devices[].enableMqtt",
-                            "devices[].mqttDebug",
-                            "devices[].mqttHost",
-                            "devices[].mqttPort",
-                            "devices[].mqttClientId",
-                            "devices[].mqttPrefix",
-                            "devices[].mqttAuth",
-                            "devices[].mqttUser",
-                            "devices[].mqttPasswd"
+                            "devices[].mqtt.enable",
+                            "devices[].mqtt.debug",
+                            "devices[].mqtt.host",
+                            "devices[].mqtt.port",
+                            "devices[].mqtt.clientId",
+                            "devices[].mqtt.prefix",
+                            "devices[].mqtt.auth",
+                            "devices[].mqtt.user",
+                            {
+                              "key": "devices[].mqtt.passwd",
+                              "type": "password"
+                            }
                           ]
                         }
                       ]

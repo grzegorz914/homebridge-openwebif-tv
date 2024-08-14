@@ -281,16 +281,16 @@ class OpenWebIfDevice extends EventEmitter {
             })
             .on('prepareAccessory', async (channels) => {
                 //mqtt client
-                const mqttEnabled = device.enableMqtt || false;
+                const mqttEnabled = device.mqtt.enable || false;
                 if (mqttEnabled) {
                     this.mqtt = new Mqtt({
-                        host: device.mqttHost,
-                        port: device.mqttPort || 1883,
-                        clientId: device.mqttClientId || `openwebif_${Math.random().toString(16).slice(3)}`,
-                        prefix: `${device.mqttPrefix}/${device.name}`,
-                        user: device.mqttUser,
-                        passwd: device.mqttPasswd,
-                        debug: device.mqttDebug || false
+                        host: device.mqtt.host,
+                        port: device.mqtt.port || 1883,
+                        clientId: device.mqtt.clientId || `openwebif_${Math.random().toString(16).slice(3)}`,
+                        prefix: `${device.mqtt.prefix}/${device.name}`,
+                        user: device.mqtt.user,
+                        passwd: device.mqtt.passwd,
+                        debug: device.mqtt.debug || false
                     });
 
                     this.mqtt.on('connected', (message) => {
@@ -374,666 +374,658 @@ class OpenWebIfDevice extends EventEmitter {
             });
     }
 
-    displayOrder() {
-        return new Promise((resolve, reject) => {
-            try {
-                switch (this.inputsDisplayOrder) {
-                    case 0:
-                        this.inputsConfigured.sort((a, b) => a.identifier - b.identifier);
-                        break;
-                    case 1:
-                        this.inputsConfigured.sort((a, b) => a.name.localeCompare(b.name));
-                        break;
-                    case 2:
-                        this.inputsConfigured.sort((a, b) => b.name.localeCompare(a.name));
-                        break;
-                    case 3:
-                        this.inputsConfigured.sort((a, b) => a.reference.localeCompare(b.reference));
-                        break;
-                    case 4:
-                        this.inputsConfigured.sort((a, b) => b.reference.localeCompare(a.reference));
-                        break;
-                }
-                const debug = !this.enableDebugMode ? false : this.emit('debug', `Inputs display order: ${JSON.stringify(this.inputsConfigured, null, 2)}`);
+    async displayOrder() {
+        try {
+            switch (this.inputsDisplayOrder) {
+                case 0:
+                    this.inputsConfigured.sort((a, b) => a.identifier - b.identifier);
+                    break;
+                case 1:
+                    this.inputsConfigured.sort((a, b) => a.name.localeCompare(b.name));
+                    break;
+                case 2:
+                    this.inputsConfigured.sort((a, b) => b.name.localeCompare(a.name));
+                    break;
+                case 3:
+                    this.inputsConfigured.sort((a, b) => a.reference.localeCompare(b.reference));
+                    break;
+                case 4:
+                    this.inputsConfigured.sort((a, b) => b.reference.localeCompare(a.reference));
+                    break;
+            }
+            const debug = !this.enableDebugMode ? false : this.emit('debug', `Inputs display order: ${JSON.stringify(this.inputsConfigured, null, 2)}`);
 
-                const displayOrder = this.inputsConfigured.map(input => input.identifier);
-                this.televisionService.setCharacteristic(Characteristic.DisplayOrder, Encode(1, displayOrder).toString('base64'));
-                resolve();
-            } catch (error) {
-                reject(error);
-            };
-        });
+            const displayOrder = this.inputsConfigured.map(input => input.identifier);
+            this.televisionService.setCharacteristic(Characteristic.DisplayOrder, Encode(1, displayOrder).toString('base64'));
+            return true;
+        } catch (error) {
+            this.emit('erroe', error);
+        };
     }
 
-    saveData(path, data) {
-        return new Promise(async (resolve, reject) => {
-            try {
-                await fsPromises.writeFile(path, JSON.stringify(data, null, 2));
-                const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved data: ${JSON.stringify(data, null, 2)}`);
-                resolve();
-            } catch (error) {
-                reject(error);
-            };
-        });
+    async saveData(path, data) {
+        try {
+            await fsPromises.writeFile(path, JSON.stringify(data, null, 2));
+            const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved data: ${JSON.stringify(data, null, 2)}`);
+            return true;
+        } catch (error) {
+            this.emit('erroe', error);
+        };
     }
 
-    readData(path) {
-        return new Promise(async (resolve, reject) => {
-            try {
-                const data = await fsPromises.readFile(path);
-                const debug = !this.enableDebugMode ? false : this.emit('debug', `Read data: ${JSON.stringify(data, null, 2)}`);
-                resolve(data);
-            } catch (error) {
-                reject(`Read saved data error: ${error}`);
-            };
-        });
+    async readData(path) {
+        try {
+            const data = await fsPromises.readFile(path);
+            const debug = !this.enableDebugMode ? false : this.emit('debug', `Read data: ${JSON.stringify(data, null, 2)}`);
+            return data;;
+        } catch (error) {
+            this.emit('erroe', `Read saved data error: ${error}`);
+        };
     }
 
     //prepare accessory
-    prepareAccessory(channels) {
-        return new Promise((resolve, reject) => {
-            try {
-                //accessory
-                const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare accessory`);
-                const accessoryName = this.name;
-                const accessoryUUID = AccessoryUUID.generate(this.mac);
-                const accessoryCategory = Categories.TV_SET_TOP_BOX;
-                const accessory = new Accessory(accessoryName, accessoryUUID, accessoryCategory);
+    async prepareAccessory(channels) {
+        try {
+            //accessory
+            const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare accessory`);
+            const accessoryName = this.name;
+            const accessoryUUID = AccessoryUUID.generate(this.mac);
+            const accessoryCategory = Categories.TV_SET_TOP_BOX;
+            const accessory = new Accessory(accessoryName, accessoryUUID, accessoryCategory);
 
-                //information service
-                const debug1 = !this.enableDebugMode ? false : this.emit('debug', `Prepare information service`);
-                const manufacturer = this.manufacturer.replace(/[^a-zA-Z0-9\s']/g, '');
-                this.informationService = accessory.getService(Service.AccessoryInformation)
-                    .setCharacteristic(Characteristic.Manufacturer, manufacturer)
-                    .setCharacteristic(Characteristic.Model, this.modelName)
-                    .setCharacteristic(Characteristic.SerialNumber, this.serialNumber)
-                    .setCharacteristic(Characteristic.FirmwareRevision, this.firmwareRevision);
-                this.allServices.push(this.informationService);
+            //information service
+            const debug1 = !this.enableDebugMode ? false : this.emit('debug', `Prepare information service`);
+            const manufacturer = this.manufacturer.replace(/[^a-zA-Z0-9\s']/g, '');
+            this.informationService = accessory.getService(Service.AccessoryInformation)
+                .setCharacteristic(Characteristic.Manufacturer, manufacturer)
+                .setCharacteristic(Characteristic.Model, this.modelName)
+                .setCharacteristic(Characteristic.SerialNumber, this.serialNumber)
+                .setCharacteristic(Characteristic.FirmwareRevision, this.firmwareRevision);
+            this.allServices.push(this.informationService);
 
-                //prepare television service
-                const debug2 = !this.enableDebugMode ? false : this.emit('debug', `Prepare television service`);
-                this.televisionService = accessory.addService(Service.Television, `${accessoryName} Television`, 'Television');
-                this.televisionService.setCharacteristic(Characteristic.ConfiguredName, accessoryName);
-                this.televisionService.setCharacteristic(Characteristic.SleepDiscoveryMode, 1);
-                this.televisionService.getCharacteristic(Characteristic.Active)
+            //prepare television service
+            const debug2 = !this.enableDebugMode ? false : this.emit('debug', `Prepare television service`);
+            this.televisionService = accessory.addService(Service.Television, `${accessoryName} Television`, 'Television');
+            this.televisionService.setCharacteristic(Characteristic.ConfiguredName, accessoryName);
+            this.televisionService.setCharacteristic(Characteristic.SleepDiscoveryMode, 1);
+            this.televisionService.getCharacteristic(Characteristic.Active)
+                .onGet(async () => {
+                    const state = this.power;
+                    return state;
+                })
+                .onSet(async (state) => {
+                    if (this.power == state) {
+                        return;
+                    }
+
+                    try {
+                        const newState = state ? '4' : '5';
+                        await this.openwebif.send(CONSTANTS.ApiUrls.SetPower + newState);
+                        const info = this.disableLogInfo ? false : this.emit('message', `set Power: ${state ? 'ON' : 'OFF'}`);
+                    } catch (error) {
+                        this.emit('error', `set Power error: ${error}`);
+                    };
+                });
+
+            this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
+                .onGet(async () => {
+                    const inputIdentifier = this.inputIdentifier;
+                    return inputIdentifier;
+                })
+                .onSet(async (activeIdentifier) => {
+                    try {
+                        const index = this.inputsConfigured.findIndex(input => input.identifier === activeIdentifier);
+                        const inputName = this.inputsConfigured[index].name;
+                        const inputReference = this.inputsConfigured[index].reference;
+
+                        switch (this.power) {
+                            case false:
+                                await new Promise(resolve => setTimeout(resolve, 4000));
+                                const tryAgain = this.power ? this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, activeIdentifier) : false;
+                                break;
+                            case true:
+                                await this.openwebif.send(CONSTANTS.ApiUrls.SetChannel + inputReference);
+                                const info = this.disableLogInfo ? false : this.emit('message', `set Channel: ${inputName}, Reference: ${inputReference}`);
+                                break;
+                        }
+                    } catch (error) {
+                        this.emit('error', `set Channel error: ${error}`);
+                    };
+                });
+
+            this.televisionService.getCharacteristic(Characteristic.RemoteKey)
+                .onSet(async (command) => {
+                    try {
+                        switch (command) {
+                            case Characteristic.RemoteKey.REWIND:
+                                command = '168';
+                                break;
+                            case Characteristic.RemoteKey.FAST_FORWARD:
+                                command = '159';
+                                break;
+                            case Characteristic.RemoteKey.NEXT_TRACK:
+                                command = '407';
+                                break;
+                            case Characteristic.RemoteKey.PREVIOUS_TRACK:
+                                command = '412';
+                                break;
+                            case Characteristic.RemoteKey.ARROW_UP:
+                                command = '103';
+                                break;
+                            case Characteristic.RemoteKey.ARROW_DOWN:
+                                command = '108';
+                                break;
+                            case Characteristic.RemoteKey.ARROW_LEFT:
+                                command = '105';
+                                break;
+                            case Characteristic.RemoteKey.ARROW_RIGHT:
+                                command = '106';
+                                break;
+                            case Characteristic.RemoteKey.SELECT:
+                                command = '352';
+                                break;
+                            case Characteristic.RemoteKey.BACK:
+                                command = '174';
+                                break;
+                            case Characteristic.RemoteKey.EXIT:
+                                command = '174';
+                                break;
+                            case Characteristic.RemoteKey.PLAY_PAUSE:
+                                command = this.playPause ? '119' : '207';
+                                this.playPause = !this.playPause;
+                                break;
+                            case Characteristic.RemoteKey.INFORMATION:
+                                command = this.infoButtonCommand;
+                                break;
+                        }
+
+                        await this.openwebif.send(CONSTANTS.ApiUrls.SetRcCommand + command);
+                        const info = this.disableLogInfo ? false : this.emit('message', `set Remote Key: ${command}`);
+                    } catch (error) {
+                        this.emit('error', `set Remote Key error: ${error}`);
+                    };
+                });
+
+            //optional television characteristics
+            this.televisionService.getCharacteristic(Characteristic.Brightness)
+                .onGet(async () => {
+                    const brightness = this.brightness;
+                    return brightness;
+                })
+                .onSet(async (value) => {
+                    try {
+                        const brightness = value;
+                        const setBrightness = false
+                        const info = this.disableLogInfo ? false : this.emit('message', `set Brightness: ${value}`);
+                    } catch (error) {
+                        this.emit('error', `set Brightness error: ${error}`);
+                    };
+                });
+
+            this.televisionService.getCharacteristic(Characteristic.ClosedCaptions)
+                .onGet(async () => {
+                    const state = 0;
+                    return state;
+                })
+                .onSet(async (state) => {
+                    const info = this.disableLogInfo ? false : this.emit('message', `set Closed Ccaptions: ${state}`);
+                });
+
+            this.televisionService.getCharacteristic(Characteristic.CurrentMediaState)
+                .onGet(async () => {
+                    //apple, 0 - PLAY, 1 - PAUSE, 2 - STOP, 3 - LOADING, 4 - INTERRUPTED
+                    const value = 0;
+                    return value;
+                });
+
+            this.televisionService.getCharacteristic(Characteristic.TargetMediaState)
+                .onGet(async () => {
+                    const value = 0;
+                    return value;
+                })
+                .onSet(async (value) => {
+                    try {
+                        const newMediaState = value;
+                        const info = this.disableLogInfo ? false : this.emit('message', `set Target Media State: ${['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]}`);
+                    } catch (error) {
+                        this.emit('error', `set Target Media state error: ${error}`);
+                    };
+                });
+
+            this.televisionService.getCharacteristic(Characteristic.PowerModeSelection)
+                .onSet(async (command) => {
+                    try {
+                        switch (command) {
+                            case Characteristic.PowerModeSelection.SHOW:
+                                command = '139';
+                                break;
+                            case Characteristic.PowerModeSelection.HIDE:
+                                command = '174';
+                                break;
+                        }
+
+                        await this.openwebif.send(CONSTANTS.ApiUrls.SetRcCommand + command);
+                        const info = this.disableLogInfo ? false : this.emit('message', `set Power Mode Selection: ${command === '139' ? 'SHOW' : 'HIDE'}`);
+                    } catch (error) {
+                        this.emit('error', `set Power Mode Selection error: ${error}`);
+                    };
+                });
+            this.allServices.push(this.televisionService);
+
+            //prepare speaker service
+            const debug3 = !this.enableDebugMode ? false : this.emit('debug', `Prepare speaker service`);
+            this.speakerService = accessory.addService(Service.TelevisionSpeaker, `${accessoryName} Speaker`, 'Speaker');
+            this.speakerService.getCharacteristic(Characteristic.Active)
+                .onGet(async () => {
+                    const state = this.power;
+                    return state;
+                })
+                .onSet(async (state) => {
+                });
+
+            this.speakerService.getCharacteristic(Characteristic.VolumeControlType)
+                .onGet(async () => {
+                    const state = 3; //none, relative, relative with current, absolute
+                    return state;
+                });
+
+            this.speakerService.getCharacteristic(Characteristic.VolumeSelector)
+                .onSet(async (command) => {
+                    try {
+                        switch (command) {
+                            case Characteristic.VolumeSelector.INCREMENT:
+                                command = '115';
+                                break;
+                            case Characteristic.VolumeSelector.DECREMENT:
+                                command = '114';
+                                break;
+                        }
+
+                        await this.openwebif.send(CONSTANTS.ApiUrls.SetRcCommand + command);
+                        const info = this.disableLogInfo ? false : this.emit('message', `set Volume Selector: ${command}`);
+                    } catch (error) {
+                        this.emit('error', `set Volume Selector command error: ${error}`);
+                    };
+                });
+
+            this.speakerService.getCharacteristic(Characteristic.Volume)
+                .onGet(async () => {
+                    const volume = this.volume;
+                    return volume;
+                })
+                .onSet(async (volume) => {
+                    try {
+                        await this.openwebif.send(CONSTANTS.ApiUrls.SetVolume + volume);
+                        const info = this.disableLogInfo ? false : this.emit('message', `set Volume: ${volume}`);
+                    } catch (error) {
+                        this.emit('error', `set Volume level error: ${error}`);
+                    };
+                });
+
+            this.speakerService.getCharacteristic(Characteristic.Mute)
+                .onGet(async () => {
+                    const state = this.mute;
+                    return state;
+                })
+                .onSet(async (state) => {
+                    try {
+                        await this.openwebif.send(CONSTANTS.ApiUrls.ToggleMute);
+                        const info = this.disableLogInfo ? false : this.emit('message', `set Mute: ${state ? 'ON' : 'OFF'}`);
+                    } catch (error) {
+                        this.emit('error', `set Mute error: ${error}`);
+                    };
+                });
+            this.allServices.push(this.tvSpeakerService);
+
+            //prepare inputs service
+            const debug4 = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs servics`);
+
+            //check possible inputs count (max 85)
+            const inputs = channels;
+            const inputsCount = inputs.length;
+            const possibleInputsCount = 85 - this.allServices.length;
+            const maxInputsCount = inputsCount >= possibleInputsCount ? possibleInputsCount : inputsCount;
+            for (let i = 0; i < maxInputsCount; i++) {
+                //input
+                const input = inputs[i];
+                const inputIdentifier = i + 1;
+
+                //get input reference
+                const inputReference = input.reference;
+
+                //get input name
+                const savedInputName = this.savedInputsNames[inputReference] ?? false;
+                input.name = savedInputName ? savedInputName : input.name;
+
+                //get input type
+                const inputSourceType = 0;
+
+                //get input configured
+                const isConfigured = 1;
+
+                //get visibility
+                input.visibility = this.savedInputsTargetVisibility[inputReference] ?? 0;
+
+                //add identifier to the input
+                input.identifier = inputIdentifier;
+
+                //input service
+                const inputService = accessory.addService(Service.InputSource, input.name, `Input ${inputIdentifier}`);
+                inputService
+                    .setCharacteristic(Characteristic.Identifier, inputIdentifier)
+                    .setCharacteristic(Characteristic.Name, input.name)
+                    .setCharacteristic(Characteristic.IsConfigured, isConfigured)
+                    .setCharacteristic(Characteristic.InputSourceType, inputSourceType)
+                    .setCharacteristic(Characteristic.CurrentVisibilityState, input.visibility)
+
+                inputService.getCharacteristic(Characteristic.ConfiguredName)
                     .onGet(async () => {
-                        const state = this.power;
-                        return state;
+                        return input.name;
                     })
-                    .onSet(async (state) => {
-                        if (this.power == state) {
+                    .onSet(async (value) => {
+                        if (value === this.savedInputsNames[inputReference]) {
                             return;
                         }
 
                         try {
-                            const newState = state ? '4' : '5';
-                            await this.openwebif.send(CONSTANTS.ApiUrls.SetPower + newState);
-                            const info = this.disableLogInfo ? false : this.emit('message', `set Power: ${state ? 'ON' : 'OFF'}`);
+                            input.name = value;
+                            this.savedInputsNames[inputReference] = value;
+                            await this.saveData(this.inputsNamesFile, this.savedInputsNames);
+                            const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved Input, Name: ${value}, Reference: ${inputReference}`);
+
+                            //sort inputs
+                            const index = this.inputsConfigured.findIndex(input => input.reference === inputReference);
+                            this.inputsConfigured[index].name = value;
+                            await this.displayOrder();
                         } catch (error) {
-                            this.emit('error', `set Power error: ${error}`);
-                        };
+                            this.emit('error', `save Input Name error: ${error}`);
+                        }
                     });
 
-                this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
+                inputService.getCharacteristic(Characteristic.TargetVisibilityState)
                     .onGet(async () => {
-                        const inputIdentifier = this.inputIdentifier;
-                        return inputIdentifier;
-                    })
-                    .onSet(async (activeIdentifier) => {
-                        try {
-                            const index = this.inputsConfigured.findIndex(input => input.identifier === activeIdentifier);
-                            const inputName = this.inputsConfigured[index].name;
-                            const inputReference = this.inputsConfigured[index].reference;
-
-                            switch (this.power) {
-                                case false:
-                                    await new Promise(resolve => setTimeout(resolve, 4000));
-                                    const tryAgain = this.power ? this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, activeIdentifier) : false;
-                                    break;
-                                case true:
-                                    await this.openwebif.send(CONSTANTS.ApiUrls.SetChannel + inputReference);
-                                    const info = this.disableLogInfo ? false : this.emit('message', `set Channel: ${inputName}, Reference: ${inputReference}`);
-                                    break;
-                            }
-                        } catch (error) {
-                            this.emit('error', `set Channel error: ${error}`);
-                        };
-                    });
-
-                this.televisionService.getCharacteristic(Characteristic.RemoteKey)
-                    .onSet(async (command) => {
-                        try {
-                            switch (command) {
-                                case Characteristic.RemoteKey.REWIND:
-                                    command = '168';
-                                    break;
-                                case Characteristic.RemoteKey.FAST_FORWARD:
-                                    command = '159';
-                                    break;
-                                case Characteristic.RemoteKey.NEXT_TRACK:
-                                    command = '407';
-                                    break;
-                                case Characteristic.RemoteKey.PREVIOUS_TRACK:
-                                    command = '412';
-                                    break;
-                                case Characteristic.RemoteKey.ARROW_UP:
-                                    command = '103';
-                                    break;
-                                case Characteristic.RemoteKey.ARROW_DOWN:
-                                    command = '108';
-                                    break;
-                                case Characteristic.RemoteKey.ARROW_LEFT:
-                                    command = '105';
-                                    break;
-                                case Characteristic.RemoteKey.ARROW_RIGHT:
-                                    command = '106';
-                                    break;
-                                case Characteristic.RemoteKey.SELECT:
-                                    command = '352';
-                                    break;
-                                case Characteristic.RemoteKey.BACK:
-                                    command = '174';
-                                    break;
-                                case Characteristic.RemoteKey.EXIT:
-                                    command = '174';
-                                    break;
-                                case Characteristic.RemoteKey.PLAY_PAUSE:
-                                    command = this.playPause ? '119' : '207';
-                                    this.playPause = !this.playPause;
-                                    break;
-                                case Characteristic.RemoteKey.INFORMATION:
-                                    command = this.infoButtonCommand;
-                                    break;
-                            }
-
-                            await this.openwebif.send(CONSTANTS.ApiUrls.SetRcCommand + command);
-                            const info = this.disableLogInfo ? false : this.emit('message', `set Remote Key: ${command}`);
-                        } catch (error) {
-                            this.emit('error', `set Remote Key error: ${error}`);
-                        };
-                    });
-
-                //optional television characteristics
-                this.televisionService.getCharacteristic(Characteristic.Brightness)
-                    .onGet(async () => {
-                        const brightness = this.brightness;
-                        return brightness;
-                    })
-                    .onSet(async (value) => {
-                        try {
-                            const brightness = value;
-                            const setBrightness = false
-                            const info = this.disableLogInfo ? false : this.emit('message', `set Brightness: ${value}`);
-                        } catch (error) {
-                            this.emit('error', `set Brightness error: ${error}`);
-                        };
-                    });
-
-                this.televisionService.getCharacteristic(Characteristic.ClosedCaptions)
-                    .onGet(async () => {
-                        const state = 0;
-                        return state;
+                        return input.visibility;
                     })
                     .onSet(async (state) => {
-                        const info = this.disableLogInfo ? false : this.emit('message', `set Closed Ccaptions: ${state}`);
-                    });
+                        if (state === this.savedInputsTargetVisibility[inputReference]) {
+                            return;
+                        }
 
-                this.televisionService.getCharacteristic(Characteristic.CurrentMediaState)
-                    .onGet(async () => {
-                        //apple, 0 - PLAY, 1 - PAUSE, 2 - STOP, 3 - LOADING, 4 - INTERRUPTED
-                        const value = 0;
-                        return value;
-                    });
-
-                this.televisionService.getCharacteristic(Characteristic.TargetMediaState)
-                    .onGet(async () => {
-                        const value = 0;
-                        return value;
-                    })
-                    .onSet(async (value) => {
                         try {
-                            const newMediaState = value;
-                            const info = this.disableLogInfo ? false : this.emit('message', `set Target Media State: ${['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]}`);
+                            input.visibility = state;
+                            this.savedInputsTargetVisibility[inputReference] = state;
+                            await this.saveData(this.inputsTargetVisibilityFile, this.savedInputsTargetVisibility);
+                            const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved Input: ${input.name}, Target Visibility: ${state ? 'HIDEN' : 'SHOWN'}`);
                         } catch (error) {
-                            this.emit('error', `set Target Media state error: ${error}`);
-                        };
+                            this.emit('error', `save Target Visibility error: ${error}`);
+                        }
                     });
+                this.inputsConfigured.push(input);
+                this.televisionService.addLinkedService(inputService);
+                this.allServices.push(inputService);
+            }
 
-                this.televisionService.getCharacteristic(Characteristic.PowerModeSelection)
-                    .onSet(async (command) => {
-                        try {
-                            switch (command) {
-                                case Characteristic.PowerModeSelection.SHOW:
-                                    command = '139';
-                                    break;
-                                case Characteristic.PowerModeSelection.HIDE:
-                                    command = '174';
-                                    break;
-                            }
+            //prepare volume service
+            if (this.volumeControl) {
+                const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare volume service`);
+                const volumeServiceName = this.volumeControlNamePrefix ? `${accessoryName} ${this.volumeControlName}` : this.volumeControlName;
+                if (this.volumeControl === 1) {
+                    this.volumeService = accessory.addService(Service.Lightbulb, `${volumeServiceName}`, 'Volume');
+                    this.volumeService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                    this.volumeService.setCharacteristic(Characteristic.ConfiguredName, `${volumeServiceName}`);
+                    this.volumeService.getCharacteristic(Characteristic.Brightness)
+                        .onGet(async () => {
+                            const volume = this.volume;
+                            return volume;
+                        })
+                        .onSet(async (volume) => {
+                            this.speakerService.setCharacteristic(Characteristic.Volume, volume);
+                        });
+                    this.volumeService.getCharacteristic(Characteristic.On)
+                        .onGet(async () => {
+                            const state = !this.mute;
+                            return state;
+                        })
+                        .onSet(async (state) => {
+                            this.speakerService.setCharacteristic(Characteristic.Mute, !state);
+                        });
+                    this.allServices.push(this.volumeService);
+                }
 
-                            await this.openwebif.send(CONSTANTS.ApiUrls.SetRcCommand + command);
-                            const info = this.disableLogInfo ? false : this.emit('message', `set Power Mode Selection: ${command === '139' ? 'SHOW' : 'HIDE'}`);
-                        } catch (error) {
-                            this.emit('error', `set Power Mode Selection error: ${error}`);
-                        };
-                    });
-                this.allServices.push(this.televisionService);
+                if (this.volumeControl === 2) {
+                    this.volumeServiceFan = accessory.addService(Service.Fan, `${volumeServiceName}`, 'Volume');
+                    this.volumeServiceFan.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                    this.volumeServiceFan.setCharacteristic(Characteristic.ConfiguredName, `${volumeServiceName}`);
+                    this.volumeServiceFan.getCharacteristic(Characteristic.RotationSpeed)
+                        .onGet(async () => {
+                            const volume = this.volume;
+                            return volume;
+                        })
+                        .onSet(async (volume) => {
+                            this.speakerService.setCharacteristic(Characteristic.Volume, volume);
+                        });
+                    this.volumeServiceFan.getCharacteristic(Characteristic.On)
+                        .onGet(async () => {
+                            const state = !this.mute;
+                            return state;
+                        })
+                        .onSet(async (state) => {
+                            this.speakerService.setCharacteristic(Characteristic.Mute, !state);
+                        });
 
-                //prepare speaker service
-                const debug3 = !this.enableDebugMode ? false : this.emit('debug', `Prepare speaker service`);
-                this.speakerService = accessory.addService(Service.TelevisionSpeaker, `${accessoryName} Speaker`, 'Speaker');
-                this.speakerService.getCharacteristic(Characteristic.Active)
+                    this.allServices.push(this.volumeServiceFan);
+                }
+            }
+
+            //prepare sensor service
+            if (this.sensorPower) {
+                const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare power sensor service`);
+                this.sensorPowerService = accessory.addService(Service.ContactSensor, `${accessoryName} Power Sensor`, `Power Sensor`);
+                this.sensorPowerService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                this.sensorPowerService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Power Sensor`);
+                this.sensorPowerService.getCharacteristic(Characteristic.ContactSensorState)
                     .onGet(async () => {
                         const state = this.power;
                         return state;
-                    })
-                    .onSet(async (state) => {
                     });
+                this.allServices.push(this.sensorPowerService);
+            };
 
-                this.speakerService.getCharacteristic(Characteristic.VolumeControlType)
+            if (this.sensorVolume) {
+                const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare volume sensor service`);
+                this.sensorVolumeService = accessory.addService(Service.ContactSensor, `${accessoryName} Volume Sensor`, `Volume Sensor`);
+                this.sensorVolumeService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                this.sensorVolumeService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Volume Sensor`);
+                this.sensorVolumeService.getCharacteristic(Characteristic.ContactSensorState)
                     .onGet(async () => {
-                        const state = 3; //none, relative, relative with current, absolute
+                        const state = this.sensorVolumeState;
                         return state;
                     });
+                this.allServices.push(this.sensorVolumeService);
+            };
 
-                this.speakerService.getCharacteristic(Characteristic.VolumeSelector)
-                    .onSet(async (command) => {
-                        try {
-                            switch (command) {
-                                case Characteristic.VolumeSelector.INCREMENT:
-                                    command = '115';
-                                    break;
-                                case Characteristic.VolumeSelector.DECREMENT:
-                                    command = '114';
-                                    break;
-                            }
-
-                            await this.openwebif.send(CONSTANTS.ApiUrls.SetRcCommand + command);
-                            const info = this.disableLogInfo ? false : this.emit('message', `set Volume Selector: ${command}`);
-                        } catch (error) {
-                            this.emit('error', `set Volume Selector command error: ${error}`);
-                        };
-                    });
-
-                this.speakerService.getCharacteristic(Characteristic.Volume)
+            if (this.sensorMute) {
+                const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare mute sensor service`);
+                this.sensorMuteService = accessory.addService(Service.ContactSensor, `${accessoryName} Mute Sensor`, `Mute Sensor`);
+                this.sensorMuteService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                this.sensorMuteService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Mute Sensor`);
+                this.sensorMuteService.getCharacteristic(Characteristic.ContactSensorState)
                     .onGet(async () => {
-                        const volume = this.volume;
-                        return volume;
-                    })
-                    .onSet(async (volume) => {
-                        try {
-                            await this.openwebif.send(CONSTANTS.ApiUrls.SetVolume + volume);
-                            const info = this.disableLogInfo ? false : this.emit('message', `set Volume: ${volume}`);
-                        } catch (error) {
-                            this.emit('error', `set Volume level error: ${error}`);
-                        };
-                    });
-
-                this.speakerService.getCharacteristic(Characteristic.Mute)
-                    .onGet(async () => {
-                        const state = this.mute;
+                        const state = this.power ? this.mute : false;
                         return state;
-                    })
-                    .onSet(async (state) => {
-                        try {
-                            await this.openwebif.send(CONSTANTS.ApiUrls.ToggleMute);
-                            const info = this.disableLogInfo ? false : this.emit('message', `set Mute: ${state ? 'ON' : 'OFF'}`);
-                        } catch (error) {
-                            this.emit('error', `set Mute error: ${error}`);
-                        };
                     });
-                this.allServices.push(this.tvSpeakerService);
+                this.allServices.push(this.sensorMuteService);
+            };
 
-                //prepare inputs service
-                const debug4 = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs servics`);
+            if (this.sensorInput) {
+                const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare input sensor service`);
+                this.sensorInputService = accessory.addService(Service.ContactSensor, `${accessoryName} Input Sensor`, `Input Sensor`);
+                this.sensorInputService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                this.sensorInputService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Input Sensor`);
+                this.sensorInputService.getCharacteristic(Characteristic.ContactSensorState)
+                    .onGet(async () => {
+                        const state = this.sensorInputState;
+                        return state;
+                    });
+                this.allServices.push(this.sensorInputService);
+            };
 
-                //check possible inputs count (max 85)
-                const inputs = channels;
-                const inputsCount = inputs.length;
-                const possibleInputsCount = 85 - this.allServices.length;
-                const maxInputsCount = inputsCount >= possibleInputsCount ? possibleInputsCount : inputsCount;
-                for (let i = 0; i < maxInputsCount; i++) {
-                    //input
-                    const input = inputs[i];
-                    const inputIdentifier = i + 1;
+            //prepare inputs switch sensor service
+            const possibleInputsButtonsCount = 99 - this.allServices.length;
+            const maxInputsSwitchesButtonsCount = this.inputsConfigured.length >= possibleInputsButtonsCount ? possibleInputsButtonsCount : this.inputsConfigured.length;
+            if (maxInputsSwitchesButtonsCount > 0) {
+                const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs buttons services`);
+                for (let i = 0; i < maxInputsSwitchesButtonsCount; i++) {
+                    //get switch
+                    const inputButton = this.inputsConfigured[i];
 
-                    //get input reference
-                    const inputReference = input.reference;
+                    //get switch name		
+                    const inputName = inputButton.name ?? false;
 
-                    //get input name
-                    const savedInputName = this.savedInputsNames[inputReference] ?? false;
-                    input.name = savedInputName ? savedInputName : input.name;
+                    //get switch reference
+                    const inputReference = inputButton.reference ?? false;
 
-                    //get input type
-                    const inputSourceType = 0;
+                    //get switch display type
+                    const inputDisplayType = inputButton.displayType || 0;
 
-                    //get input configured
-                    const isConfigured = 1;
+                    //get sensor name prefix
+                    const namePrefix = inputButton.namePrefix || false;
 
-                    //get visibility
-                    input.visibility = this.savedInputsTargetVisibility[inputReference] ?? 0;
+                    //add state to the input
+                    inputButton.state = false;
 
-                    //add identifier to the input
-                    input.identifier = inputIdentifier;
-
-                    //input service
-                    const inputService = accessory.addService(Service.InputSource, input.name, `Input ${inputIdentifier}`);
-                    inputService
-                        .setCharacteristic(Characteristic.Identifier, inputIdentifier)
-                        .setCharacteristic(Characteristic.Name, input.name)
-                        .setCharacteristic(Characteristic.IsConfigured, isConfigured)
-                        .setCharacteristic(Characteristic.InputSourceType, inputSourceType)
-                        .setCharacteristic(Characteristic.CurrentVisibilityState, input.visibility)
-
-                    inputService.getCharacteristic(Characteristic.ConfiguredName)
-                        .onGet(async () => {
-                            return input.name;
-                        })
-                        .onSet(async (value) => {
-                            if (value === this.savedInputsNames[inputReference]) {
-                                return;
-                            }
-
-                            try {
-                                input.name = value;
-                                this.savedInputsNames[inputReference] = value;
-                                await this.saveData(this.inputsNamesFile, this.savedInputsNames);
-                                const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved Input, Name: ${value}, Reference: ${inputReference}`);
-
-                                //sort inputs
-                                const index = this.inputsConfigured.findIndex(input => input.reference === inputReference);
-                                this.inputsConfigured[index].name = value;
-                                await this.displayOrder();
-                            } catch (error) {
-                                this.emit('error', `save Input Name error: ${error}`);
-                            }
-                        });
-
-                    inputService.getCharacteristic(Characteristic.TargetVisibilityState)
-                        .onGet(async () => {
-                            return input.visibility;
-                        })
-                        .onSet(async (state) => {
-                            if (state === this.savedInputsTargetVisibility[inputReference]) {
-                                return;
-                            }
-
-                            try {
-                                input.visibility = state;
-                                this.savedInputsTargetVisibility[inputReference] = state;
-                                await this.saveData(this.inputsTargetVisibilityFile, this.savedInputsTargetVisibility);
-                                const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved Input: ${input.name}, Target Visibility: ${state ? 'HIDEN' : 'SHOWN'}`);
-                            } catch (error) {
-                                this.emit('error', `save Target Visibility error: ${error}`);
-                            }
-                        });
-                    this.inputsConfigured.push(input);
-                    this.televisionService.addLinkedService(inputService);
-                    this.allServices.push(inputService);
-                }
-
-                //prepare volume service
-                if (this.volumeControl) {
-                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare volume service`);
-                    const volumeServiceName = this.volumeControlNamePrefix ? `${accessoryName} ${this.volumeControlName}` : this.volumeControlName;
-                    if (this.volumeControl === 1) {
-                        this.volumeService = accessory.addService(Service.Lightbulb, `${volumeServiceName}`, 'Volume');
-                        this.volumeService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                        this.volumeService.setCharacteristic(Characteristic.ConfiguredName, `${volumeServiceName}`);
-                        this.volumeService.getCharacteristic(Characteristic.Brightness)
+                    if (inputReference && inputName && inputDisplayType > 0) {
+                        const serviceName = namePrefix ? `${accessoryName} ${inputName}` : inputName;
+                        const serviceType = ['', Service.Outlet, Service.Switch][inputDisplayType];
+                        const inputButtonService = new serviceType(serviceName, `Switch ${i}`);
+                        inputButtonService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                        inputButtonService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
+                        inputButtonService.getCharacteristic(Characteristic.On)
                             .onGet(async () => {
-                                const volume = this.volume;
-                                return volume;
-                            })
-                            .onSet(async (volume) => {
-                                this.speakerService.setCharacteristic(Characteristic.Volume, volume);
-                            });
-                        this.volumeService.getCharacteristic(Characteristic.On)
-                            .onGet(async () => {
-                                const state = !this.mute;
-                                return state;
-                            })
-                            .onSet(async (state) => {
-                                this.speakerService.setCharacteristic(Characteristic.Mute, !state);
-                            });
-                        this.allServices.push(this.volumeService);
-                    }
-
-                    if (this.volumeControl === 2) {
-                        this.volumeServiceFan = accessory.addService(Service.Fan, `${volumeServiceName}`, 'Volume');
-                        this.volumeServiceFan.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                        this.volumeServiceFan.setCharacteristic(Characteristic.ConfiguredName, `${volumeServiceName}`);
-                        this.volumeServiceFan.getCharacteristic(Characteristic.RotationSpeed)
-                            .onGet(async () => {
-                                const volume = this.volume;
-                                return volume;
-                            })
-                            .onSet(async (volume) => {
-                                this.speakerService.setCharacteristic(Characteristic.Volume, volume);
-                            });
-                        this.volumeServiceFan.getCharacteristic(Characteristic.On)
-                            .onGet(async () => {
-                                const state = !this.mute;
-                                return state;
-                            })
-                            .onSet(async (state) => {
-                                this.speakerService.setCharacteristic(Characteristic.Mute, !state);
-                            });
-
-                        this.allServices.push(this.volumeServiceFan);
-                    }
-                }
-
-                //prepare sensor service
-                if (this.sensorPower) {
-                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare power sensor service`);
-                    this.sensorPowerService = accessory.addService(Service.ContactSensor, `${accessoryName} Power Sensor`, `Power Sensor`);
-                    this.sensorPowerService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                    this.sensorPowerService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Power Sensor`);
-                    this.sensorPowerService.getCharacteristic(Characteristic.ContactSensorState)
-                        .onGet(async () => {
-                            const state = this.power;
-                            return state;
-                        });
-                    this.allServices.push(this.sensorPowerService);
-                };
-
-                if (this.sensorVolume) {
-                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare volume sensor service`);
-                    this.sensorVolumeService = accessory.addService(Service.ContactSensor, `${accessoryName} Volume Sensor`, `Volume Sensor`);
-                    this.sensorVolumeService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                    this.sensorVolumeService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Volume Sensor`);
-                    this.sensorVolumeService.getCharacteristic(Characteristic.ContactSensorState)
-                        .onGet(async () => {
-                            const state = this.sensorVolumeState;
-                            return state;
-                        });
-                    this.allServices.push(this.sensorVolumeService);
-                };
-
-                if (this.sensorMute) {
-                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare mute sensor service`);
-                    this.sensorMuteService = accessory.addService(Service.ContactSensor, `${accessoryName} Mute Sensor`, `Mute Sensor`);
-                    this.sensorMuteService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                    this.sensorMuteService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Mute Sensor`);
-                    this.sensorMuteService.getCharacteristic(Characteristic.ContactSensorState)
-                        .onGet(async () => {
-                            const state = this.power ? this.mute : false;
-                            return state;
-                        });
-                    this.allServices.push(this.sensorMuteService);
-                };
-
-                if (this.sensorInput) {
-                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare input sensor service`);
-                    this.sensorInputService = accessory.addService(Service.ContactSensor, `${accessoryName} Input Sensor`, `Input Sensor`);
-                    this.sensorInputService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                    this.sensorInputService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Input Sensor`);
-                    this.sensorInputService.getCharacteristic(Characteristic.ContactSensorState)
-                        .onGet(async () => {
-                            const state = this.sensorInputState;
-                            return state;
-                        });
-                    this.allServices.push(this.sensorInputService);
-                };
-
-                //prepare inputs switch sensor service
-                const possibleInputsButtonsCount = 99 - this.allServices.length;
-                const maxInputsSwitchesButtonsCount = this.inputsConfigured.length >= possibleInputsButtonsCount ? possibleInputsButtonsCount : this.inputsConfigured.length;
-                if (maxInputsSwitchesButtonsCount > 0) {
-                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs buttons services`);
-                    for (let i = 0; i < maxInputsSwitchesButtonsCount; i++) {
-                        //get switch
-                        const inputButton = this.inputsConfigured[i];
-
-                        //get switch name		
-                        const inputName = inputButton.name ?? false;
-
-                        //get switch reference
-                        const inputReference = inputButton.reference ?? false;
-
-                        //get switch display type
-                        const inputDisplayType = inputButton.displayType || 0;
-
-                        //get sensor name prefix
-                        const namePrefix = inputButton.namePrefix || false;
-
-                        //add state to the input
-                        inputButton.state = false;
-
-                        if (inputReference && inputName && inputDisplayType > 0) {
-                            const serviceName = namePrefix ? `${accessoryName} ${inputName}` : inputName;
-                            const serviceType = ['', Service.Outlet, Service.Switch][inputDisplayType];
-                            const inputButtonService = new serviceType(serviceName, `Switch ${i}`);
-                            inputButtonService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                            inputButtonService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
-                            inputButtonService.getCharacteristic(Characteristic.On)
-                                .onGet(async () => {
-                                    const state = inputButton.state;
-                                    return state;
-                                })
-                                .onSet(async (state) => {
-                                    try {
-                                        const setSwitchInput = state ? await this.openwebif.send(CONSTANTS.ApiUrls.SetChannel + inputReference) : false;
-                                        const debug = !this.enableDebugMode ? false : this.emit('debug', `Set Channel Name: ${inputName}, Reference: ${inputReference}`);
-                                    } catch (error) {
-                                        this.emit('error', `set Channel error: ${error}`);
-                                    };
-                                });
-                            this.inputsButtonsConfigured.push(inputButton);
-                            this.inputsButtonsServices.push(inputButtonService);
-                            this.allServices.push(inputButtonService);
-                            accessory.addService(inputButtonService);
-                        } else {
-                            const log = inputDisplayType === 0 ? false : this.emit('message', `Input Button Name: ${inputName ? inputName : 'Missing'}, Reference: ${inputReference ? inputReference : 'Missing'}.`);
-                        };
-                    }
-                }
-
-                //prepare sonsor service
-                const possibleSensorInputsCount = 99 - this.allServices.length;
-                const maxSensorInputsCount = this.sensorsInputsConfiguredCount >= possibleSensorInputsCount ? possibleSensorInputsCount : this.sensorsInputsConfiguredCount;
-                if (maxSensorInputsCount > 0) {
-                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs sensors services`);
-                    for (let i = 0; i < maxSensorInputsCount; i++) {
-                        //get sensor
-                        const sensorInput = this.sensorsInputsConfigured[i];
-
-                        //get sensor name		
-                        const sensorInputName = sensorInput.name;
-
-                        //get sensor name prefix
-                        const namePrefix = sensorInput.namePrefix || false;
-
-                        //get service type
-                        const serviceType = sensorInput.serviceType;
-
-                        //get service type
-                        const characteristicType = sensorInput.characteristicType;
-
-                        const serviceName = namePrefix ? `${accessoryName} ${sensorInputName}` : sensorInputName;
-                        const sensorInputService = new serviceType(serviceName, `Sensor ${i}`);
-                        sensorInputService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                        sensorInputService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
-                        sensorInputService.getCharacteristic(characteristicType)
-                            .onGet(async () => {
-                                const state = sensorInput.state
-                                return state;
-                            });
-                        this.sensorsInputsServices.push(sensorInputService);
-                        this.allServices.push(sensorInputService);
-                        accessory.addService(sensorInputService);
-                    }
-                }
-
-                //prepare buttons service
-                const possibleButtonsCount = 99 - this.allServices.length;
-                const maxButtonsCount = this.buttonsConfiguredCount >= possibleButtonsCount ? possibleButtonsCount : this.buttonsConfiguredCount;
-                if (maxButtonsCount > 0) {
-                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs buttons services`);
-                    for (let i = 0; i < maxButtonsCount; i++) {
-                        //get button
-                        const button = this.buttonsConfigured[i];
-
-                        //get button name
-                        const buttonName = button.name;
-
-                        //get button mode
-                        const buttonMode = button.mode;
-
-                        //get button command
-                        const buttonReference = button.reference;
-
-                        //get button command
-                        const buttonCommand = button.command;
-
-                        //get button name prefix
-                        const namePrefix = button.namePrefix || 0;
-
-                        //get service type
-                        const serviceType = button.serviceType;
-
-                        const serviceName = namePrefix ? `${accessoryName} ${buttonName}` : buttonName;
-                        const buttonService = new serviceType(serviceName, `Button ${i}`);
-                        buttonService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                        buttonService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
-                        buttonService.getCharacteristic(Characteristic.On)
-                            .onGet(async () => {
-                                const state = button.state;
+                                const state = inputButton.state;
                                 return state;
                             })
                             .onSet(async (state) => {
                                 try {
-                                    switch (buttonMode) {
-                                        case 0: //Channel control
-                                            const send = this.power && state ? await this.openwebif.send(CONSTANTS.ApiUrls.SetChannel + buttonReference) : false;
-                                            const debug0 = state && this.enableDebugMode ? this.emit('debug', `Set Channel, Name: ${buttonName}, Reference: ${buttonReference}`) : false;
-                                            break;
-                                        case 1: //RC Control
-                                            const send1 = state ? await this.openwebif.send(CONSTANTS.ApiUrls.SetRcCommand + buttonCommand) : false;
-                                            const debug1 = state && this.enableDebugMode ? this.emit('debug', `Set Command, Name: ${buttonName}, Reference: ${buttonCommand}`) : false;
-                                            button.state = false;
-                                            break;
-                                        default:
-                                            const debug2 = this.enableDebugMode ? this.emit('debug', `Set Unknown Button Mode: ${buttonMode}.`) : false;
-                                            button.state = false;
-                                            break;
-                                    };
+                                    const setSwitchInput = state ? await this.openwebif.send(CONSTANTS.ApiUrls.SetChannel + inputReference) : false;
+                                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Set Channel Name: ${inputName}, Reference: ${inputReference}`);
                                 } catch (error) {
-                                    this.emit('error', `set ${['Channel', 'Command'][buttonMode]} error: ${error}`);
+                                    this.emit('error', `set Channel error: ${error}`);
                                 };
                             });
-                        this.buttonsServices.push(buttonService);
-                        this.allServices.push(buttonService);
-                        accessory.addService(buttonService);
+                        this.inputsButtonsConfigured.push(inputButton);
+                        this.inputsButtonsServices.push(inputButtonService);
+                        this.allServices.push(inputButtonService);
+                        accessory.addService(inputButtonService);
+                    } else {
+                        const log = inputDisplayType === 0 ? false : this.emit('message', `Input Button Name: ${inputName ? inputName : 'Missing'}, Reference: ${inputReference ? inputReference : 'Missing'}.`);
                     };
                 }
+            }
 
-                resolve(accessory);
-            } catch (error) {
-                reject(error)
-            };
-        });
+            //prepare sonsor service
+            const possibleSensorInputsCount = 99 - this.allServices.length;
+            const maxSensorInputsCount = this.sensorsInputsConfiguredCount >= possibleSensorInputsCount ? possibleSensorInputsCount : this.sensorsInputsConfiguredCount;
+            if (maxSensorInputsCount > 0) {
+                const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs sensors services`);
+                for (let i = 0; i < maxSensorInputsCount; i++) {
+                    //get sensor
+                    const sensorInput = this.sensorsInputsConfigured[i];
+
+                    //get sensor name		
+                    const sensorInputName = sensorInput.name;
+
+                    //get sensor name prefix
+                    const namePrefix = sensorInput.namePrefix || false;
+
+                    //get service type
+                    const serviceType = sensorInput.serviceType;
+
+                    //get service type
+                    const characteristicType = sensorInput.characteristicType;
+
+                    const serviceName = namePrefix ? `${accessoryName} ${sensorInputName}` : sensorInputName;
+                    const sensorInputService = new serviceType(serviceName, `Sensor ${i}`);
+                    sensorInputService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                    sensorInputService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
+                    sensorInputService.getCharacteristic(characteristicType)
+                        .onGet(async () => {
+                            const state = sensorInput.state
+                            return state;
+                        });
+                    this.sensorsInputsServices.push(sensorInputService);
+                    this.allServices.push(sensorInputService);
+                    accessory.addService(sensorInputService);
+                }
+            }
+
+            //prepare buttons service
+            const possibleButtonsCount = 99 - this.allServices.length;
+            const maxButtonsCount = this.buttonsConfiguredCount >= possibleButtonsCount ? possibleButtonsCount : this.buttonsConfiguredCount;
+            if (maxButtonsCount > 0) {
+                const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs buttons services`);
+                for (let i = 0; i < maxButtonsCount; i++) {
+                    //get button
+                    const button = this.buttonsConfigured[i];
+
+                    //get button name
+                    const buttonName = button.name;
+
+                    //get button mode
+                    const buttonMode = button.mode;
+
+                    //get button command
+                    const buttonReference = button.reference;
+
+                    //get button command
+                    const buttonCommand = button.command;
+
+                    //get button name prefix
+                    const namePrefix = button.namePrefix || 0;
+
+                    //get service type
+                    const serviceType = button.serviceType;
+
+                    const serviceName = namePrefix ? `${accessoryName} ${buttonName}` : buttonName;
+                    const buttonService = new serviceType(serviceName, `Button ${i}`);
+                    buttonService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                    buttonService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
+                    buttonService.getCharacteristic(Characteristic.On)
+                        .onGet(async () => {
+                            const state = button.state;
+                            return state;
+                        })
+                        .onSet(async (state) => {
+                            try {
+                                switch (buttonMode) {
+                                    case 0: //Channel control
+                                        const send = this.power && state ? await this.openwebif.send(CONSTANTS.ApiUrls.SetChannel + buttonReference) : false;
+                                        const debug0 = state && this.enableDebugMode ? this.emit('debug', `Set Channel, Name: ${buttonName}, Reference: ${buttonReference}`) : false;
+                                        break;
+                                    case 1: //RC Control
+                                        const send1 = state ? await this.openwebif.send(CONSTANTS.ApiUrls.SetRcCommand + buttonCommand) : false;
+                                        const debug1 = state && this.enableDebugMode ? this.emit('debug', `Set Command, Name: ${buttonName}, Reference: ${buttonCommand}`) : false;
+                                        button.state = false;
+                                        break;
+                                    default:
+                                        const debug2 = this.enableDebugMode ? this.emit('debug', `Set Unknown Button Mode: ${buttonMode}.`) : false;
+                                        button.state = false;
+                                        break;
+                                };
+                            } catch (error) {
+                                this.emit('error', `set ${['Channel', 'Command'][buttonMode]} error: ${error}`);
+                            };
+                        });
+                    this.buttonsServices.push(buttonService);
+                    this.allServices.push(buttonService);
+                    accessory.addService(buttonService);
+                };
+            }
+
+            return accessory;
+        } catch (error) {
+            this.emit('erroe', error)
+        };
     }
 };
 module.exports = OpenWebIfDevice;
