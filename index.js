@@ -36,11 +36,9 @@ class OpenWebIfPlatform {
 				const debug = enableDebugMode ? log(`Device: ${host} ${deviceName}, did finish launching.`) : false;
 				const config = {
 					...device,
-					user: 'removed',
 					pass: 'removed',
 					mqtt: {
 						...device.mqtt,
-						user: 'removed',
 						passwd: 'removed'
 					}
 				};

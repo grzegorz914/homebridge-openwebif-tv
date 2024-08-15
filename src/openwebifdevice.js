@@ -44,6 +44,7 @@ class OpenWebIfDevice extends EventEmitter {
         this.volumeControlName = device.volumeControlName || 'Volume';
         this.volumeControl = device.volumeControl || false;
         this.refreshInterval = device.refreshInterval * 1000 || 5000;
+        this.mqtt = device.mqtt || {};
 
         //external integrations
         this.mqttConnected = false;
@@ -281,16 +282,16 @@ class OpenWebIfDevice extends EventEmitter {
             })
             .on('prepareAccessory', async (channels) => {
                 //mqtt client
-                const mqttEnabled = device.mqtt.enable || false;
+                const mqttEnabled = this.mqtt.enable || false;
                 if (mqttEnabled) {
                     this.mqtt = new Mqtt({
-                        host: device.mqtt.host,
-                        port: device.mqtt.port || 1883,
-                        clientId: device.mqtt.clientId || `openwebif_${Math.random().toString(16).slice(3)}`,
-                        prefix: `${device.mqtt.prefix}/${device.name}`,
-                        user: device.mqtt.user,
-                        passwd: device.mqtt.passwd,
-                        debug: device.mqtt.debug || false
+                        host: this.mqtt.host,
+                        port: this.mqtt.port || 1883,
+                        clientId: this.mqtt.clientId || `openwebif_${Math.random().toString(16).slice(3)}`,
+                        prefix: `${this.mqtt.prefix}/${device.name}`,
+                        user: this.mqtt.user,
+                        passwd: this.mqtt.passwd,
+                        debug: this.mqtt.debug || false
                     });
 
                     this.mqtt.on('connected', (message) => {
@@ -353,8 +354,13 @@ class OpenWebIfDevice extends EventEmitter {
 
                     //sort inputs list
                     const sortInputsDisplayOrder = this.televisionService ? await this.displayOrder() : false;
+
+                    //start check state
+                    this.openwebif.impulseGenerator.start([{ timerName: 'checkState', sampling: this.refreshInterval }]);
                 } catch (error) {
-                    this.emit('error', `Prepare accessory error: ${error}`);
+                    this.emit('error', `Prepare accessory error: ${error}. try again in 15s.`);
+                    await new Promise(resolve => setTimeout(resolve, 15000));
+                    this.openwebif.impulseGenerator.emit('checkDeviceInfo');
                 };
             })
             .on('message', (message) => {

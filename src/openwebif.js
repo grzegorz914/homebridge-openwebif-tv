@@ -37,8 +37,6 @@ class OPENWEBIF extends EventEmitter {
             }
         });
 
-        this.startPrepareAccessory = true;
-        this.emitDeviceInfo = true;
         this.power = false;
         this.name = '';
         this.eventName = '';
@@ -47,17 +45,8 @@ class OPENWEBIF extends EventEmitter {
         this.mute = false;
         this.devInfo = '';
 
-        const timers = [
-            { name: 'checkDeviceInfo', interval: 30000 },
-            { name: 'checkState', interval: refreshInterval },
-        ];
-
-        const impulseGenerator = new ImpulseGenerator(timers);
-        impulseGenerator.on('checkDeviceInfo', async () => {
-            if (!this.startPrepareAccessory) {
-                return;
-            }
-
+        this.impulseGenerator = new ImpulseGenerator();
+        this.impulseGenerator.on('checkDeviceInfo', async () => {
             try {
                 const deviceInfo = await this.axiosInstance(CONSTANTS.ApiUrls.DeviceInfo);
                 const devInfo = deviceInfo.data;
@@ -88,26 +77,17 @@ class OPENWEBIF extends EventEmitter {
                 const channels = await this.saveInputs(channelsFile, inputsFile, allChannels, bouquets, inputs, getInputsFromDevice);
 
                 //emit device info
-                const emitDeviceInfo = this.emitDeviceInfo ? this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) : false;
-                this.emitDeviceInfo = false;
-
+                this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
 
                 //prepare accessory
-                const prepareAccessory = this.startPrepareAccessory ? this.emit('prepareAccessory', channels) : false;
-                this.startPrepareAccessory = false;
-
-                //update state
-                await new Promise(resolve => setTimeout(resolve, 1500));
-                impulseGenerator.emit('checkState');
+                this.emit('prepareAccessory', channels);
             } catch (error) {
                 const debug = disableLogConnectError ? false : this.emit('error', `Info error: ${error}, reconnect in 15s.`);
+                await new Promise(resolve => setTimeout(resolve, 15000));
+                this.impulseGenerator.emit('checkDeviceInfo');
             };
         })
             .on('checkState', async () => {
-                if (this.startPrepareAccessory) {
-                    return;
-                }
-
                 try {
                     const deviceState = await this.axiosInstance(CONSTANTS.ApiUrls.DeviceStatus);
                     const devState = deviceState.data;
@@ -139,16 +119,13 @@ class OPENWEBIF extends EventEmitter {
                     //emit state changed
                     this.emit('stateChanged', power, name, eventName, reference, volume, mute);
                 } catch (error) {
+                    this.emit('stateChanged', false, this.name, this.eventName, this.reference, this.volume, this.mute);
                     const debug = disableLogConnectError ? false : this.emit('error', `State error: ${error}, reconnect in ${refreshInterval / 1000}s.`);
-                    impulseGenerator.emit('disconnect');
                 };
             })
-            .on('disconnect', () => {
-                this.emit('stateChanged', false, this.name, this.eventName, this.reference, this.volume, this.mute);
-                const debug = disableLogConnectError ? false : this.emit('disconnected', 'Disconnected.');
-            });
+            .on('state', () => { });
 
-        impulseGenerator.start();
+        this.impulseGenerator.emit('checkDeviceInfo');
     };
 
     async saveDevInfo(path, devInfo) {
