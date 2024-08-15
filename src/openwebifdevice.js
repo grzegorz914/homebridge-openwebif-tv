@@ -44,9 +44,11 @@ class OpenWebIfDevice extends EventEmitter {
         this.volumeControlName = device.volumeControlName || 'Volume';
         this.volumeControl = device.volumeControl || false;
         this.refreshInterval = device.refreshInterval * 1000 || 5000;
-        this.mqtt = device.mqtt || {};
 
         //external integrations
+        //mqtt
+        const mqtt = device.restFul ?? {};
+        const mqttEnabled = mqtt.enable || false;
         this.mqttConnected = false;
 
         //services
@@ -282,16 +284,15 @@ class OpenWebIfDevice extends EventEmitter {
             })
             .on('prepareAccessory', async (channels) => {
                 //mqtt client
-                const mqttEnabled = this.mqtt.enable || false;
                 if (mqttEnabled) {
                     this.mqtt = new Mqtt({
-                        host: this.mqtt.host,
-                        port: this.mqtt.port || 1883,
-                        clientId: this.mqtt.clientId || `openwebif_${Math.random().toString(16).slice(3)}`,
-                        prefix: `${this.mqtt.prefix}/${device.name}`,
-                        user: this.mqtt.user,
-                        passwd: this.mqtt.passwd,
-                        debug: this.mqtt.debug || false
+                        host: mqtt.host,
+                        port: mqtt.port || 1883,
+                        clientId: mqtt.clientId || `openwebif_${Math.random().toString(16).slice(3)}`,
+                        prefix: `${mqtt.prefix}/${device.name}`,
+                        user: mqtt.user,
+                        passwd: mqtt.passwd,
+                        debug: mqtt.debug || false
                     });
 
                     this.mqtt.on('connected', (message) => {
