@@ -357,7 +357,7 @@ class OpenWebIfDevice extends EventEmitter {
                     const sortInputsDisplayOrder = this.televisionService ? await this.displayOrder() : false;
 
                     //start check state
-                    this.openwebif.impulseGenerator.start([{ timerName: 'checkState', sampling: this.refreshInterval }]);
+                    this.openwebif.impulseGenerator.start([{ name: 'checkState', sampling: this.refreshInterval }]);
                 } catch (error) {
                     this.emit('error', `Prepare accessory error: ${error}. try again in 15s.`);
                     await new Promise(resolve => setTimeout(resolve, 15000));
