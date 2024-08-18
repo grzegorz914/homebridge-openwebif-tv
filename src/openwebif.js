@@ -136,7 +136,7 @@ class OPENWEBIF extends EventEmitter {
 
             return true;;
         } catch (error) {
-            this.emit('erroe', error);
+            throw new Error(error);
         };
     };
 
@@ -198,7 +198,7 @@ class OPENWEBIF extends EventEmitter {
 
             return channelArr;
         } catch (error) {
-            this.emit('erroe', error);
+            throw new Error(error);
         };
     };
 
@@ -207,7 +207,7 @@ class OPENWEBIF extends EventEmitter {
             await this.axiosInstance(apiUrl);
             return true;;
         } catch (error) {
-            this.emit('erroe', error);
+            throw new Error(error);
         };
     };
 };

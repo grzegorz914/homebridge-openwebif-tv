@@ -47,7 +47,7 @@ class OpenWebIfDevice extends EventEmitter {
 
         //external integrations
         //mqtt
-        const mqtt = device.restFul ?? {};
+        const mqtt = device.mqtt ?? {};
         const mqttEnabled = mqtt.enable || false;
         this.mqttConnected = false;
 
@@ -406,7 +406,7 @@ class OpenWebIfDevice extends EventEmitter {
             this.televisionService.setCharacteristic(Characteristic.DisplayOrder, Encode(1, displayOrder).toString('base64'));
             return true;
         } catch (error) {
-            this.emit('erroe', error);
+            throw new Error(error);
         };
     }
 
@@ -416,7 +416,7 @@ class OpenWebIfDevice extends EventEmitter {
             const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved data: ${JSON.stringify(data, null, 2)}`);
             return true;
         } catch (error) {
-            this.emit('erroe', error);
+            throw new Error(error);
         };
     }
 
@@ -426,7 +426,7 @@ class OpenWebIfDevice extends EventEmitter {
             const debug = !this.enableDebugMode ? false : this.emit('debug', `Read data: ${JSON.stringify(data, null, 2)}`);
             return data;;
         } catch (error) {
-            this.emit('erroe', `Read saved data error: ${error}`);
+            throw new Error(`Read saved data error: ${error}`);
         };
     }
 
@@ -1031,7 +1031,7 @@ class OpenWebIfDevice extends EventEmitter {
 
             return accessory;
         } catch (error) {
-            this.emit('erroe', error)
+            throw new Error(error)
         };
     }
 };
