@@ -335,7 +335,7 @@ class OpenWebIfDevice extends EventEmitter {
                             this.emit('debug', debug);
                         })
                         .on('error', (error) => {
-                            this.emit('error', error);
+                            this.emit('warn', error);
                         });
                 };
 
