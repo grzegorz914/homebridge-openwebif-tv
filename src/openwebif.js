@@ -62,7 +62,9 @@ class OPENWEBIF extends EventEmitter {
                 const mac = devInfo.ifaces[0].mac || false;
 
                 if (!mac) {
-                    const debug = debugLog ? this.emit('debug', `Missing Mac Address: ${mac}, reconnect in 15s.`) : false;
+                    this.emit('warn', `Missing Mac Address: ${mac}, check again in 15s.`);
+                    await new Promise(resolve => setTimeout(resolve, 15000));
+                    this.impulseGenerator.emit('checkDeviceInfo');
                     return;
                 }
 
@@ -75,6 +77,12 @@ class OPENWEBIF extends EventEmitter {
 
                 //save inputs to the file
                 const channels = await this.saveInputs(channelsFile, inputsFile, allChannels, bouquets, inputs, getInputsFromDevice);
+                if (!channels) {
+                    this.emit('warn', `Found: ${channels} channels, check again in 15s.`);
+                    await new Promise(resolve => setTimeout(resolve, 15000));
+                    this.impulseGenerator.emit('checkDeviceInfo');
+                    return;
+                }
 
                 //emit device info
                 this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
@@ -82,7 +90,7 @@ class OPENWEBIF extends EventEmitter {
                 //prepare accessory
                 this.emit('prepareAccessory', channels);
             } catch (error) {
-                const debug = disableLogConnectError ? false : this.emit('error', `Info error: ${error}, reconnect in 15s.`);
+                const debug = disableLogConnectError ? false : this.emit('error', `Info error: ${error}, check again in 15s.`);
                 await new Promise(resolve => setTimeout(resolve, 15000));
                 this.impulseGenerator.emit('checkDeviceInfo');
             };
@@ -120,7 +128,7 @@ class OPENWEBIF extends EventEmitter {
                     this.emit('stateChanged', power, name, eventName, reference, volume, mute);
                 } catch (error) {
                     this.emit('stateChanged', false, this.name, this.eventName, this.reference, this.volume, this.mute);
-                    const debug = disableLogConnectError ? false : this.emit('error', `State error: ${error}, reconnect in ${refreshInterval / 1000}s.`);
+                    const debug = disableLogConnectError ? false : this.emit('error', `State error: ${error}, check again in ${refreshInterval / 1000}s.`);
                 };
             })
             .on('state', () => { });
@@ -146,7 +154,7 @@ class OPENWEBIF extends EventEmitter {
             await fsPromises.writeFile(channelsFile, channels);
             const debug = this.debugLog ? this.emit('debug', `Saved all channels: ${channels}`) : false;
         } catch (error) {
-            this.emit('error', `Save all channels error: ${error}`);
+            this.emit('warn', `Save all channels error: ${error}`);
         };
 
         try {
@@ -171,7 +179,7 @@ class OPENWEBIF extends EventEmitter {
                     };
                     this.bouquetName = bouquetName;
                 } else {
-                    this.emit('message', `Bouquet: ${bouquetName}, was not found.`);
+                    this.emit('warn', `Bouquet: ${bouquetName}, was not found.`);
                 }
             }
 
@@ -192,11 +200,16 @@ class OPENWEBIF extends EventEmitter {
                 const push = inputName && inputReference && !duplicatedInput ? channelArr.push(obj) : false;
             };
 
-            const channels = JSON.stringify(channelArr, null, 2);
-            await fsPromises.writeFile(inputsFile, channels);
-            const debug = this.debugLog ? this.emit('debug', `Saved channels: ${channels}.`) : false;
+            try {
+                const channels = JSON.stringify(channelArr, null, 2);
+                await fsPromises.writeFile(inputsFile, channels);
+                const debug = this.debugLog ? this.emit('debug', `Saved channels: ${channels}.`) : false;
+            } catch (error) {
+                this.emit('warn', `Save channels error: ${error}`);
+            };
 
-            return channelArr;
+            const channels = channelArr.length > 0 ? channelArr : false;
+            return channels;
         } catch (error) {
             throw new Error(error);
         };
@@ -205,7 +218,7 @@ class OPENWEBIF extends EventEmitter {
     async send(apiUrl) {
         try {
             await this.axiosInstance(apiUrl);
-            return true;;
+            return true;
         } catch (error) {
             throw new Error(error);
         };

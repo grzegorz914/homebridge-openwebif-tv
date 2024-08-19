@@ -130,6 +130,7 @@ class OpenWebIfDevice extends EventEmitter {
             });
         } catch (error) {
             this.emit('error', `prepare files error: ${error}`);
+            return;
         }
 
         //openwebif client
@@ -327,7 +328,7 @@ class OpenWebIfDevice extends EventEmitter {
                                         break;
                                 };
                             } catch (error) {
-                                this.emit('error', `MQTT send error: ${error}.`);
+                                this.emit('warn', `MQTT send error: ${error}.`);
                             };
                         })
                         .on('debug', (debug) => {
@@ -369,6 +370,9 @@ class OpenWebIfDevice extends EventEmitter {
             })
             .on('debug', (debug) => {
                 this.emit('debug', debug);
+            })
+            .on('warn', (warn) => {
+                this.emit('warn', warn);
             })
             .on('error', (error) => {
                 this.emit('error', error);
@@ -470,7 +474,7 @@ class OpenWebIfDevice extends EventEmitter {
                         await this.openwebif.send(CONSTANTS.ApiUrls.SetPower + newState);
                         const info = this.disableLogInfo ? false : this.emit('message', `set Power: ${state ? 'ON' : 'OFF'}`);
                     } catch (error) {
-                        this.emit('error', `set Power error: ${error}`);
+                        this.emit('warn', `set Power error: ${error}`);
                     };
                 });
 
@@ -496,7 +500,7 @@ class OpenWebIfDevice extends EventEmitter {
                                 break;
                         }
                     } catch (error) {
-                        this.emit('error', `set Channel error: ${error}`);
+                        this.emit('warn', `set Channel error: ${error}`);
                     };
                 });
 
@@ -549,7 +553,7 @@ class OpenWebIfDevice extends EventEmitter {
                         await this.openwebif.send(CONSTANTS.ApiUrls.SetRcCommand + command);
                         const info = this.disableLogInfo ? false : this.emit('message', `set Remote Key: ${command}`);
                     } catch (error) {
-                        this.emit('error', `set Remote Key error: ${error}`);
+                        this.emit('warn', `set Remote Key error: ${error}`);
                     };
                 });
 
@@ -565,7 +569,7 @@ class OpenWebIfDevice extends EventEmitter {
                         const setBrightness = false
                         const info = this.disableLogInfo ? false : this.emit('message', `set Brightness: ${value}`);
                     } catch (error) {
-                        this.emit('error', `set Brightness error: ${error}`);
+                        this.emit('warn', `set Brightness error: ${error}`);
                     };
                 });
 
@@ -595,7 +599,7 @@ class OpenWebIfDevice extends EventEmitter {
                         const newMediaState = value;
                         const info = this.disableLogInfo ? false : this.emit('message', `set Target Media State: ${['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]}`);
                     } catch (error) {
-                        this.emit('error', `set Target Media state error: ${error}`);
+                        this.emit('warn', `set Target Media state error: ${error}`);
                     };
                 });
 
@@ -614,7 +618,7 @@ class OpenWebIfDevice extends EventEmitter {
                         await this.openwebif.send(CONSTANTS.ApiUrls.SetRcCommand + command);
                         const info = this.disableLogInfo ? false : this.emit('message', `set Power Mode Selection: ${command === '139' ? 'SHOW' : 'HIDE'}`);
                     } catch (error) {
-                        this.emit('error', `set Power Mode Selection error: ${error}`);
+                        this.emit('warn', `set Power Mode Selection error: ${error}`);
                     };
                 });
             this.allServices.push(this.televisionService);
@@ -651,7 +655,7 @@ class OpenWebIfDevice extends EventEmitter {
                         await this.openwebif.send(CONSTANTS.ApiUrls.SetRcCommand + command);
                         const info = this.disableLogInfo ? false : this.emit('message', `set Volume Selector: ${command}`);
                     } catch (error) {
-                        this.emit('error', `set Volume Selector command error: ${error}`);
+                        this.emit('warn', `set Volume Selector command error: ${error}`);
                     };
                 });
 
@@ -665,7 +669,7 @@ class OpenWebIfDevice extends EventEmitter {
                         await this.openwebif.send(CONSTANTS.ApiUrls.SetVolume + volume);
                         const info = this.disableLogInfo ? false : this.emit('message', `set Volume: ${volume}`);
                     } catch (error) {
-                        this.emit('error', `set Volume level error: ${error}`);
+                        this.emit('warn', `set Volume level error: ${error}`);
                     };
                 });
 
@@ -679,7 +683,7 @@ class OpenWebIfDevice extends EventEmitter {
                         await this.openwebif.send(CONSTANTS.ApiUrls.ToggleMute);
                         const info = this.disableLogInfo ? false : this.emit('message', `set Mute: ${state ? 'ON' : 'OFF'}`);
                     } catch (error) {
-                        this.emit('error', `set Mute error: ${error}`);
+                        this.emit('warn', `set Mute error: ${error}`);
                     };
                 });
             this.allServices.push(this.tvSpeakerService);
@@ -745,7 +749,7 @@ class OpenWebIfDevice extends EventEmitter {
                             this.inputsConfigured[index].name = value;
                             await this.displayOrder();
                         } catch (error) {
-                            this.emit('error', `save Input Name error: ${error}`);
+                            this.emit('warn', `save Input Name error: ${error}`);
                         }
                     });
 
@@ -764,7 +768,7 @@ class OpenWebIfDevice extends EventEmitter {
                             await this.saveData(this.inputsTargetVisibilityFile, this.savedInputsTargetVisibility);
                             const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved Input: ${input.name}, Target Visibility: ${state ? 'HIDEN' : 'SHOWN'}`);
                         } catch (error) {
-                            this.emit('error', `save Target Visibility error: ${error}`);
+                            this.emit('warn', `save Target Visibility error: ${error}`);
                         }
                     });
                 this.inputsConfigured.push(input);
@@ -917,7 +921,7 @@ class OpenWebIfDevice extends EventEmitter {
                                     const setSwitchInput = state ? await this.openwebif.send(CONSTANTS.ApiUrls.SetChannel + inputReference) : false;
                                     const debug = !this.enableDebugMode ? false : this.emit('debug', `Set Channel Name: ${inputName}, Reference: ${inputReference}`);
                                 } catch (error) {
-                                    this.emit('error', `set Channel error: ${error}`);
+                                    this.emit('warn', `set Channel error: ${error}`);
                                 };
                             });
                         this.inputsButtonsConfigured.push(inputButton);
@@ -1020,7 +1024,7 @@ class OpenWebIfDevice extends EventEmitter {
                                         break;
                                 };
                             } catch (error) {
-                                this.emit('error', `set ${['Channel', 'Command'][buttonMode]} error: ${error}`);
+                                this.emit('warn', `set ${['Channel', 'Command'][buttonMode]} error: ${error}`);
                             };
                         });
                     this.buttonsServices.push(buttonService);
