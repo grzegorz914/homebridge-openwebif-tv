@@ -53,6 +53,9 @@ class OpenWebIfPlatform {
 					.on('devInfo', (devInfo) => {
 						log.info(devInfo);
 					})
+					.on('success', (message) => {
+						log.success(`Device: ${host} ${deviceName}, ${message}`);
+					})
 					.on('message', (message) => {
 						log.info(`Device: ${host} ${deviceName}, ${message}`);
 					})
