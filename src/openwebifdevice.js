@@ -48,7 +48,6 @@ class OpenWebIfDevice extends EventEmitter {
         //external integrations
         //mqtt
         const mqtt = device.mqtt ?? {};
-        const mqttEnabled = mqtt.enable || false;
         this.mqttConnected = false;
 
         //services
@@ -285,6 +284,7 @@ class OpenWebIfDevice extends EventEmitter {
             })
             .on('prepareAccessory', async (channels) => {
                 //mqtt client
+                const mqttEnabled = mqtt.enable || false;
                 if (mqttEnabled) {
                     this.mqtt = new Mqtt({
                         host: mqtt.host,
@@ -297,13 +297,13 @@ class OpenWebIfDevice extends EventEmitter {
                     });
 
                     this.mqtt.on('connected', (message) => {
-                        this.emit('message', message);
+                        this.emit('success', message);
                         this.mqttConnected = true;
                     })
                         .on('subscribed', (message) => {
-                            this.emit('message', message);
+                            this.emit('success', message);
                         })
-                        .on('subscribedMessage', async (key, value) => {
+                        .on('set', async (key, value) => {
                             try {
                                 switch (key) {
                                     case 'Power':
@@ -324,11 +324,11 @@ class OpenWebIfDevice extends EventEmitter {
                                         await this.openwebif.send(CONSTANTS.ApiUrls.SetRcCommand + value);
                                         break;
                                     default:
-                                        this.emit('message', `MQTT Received unknown key: ${key}, value: ${value}`);
+                                        this.emit('message', `MQTT Received key: ${key}, value: ${value}`);
                                         break;
                                 };
                             } catch (error) {
-                                this.emit('warn', `MQTT send error: ${error}.`);
+                                this.emit('warn', `MQTT set error: ${error}.`);
                             };
                         })
                         .on('debug', (debug) => {
