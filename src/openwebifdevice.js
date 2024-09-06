@@ -8,7 +8,7 @@ const CONSTANTS = require('./constants.json');
 let Accessory, Characteristic, Service, Categories, Encode, AccessoryUUID;
 
 class OpenWebIfDevice extends EventEmitter {
-    constructor(api, prefDir, device) {
+    constructor(api, device, devInfoFile, inputsFile, channelsFile, inputsNamesFile, inputsTargetVisibilityFile) {
         super();
 
         Accessory = api.platformAccessory;
@@ -44,10 +44,15 @@ class OpenWebIfDevice extends EventEmitter {
         this.volumeControlName = device.volumeControlName || 'Volume';
         this.volumeControl = device.volumeControl || false;
         this.refreshInterval = device.refreshInterval * 1000 || 5000;
+        this.devInfoFile = devInfoFile;
+        this.inputsFile = inputsFile;
+        this.channelsFile = channelsFile;
+        this.inputsNamesFile = inputsNamesFile;
+        this.inputsTargetVisibilityFile = inputsTargetVisibilityFile;
 
         //external integrations
         //mqtt
-        const mqtt = device.mqtt ?? {};
+        this.mqtt = device.mqtt ?? {};
         this.mqttConnected = false;
 
         //services
@@ -104,286 +109,278 @@ class OpenWebIfDevice extends EventEmitter {
         this.mute = true;
         this.brightness = 0;
         this.playPause = false;
-
-        //check files exists, if not then create it
-        const postFix = this.host.split('.').join('');
-        const devInfoFile = `${prefDir}/devInfo_${postFix}`;
-        const inputsFile = `${prefDir}/inputs_${postFix}`;
-        const channelsFile = `${prefDir}/channels_${postFix}`;
-        this.inputsNamesFile = `${prefDir}/inputsNames_${postFix}`;
-        this.inputsTargetVisibilityFile = `${prefDir}/inputsTargetVisibility_${postFix}`;
-
-        try {
-            const files = [
-                devInfoFile,
-                inputsFile,
-                channelsFile,
-                this.inputsNamesFile,
-                this.inputsTargetVisibilityFile
-            ];
-
-            files.forEach((file) => {
-                if (!fs.existsSync(file)) {
-                    fs.writeFileSync(file, '');
-                }
-            });
-        } catch (error) {
-            this.emit('error', `prepare files error: ${error}`);
-            return;
-        }
-
-        //openwebif client
-        this.openwebif = new OpenWebIf({
-            host: this.host,
-            port: this.port,
-            user: this.user,
-            pass: this.pass,
-            auth: this.auth,
-            inputs: this.inputs,
-            bouquets: this.bouquets,
-            devInfoFile: devInfoFile,
-            inputsFile: inputsFile,
-            channelsFile: channelsFile,
-            getInputsFromDevice: this.getInputsFromDevice,
-            disableLogConnectError: this.disableLogConnectError,
-            debugLog: this.enableDebugMode,
-            refreshInterval: this.refreshInterval,
-        });
-
-        this.openwebif.on('deviceInfo', (manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) => {
-            if (!this.disableLogDeviceInfo) {
-                this.emit('devInfo', `-------- ${this.name} --------`);
-                this.emit('devInfo', `Manufacturer: ${manufacturer}`);
-                this.emit('devInfo', `Model: ${modelName}`);
-                this.emit('devInfo', `Kernel: ${kernelVer}`);
-                this.emit('devInfo', `Chipset: ${chipset}`);
-                this.emit('devInfo', `Webif version: ${serialNumber}`);
-                this.emit('devInfo', `Firmware: ${firmwareRevision}`);
-                this.emit('devInfo', `----------------------------------`)
-            }
-
-            this.manufacturer = manufacturer || 'Manufacturer';
-            this.modelName = modelName || 'Model Name';
-            this.serialNumber = serialNumber || 'Serial Number';
-            this.firmwareRevision = firmwareRevision || 'Firmware Revision';
-            this.mac = mac;
-        })
-            .on('stateChanged', (power, name, eventName, reference, volume, mute) => {
-                const index = this.inputsConfigured.findIndex(input => input.reference === reference) ?? -1;
-                const inputIdentifier = index !== -1 ? this.inputsConfigured[index].identifier : this.inputIdentifier;
-                mute = power ? mute : true;
-
-                if (this.televisionService) {
-                    this.televisionService
-                        .updateCharacteristic(Characteristic.Active, power)
-                }
-
-                if (this.televisionService) {
-                    this.televisionService
-                        .updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier)
-                }
-
-                if (this.speakerService) {
-                    this.speakerService
-                        .updateCharacteristic(Characteristic.Active, power)
-                        .updateCharacteristic(Characteristic.Volume, volume)
-                        .updateCharacteristic(Characteristic.Mute, mute);
-
-                    if (this.volumeService) {
-                        this.volumeService
-                            .updateCharacteristic(Characteristic.Brightness, volume)
-                            .updateCharacteristic(Characteristic.On, !mute);
-                    }
-
-                    if (this.volumeServiceFan) {
-                        this.volumeServiceFan
-                            .updateCharacteristic(Characteristic.RotationSpeed, volume)
-                            .updateCharacteristic(Characteristic.On, !mute);
-                    }
-                }
-
-                //sensors
-                if (this.sensorPowerService) {
-                    this.sensorPowerService
-                        .updateCharacteristic(Characteristic.ContactSensorState, power)
-                }
-
-                if (this.sensorVolumeService && volume !== this.volume) {
-                    for (let i = 0; i < 2; i++) {
-                        const state = power ? [true, false][i] : false;
-                        this.sensorVolumeService
-                            .updateCharacteristic(Characteristic.ContactSensorState, state)
-                        this.sensorVolumeState = state;
-                    }
-                }
-
-                if (this.sensorMuteService) {
-                    const state = power ? mute : false;
-                    this.sensorMuteService
-                        .updateCharacteristic(Characteristic.ContactSensorState, state)
-                }
-
-                if (this.sensorInputService && reference !== this.reference) {
-                    for (let i = 0; i < 2; i++) {
-                        const state = power ? [true, false][i] : false;
-                        this.sensorInputService
-                            .updateCharacteristic(Characteristic.ContactSensorState, state)
-                        this.sensorInputState = state;
-                    }
-                }
-
-                if (this.sensorsInputsServices) {
-                    for (let i = 0; i < this.sensorsInputsConfiguredCount; i++) {
-                        const sensorInput = this.sensorsInputsConfigured[i];
-                        const state = power ? sensorInput.reference === reference : false;
-                        sensorInput.state = state;
-                        const characteristicType = sensorInput.characteristicType;
-                        this.sensorsInputsServices[i]
-                            .updateCharacteristic(characteristicType, state);
-                    }
-                }
-
-                //inputs buttons
-                if (this.inputsButtonsServices) {
-                    for (let i = 0; i < this.inputsButtonsConfigured.length; i++) {
-                        const inputButton = this.inputsButtonsConfigured[i];
-                        const state = power ? inputButton.reference === reference : false;
-                        inputButton.state = state;
-                        this.inputsButtonsServices[i]
-                            .updateCharacteristic(Characteristic.On, state);
-                    }
-                }
-
-                //buttons
-                if (this.buttonsServices) {
-                    for (let i = 0; i < this.buttonsConfiguredCount; i++) {
-                        const button = this.buttonsConfigured[i];
-                        const state = this.power ? button.reference === reference : false;
-                        button.state = state;
-                        this.buttonsServices[i]
-                            .updateCharacteristic(Characteristic.On, state);
-                    }
-                }
-
-                this.inputIdentifier = inputIdentifier;
-                this.power = power;
-                this.reference = reference;
-                this.volume = volume;
-                this.mute = mute;
-
-                if (!this.disableLogInfo) {
-                    this.emit('message', `Power: ${power ? 'ON' : 'OFF'}`);
-                    this.emit('message', `Channel Name: ${name}`);
-                    this.emit('message', `Event Name: ${eventName}`);
-                    this.emit('message', `Reference: ${reference}`);
-                    this.emit('message', `Volume: ${volume}%`);
-                    this.emit('message', `Mute: ${mute ? 'ON' : 'OFF'}`);
-                    this.emit('message', `Closed Captions: 0`);
-                    this.emit('message', `Media State: ${['PLAY', 'PAUSE', 'STOPPED', 'LOADING', 'INTERRUPTED'][2]}`);
-                };
-            })
-            .on('prepareAccessory', async (channels) => {
-                //mqtt client
-                const mqttEnabled = mqtt.enable || false;
-                if (mqttEnabled) {
-                    this.mqtt = new Mqtt({
-                        host: mqtt.host,
-                        port: mqtt.port || 1883,
-                        clientId: mqtt.clientId || `openwebif_${Math.random().toString(16).slice(3)}`,
-                        prefix: `${mqtt.prefix}/${device.name}`,
-                        user: mqtt.user,
-                        passwd: mqtt.passwd,
-                        debug: mqtt.debug || false
-                    });
-
-                    this.mqtt.on('connected', (message) => {
-                        this.emit('success', message);
-                        this.mqttConnected = true;
-                    })
-                        .on('subscribed', (message) => {
-                            this.emit('success', message);
-                        })
-                        .on('set', async (key, value) => {
-                            try {
-                                switch (key) {
-                                    case 'Power':
-                                        const state = value ? '4' : '5';
-                                        await this.openwebif.send(CONSTANTS.ApiUrls.SetPower + state);
-                                        break;
-                                    case 'Channel':
-                                        await this.openwebif.send(CONSTANTS.ApiUrls.SetChannel + value);
-                                        break;
-                                    case 'Volume':
-                                        const volume = (value < 0 || value > 100) ? this.volume : value;
-                                        await this.openwebif.send(CONSTANTS.ApiUrls.SetVolume + volume);
-                                        break;
-                                    case 'Mute':
-                                        await this.openwebif.send(CONSTANTS.ApiUrls.ToggleMute);
-                                        break;
-                                    case 'RcControl':
-                                        await this.openwebif.send(CONSTANTS.ApiUrls.SetRcCommand + value);
-                                        break;
-                                    default:
-                                        this.emit('message', `MQTT Received key: ${key}, value: ${value}`);
-                                        break;
-                                };
-                            } catch (error) {
-                                this.emit('warn', `MQTT set error: ${error}.`);
-                            };
-                        })
-                        .on('debug', (debug) => {
-                            this.emit('debug', debug);
-                        })
-                        .on('error', (error) => {
-                            this.emit('warn', error);
-                        });
-                };
-
-                try {
-                    //read inputs names from file
-                    const savedInputsNames = await this.readData(this.inputsNamesFile);
-                    this.savedInputsNames = savedInputsNames.toString().trim() !== '' ? JSON.parse(savedInputsNames) : {};
-                    const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs/Channels: Names: ${JSON.stringify(this.savedInputsNames, null, 2)}`);
-
-                    //read inputs visibility from file
-                    const savedInputsTargetVisibility = await this.readData(this.inputsTargetVisibilityFile);
-                    this.savedInputsTargetVisibility = savedInputsTargetVisibility.toString().trim() !== '' ? JSON.parse(savedInputsTargetVisibility) : {};
-                    const debug1 = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs/Channels: Target Visibility: ${JSON.stringify(this.savedInputsTargetVisibility, null, 2)}`);
-
-                    //prepare accessory
-                    const accessory = await this.prepareAccessory(channels);
-                    this.emit('publishAccessory', accessory);
-
-                    //sort inputs list
-                    const sortInputsDisplayOrder = this.televisionService ? await this.displayOrder() : false;
-
-                    //start check state
-                    this.openwebif.impulseGenerator.start([{ name: 'checkState', sampling: this.refreshInterval }]);
-                } catch (error) {
-                    this.emit('error', `Prepare accessory error: ${error}. try again in 15s.`);
-                    await new Promise(resolve => setTimeout(resolve, 15000));
-                    this.openwebif.impulseGenerator.emit('checkDeviceInfo');
-                };
-            })
-            .on('message', (message) => {
-                this.emit('message', message);
-            })
-            .on('debug', (debug) => {
-                this.emit('debug', debug);
-            })
-            .on('warn', (warn) => {
-                this.emit('warn', warn);
-            })
-            .on('error', (error) => {
-                this.emit('error', error);
-            })
-            .on('mqtt', (topic, message) => {
-                const mqtt = this.mqttConnected ? this.mqtt.emit('publish', topic, message) : false;
-            })
-            .on('disconnected', (message) => {
-                this.emit('message', message);
-            });
     }
+
+    async start() {
+        try {
+            //openwebif client
+            this.openwebif = new OpenWebIf({
+                host: this.host,
+                port: this.port,
+                user: this.user,
+                pass: this.pass,
+                auth: this.auth,
+                inputs: this.inputs,
+                bouquets: this.bouquets,
+                devInfoFile: this.devInfoFile,
+                inputsFile: this.inputsFile,
+                channelsFile: this.channelsFile,
+                getInputsFromDevice: this.getInputsFromDevice,
+                debugLog: this.enableDebugMode
+            });
+
+            this.openwebif.on('deviceInfo', (manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) => {
+                if (!this.disableLogDeviceInfo) {
+                    this.emit('devInfo', `-------- ${this.name} --------`);
+                    this.emit('devInfo', `Manufacturer: ${manufacturer}`);
+                    this.emit('devInfo', `Model: ${modelName}`);
+                    this.emit('devInfo', `Kernel: ${kernelVer}`);
+                    this.emit('devInfo', `Chipset: ${chipset}`);
+                    this.emit('devInfo', `Webif version: ${serialNumber}`);
+                    this.emit('devInfo', `Firmware: ${firmwareRevision}`);
+                    this.emit('devInfo', `----------------------------------`)
+                }
+
+                this.manufacturer = manufacturer || 'Manufacturer';
+                this.modelName = modelName || 'Model Name';
+                this.serialNumber = serialNumber || 'Serial Number';
+                this.firmwareRevision = firmwareRevision || 'Firmware Revision';
+                this.mac = mac;
+            })
+                .on('stateChanged', (power, name, eventName, reference, volume, mute) => {
+                    const index = this.inputsConfigured.findIndex(input => input.reference === reference) ?? -1;
+                    const inputIdentifier = index !== -1 ? this.inputsConfigured[index].identifier : this.inputIdentifier;
+                    mute = power ? mute : true;
+
+                    if (this.televisionService) {
+                        this.televisionService
+                            .updateCharacteristic(Characteristic.Active, power)
+                    }
+
+                    if (this.televisionService) {
+                        this.televisionService
+                            .updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier)
+                    }
+
+                    if (this.speakerService) {
+                        this.speakerService
+                            .updateCharacteristic(Characteristic.Active, power)
+                            .updateCharacteristic(Characteristic.Volume, volume)
+                            .updateCharacteristic(Characteristic.Mute, mute);
+
+                        if (this.volumeService) {
+                            this.volumeService
+                                .updateCharacteristic(Characteristic.Brightness, volume)
+                                .updateCharacteristic(Characteristic.On, !mute);
+                        }
+
+                        if (this.volumeServiceFan) {
+                            this.volumeServiceFan
+                                .updateCharacteristic(Characteristic.RotationSpeed, volume)
+                                .updateCharacteristic(Characteristic.On, !mute);
+                        }
+                    }
+
+                    //sensors
+                    if (this.sensorPowerService) {
+                        this.sensorPowerService
+                            .updateCharacteristic(Characteristic.ContactSensorState, power)
+                    }
+
+                    if (this.sensorVolumeService && volume !== this.volume) {
+                        for (let i = 0; i < 2; i++) {
+                            const state = power ? [true, false][i] : false;
+                            this.sensorVolumeService
+                                .updateCharacteristic(Characteristic.ContactSensorState, state)
+                            this.sensorVolumeState = state;
+                        }
+                    }
+
+                    if (this.sensorMuteService) {
+                        const state = power ? mute : false;
+                        this.sensorMuteService
+                            .updateCharacteristic(Characteristic.ContactSensorState, state)
+                    }
+
+                    if (this.sensorInputService && reference !== this.reference) {
+                        for (let i = 0; i < 2; i++) {
+                            const state = power ? [true, false][i] : false;
+                            this.sensorInputService
+                                .updateCharacteristic(Characteristic.ContactSensorState, state)
+                            this.sensorInputState = state;
+                        }
+                    }
+
+                    if (this.sensorsInputsServices) {
+                        for (let i = 0; i < this.sensorsInputsConfiguredCount; i++) {
+                            const sensorInput = this.sensorsInputsConfigured[i];
+                            const state = power ? sensorInput.reference === reference : false;
+                            sensorInput.state = state;
+                            const characteristicType = sensorInput.characteristicType;
+                            this.sensorsInputsServices[i]
+                                .updateCharacteristic(characteristicType, state);
+                        }
+                    }
+
+                    //inputs buttons
+                    if (this.inputsButtonsServices) {
+                        for (let i = 0; i < this.inputsButtonsConfigured.length; i++) {
+                            const inputButton = this.inputsButtonsConfigured[i];
+                            const state = power ? inputButton.reference === reference : false;
+                            inputButton.state = state;
+                            this.inputsButtonsServices[i]
+                                .updateCharacteristic(Characteristic.On, state);
+                        }
+                    }
+
+                    //buttons
+                    if (this.buttonsServices) {
+                        for (let i = 0; i < this.buttonsConfiguredCount; i++) {
+                            const button = this.buttonsConfigured[i];
+                            const state = this.power ? button.reference === reference : false;
+                            button.state = state;
+                            this.buttonsServices[i]
+                                .updateCharacteristic(Characteristic.On, state);
+                        }
+                    }
+
+                    this.inputIdentifier = inputIdentifier;
+                    this.power = power;
+                    this.reference = reference;
+                    this.volume = volume;
+                    this.mute = mute;
+
+                    if (!this.disableLogInfo) {
+                        this.emit('message', `Power: ${power ? 'ON' : 'OFF'}`);
+                        this.emit('message', `Channel Name: ${name}`);
+                        this.emit('message', `Event Name: ${eventName}`);
+                        this.emit('message', `Reference: ${reference}`);
+                        this.emit('message', `Volume: ${volume}%`);
+                        this.emit('message', `Mute: ${mute ? 'ON' : 'OFF'}`);
+                        this.emit('message', `Closed Captions: 0`);
+                        this.emit('message', `Media State: ${['PLAY', 'PAUSE', 'STOPPED', 'LOADING', 'INTERRUPTED'][2]}`);
+                    };
+                })
+                .on('prepareAccessory', async (channels) => {
+                    //mqtt client
+                    const mqttEnabled = this.mqtt.enable || false;
+                    if (mqttEnabled) {
+                        this.mqtt = new Mqtt({
+                            host: this.mqtt.host,
+                            port: this.mqtt.port || 1883,
+                            clientId: this.mqtt.clientId || `openwebif_${Math.random().toString(16).slice(3)}`,
+                            prefix: `${this.mqtt.prefix}/${device.name}`,
+                            user: this.mqtt.user,
+                            passwd: this.mqtt.passwd,
+                            debug: this.mqtt.debug || false
+                        });
+
+                        this.mqtt.on('connected', (message) => {
+                            this.emit('success', message);
+                            this.mqttConnected = true;
+                        })
+                            .on('subscribed', (message) => {
+                                this.emit('success', message);
+                            })
+                            .on('set', async (key, value) => {
+                                try {
+                                    switch (key) {
+                                        case 'Power':
+                                            const state = value ? '4' : '5';
+                                            await this.openwebif.send(CONSTANTS.ApiUrls.SetPower + state);
+                                            break;
+                                        case 'Channel':
+                                            await this.openwebif.send(CONSTANTS.ApiUrls.SetChannel + value);
+                                            break;
+                                        case 'Volume':
+                                            const volume = (value < 0 || value > 100) ? this.volume : value;
+                                            await this.openwebif.send(CONSTANTS.ApiUrls.SetVolume + volume);
+                                            break;
+                                        case 'Mute':
+                                            await this.openwebif.send(CONSTANTS.ApiUrls.ToggleMute);
+                                            break;
+                                        case 'RcControl':
+                                            await this.openwebif.send(CONSTANTS.ApiUrls.SetRcCommand + value);
+                                            break;
+                                        default:
+                                            this.emit('message', `MQTT Received key: ${key}, value: ${value}`);
+                                            break;
+                                    };
+                                } catch (error) {
+                                    this.emit('warn', `MQTT set error: ${error}.`);
+                                };
+                            })
+                            .on('debug', (debug) => {
+                                this.emit('debug', debug);
+                            })
+                            .on('error', (error) => {
+                                this.emit('warn', error);
+                            });
+                    };
+
+                    try {
+                        //read inputs names from file
+                        const savedInputsNames = await this.readData(this.inputsNamesFile);
+                        this.savedInputsNames = savedInputsNames.toString().trim() !== '' ? JSON.parse(savedInputsNames) : {};
+                        const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs/Channels: Names: ${JSON.stringify(this.savedInputsNames, null, 2)}`);
+
+                        //read inputs visibility from file
+                        const savedInputsTargetVisibility = await this.readData(this.inputsTargetVisibilityFile);
+                        this.savedInputsTargetVisibility = savedInputsTargetVisibility.toString().trim() !== '' ? JSON.parse(savedInputsTargetVisibility) : {};
+                        const debug1 = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs/Channels: Target Visibility: ${JSON.stringify(this.savedInputsTargetVisibility, null, 2)}`);
+
+                        //prepare accessory
+                        const accessory = await this.prepareAccessory(channels);
+                        this.emit('publishAccessory', accessory);
+
+                        //sort inputs list
+                        const sortInputsDisplayOrder = this.televisionService ? await this.displayOrder() : false;
+
+                        //start check state
+                        this.openwebif.impulseGenerator.start([{ name: 'checkState', sampling: this.refreshInterval }]);
+                    } catch (error) {
+                        this.emit('error', `Prepare accessory error: ${error}. try again in 15s.`);
+                        await new Promise(resolve => setTimeout(resolve, 15000));
+                        this.openwebif.impulseGenerator.emit('checkDeviceInfo');
+                    };
+                })
+                .on('success', (message) => {
+                    this.emit('success', message);
+                })
+                .on('message', (message) => {
+                    this.emit('message', message);
+                })
+                .on('debug', (debug) => {
+                    this.emit('debug', debug);
+                })
+                .on('warn', async (warn) => {
+                    const debug = this.disableLogConnectError ? false : this.emit('warn', warn);
+                    this.openwebif.impulseGenerator.stop();
+                    await new Promise(resolve => setTimeout(resolve, 15000));
+                    await this.openwebif.connect();
+                })
+                .on('error', async (error) => {
+                    const debug = this.disableLogConnectError ? false : this.emit('error', error);
+                    this.openwebif.impulseGenerator.stop();
+                    await new Promise(resolve => setTimeout(resolve, 15000));
+                    await this.openwebif.connect();
+                })
+                .on('mqtt', (topic, message) => {
+                    const mqtt = this.mqttConnected ? this.mqtt.emit('publish', topic, message) : false;
+                });
+
+            //connect to box
+            await this.openwebif.connect();
+
+            //start impulse generator
+            const timers = [{ name: 'checkState', sampling: this.refreshInterval }];
+            this.openwebif.impulseGenerator.start(timers);
+
+            return true;
+        } catch (error) {
+            throw new Error(`start error: ${error}`);
+        };
+    };
 
     async displayOrder() {
         try {

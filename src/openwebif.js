@@ -14,16 +14,13 @@ class OPENWEBIF extends EventEmitter {
         const user = config.user;
         const pass = config.pass;
         const auth = config.auth;
-        const inputs = config.inputs;
-        const bouquets = config.bouquets
-        const devInfoFile = config.devInfoFile;
-        const channelsFile = config.channelsFile;
-        const inputsFile = config.inputsFile;
-        const getInputsFromDevice = config.getInputsFromDevice;
-        const disableLogConnectError = config.disableLogConnectError;
-        const refreshInterval = config.refreshInterval;
-        const debugLog = config.debugLog;
-        this.debugLog = debugLog;
+        this.inputs = config.inputs;
+        this.bouquets = config.bouquets
+        this.devInfoFile = config.devInfoFile;
+        this.channelsFile = config.channelsFile;
+        this.inputsFile = config.inputsFile;
+        this.getInputsFromDevice = config.getInputsFromDevice;
+        this.debugLog = config.debugLog;
 
         const baseUrl = `http://${host}:${port}`;
         this.axiosInstance = axios.create({
@@ -46,109 +43,106 @@ class OPENWEBIF extends EventEmitter {
         this.devInfo = '';
 
         this.impulseGenerator = new ImpulseGenerator();
-        this.impulseGenerator.on('checkDeviceInfo', async () => {
+        this.impulseGenerator.on('checkState', async () => {
             try {
-                const deviceInfo = await this.axiosInstance(CONSTANTS.ApiUrls.DeviceInfo);
-                const devInfo = deviceInfo.data;
-                const debug = debugLog ? this.emit('debug', `Info: ${JSON.stringify(devInfo, null, 2)}`) : false;
-                this.devInfo = devInfo;
-
-                const manufacturer = devInfo.brand || 'undefined';
-                const modelName = devInfo.model || 'undefined';
-                const serialNumber = devInfo.webifver || 'undefined';
-                const firmwareRevision = devInfo.imagever || 'undefined';
-                const kernelVer = devInfo.kernelver || 'undefined';
-                const chipset = devInfo.chipset || 'undefined';
-                const mac = devInfo.ifaces[0].mac || false;
-
-                if (!mac) {
-                    this.emit('warn', `Missing Mac Address: ${mac}, check again in 15s.`);
-                    await new Promise(resolve => setTimeout(resolve, 15000));
-                    this.impulseGenerator.emit('checkDeviceInfo');
-                    return;
-                }
-
-                const channelsInfo = await this.axiosInstance(CONSTANTS.ApiUrls.GetAllServices);
-                const allChannels = channelsInfo.data.services;
-                const debug1 = debugLog ? this.emit('debug', `Channels info: ${channelsInfo}`) : false;
-
-                //save device info to the file
-                await this.saveDevInfo(devInfoFile, devInfo)
-
-                //save inputs to the file
-                const channels = await this.saveInputs(channelsFile, inputsFile, allChannels, bouquets, inputs, getInputsFromDevice);
-                if (!channels) {
-                    this.emit('warn', `Found: ${channels} channels, check again in 15s.`);
-                    await new Promise(resolve => setTimeout(resolve, 15000));
-                    this.impulseGenerator.emit('checkDeviceInfo');
-                    return;
-                }
-
-                //emit device info
-                this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
-
-                //prepare accessory
-                this.emit('prepareAccessory', channels);
+                await this.checkState();
             } catch (error) {
-                const debug = disableLogConnectError ? false : this.emit('error', `Info error: ${error}, check again in 15s.`);
-                await new Promise(resolve => setTimeout(resolve, 15000));
-                this.impulseGenerator.emit('checkDeviceInfo');
+                this.emit('error', error);
             };
-        })
-            .on('checkState', async () => {
-                try {
-                    const deviceState = await this.axiosInstance(CONSTANTS.ApiUrls.DeviceStatus);
-                    const devState = deviceState.data;
-                    const debug = debugLog ? this.emit('debug', `State: ${JSON.stringify(devState, null, 2)}`) : false;
-
-                    //mqtt
-                    this.emit('mqtt', 'Info', this.devInfo);
-                    this.emit('mqtt', 'State', devState);
-
-                    const power = devState.inStandby === 'false';
-                    const name = devState.currservice_station;
-                    const eventName = devState.currservice_name;
-                    const reference = devState.currservice_serviceref;
-                    const volume = devState.volume;
-                    const mute = devState.muted;
-
-                    //update only if value change
-                    if (power === this.power && name === this.name && eventName === this.eventName && reference === this.reference && volume === this.volume && mute === this.mute) {
-                        return;
-                    };
-
-                    this.power = power;
-                    this.name = name;
-                    this.eventName = eventName;
-                    this.reference = reference;
-                    this.volume = volume;
-                    this.mute = mute;
-
-                    //emit state changed
-                    this.emit('stateChanged', power, name, eventName, reference, volume, mute);
-                } catch (error) {
-                    this.emit('stateChanged', false, this.name, this.eventName, this.reference, this.volume, this.mute);
-                    const debug = disableLogConnectError ? false : this.emit('error', `State error: ${error}, check again in ${refreshInterval / 1000}s.`);
-                };
-            })
-            .on('state', () => { });
-
-        this.impulseGenerator.emit('checkDeviceInfo');
+        }).on('state', (state) => { });
     };
 
-    async saveDevInfo(path, devInfo) {
+    async connect() {
         try {
-            const info = JSON.stringify(devInfo, null, 2);
-            await fsPromises.writeFile(path, info);
-            const debug = this.debugLog ? this.emit('debug', `Saved device info: ${info}`) : false;
+            const deviceInfo = await this.axiosInstance(CONSTANTS.ApiUrls.DeviceInfo);
+            const devInfo = deviceInfo.data;
+            const debug = this.debugLog ? this.emit('debug', `Info: ${JSON.stringify(devInfo, null, 2)}`) : false;
+            this.devInfo = devInfo;
 
-            return true;;
+            const manufacturer = devInfo.brand || 'undefined';
+            const modelName = devInfo.model || 'undefined';
+            const serialNumber = devInfo.webifver || 'undefined';
+            const firmwareRevision = devInfo.imagever || 'undefined';
+            const kernelVer = devInfo.kernelver || 'undefined';
+            const chipset = devInfo.chipset || 'undefined';
+            const mac = devInfo.ifaces[0].mac || false;
+
+            if (!mac) {
+                this.emit('warn', `Missing Mac Address: ${mac}, check again in 15s.`);
+                return;
+            }
+
+            //save device info to the file
+            await this.saveData(this.devInfoFile, devInfo);
+
+            //get all channels
+            const channelsInfo = await this.axiosInstance(CONSTANTS.ApiUrls.GetAllServices);
+            const allChannels = channelsInfo.data.services;
+            const debug1 = this.debugLog ? this.emit('debug', `Channels info: ${channelsInfo}`) : false;
+
+            //save inputs to the file
+            const channels = await this.getInputs(this.channelsFile, this.inputsFile, allChannels, this.bouquets, this.inputs, this.getInputsFromDevice);
+            if (!channels) {
+                this.emit('warn', `Found: ${channels} channels, check again in 15s.`);
+                return;
+            }
+
+            //save channels
+            await this.saveData(this.inputsFile, channels);
+
+            //connect to deice success
+            this.emit('success', `Connect Success.`)
+
+            //emit device info
+            this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
+
+            //prepare accessory
+            this.emit('prepareAccessory', channels);
+
+            return true;
         } catch (error) {
-            throw new Error(error);
+            this.emit('error', `Info error: ${error}, check again in 15s.`);
+
         };
     };
 
-    async saveInputs(channelsFile, inputsFile, allChannels, bouquets, inputs, getInputsFromDevice) {
+    async checkState() {
+        try {
+            const deviceState = await this.axiosInstance(CONSTANTS.ApiUrls.DeviceStatus);
+            const devState = deviceState.data;
+            const debug = this.debugLog ? this.emit('debug', `State: ${JSON.stringify(devState, null, 2)}`) : false;
+
+            //mqtt
+            this.emit('mqtt', 'Info', this.devInfo);
+            this.emit('mqtt', 'State', devState);
+
+            const power = devState.inStandby === 'false';
+            const name = devState.currservice_station;
+            const eventName = devState.currservice_name;
+            const reference = devState.currservice_serviceref;
+            const volume = devState.volume;
+            const mute = devState.muted;
+
+            //update only if value change
+            if (power === this.power && name === this.name && eventName === this.eventName && reference === this.reference && volume === this.volume && mute === this.mute) {
+                return;
+            };
+
+            this.power = power;
+            this.name = name;
+            this.eventName = eventName;
+            this.reference = reference;
+            this.volume = volume;
+            this.mute = mute;
+
+            //emit state changed
+            this.emit('stateChanged', power, name, eventName, reference, volume, mute);
+        } catch (error) {
+            this.emit('error', `Check state error: ${error}.`);
+        };
+    };
+
+    async getInputs(channelsFile, inputsFile, allChannels, bouquets, inputs, getInputsFromDevice) {
         try {
             const channels = JSON.stringify(allChannels, null, 2);
             await fsPromises.writeFile(channelsFile, channels);
@@ -200,16 +194,18 @@ class OPENWEBIF extends EventEmitter {
                 const push = inputName && inputReference && !duplicatedInput ? channelArr.push(obj) : false;
             };
 
-            try {
-                const channels = JSON.stringify(channelArr, null, 2);
-                await fsPromises.writeFile(inputsFile, channels);
-                const debug = this.debugLog ? this.emit('debug', `Saved channels: ${channels}.`) : false;
-            } catch (error) {
-                this.emit('warn', `Save channels error: ${error}`);
-            };
-
             const channels = channelArr.length > 0 ? channelArr : false;
             return channels;
+        } catch (error) {
+            throw new Error(error);
+        };
+    };
+
+    async saveData(path, data) {
+        try {
+            await fsPromises.writeFile(path, JSON.stringify(data, null, 2));
+            const debug = this.debugLog ? this.emit('debug', `Saved data: ${JSON.stringify(data, null, 2)}`) : false;
+            return true;
         } catch (error) {
             throw new Error(error);
         };
