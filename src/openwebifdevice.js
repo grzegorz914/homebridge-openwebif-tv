@@ -407,7 +407,7 @@ class OpenWebIfDevice extends EventEmitter {
             this.televisionService.setCharacteristic(Characteristic.DisplayOrder, Encode(1, displayOrder).toString('base64'));
             return true;
         } catch (error) {
-            throw new Error(`Display order error: ${error}`);
+            throw new Error(`Display order error: ${error.message ?? error}`);
         };
     }
 
@@ -417,7 +417,7 @@ class OpenWebIfDevice extends EventEmitter {
             const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved data: ${JSON.stringify(data, null, 2)}`);
             return true;
         } catch (error) {
-            throw new Error(`Save data error: ${error}`);
+            throw new Error(`Save data error: ${error.message ?? error}`);
         };
     }
 
@@ -427,7 +427,7 @@ class OpenWebIfDevice extends EventEmitter {
             const debug = !this.enableDebugMode ? false : this.emit('debug', `Read data: ${JSON.stringify(data, null, 2)}`);
             return data;;
         } catch (error) {
-            throw new Error(`Read data error: ${error}`);
+            throw new Error(`Read data error: ${error.message ?? error}`);
         };
     }
 
