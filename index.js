@@ -47,6 +47,9 @@ class OpenWebIfPlatform {
 				};
 				const debug1 = enableDebugMode ? log.info(`Device: ${host} ${deviceName}, Config: ${JSON.stringify(config, null, 2)}`) : false;
 
+				//refresh interval
+				const refreshInterval = device.refreshInterval * 1000 || 5000;
+
 				//check files exists, if not then create it
 				const postFix = host.split('.').join('');
 				const devInfoFile = `${prefDir}/devInfo_${postFix}`;
@@ -70,14 +73,14 @@ class OpenWebIfPlatform {
 						}
 					});
 				} catch (error) {
-					log.error(`Device: ${host} ${deviceName}, ${error}`);
+					log.error(`Device: ${host} ${deviceName}, prepare files error: ${error}`);
 					return;
 				}
 
 				//openwebif device
 				try {
-					const openWebIfDevice = new OpenWebIfDevice(api, device, devInfoFile, inputsFile, channelsFile, inputsNamesFile, inputsTargetVisibilityFile);
-					openWebIfDevice.on('publishAccessory', (accessory) => {
+					this.openWebIfDevice = new OpenWebIfDevice(api, device, devInfoFile, inputsFile, channelsFile, inputsNamesFile, inputsTargetVisibilityFile, refreshInterval);
+					this.openWebIfDevice.on('publishAccessory', (accessory) => {
 						api.publishExternalAccessories(CONSTANTS.PluginName, [accessory]);
 						log.success(`Device: ${host} ${deviceName}, published as external accessory.`);
 					})
@@ -96,13 +99,22 @@ class OpenWebIfPlatform {
 						.on('warn', (warn) => {
 							log.warn(`Device: ${host} ${deviceName}, ${warn}`);
 						})
-						.on('error', (error) => {
+						.on('error', async (error) => {
 							log.error(`Device: ${host} ${deviceName}, ${error}`);
+
+							//start
+							await new Promise(resolve => setTimeout(resolve, 15000));
+							await this.openWebIfDevice.start();
 						});
 
-					await openWebIfDevice.start();
+					//start
+					await this.openWebIfDevice.start();
 				} catch (error) {
-					log.error(`Device: ${deviceHost} ${deviceName}, Did finish launching error: ${error}`);
+					log.error(`Device: ${deviceHost} ${deviceName}, did finish launching error: ${error}`);
+
+					//start
+					await new Promise(resolve => setTimeout(resolve, 15000));
+					await this.openWebIfDevice.start();
 				}
 			}
 		});

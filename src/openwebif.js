@@ -21,12 +21,13 @@ class OPENWEBIF extends EventEmitter {
         this.inputsFile = config.inputsFile;
         this.getInputsFromDevice = config.getInputsFromDevice;
         this.debugLog = config.debugLog;
+        this.disableLogConnectError = config.disableLogConnectError;
 
         const baseUrl = `http://${host}:${port}`;
         this.axiosInstance = axios.create({
             method: 'GET',
             baseURL: baseUrl,
-            timeout: 15000,
+            timeout: 5000,
             withCredentials: auth,
             auth: {
                 username: user,
@@ -47,7 +48,8 @@ class OPENWEBIF extends EventEmitter {
             try {
                 await this.checkState();
             } catch (error) {
-                this.emit('error', error);
+                await this.impulseGenerator.stop();
+                this.emit('error', `Impulse generator check state error: ${error.message || error}}, check again in 15s.`);
             };
         }).on('state', (state) => { });
     };
@@ -56,7 +58,7 @@ class OPENWEBIF extends EventEmitter {
         try {
             const deviceInfo = await this.axiosInstance(CONSTANTS.ApiUrls.DeviceInfo);
             const devInfo = deviceInfo.data;
-            const debug = this.debugLog ? this.emit('debug', `Info: ${JSON.stringify(devInfo, null, 2)}`) : false;
+            const debug = this.debugLog ? this.emit('debug', `Connect data: ${JSON.stringify(devInfo, null, 2)}`) : false;
             this.devInfo = devInfo;
 
             const manufacturer = devInfo.brand || 'undefined';
@@ -68,7 +70,8 @@ class OPENWEBIF extends EventEmitter {
             const mac = devInfo.ifaces[0].mac || false;
 
             if (!mac) {
-                this.emit('warn', `Missing Mac Address: ${mac}, check again in 15s.`);
+                await this.impulseGenerator.stop();
+                this.emit('error', `Missing Mac Address: ${mac}, check again in 15s.`);
                 return;
             }
 
@@ -80,10 +83,14 @@ class OPENWEBIF extends EventEmitter {
             const allChannels = channelsInfo.data.services;
             const debug1 = this.debugLog ? this.emit('debug', `Channels info: ${channelsInfo}`) : false;
 
-            //save inputs to the file
-            const channels = await this.getInputs(this.channelsFile, this.inputsFile, allChannels, this.bouquets, this.inputs, this.getInputsFromDevice);
+            //save all channels
+            await this.saveData(this.channelsFile, allChannels);
+
+            //prepare channels
+            const channels = await this.getInputs(allChannels, this.bouquets, this.inputs, this.getInputsFromDevice);
             if (!channels) {
-                this.emit('warn', `Found: ${channels} channels, check again in 15s.`);
+                await this.impulseGenerator.stop();
+                this.emit('error', `Found: ${channels} channels, check again in 15s.`);
                 return;
             }
 
@@ -96,12 +103,19 @@ class OPENWEBIF extends EventEmitter {
             //emit device info
             this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
 
+            //start external integration
+            this.emit('externalIntegration');
+
             //prepare accessory
             this.emit('prepareAccessory', channels);
 
             return true;
         } catch (error) {
-            this.emit('error', `Info error: ${error}, check again in 15s.`);
+            if (this.disableLogConnectError) {
+                return true;
+            };
+            await this.impulseGenerator.stop();
+            throw new Error(`Connect error: ${error.message || error}}, check again in 15s.`);
 
         };
     };
@@ -137,20 +151,18 @@ class OPENWEBIF extends EventEmitter {
 
             //emit state changed
             this.emit('stateChanged', power, name, eventName, reference, volume, mute);
+
+            return true;
         } catch (error) {
-            this.emit('error', `Check state error: ${error}.`);
+            if (this.disableLogConnectError) {
+                return true;
+            };
+            await this.impulseGenerator.stop();
+            throw new Error(`Check state error: ${error.message || error}}, check again in 15s.`);
         };
     };
 
-    async getInputs(channelsFile, inputsFile, allChannels, bouquets, inputs, getInputsFromDevice) {
-        try {
-            const channels = JSON.stringify(allChannels, null, 2);
-            await fsPromises.writeFile(channelsFile, channels);
-            const debug = this.debugLog ? this.emit('debug', `Saved all channels: ${channels}`) : false;
-        } catch (error) {
-            this.emit('warn', `Save all channels error: ${error}`);
-        };
-
+    async getInputs(allChannels, bouquets, inputs, getInputsFromDevice) {
         try {
             //save channels to the file
             const bouquetChannelsArr = [];
@@ -197,17 +209,18 @@ class OPENWEBIF extends EventEmitter {
             const channels = channelArr.length > 0 ? channelArr : false;
             return channels;
         } catch (error) {
-            throw new Error(error);
+            throw new Error(`Get inputus error: ${error}`);
         };
     };
 
     async saveData(path, data) {
         try {
-            await fsPromises.writeFile(path, JSON.stringify(data, null, 2));
-            const debug = this.debugLog ? this.emit('debug', `Saved data: ${JSON.stringify(data, null, 2)}`) : false;
+            data = JSON.stringify(data, null, 2);
+            await fsPromises.writeFile(path, data);
+            const debug = this.debugLog ? this.emit('debug', `Saved data: ${data}`) : false;
             return true;
         } catch (error) {
-            throw new Error(error);
+            throw new Error(`Save data error: ${error.message || error}}`);
         };
     };
 
