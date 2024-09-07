@@ -110,7 +110,7 @@ class OpenWebIfPlatform {
 					//start
 					await this.openWebIfDevice.start();
 				} catch (error) {
-					log.error(`Device: ${deviceHost} ${deviceName}, did finish launching error: ${error}`);
+					log.error(`Device: ${host} ${deviceName}, did finish launching error: ${error}`);
 
 					//start
 					await new Promise(resolve => setTimeout(resolve, 15000));
