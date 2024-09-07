@@ -268,7 +268,7 @@ class OpenWebIfDevice extends EventEmitter {
                         //mqtt client
                         const mqttEnabled = this.mqtt.enable || false;
                         if (mqttEnabled) {
-                            this.mqtt = new Mqtt({
+                            this.mqtt1 = new Mqtt({
                                 host: this.mqtt.host,
                                 port: this.mqtt.port || 1883,
                                 clientId: this.mqtt.clientId || `openwebif_${Math.random().toString(16).slice(3)}`,
@@ -278,7 +278,7 @@ class OpenWebIfDevice extends EventEmitter {
                                 debug: this.mqtt.debug || false
                             });
 
-                            this.mqtt.on('connected', (message) => {
+                            this.mqtt1.on('connected', (message) => {
                                 this.emit('success', message);
                                 this.mqttConnected = true;
                             })
@@ -365,7 +365,7 @@ class OpenWebIfDevice extends EventEmitter {
                     this.emit('error', error);
                 })
                 .on('mqtt', (topic, message) => {
-                    const mqtt = this.mqttConnected ? this.mqtt.emit('publish', topic, message) : false;
+                    const mqtt = this.mqttConnected ? this.mqtt1.emit('publish', topic, message) : false;
                 });
 
             //connect to box and check state
