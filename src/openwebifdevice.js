@@ -377,7 +377,7 @@ class OpenWebIfDevice extends EventEmitter {
 
             return true;
         } catch (error) {
-            await this.openwebif.impulseGenerato.stop();
+            await this.openwebif.impulseGenerator.stop();
             throw new Error(`Start error: ${error.message || error}}, check again in 15s.`);
         };
     };
