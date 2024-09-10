@@ -58,14 +58,10 @@ class OpenWebIfDevice extends EventEmitter {
 
         //services
         this.allServices = [];
-        this.inputsButtonsServices = [];
-        this.sensorsInputsServices = [];
-        this.buttonsServices = [];
 
         //inputs variable
         this.inputsConfigured = [];
         this.inputIdentifier = 1;
-        this.inputsButtonsConfigured = [];
 
         //sensors variable
         this.sensorsInputsConfigured = [];
@@ -189,12 +185,14 @@ class OpenWebIfDevice extends EventEmitter {
                             .updateCharacteristic(Characteristic.ContactSensorState, power)
                     }
 
-                    if (this.sensorVolumeService && volume !== this.volume) {
+                    if (volume !== this.volume) {
                         for (let i = 0; i < 2; i++) {
                             const state = power ? [true, false][i] : false;
-                            this.sensorVolumeService
-                                .updateCharacteristic(Characteristic.ContactSensorState, state)
-                            this.sensorVolumeState = state;
+                            if (this.sensorVolumeService) {
+                                this.sensorVolumeService
+                                    .updateCharacteristic(Characteristic.ContactSensorState, state)
+                                this.sensorVolumeState = state;
+                            }
                         }
                     }
 
@@ -204,23 +202,27 @@ class OpenWebIfDevice extends EventEmitter {
                             .updateCharacteristic(Characteristic.ContactSensorState, state)
                     }
 
-                    if (this.sensorInputService && reference !== this.reference) {
+                    if (reference !== this.reference) {
                         for (let i = 0; i < 2; i++) {
                             const state = power ? [true, false][i] : false;
-                            this.sensorInputService
-                                .updateCharacteristic(Characteristic.ContactSensorState, state)
-                            this.sensorInputState = state;
+                            if (this.sensorInputService) {
+                                this.sensorInputService
+                                    .updateCharacteristic(Characteristic.ContactSensorState, state)
+                                this.sensorInputState = state;
+                            }
                         }
                     }
 
-                    if (this.sensorsInputsServices) {
+                    if (this.sensorsInputsConfiguredCount > 0) {
                         for (let i = 0; i < this.sensorsInputsConfiguredCount; i++) {
                             const sensorInput = this.sensorsInputsConfigured[i];
                             const state = power ? sensorInput.reference === reference : false;
                             sensorInput.state = state;
-                            const characteristicType = sensorInput.characteristicType;
-                            this.sensorsInputsServices[i]
-                                .updateCharacteristic(characteristicType, state);
+                            if (this.sensorsInputsServices) {
+                                const characteristicType = sensorInput.characteristicType;
+                                this.sensorsInputsServices[i]
+                                    .updateCharacteristic(characteristicType, state);
+                            }
                         }
                     }
 
@@ -230,19 +232,23 @@ class OpenWebIfDevice extends EventEmitter {
                             const inputButton = this.inputsButtonsConfigured[i];
                             const state = power ? inputButton.reference === reference : false;
                             inputButton.state = state;
-                            this.inputsButtonsServices[i]
-                                .updateCharacteristic(Characteristic.On, state);
+                            if (this.inputsButtonsServices) {
+                                this.inputsButtonsServices[i]
+                                    .updateCharacteristic(Characteristic.On, state);
+                            }
                         }
                     }
 
                     //buttons
-                    if (this.buttonsServices) {
+                    if (this.buttonsConfiguredCount > 0) {
                         for (let i = 0; i < this.buttonsConfiguredCount; i++) {
                             const button = this.buttonsConfigured[i];
                             const state = this.power ? button.reference === reference : false;
                             button.state = state;
-                            this.buttonsServices[i]
-                                .updateCharacteristic(Characteristic.On, state);
+                            if (this.buttonsServices) {
+                                this.buttonsServices[i]
+                                    .updateCharacteristic(Characteristic.On, state);
+                            }
                         }
                     }
 
@@ -377,8 +383,7 @@ class OpenWebIfDevice extends EventEmitter {
 
             return true;
         } catch (error) {
-            await this.openwebif.impulseGenerator.stop();
-            throw new Error(`Start error: ${error.message || error}}, check again in 15s.`);
+            throw new Error(`Start error: ${error.message || error}}.`);
         };
     };
 
@@ -882,6 +887,7 @@ class OpenWebIfDevice extends EventEmitter {
             const possibleInputsButtonsCount = 99 - this.allServices.length;
             const maxInputsSwitchesButtonsCount = this.inputsConfigured.length >= possibleInputsButtonsCount ? possibleInputsButtonsCount : this.inputsConfigured.length;
             if (maxInputsSwitchesButtonsCount > 0) {
+                this.inputsButtonsServices = [];
                 const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs buttons services`);
                 for (let i = 0; i < maxInputsSwitchesButtonsCount; i++) {
                     //get switch
@@ -935,6 +941,7 @@ class OpenWebIfDevice extends EventEmitter {
             const possibleSensorInputsCount = 99 - this.allServices.length;
             const maxSensorInputsCount = this.sensorsInputsConfiguredCount >= possibleSensorInputsCount ? possibleSensorInputsCount : this.sensorsInputsConfiguredCount;
             if (maxSensorInputsCount > 0) {
+                this.sensorsInputsServices = [];
                 const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs sensors services`);
                 for (let i = 0; i < maxSensorInputsCount; i++) {
                     //get sensor
@@ -971,6 +978,7 @@ class OpenWebIfDevice extends EventEmitter {
             const possibleButtonsCount = 99 - this.allServices.length;
             const maxButtonsCount = this.buttonsConfiguredCount >= possibleButtonsCount ? possibleButtonsCount : this.buttonsConfiguredCount;
             if (maxButtonsCount > 0) {
+                this.buttonsServices = [];
                 const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs buttons services`);
                 for (let i = 0; i < maxButtonsCount; i++) {
                     //get button

@@ -48,8 +48,7 @@ class OPENWEBIF extends EventEmitter {
             try {
                 await this.checkState();
             } catch (error) {
-                await this.impulseGenerator.stop();
-                this.emit('error', `Impulse generator check state error: ${error.message || error}}, check again in 15s.`);
+                this.emit('error', `Impulse generator check state error: ${error.message || error}}.`);
             };
         }).on('state', (state) => { });
     };
@@ -70,8 +69,7 @@ class OPENWEBIF extends EventEmitter {
             const mac = devInfo.ifaces[0].mac || false;
 
             if (!mac) {
-                await this.impulseGenerator.stop();
-                this.emit('error', `Missing Mac Address: ${mac}, check again in 15s.`);
+                this.emit('error', `Missing Mac Address: ${mac}.`);
                 return;
             }
 
@@ -89,8 +87,7 @@ class OPENWEBIF extends EventEmitter {
             //prepare channels
             const channels = await this.getInputs(allChannels, this.bouquets, this.inputs, this.getInputsFromDevice);
             if (!channels) {
-                await this.impulseGenerator.stop();
-                this.emit('error', `Found: ${channels} channels, check again in 15s.`);
+                this.emit('error', `Found: ${channels} channels.`);
                 return;
             }
 
@@ -114,8 +111,7 @@ class OPENWEBIF extends EventEmitter {
             if (this.disableLogConnectError) {
                 return true;
             };
-            await this.impulseGenerator.stop();
-            throw new Error(`Connect error: ${error.message || error}}, check again in 15s.`);
+            throw new Error(`Connect error: ${error.message || error}}.`);
 
         };
     };
@@ -157,8 +153,7 @@ class OPENWEBIF extends EventEmitter {
             if (this.disableLogConnectError) {
                 return true;
             };
-            await this.impulseGenerator.stop();
-            throw new Error(`Check state error: ${error.message || error}}, check again in 15s.`);
+            throw new Error(`Check state error: ${error.message || error}}.`);
         };
     };
 
