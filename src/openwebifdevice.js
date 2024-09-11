@@ -62,6 +62,7 @@ class OpenWebIfDevice extends EventEmitter {
         //inputs variable
         this.inputsConfigured = [];
         this.inputIdentifier = 1;
+        this.inputsButtonsConfigured = [];
 
         //sensors variable
         this.sensorsInputsConfigured = [];
@@ -227,7 +228,7 @@ class OpenWebIfDevice extends EventEmitter {
                     }
 
                     //inputs buttons
-                    if (this.inputsButtonsServices) {
+                    if (this.inputsButtonsConfigured.length > 0) {
                         for (let i = 0; i < this.inputsButtonsConfigured.length; i++) {
                             const inputButton = this.inputsButtonsConfigured[i];
                             const state = power ? inputButton.reference === reference : false;
