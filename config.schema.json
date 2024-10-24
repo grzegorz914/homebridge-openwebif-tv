@@ -97,6 +97,7 @@
                   "displayType": {
                     "title": "Extra Tile",
                     "type": "integer",
+                    "default": 0,
                     "oneOf": [
                       {
                         "title": "None/Disabled",
@@ -156,6 +157,7 @@
                   "displayType": {
                     "title": "Extra Tile",
                     "type": "integer",
+                    "default": 0,
                     "oneOf": [
                       {
                         "title": "None/Disabled",
@@ -208,7 +210,9 @@
                   "mode": {
                     "title": "Mode",
                     "type": "integer",
+                    "minimum": 0,
                     "maximum": 1,
+                    "default": 0,
                     "description": "Here select the function mode.",
                     "oneOf": [
                       {
@@ -515,11 +519,12 @@
                       }
                     ],
                     "description": "Here select the remote control command.",
-                    "required": true
+                    "required": false
                   },
                   "displayType": {
                     "title": "Display Type",
                     "type": "integer",
+                    "default": 0,
                     "oneOf": [
                       {
                         "title": "None/Disabled",
@@ -605,6 +610,7 @@
                   "displayType": {
                     "title": "Type",
                     "type": "integer",
+                    "default": 0,
                     "oneOf": [
                       {
                         "title": "None/Disabled",
@@ -813,7 +819,7 @@
               "maximum": 30,
               "multipleOf": 0.5,
               "description": "Here set the background data refresh interval.",
-              "required": false
+              "required": true
             },
             "enableDebugMode": {
               "title": "Debug",
@@ -872,7 +878,7 @@
                   "condition": {
                     "functionBody": "return model.devices[arrayIndices].mqtt.enable === true;"
                   },
-                  "required": true
+                  "required": false
                 },
                 "port": {
                   "title": "Port",
