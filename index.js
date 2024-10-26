@@ -2,6 +2,7 @@
 const path = require('path');
 const fs = require('fs');
 const OpenWebIfDevice = require('./src/openwebifdevice.js');
+const ImpulseGenerator = require('./src/impulsegenerator.js');
 const CONSTANTS = require('./src/constants.json');
 
 class OpenWebIfPlatform {
@@ -36,6 +37,7 @@ class OpenWebIfPlatform {
 
 				//debug config
 				const enableDebugMode = device.enableDebugMode || false;
+				const disableLogConnectError = device.disableLogConnectError || false;
 				const debug = enableDebugMode ? log.info(`Device: ${host} ${deviceName}, did finish launching.`) : false;
 				const config = {
 					...device,
@@ -73,16 +75,16 @@ class OpenWebIfPlatform {
 						}
 					});
 				} catch (error) {
-					log.error(`Device: ${host} ${deviceName}, prepare files error: ${error}`);
+					log.error(`Device: ${host} ${deviceName}, Prepare files error: ${error}`);
 					return;
 				}
 
 				//openwebif device
 				try {
-					this.openWebIfDevice = new OpenWebIfDevice(api, device, devInfoFile, inputsFile, channelsFile, inputsNamesFile, inputsTargetVisibilityFile, refreshInterval);
-					this.openWebIfDevice.on('publishAccessory', (accessory) => {
+					const openWebIfDevice = new OpenWebIfDevice(api, device, devInfoFile, inputsFile, channelsFile, inputsNamesFile, inputsTargetVisibilityFile, refreshInterval);
+					openWebIfDevice.on('publishAccessory', (accessory) => {
 						api.publishExternalAccessories(CONSTANTS.PluginName, [accessory]);
-						log.success(`Device: ${host} ${deviceName}, published as external accessory.`);
+						log.success(`Device: ${host} ${deviceName}, Published as external accessory.`);
 					})
 						.on('devInfo', (devInfo) => {
 							log.info(devInfo);
@@ -103,10 +105,23 @@ class OpenWebIfPlatform {
 							log.error(`Device: ${host} ${deviceName}, ${error}`);
 						});
 
-					//start
-					await this.openWebIfDevice.start();
+					//create impulse generator
+					const impulseGenerator = new ImpulseGenerator();
+					impulseGenerator.on('start', async () => {
+						try {
+							await openWebIfDevice.start();
+							impulseGenerator.stop();
+						} catch (error) {
+							const logError = disableLogConnectError ? false : log.error(`Device: ${host} ${deviceName}, ${error}, trying again.`);
+						};
+					}).on('state', (state) => {
+						const debug = enableDebugMode ? state ? log.info(`Device: ${host} ${deviceName}, Start impulse generator started.`) : log.info(`Device: ${host} ${deviceName}, Start impulse generator stopped.`) : false;
+					});
+
+					//start impulse generator
+					impulseGenerator.start([{ name: 'start', sampling: 45000 }]);
 				} catch (error) {
-					log.error(`Device: ${host} ${deviceName}, did finish launching error: ${error}`);
+					log.error(`Device: ${host} ${deviceName}, Did finish launching error: ${error}`);
 				}
 			}
 		});
