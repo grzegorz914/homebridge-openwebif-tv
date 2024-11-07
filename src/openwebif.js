@@ -78,12 +78,9 @@ class OPENWEBIF extends EventEmitter {
             await this.saveData(this.devInfoFile, devInfo);
 
             //get all channels
-            const channelsInfo = await this.axiosInstance(CONSTANTS.ApiUrls.GetAllServices);
-            const allChannels = channelsInfo.data.services;
+            const channelsInfo = this.getInputsFromDevice ? await this.axiosInstance(CONSTANTS.ApiUrls.GetAllServices) : false;
+            const allChannels = channelsInfo ? channelsInfo.data.services : false;
             const debug1 = this.debugLog ? this.emit('debug', `Channels info: ${channelsInfo}`) : false;
-
-            //save all channels
-            await this.saveData(this.channelsFile, allChannels);
 
             //prepare channels
             const channels = await this.getInputs(allChannels, this.bouquets, this.inputs, this.getInputsFromDevice);
@@ -154,34 +151,35 @@ class OPENWEBIF extends EventEmitter {
 
     async getInputs(allChannels, bouquets, inputs, getInputsFromDevice) {
         try {
-            //save channels to the file
+            //get channels by bouquet
             const bouquetChannelsArr = [];
-            for (const bouquet of bouquets) {
-                const bouquetName = bouquet.name;
-                const displayType = bouquet.displayType ?? 0;
-                const bouquetChannels = allChannels.find(service => service.servicename === bouquetName);
+            if (getInputsFromDevice) {
+                for (const bouquet of bouquets) {
+                    const bouquetName = bouquet.name;
+                    const displayType = bouquet.displayType ?? 0;
+                    const bouquetChannels = allChannels.find(service => service.servicename === bouquetName);
 
-                if (bouquetChannels) {
-                    for (const channel of bouquetChannels.subservices) {
-                        const name = channel.servicename;
-                        const reference = channel.servicereference;
+                    if (bouquetChannels) {
+                        for (const channel of bouquetChannels.subservices) {
+                            const name = channel.servicename;
+                            const reference = channel.servicereference;
 
-                        const obj = {
-                            'name': name,
-                            'reference': reference,
-                            'displayType': displayType
-                        }
-                        bouquetChannelsArr.push(obj);
-                    };
-                    this.bouquetName = bouquetName;
-                } else {
-                    this.emit('warn', `Bouquet: ${bouquetName}, was not found.`);
+                            const obj = {
+                                'name': name,
+                                'reference': reference,
+                                'displayType': displayType
+                            }
+                            bouquetChannelsArr.push(obj);
+                        };
+                    } else {
+                        this.emit('warn', `Bouquet: ${bouquetName}, was not found.`);
+                    }
                 }
             }
 
             //chack duplicated channels
             const channelArr = [];
-            const channelsArr = !getInputsFromDevice || bouquetChannelsArr.length === 0 ? inputs : bouquetChannelsArr;
+            const channelsArr = !getInputsFromDevice ? inputs : bouquetChannelsArr;
             for (const input of channelsArr) {
                 const inputName = input.name;
                 const inputReference = input.reference;
