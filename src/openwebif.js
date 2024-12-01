@@ -1,12 +1,12 @@
 'use strict';
-const fs = require('fs');
-const fsPromises = fs.promises;
-const axios = require('axios');
-const EventEmitter = require('events');
-const ImpulseGenerator = require('./impulsegenerator.js');
-const CONSTANTS = require('./constants.json');
+import { promises } from 'fs';
+const fsPromises = promises;
+import axios from 'axios';
+import EventEmitter from 'events';
+import ImpulseGenerator from './impulsegenerator.js';
+import { ApiUrls } from './constants.js';
 
-class OPENWEBIF extends EventEmitter {
+class OpenWebIf extends EventEmitter {
     constructor(config) {
         super();
         const host = config.host;
@@ -56,7 +56,7 @@ class OPENWEBIF extends EventEmitter {
 
     async connect() {
         try {
-            const deviceInfo = await this.axiosInstance(CONSTANTS.ApiUrls.DeviceInfo);
+            const deviceInfo = await this.axiosInstance(ApiUrls.DeviceInfo);
             const devInfo = deviceInfo.data;
             const debug = this.debugLog ? this.emit('debug', `Connect data: ${JSON.stringify(devInfo, null, 2)}`) : false;
             this.devInfo = devInfo;
@@ -78,7 +78,7 @@ class OPENWEBIF extends EventEmitter {
             await this.saveData(this.devInfoFile, devInfo);
 
             //get all channels
-            const channelsInfo = this.getInputsFromDevice ? await this.axiosInstance(CONSTANTS.ApiUrls.GetAllServices) : false;
+            const channelsInfo = this.getInputsFromDevice ? await this.axiosInstance(ApiUrls.GetAllServices) : false;
             const allChannels = channelsInfo ? channelsInfo.data.services : false;
             const debug1 = this.debugLog ? this.emit('debug', `Channels info: ${channelsInfo}`) : false;
 
@@ -113,7 +113,7 @@ class OPENWEBIF extends EventEmitter {
 
     async checkState() {
         try {
-            const deviceState = await this.axiosInstance(CONSTANTS.ApiUrls.DeviceStatus);
+            const deviceState = await this.axiosInstance(ApiUrls.DeviceStatus);
             const devState = deviceState.data;
             const debug = this.debugLog ? this.emit('debug', `State: ${JSON.stringify(devState, null, 2)}`) : false;
 
@@ -221,4 +221,4 @@ class OPENWEBIF extends EventEmitter {
         };
     };
 };
-module.exports = OPENWEBIF;
+export default OpenWebIf;

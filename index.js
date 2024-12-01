@@ -1,23 +1,23 @@
 'use strict';
-const path = require('path');
-const fs = require('fs');
-const OpenWebIfDevice = require('./src/openwebifdevice.js');
-const ImpulseGenerator = require('./src/impulsegenerator.js');
-const CONSTANTS = require('./src/constants.json');
+import { join } from 'path';
+import { mkdirSync, existsSync, writeFileSync } from 'fs';
+import OpenWebIfDevice from './src/openwebifdevice.js';
+import ImpulseGenerator from './src/impulsegenerator.js';
+import { PluginName, PlatformName } from './src/constants.js';
 
 class OpenWebIfPlatform {
 	constructor(log, config, api) {
 		// only load if configured
 		if (!config || !Array.isArray(config.devices)) {
-			log.warn(`No configuration found for ${CONSTANTS.PluginName}`);
+			log.warn(`No configuration found for ${PluginName}`);
 			return;
 		}
 		this.accessories = [];
 
 		//check if prefs directory exist
-		const prefDir = path.join(api.user.storagePath(), 'openwebifTv');
+		const prefDir = join(api.user.storagePath(), 'openwebifTv');
 		try {
-			fs.mkdirSync(prefDir, { recursive: true });
+			mkdirSync(prefDir, { recursive: true });
 		} catch (error) {
 			log.error(`Prepare directory error: ${error.message ?? error}`);
 			return;
@@ -70,8 +70,8 @@ class OpenWebIfPlatform {
 					];
 
 					files.forEach((file) => {
-						if (!fs.existsSync(file)) {
-							fs.writeFileSync(file, '');
+						if (!existsSync(file)) {
+							writeFileSync(file, '');
 						}
 					});
 				} catch (error) {
@@ -83,7 +83,7 @@ class OpenWebIfPlatform {
 				try {
 					const openWebIfDevice = new OpenWebIfDevice(api, device, devInfoFile, inputsFile, channelsFile, inputsNamesFile, inputsTargetVisibilityFile, refreshInterval);
 					openWebIfDevice.on('publishAccessory', (accessory) => {
-						api.publishExternalAccessories(CONSTANTS.PluginName, [accessory]);
+						api.publishExternalAccessories(PluginName, [accessory]);
 						log.success(`Device: ${host} ${deviceName}, Published as external accessory.`);
 					})
 						.on('devInfo', (devInfo) => {
@@ -132,6 +132,6 @@ class OpenWebIfPlatform {
 	}
 };
 
-module.exports = (api) => {
-	api.registerPlatform(CONSTANTS.PluginName, CONSTANTS.PlatformName, OpenWebIfPlatform, true);
+export default (api) => {
+	api.registerPlatform(PluginName, PlatformName, OpenWebIfPlatform, true);
 };
