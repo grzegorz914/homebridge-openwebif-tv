@@ -18,7 +18,7 @@ class OpenWebIfPlatform {
 		try {
 			mkdirSync(prefDir, { recursive: true });
 		} catch (error) {
-			log.error(`Prepare directory error: ${error.message ?? error}`);
+			log.error(`Prepare directory error: ${error}`);
 			return;
 		}
 
@@ -29,7 +29,7 @@ class OpenWebIfPlatform {
 				const port = device.port;
 
 				if (!deviceName || !host || !port) {
-					log.warn(`Name: ${deviceName ? 'OK' : deviceName}, host: ${host ? 'OK' : host}, port: ${port ? 'OK' : port}, in config missing.`);
+					log.warn(`Name: ${deviceName ? 'OK' : deviceName}, host: ${host ? 'OK' : host}, port: ${port ? 'OK' : port}, in config missing`);
 					return;
 				}
 				await new Promise(resolve => setTimeout(resolve, 500))
@@ -37,7 +37,7 @@ class OpenWebIfPlatform {
 				//debug config
 				const enableDebugMode = device.enableDebugMode || false;
 				const disableLogConnectError = device.disableLogConnectError || false;
-				const debug = enableDebugMode ? log.info(`Device: ${host} ${deviceName}, did finish launching.`) : false;
+				const debug = enableDebugMode ? log.info(`Device: ${host} ${deviceName}, did finish launching`) : false;
 				const config = {
 					...device,
 					pass: 'removed',
@@ -83,7 +83,7 @@ class OpenWebIfPlatform {
 					const openWebIfDevice = new OpenWebIfDevice(api, device, devInfoFile, inputsFile, channelsFile, inputsNamesFile, inputsTargetVisibilityFile, refreshInterval);
 					openWebIfDevice.on('publishAccessory', (accessory) => {
 						api.publishExternalAccessories(PluginName, [accessory]);
-						log.success(`Device: ${host} ${deviceName}, Published as external accessory.`);
+						log.success(`Device: ${host} ${deviceName}, Published as external accessory`);
 					})
 						.on('devInfo', (devInfo) => {
 							log.info(devInfo);
@@ -111,10 +111,10 @@ class OpenWebIfPlatform {
 							await openWebIfDevice.start();
 							impulseGenerator.stop();
 						} catch (error) {
-							const logError = disableLogConnectError ? false : log.error(`Device: ${host} ${deviceName}, ${error}, trying again.`);
+							const logError = disableLogConnectError ? false : log.error(`Device: ${host} ${deviceName}, ${error}, trying again`);
 						};
 					}).on('state', (state) => {
-						const debug = enableDebugMode ? state ? log.info(`Device: ${host} ${deviceName}, Start impulse generator started.`) : log.info(`Device: ${host} ${deviceName}, Start impulse generator stopped.`) : false;
+						const debug = enableDebugMode ? state ? log.info(`Device: ${host} ${deviceName}, Start impulse generator started`) : log.info(`Device: ${host} ${deviceName}, Start impulse generator stopped`) : false;
 					});
 
 					//start impulse generator

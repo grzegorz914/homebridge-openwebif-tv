@@ -191,7 +191,7 @@ class OpenWebIfDevice extends EventEmitter {
                                                 break;
                                         };
                                     } catch (error) {
-                                        this.emit('warn', `MQTT set error: ${error}.`);
+                                        this.emit('warn', `MQTT set error: ${error}`);
                                     };
                                 })
                                 .on('debug', (debug) => {
@@ -202,7 +202,7 @@ class OpenWebIfDevice extends EventEmitter {
                                 });
                         };
                     } catch (error) {
-                        this.emit('warn', `External integration start error: ${error.message || error}}.`);
+                        this.emit('warn', `External integration start error: ${error}`);
                     };
                 })
                 .on('prepareAccessory', async (channels) => {
@@ -232,7 +232,7 @@ class OpenWebIfDevice extends EventEmitter {
                         //start impulse generator 
                         await this.openwebif.impulseGenerator.start([{ name: 'checkState', sampling: this.refreshInterval }]);
                     } catch (error) {
-                        this.emit('error', `Prepare accessory error: ${error.message || error}}`);
+                        this.emit('error', `Prepare accessory error: ${error}`);
                     };
                 })
                 .on('stateChanged', (power, name, eventName, reference, volume, mute) => {
@@ -383,7 +383,7 @@ class OpenWebIfDevice extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`Start error: ${error.message || error}}.`);
+            throw new Error(`Start error: ${error}`);
         };
     };
 
@@ -412,7 +412,7 @@ class OpenWebIfDevice extends EventEmitter {
             this.televisionService.setCharacteristic(Characteristic.DisplayOrder, Encode(1, displayOrder).toString('base64'));
             return true;
         } catch (error) {
-            throw new Error(`Display order error: ${error.message ?? error}`);
+            throw new Error(`Display order error: ${error}`);
         };
     }
 
@@ -422,7 +422,7 @@ class OpenWebIfDevice extends EventEmitter {
             const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved data: ${JSON.stringify(data, null, 2)}`);
             return true;
         } catch (error) {
-            throw new Error(`Save data error: ${error.message ?? error}`);
+            throw new Error(`Save data error: ${error}`);
         };
     }
 
@@ -432,7 +432,7 @@ class OpenWebIfDevice extends EventEmitter {
             const debug = !this.enableDebugMode ? false : this.emit('debug', `Read data: ${JSON.stringify(data, null, 2)}`);
             return data;;
         } catch (error) {
-            throw new Error(`Read data error: ${error.message ?? error}`);
+            throw new Error(`Read data error: ${error}`);
         };
     }
 

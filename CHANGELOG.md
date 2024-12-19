@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - After update to v4.0.0 RESTFull and MQTT config settings need to be updated
 
+## [4.1.2] - (19.12.2024)
+
+## Changes
+
+- bump dependencies
+- cleanup
+
 ## [4.1.0] - (01.12.2024)
 
 ## Changes

@@ -45,10 +45,10 @@ class OpenWebIf extends EventEmitter {
             try {
                 await this.checkState();
             } catch (error) {
-                const logError = config.disableLogConnectError ? false : this.emit('error', `Impulse generator check state error: ${error.message || error}.`);
+                const logError = config.disableLogConnectError ? false : this.emit('error', `Impulse generator error: ${error}`);
             };
         }).on('state', (state) => {
-            const emitState = state ? this.emit('success', `Impulse generator started.`) : this.emit('warn', `Impulse generator stopped.`);
+            const emitState = state ? this.emit('success', `Impulse generator started`) : this.emit('warn', `Impulse generator stopped`);
         });
     };
 
@@ -68,7 +68,7 @@ class OpenWebIf extends EventEmitter {
             const mac = devInfo.ifaces[0].mac || false;
 
             if (!mac) {
-                this.emit('error', `Missing Mac Address: ${mac}.`);
+                this.emit('error', `Missing Mac Address: ${mac}`);
                 return;
             }
 
@@ -83,7 +83,7 @@ class OpenWebIf extends EventEmitter {
             //prepare channels
             const channels = await this.getInputs(allChannels, this.bouquets, this.inputs, this.getInputsFromDevice);
             if (!channels) {
-                this.emit('error', `Found: ${channels} channels.`);
+                this.emit('error', `Found: ${channels} channels`);
                 return;
             }
 
@@ -91,7 +91,7 @@ class OpenWebIf extends EventEmitter {
             await this.saveData(this.inputsFile, channels);
 
             //connect to deice success
-            this.emit('success', `Connect Success.`)
+            this.emit('success', `Connect Success`)
 
             //emit device info
             this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
@@ -104,7 +104,7 @@ class OpenWebIf extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`Connect error: ${error.message || error}}.`);
+            throw new Error(`Connect error: ${error}`);
 
         };
     };
@@ -143,7 +143,7 @@ class OpenWebIf extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`Check state error: ${error.message || error}}.`);
+            throw new Error(`Check state error: ${error}`);
         };
     };
 
@@ -170,7 +170,7 @@ class OpenWebIf extends EventEmitter {
                             bouquetChannelsArr.push(obj);
                         };
                     } else {
-                        this.emit('warn', `Bouquet: ${bouquetName}, was not found.`);
+                        this.emit('warn', `Bouquet: ${bouquetName}, was not found`);
                     }
                 }
             }
@@ -206,7 +206,7 @@ class OpenWebIf extends EventEmitter {
             const debug = this.debugLog ? this.emit('debug', `Saved data: ${data}`) : false;
             return true;
         } catch (error) {
-            throw new Error(`Save data error: ${error.message || error}}`);
+            throw new Error(`Save data error: ${error}`);
         };
     };
 
@@ -215,7 +215,7 @@ class OpenWebIf extends EventEmitter {
             await this.axiosInstance(apiUrl);
             return true;
         } catch (error) {
-            throw new Error(error);
+            throw new Error(`Send data error: ${error}`);
         };
     };
 };
