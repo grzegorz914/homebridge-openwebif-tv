@@ -74,7 +74,7 @@ class OpenWebIfDevice extends EventEmitter {
                 sensor.state = false;
                 this.sensorsInputsConfigured.push(sensor);
             } else {
-                const log = sensorInputDisplayType === 0 ? false : this.emit('message', `Sensor Name: ${sensorInputName ? sensorInputName : 'Missing'}, Reference: ${sensorInputReference ? sensorInputReference : 'Missing'}.`);
+                const log = sensorInputDisplayType === 0 ? false : this.emit('message', `Sensor Name: ${sensorInputName ? sensorInputName : 'Missing'}, Reference: ${sensorInputReference ? sensorInputReference : 'Missing'}`);
             };
         }
         this.sensorsInputsConfiguredCount = this.sensorsInputsConfigured.length || 0;
@@ -93,7 +93,7 @@ class OpenWebIfDevice extends EventEmitter {
                 button.state = false;
                 this.buttonsConfigured.push(button);
             } else {
-                const log = buttonDisplayType === 0 ? false : this.emit('message', `Button Name: ${buttonName ? buttonName : 'Missing'}, ${buttonMode ? 'Command:' : 'Reference:'} ${buttonReferenceCommand ? buttonReferenceCommand : 'Missing'}, Mode: ${buttonMode ? buttonMode : 'Missing'}.`);
+                const log = buttonDisplayType === 0 ? false : this.emit('message', `Button Name: ${buttonName ? buttonName : 'Missing'}, ${buttonMode ? 'Command:' : 'Reference:'} ${buttonReferenceCommand ? buttonReferenceCommand : 'Missing'}, Mode: ${buttonMode ? buttonMode : 'Missing'}`);
             };
         }
         this.buttonsConfiguredCount = this.buttonsConfigured.length || 0;
@@ -933,7 +933,7 @@ class OpenWebIfDevice extends EventEmitter {
                         this.allServices.push(inputButtonService);
                         accessory.addService(inputButtonService);
                     } else {
-                        const log = inputDisplayType === 0 ? false : this.emit('message', `Input Button Name: ${inputName ? inputName : 'Missing'}, Reference: ${inputReference ? inputReference : 'Missing'}.`);
+                        const log = inputDisplayType === 0 ? false : this.emit('message', `Input Button Name: ${inputName ? inputName : 'Missing'}, Reference: ${inputReference ? inputReference : 'Missing'}`);
                     };
                 }
             }
@@ -1025,7 +1025,7 @@ class OpenWebIfDevice extends EventEmitter {
                                         button.state = false;
                                         break;
                                     default:
-                                        const debug2 = this.enableDebugMode ? this.emit('debug', `Set Unknown Button Mode: ${buttonMode}.`) : false;
+                                        const debug2 = this.enableDebugMode ? this.emit('debug', `Set Unknown Button Mode: ${buttonMode}`) : false;
                                         button.state = false;
                                         break;
                                 };
