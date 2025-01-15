@@ -104,7 +104,7 @@ class OpenWebIfPlatform {
 						.on('warn', (warn) => {
 							const lemitLogog = disableLogWarn ? false : log.warn(`Device: ${host} ${deviceName}, ${warn}.`);
 						})
-						.on('error', async (error) => {
+						.on('error', (error) => {
 							const emitLog = disableLogError ? false : log.error(`Device: ${host} ${deviceName}, ${error}.`);
 						});
 
