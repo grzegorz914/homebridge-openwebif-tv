@@ -18,7 +18,7 @@ class OpenWebIf extends EventEmitter {
         this.channelsFile = config.channelsFile;
         this.inputsFile = config.inputsFile;
         this.getInputsFromDevice = config.getInputsFromDevice;
-        this.debugLog = config.debugLog;
+        this.enableDebugMode = config.enableDebugMode;
 
         const baseUrl = `http://${host}:${port}`;
         this.axiosInstance = axios.create({
@@ -45,7 +45,7 @@ class OpenWebIf extends EventEmitter {
             try {
                 await this.checkState();
             } catch (error) {
-                const logError = config.disableLogConnectError ? false : this.emit('error', `Impulse generator error: ${error}`);
+                const logError = config.disableLogError ? false : this.emit('error', `Impulse generator error: ${error}`);
             };
         }).on('state', (state) => {
             const emitState = state ? this.emit('success', `Impulse generator started`) : this.emit('warn', `Impulse generator stopped`);
@@ -56,7 +56,7 @@ class OpenWebIf extends EventEmitter {
         try {
             const deviceInfo = await this.axiosInstance(ApiUrls.DeviceInfo);
             const devInfo = deviceInfo.data;
-            const debug = this.debugLog ? this.emit('debug', `Connect data: ${JSON.stringify(devInfo, null, 2)}`) : false;
+            const debug = this.enableDebugMode ? this.emit('debug', `Connect data: ${JSON.stringify(devInfo, null, 2)}`) : false;
             this.devInfo = devInfo;
 
             const manufacturer = devInfo.brand || 'undefined';
@@ -69,7 +69,7 @@ class OpenWebIf extends EventEmitter {
 
             if (!mac) {
                 this.emit('error', `Missing Mac Address: ${mac}`);
-                return;
+                return false;
             }
 
             //save device info to the file
@@ -78,13 +78,13 @@ class OpenWebIf extends EventEmitter {
             //get all channels
             const channelsInfo = this.getInputsFromDevice ? await this.axiosInstance(ApiUrls.GetAllServices) : false;
             const allChannels = channelsInfo ? channelsInfo.data.services : false;
-            const debug1 = this.debugLog ? this.emit('debug', `Channels info: ${channelsInfo}`) : false;
+            const debug1 = this.enableDebugMode ? this.emit('debug', `Channels info: ${channelsInfo}`) : false;
 
             //prepare channels
             const channels = await this.getInputs(allChannels, this.bouquets, this.inputs, this.getInputsFromDevice);
             if (!channels) {
                 this.emit('error', `Found: ${channels} channels`);
-                return;
+                return false;
             }
 
             //save channels
@@ -95,12 +95,6 @@ class OpenWebIf extends EventEmitter {
 
             //emit device info
             this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
-
-            //start external integration
-            this.emit('externalIntegration');
-
-            //prepare accessory
-            this.emit('prepareAccessory', channels);
 
             return true;
         } catch (error) {
@@ -113,7 +107,7 @@ class OpenWebIf extends EventEmitter {
         try {
             const deviceState = await this.axiosInstance(ApiUrls.DeviceStatus);
             const devState = deviceState.data;
-            const debug = this.debugLog ? this.emit('debug', `State: ${JSON.stringify(devState, null, 2)}`) : false;
+            const debug = this.enableDebugMode ? this.emit('debug', `State: ${JSON.stringify(devState, null, 2)}`) : false;
 
             //mqtt
             this.emit('mqtt', 'Info', this.devInfo);
@@ -203,7 +197,7 @@ class OpenWebIf extends EventEmitter {
         try {
             data = JSON.stringify(data, null, 2);
             await fsPromises.writeFile(path, data);
-            const debug = this.debugLog ? this.emit('debug', `Saved data: ${data}`) : false;
+            const debug = this.enableDebugMode ? this.emit('debug', `Saved data: ${data}`) : false;
             return true;
         } catch (error) {
             throw new Error(`Save data error: ${error}`);

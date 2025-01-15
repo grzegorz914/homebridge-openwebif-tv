@@ -34,10 +34,14 @@ class OpenWebIfPlatform {
 				}
 				await new Promise(resolve => setTimeout(resolve, 500))
 
-				//debug config
+				//log config
 				const enableDebugMode = device.enableDebugMode || false;
-				const disableLogConnectError = device.disableLogConnectError || false;
-				const debug = enableDebugMode ? log.info(`Device: ${host} ${deviceName}, did finish launching.`) : false;
+				const disableLogDeviceInfo = device.disableLogDeviceInfo || false;
+				const disableLogInfo = device.disableLogInfo || false;
+				const disableLogSuccess = device.disableLogSuccess || false;
+				const disableLogWarn = device.disableLogWarn || false;
+				const disableLogError = device.disableLogError || false;
+				const debug = !enableDebugMode ? false : log.info(`Device: ${host} ${deviceName}, did finish launching.`);
 				const config = {
 					...device,
 					pass: 'removed',
@@ -46,7 +50,7 @@ class OpenWebIfPlatform {
 						passwd: 'removed'
 					}
 				};
-				const debug1 = enableDebugMode ? log.info(`Device: ${host} ${deviceName}, Config: ${JSON.stringify(config, null, 2)}.`) : false;
+				const debug1 = !enableDebugMode ? false : log.info(`Device: ${host} ${deviceName}, Config: ${JSON.stringify(config, null, 2)}.`);
 
 				//refresh interval
 				const refreshInterval = device.refreshInterval * 1000 || 5000;
@@ -74,7 +78,7 @@ class OpenWebIfPlatform {
 						}
 					});
 				} catch (error) {
-					log.error(`Device: ${host} ${deviceName}, Prepare files error: ${error}.`);
+					const emitLog = disableLogError ? false : log.error(`Device: ${host} ${deviceName}, Prepare files error: ${error}.`);
 					return;
 				}
 
@@ -86,41 +90,41 @@ class OpenWebIfPlatform {
 						log.success(`Device: ${host} ${deviceName}, Published as external accessory.`);
 					})
 						.on('devInfo', (devInfo) => {
-							log.info(devInfo);
+							const emitLog = disableLogDeviceInfo ? false : log.info(devInfo);
 						})
-						.on('success', (message) => {
-							log.success(`Device: ${host} ${deviceName}, ${message}.`);
+						.on('success', (success) => {
+							const emitLog = disableLogSuccess ? false : log.success(`Device: ${host} ${deviceName}, ${success}.`);
 						})
-						.on('message', (message) => {
-							log.info(`Device: ${host} ${deviceName}, ${message}.`);
+						.on('info', (info) => {
+							const emitLog = disableLogInfo ? false : log.info(`Device: ${host} ${deviceName}, ${info}.`);
 						})
 						.on('debug', (debug) => {
-							log.info(`Device: ${host} ${deviceName}, debug: ${debug}.`);
+							const emitLog = !enableDebugMode ? false : log.info(`Device: ${host} ${deviceName}, debug: ${debug}.`);
 						})
 						.on('warn', (warn) => {
-							log.warn(`Device: ${host} ${deviceName}, ${warn}.`);
+							const lemitLogog = disableLogWarn ? false : log.warn(`Device: ${host} ${deviceName}, ${warn}.`);
 						})
 						.on('error', async (error) => {
-							log.error(`Device: ${host} ${deviceName}, ${error}.`);
+							const emitLog = disableLogError ? false : log.error(`Device: ${host} ${deviceName}, ${error}.`);
 						});
 
 					//create impulse generator
 					const impulseGenerator = new ImpulseGenerator();
 					impulseGenerator.on('start', async () => {
 						try {
-							await openWebIfDevice.start();
-							impulseGenerator.stop();
+							const startDone = await openWebIfDevice.start();
+							const stopImpulseGenerator = startDone ? impulseGenerator.stop() : false;
 						} catch (error) {
-							const logError = disableLogConnectError ? false : log.error(`Device: ${host} ${deviceName}, ${error}, trying again.`);
+							const emitLog = disableLogError ? false : log.error(`Device: ${host} ${deviceName}, ${error}, trying again.`);
 						};
 					}).on('state', (state) => {
-						const debug = enableDebugMode ? state ? log.info(`Device: ${host} ${deviceName}, Start impulse generator started.`) : log.info(`Device: ${host} ${deviceName}, Start impulse generator stopped.`) : false;
+						const emitLog = !enableDebugMode ? false : state ? log.info(`Device: ${host} ${deviceName}, Start impulse generator started.`) : log.info(`Device: ${host} ${deviceName}, Start impulse generator stopped.`);
 					});
 
 					//start impulse generator
 					impulseGenerator.start([{ name: 'start', sampling: 45000 }]);
 				} catch (error) {
-					log.error(`Device: ${host} ${deviceName}, Did finish launching error: ${error}.`);
+					throw new Error(`Device: ${host} ${deviceName}, Did finish launching error: ${error}.`);
 				}
 			}
 		});

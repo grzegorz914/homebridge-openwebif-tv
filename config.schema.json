@@ -821,20 +821,6 @@
               "description": "Here set the background data refresh interval.",
               "required": true
             },
-            "enableDebugMode": {
-              "title": "Debug",
-              "type": "boolean",
-              "default": false,
-              "description": "This enable debug mode.",
-              "required": false
-            },
-            "disableLogInfo": {
-              "title": "Disable Log Info",
-              "type": "boolean",
-              "default": false,
-              "description": "This disable logging values and states on every it change.",
-              "required": false
-            },
             "disableLogDeviceInfo": {
               "title": "Disable Log Device Info",
               "type": "boolean",
@@ -842,11 +828,34 @@
               "description": "This disable logging device info by every connections device to the network.",
               "required": false
             },
-            "disableLogConnectError": {
-              "title": "Disable Log Connect Error",
+            "disableLogInfo": {
+              "title": "Disable Log Info",
               "type": "boolean",
               "default": false,
-              "description": "This disable logging device connect error.",
+              "required": false
+            },
+            "disableLogSuccess": {
+              "title": "Disable Log Success",
+              "type": "boolean",
+              "default": false,
+              "required": false
+            },
+            "disableLogWarn": {
+              "title": "Disable Log Warn",
+              "type": "boolean",
+              "default": false,
+              "required": false
+            },
+            "disableLogError": {
+              "title": "Disable Log Error",
+              "type": "boolean",
+              "default": false,
+              "required": false
+            },
+            "enableDebugMode": {
+              "title": "Enable Log Debug",
+              "type": "boolean",
+              "default": false,
               "required": false
             },
             "mqtt": {
@@ -1084,12 +1093,14 @@
                 },
                 {
                   "key": "devices[]",
-                  "title": "System",
+                  "title": "Log",
                   "items": [
-                    "devices[].enableDebugMode",
-                    "devices[].disableLogInfo",
                     "devices[].disableLogDeviceInfo",
-                    "devices[].disableLogConnectError"
+                    "devices[].disableLogInfo",
+                    "devices[].disableLogSuccess",
+                    "devices[].disableLogWarn",
+                    "devices[].disableLogError",
+                    "devices[].enableDebugMode"
                   ]
                 },
                 {

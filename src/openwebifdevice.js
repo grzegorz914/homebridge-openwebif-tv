@@ -35,8 +35,7 @@ class OpenWebIfDevice extends EventEmitter {
         this.sensorInputs = device.sensorInputs || [];
         this.enableDebugMode = device.enableDebugMode || false;
         this.disableLogInfo = device.disableLogInfo || false;
-        this.disableLogDeviceInfo = device.disableLogDeviceInfo || false;
-        this.disableLogConnectError = device.disableLogConnectError || false;
+        this.disableLogError = device.disableLogError || false;
         this.infoButtonCommand = device.infoButtonCommand || '139';
         this.volumeControlNamePrefix = device.volumeControlNamePrefix || false;
         this.volumeControlName = device.volumeControlName || 'Volume';
@@ -74,7 +73,7 @@ class OpenWebIfDevice extends EventEmitter {
                 sensor.state = false;
                 this.sensorsInputsConfigured.push(sensor);
             } else {
-                const log = sensorInputDisplayType === 0 ? false : this.emit('message', `Sensor Name: ${sensorInputName ? sensorInputName : 'Missing'}, Reference: ${sensorInputReference ? sensorInputReference : 'Missing'}`);
+                const log = sensorInputDisplayType === 0 ? false : this.emit('info', `Sensor Name: ${sensorInputName ? sensorInputName : 'Missing'}, Reference: ${sensorInputReference ? sensorInputReference : 'Missing'}`);
             };
         }
         this.sensorsInputsConfiguredCount = this.sensorsInputsConfigured.length || 0;
@@ -93,7 +92,7 @@ class OpenWebIfDevice extends EventEmitter {
                 button.state = false;
                 this.buttonsConfigured.push(button);
             } else {
-                const log = buttonDisplayType === 0 ? false : this.emit('message', `Button Name: ${buttonName ? buttonName : 'Missing'}, ${buttonMode ? 'Command:' : 'Reference:'} ${buttonReferenceCommand ? buttonReferenceCommand : 'Missing'}, Mode: ${buttonMode ? buttonMode : 'Missing'}`);
+                const log = buttonDisplayType === 0 ? false : this.emit('info', `Button Name: ${buttonName ? buttonName : 'Missing'}, ${buttonMode ? 'Command:' : 'Reference:'} ${buttonReferenceCommand ? buttonReferenceCommand : 'Missing'}, Mode: ${buttonMode ? buttonMode : 'Missing'}`);
             };
         }
         this.buttonsConfiguredCount = this.buttonsConfigured.length || 0;
@@ -122,21 +121,19 @@ class OpenWebIfDevice extends EventEmitter {
                 inputsFile: this.inputsFile,
                 channelsFile: this.channelsFile,
                 getInputsFromDevice: this.getInputsFromDevice,
-                debugLog: this.enableDebugMode,
-                disableLogConnectError: this.disableLogConnectError
+                enableDebugMode: this.enableDebugMode,
+                disableLogError: this.disableLogError
             });
 
             this.openwebif.on('deviceInfo', (manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) => {
-                if (!this.disableLogDeviceInfo) {
-                    this.emit('devInfo', `-------- ${this.name} --------`);
-                    this.emit('devInfo', `Manufacturer: ${manufacturer}`);
-                    this.emit('devInfo', `Model: ${modelName}`);
-                    this.emit('devInfo', `Kernel: ${kernelVer}`);
-                    this.emit('devInfo', `Chipset: ${chipset}`);
-                    this.emit('devInfo', `Webif version: ${serialNumber}`);
-                    this.emit('devInfo', `Firmware: ${firmwareRevision}`);
-                    this.emit('devInfo', `----------------------------------`)
-                }
+                this.emit('devInfo', `-------- ${this.name} --------`);
+                this.emit('devInfo', `Manufacturer: ${manufacturer}`);
+                this.emit('devInfo', `Model: ${modelName}`);
+                this.emit('devInfo', `Kernel: ${kernelVer}`);
+                this.emit('devInfo', `Chipset: ${chipset}`);
+                this.emit('devInfo', `Webif version: ${serialNumber}`);
+                this.emit('devInfo', `Firmware: ${firmwareRevision}`);
+                this.emit('devInfo', `----------------------------------`)
 
                 this.manufacturer = manufacturer || 'Manufacturer';
                 this.modelName = modelName || 'Model Name';
@@ -144,97 +141,6 @@ class OpenWebIfDevice extends EventEmitter {
                 this.firmwareRevision = firmwareRevision || 'Firmware Revision';
                 this.mac = mac;
             })
-                .on('externalIntegration', () => {
-                    try {
-                        //mqtt client
-                        const mqttEnabled = this.mqtt.enable || false;
-                        if (mqttEnabled) {
-                            this.mqtt1 = new Mqtt({
-                                host: this.mqtt.host,
-                                port: this.mqtt.port || 1883,
-                                clientId: this.mqtt.clientId || `openwebif_${Math.random().toString(16).slice(3)}`,
-                                prefix: `${this.mqtt.prefix}/${this.name}`,
-                                user: this.mqtt.user,
-                                passwd: this.mqtt.passwd,
-                                debug: this.mqtt.debug || false
-                            });
-
-                            this.mqtt1.on('connected', (message) => {
-                                this.emit('success', message);
-                                this.mqttConnected = true;
-                            })
-                                .on('subscribed', (message) => {
-                                    this.emit('success', message);
-                                })
-                                .on('set', async (key, value) => {
-                                    try {
-                                        switch (key) {
-                                            case 'Power':
-                                                const state = value ? '4' : '5';
-                                                await this.openwebif.send(ApiUrls.SetPower + state);
-                                                break;
-                                            case 'Channel':
-                                                await this.openwebif.send(ApiUrls.SetChannel + value);
-                                                break;
-                                            case 'Volume':
-                                                const volume = (value < 0 || value > 100) ? this.volume : value;
-                                                await this.openwebif.send(ApiUrls.SetVolume + volume);
-                                                break;
-                                            case 'Mute':
-                                                await this.openwebif.send(ApiUrls.ToggleMute);
-                                                break;
-                                            case 'RcControl':
-                                                await this.openwebif.send(ApiUrls.SetRcCommand + value);
-                                                break;
-                                            default:
-                                                this.emit('message', `MQTT Received key: ${key}, value: ${value}`);
-                                                break;
-                                        };
-                                    } catch (error) {
-                                        this.emit('warn', `MQTT set error: ${error}`);
-                                    };
-                                })
-                                .on('debug', (debug) => {
-                                    this.emit('debug', debug);
-                                })
-                                .on('error', (error) => {
-                                    this.emit('warn', error);
-                                });
-                        };
-                    } catch (error) {
-                        this.emit('warn', `External integration start error: ${error}`);
-                    };
-                })
-                .on('prepareAccessory', async (channels) => {
-                    if (!this.startPrepareAccessory) {
-                        return;
-                    }
-
-                    try {
-                        //read inputs names from file
-                        const savedInputsNames = await this.readData(this.inputsNamesFile);
-                        this.savedInputsNames = savedInputsNames.toString().trim() !== '' ? JSON.parse(savedInputsNames) : {};
-                        const debug = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs/Channels: Names: ${JSON.stringify(this.savedInputsNames, null, 2)}`);
-
-                        //read inputs visibility from file
-                        const savedInputsTargetVisibility = await this.readData(this.inputsTargetVisibilityFile);
-                        this.savedInputsTargetVisibility = savedInputsTargetVisibility.toString().trim() !== '' ? JSON.parse(savedInputsTargetVisibility) : {};
-                        const debug1 = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs/Channels: Target Visibility: ${JSON.stringify(this.savedInputsTargetVisibility, null, 2)}`);
-
-                        //prepare accessory
-                        const accessory = await this.prepareAccessory(channels);
-                        this.emit('publishAccessory', accessory);
-
-                        //sort inputs list
-                        const sortInputsDisplayOrder = this.televisionService ? await this.displayOrder() : false;
-                        this.startPrepareAccessory = false;
-
-                        //start impulse generator 
-                        await this.openwebif.impulseGenerator.start([{ name: 'checkState', sampling: this.refreshInterval }]);
-                    } catch (error) {
-                        this.emit('error', `Prepare accessory error: ${error}`);
-                    };
-                })
                 .on('stateChanged', (power, name, eventName, reference, volume, mute) => {
                     const input = this.inputsConfigured.find(input => input.reference === reference) ?? false;
                     const inputIdentifier = input ? input.identifier : this.inputIdentifier;
@@ -349,27 +255,27 @@ class OpenWebIfDevice extends EventEmitter {
                     this.mute = mute;
 
                     if (!this.disableLogInfo) {
-                        this.emit('message', `Power: ${power ? 'ON' : 'OFF'}`);
-                        this.emit('message', `Channel Name: ${name}`);
-                        this.emit('message', `Event Name: ${eventName}`);
-                        this.emit('message', `Reference: ${reference}`);
-                        this.emit('message', `Volume: ${volume}%`);
-                        this.emit('message', `Mute: ${mute ? 'ON' : 'OFF'}`);
-                        this.emit('message', `Closed Captions: 0`);
-                        this.emit('message', `Media State: ${['PLAY', 'PAUSE', 'STOPPED', 'LOADING', 'INTERRUPTED'][2]}`);
+                        this.emit('info', `Power: ${power ? 'ON' : 'OFF'}`);
+                        this.emit('info', `Channel Name: ${name}`);
+                        this.emit('info', `Event Name: ${eventName}`);
+                        this.emit('info', `Reference: ${reference}`);
+                        this.emit('info', `Volume: ${volume}%`);
+                        this.emit('info', `Mute: ${mute ? 'ON' : 'OFF'}`);
+                        this.emit('info', `Closed Captions: 0`);
+                        this.emit('info', `Media State: ${['PLAY', 'PAUSE', 'STOPPED', 'LOADING', 'INTERRUPTED'][2]}`);
                     };
                 })
-                .on('success', (message) => {
-                    this.emit('success', message);
+                .on('success', (success) => {
+                    this.emit('success', success);
                 })
-                .on('message', (message) => {
-                    this.emit('message', message);
+                .on('info', (info) => {
+                    this.emit('info', info);
                 })
                 .on('debug', (debug) => {
                     this.emit('debug', debug);
                 })
-                .on('warn', async (error) => {
-                    this.emit('warn', error);
+                .on('warn', async (warn) => {
+                    this.emit('warn', warn);
                 })
                 .on('error', async (error) => {
                     this.emit('error', error);
@@ -380,6 +286,23 @@ class OpenWebIfDevice extends EventEmitter {
 
             //connect to receiver
             await this.openwebif.connect();
+
+            //start external integrations
+            const startExternalIntegrations = this.mqtt.enable ? await this.externalIntegrations() : false;
+
+            //prepare accessory
+            if (this.startPrepareAccessory) {
+                //prepare data for accessory
+                await this.prepareDataForAccessory();
+
+                //prepare accessory
+                const accessory = await this.prepareAccessory();
+                this.emit('publishAccessory', accessory);
+                this.startPrepareAccessory = false;
+
+                //start impulse generator 
+                await this.openwebif.impulseGenerator.start([{ name: 'checkState', sampling: this.refreshInterval }]);
+            }
 
             return true;
         } catch (error) {
@@ -430,14 +353,101 @@ class OpenWebIfDevice extends EventEmitter {
         try {
             const data = await fsPromises.readFile(path);
             const debug = !this.enableDebugMode ? false : this.emit('debug', `Read data: ${JSON.stringify(data, null, 2)}`);
-            return data;;
+            return data;
         } catch (error) {
             throw new Error(`Read data error: ${error}`);
         };
     }
 
+    async externalIntegrations() {
+        try {
+            //mqtt client
+            const mqttEnabled = this.mqtt.enable || false;
+            if (mqttEnabled) {
+                this.mqtt1 = new Mqtt({
+                    host: this.mqtt.host,
+                    port: this.mqtt.port || 1883,
+                    clientId: this.mqtt.clientId || `openwebif_${Math.random().toString(16).slice(3)}`,
+                    prefix: `${this.mqtt.prefix}/${this.name}`,
+                    user: this.mqtt.user,
+                    passwd: this.mqtt.passwd,
+                    debug: this.mqtt.debug || false
+                });
+
+                this.mqtt1.on('connected', (message) => {
+                    this.emit('success', message);
+                    this.mqttConnected = true;
+                })
+                    .on('subscribed', (message) => {
+                        this.emit('success', message);
+                    })
+                    .on('set', async (key, value) => {
+                        try {
+                            switch (key) {
+                                case 'Power':
+                                    const state = value ? '4' : '5';
+                                    await this.openwebif.send(ApiUrls.SetPower + state);
+                                    break;
+                                case 'Channel':
+                                    await this.openwebif.send(ApiUrls.SetChannel + value);
+                                    break;
+                                case 'Volume':
+                                    const volume = (value < 0 || value > 100) ? this.volume : value;
+                                    await this.openwebif.send(ApiUrls.SetVolume + volume);
+                                    break;
+                                case 'Mute':
+                                    await this.openwebif.send(ApiUrls.ToggleMute);
+                                    break;
+                                case 'RcControl':
+                                    await this.openwebif.send(ApiUrls.SetRcCommand + value);
+                                    break;
+                                default:
+                                    this.emit('info', `MQTT Received key: ${key}, value: ${value}`);
+                                    break;
+                            };
+                        } catch (error) {
+                            this.emit('warn', `MQTT set error: ${error}`);
+                        };
+                    })
+                    .on('debug', (debug) => {
+                        this.emit('debug', debug);
+                    })
+                    .on('error', (error) => {
+                        this.emit('warn', error);
+                    });
+            };
+
+            return true;
+        } catch (error) {
+            this.emit('warn', `External integration start error: ${error}`);
+        };
+    }
+
+    async prepareDataForAccessory() {
+        try {
+            //read inputs file
+            const savedInputs = await this.readData(this.inputsFile);
+            this.savedInputs = savedInputs.toString().trim() !== '' ? JSON.parse(savedInputs) : this.inputs;
+            const debug = this.enableDebugMode ? this.emit('debug', `Read saved Inputs/Channels: ${JSON.stringify(this.savedInputs, null, 2)}`) : false;
+
+            //read inputs names from file
+            const savedInputsNames = await this.readData(this.inputsNamesFile);
+            this.savedInputsNames = savedInputsNames.toString().trim() !== '' ? JSON.parse(savedInputsNames) : {};
+            const debug1 = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs/Channels: Names: ${JSON.stringify(this.savedInputsNames, null, 2)}`);
+
+            //read inputs visibility from file
+            const savedInputsTargetVisibility = await this.readData(this.inputsTargetVisibilityFile);
+            this.savedInputsTargetVisibility = savedInputsTargetVisibility.toString().trim() !== '' ? JSON.parse(savedInputsTargetVisibility) : {};
+            const debug2 = !this.enableDebugMode ? false : this.emit('debug', `Read saved Inputs/Channels: Target Visibility: ${JSON.stringify(this.savedInputsTargetVisibility, null, 2)}`);
+
+            return true;
+        } catch (error) {
+            throw new Error(`Prepare data for accessory error: ${error}`);
+        }
+    }
+
     //prepare accessory
-    async prepareAccessory(channels) {
+    async prepareAccessory() {
         try {
             //accessory
             const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare accessory`);
@@ -475,7 +485,7 @@ class OpenWebIfDevice extends EventEmitter {
                     try {
                         const newState = state ? '4' : '5';
                         await this.openwebif.send(ApiUrls.SetPower + newState);
-                        const info = this.disableLogInfo ? false : this.emit('message', `set Power: ${state ? 'ON' : 'OFF'}`);
+                        const info = this.disableLogInfo ? false : this.emit('info', `set Power: ${state ? 'ON' : 'OFF'}`);
                     } catch (error) {
                         this.emit('warn', `set Power error: ${error}`);
                     };
@@ -499,7 +509,7 @@ class OpenWebIfDevice extends EventEmitter {
                                 break;
                             case true:
                                 await this.openwebif.send(ApiUrls.SetChannel + inputReference);
-                                const info = this.disableLogInfo ? false : this.emit('message', `set Channel: ${inputName}, Reference: ${inputReference}`);
+                                const info = this.disableLogInfo ? false : this.emit('info', `set Channel: ${inputName}, Reference: ${inputReference}`);
                                 break;
                         }
                     } catch (error) {
@@ -554,7 +564,7 @@ class OpenWebIfDevice extends EventEmitter {
                         }
 
                         await this.openwebif.send(ApiUrls.SetRcCommand + command);
-                        const info = this.disableLogInfo ? false : this.emit('message', `set Remote Key: ${command}`);
+                        const info = this.disableLogInfo ? false : this.emit('info', `set Remote Key: ${command}`);
                     } catch (error) {
                         this.emit('warn', `set Remote Key error: ${error}`);
                     };
@@ -570,7 +580,7 @@ class OpenWebIfDevice extends EventEmitter {
                     try {
                         const brightness = value;
                         const setBrightness = false
-                        const info = this.disableLogInfo ? false : this.emit('message', `set Brightness: ${value}`);
+                        const info = this.disableLogInfo ? false : this.emit('info', `set Brightness: ${value}`);
                     } catch (error) {
                         this.emit('warn', `set Brightness error: ${error}`);
                     };
@@ -582,7 +592,7 @@ class OpenWebIfDevice extends EventEmitter {
                     return state;
                 })
                 .onSet(async (state) => {
-                    const info = this.disableLogInfo ? false : this.emit('message', `set Closed Ccaptions: ${state}`);
+                    const info = this.disableLogInfo ? false : this.emit('info', `set Closed Ccaptions: ${state}`);
                 });
 
             this.televisionService.getCharacteristic(Characteristic.CurrentMediaState)
@@ -600,7 +610,7 @@ class OpenWebIfDevice extends EventEmitter {
                 .onSet(async (value) => {
                     try {
                         const newMediaState = value;
-                        const info = this.disableLogInfo ? false : this.emit('message', `set Target Media State: ${['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]}`);
+                        const info = this.disableLogInfo ? false : this.emit('info', `set Target Media State: ${['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]}`);
                     } catch (error) {
                         this.emit('warn', `set Target Media state error: ${error}`);
                     };
@@ -619,7 +629,7 @@ class OpenWebIfDevice extends EventEmitter {
                         }
 
                         await this.openwebif.send(ApiUrls.SetRcCommand + command);
-                        const info = this.disableLogInfo ? false : this.emit('message', `set Power Mode Selection: ${command === '139' ? 'SHOW' : 'HIDE'}`);
+                        const info = this.disableLogInfo ? false : this.emit('info', `set Power Mode Selection: ${command === '139' ? 'SHOW' : 'HIDE'}`);
                     } catch (error) {
                         this.emit('warn', `set Power Mode Selection error: ${error}`);
                     };
@@ -656,7 +666,7 @@ class OpenWebIfDevice extends EventEmitter {
                         }
 
                         await this.openwebif.send(ApiUrls.SetRcCommand + command);
-                        const info = this.disableLogInfo ? false : this.emit('message', `set Volume Selector: ${command}`);
+                        const info = this.disableLogInfo ? false : this.emit('info', `set Volume Selector: ${command}`);
                     } catch (error) {
                         this.emit('warn', `set Volume Selector command error: ${error}`);
                     };
@@ -670,7 +680,7 @@ class OpenWebIfDevice extends EventEmitter {
                 .onSet(async (volume) => {
                     try {
                         await this.openwebif.send(ApiUrls.SetVolume + volume);
-                        const info = this.disableLogInfo ? false : this.emit('message', `set Volume: ${volume}`);
+                        const info = this.disableLogInfo ? false : this.emit('info', `set Volume: ${volume}`);
                     } catch (error) {
                         this.emit('warn', `set Volume level error: ${error}`);
                     };
@@ -684,7 +694,7 @@ class OpenWebIfDevice extends EventEmitter {
                 .onSet(async (state) => {
                     try {
                         await this.openwebif.send(ApiUrls.ToggleMute);
-                        const info = this.disableLogInfo ? false : this.emit('message', `set Mute: ${state ? 'ON' : 'OFF'}`);
+                        const info = this.disableLogInfo ? false : this.emit('info', `set Mute: ${state ? 'ON' : 'OFF'}`);
                     } catch (error) {
                         this.emit('warn', `set Mute error: ${error}`);
                     };
@@ -695,7 +705,7 @@ class OpenWebIfDevice extends EventEmitter {
             const debug4 = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs servics`);
 
             //check possible inputs count (max 85)
-            const inputs = channels;
+            const inputs = this.savedInputs;
             const inputsCount = inputs.length;
             const possibleInputsCount = 85 - this.allServices.length;
             const maxInputsCount = inputsCount >= possibleInputsCount ? possibleInputsCount : inputsCount;
@@ -933,7 +943,7 @@ class OpenWebIfDevice extends EventEmitter {
                         this.allServices.push(inputButtonService);
                         accessory.addService(inputButtonService);
                     } else {
-                        const log = inputDisplayType === 0 ? false : this.emit('message', `Input Button Name: ${inputName ? inputName : 'Missing'}, Reference: ${inputReference ? inputReference : 'Missing'}`);
+                        const log = inputDisplayType === 0 ? false : this.emit('info', `Input Button Name: ${inputName ? inputName : 'Missing'}, Reference: ${inputReference ? inputReference : 'Missing'}`);
                     };
                 }
             }
@@ -1038,6 +1048,9 @@ class OpenWebIfDevice extends EventEmitter {
                     accessory.addService(buttonService);
                 };
             }
+
+            //sort inputs list
+            const sortInputsDisplayOrder = this.televisionService ? await this.displayOrder() : false;
 
             return accessory;
         } catch (error) {

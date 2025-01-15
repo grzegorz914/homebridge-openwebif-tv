@@ -7,7 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### NOTE
 
-- After update to v4.0.0 RESTFull and MQTT config settings need to be updated
+- After update to v4.0.0 MQTT config settings need to be updated
+
+## [4.2.0] - (15.01.2025)
+
+## Changes
+
+- added possibility to disable/enable log success, info, warn, error
+- refactor cnnrct code
+- bump dependencies
+- config schema updated
+- redme updated
+- cleanup
 
 ## [4.1.2] - (19.12.2024)
 
