@@ -285,7 +285,7 @@ class OpenWebIfDevice extends EventEmitter {
                 });
 
             //connect to receiver
-            const connect = await this.denon.connect();
+            const connect = await this.openwebif.connect();
             if (!connect) {
                 return false;
             }
