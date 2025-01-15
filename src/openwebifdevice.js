@@ -285,7 +285,11 @@ class OpenWebIfDevice extends EventEmitter {
                 });
 
             //connect to receiver
-            await this.openwebif.connect();
+            const connect = await this.denon.connect();
+
+            if (!connect) {
+                return false;
+            }
 
             //start external integrations
             const startExternalIntegrations = this.mqtt.enable ? await this.externalIntegrations() : false;

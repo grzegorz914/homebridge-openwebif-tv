@@ -9,12 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - After update to v4.0.0 MQTT config settings need to be updated
 
+## [4.2.2] - (15.01.2025)
+
+## Changes
+
+- prevent publish accessory if required data not found
+- cleanup
+
 ## [4.2.0] - (15.01.2025)
 
 ## Changes
 
 - added possibility to disable/enable log success, info, warn, error
-- refactor cnnrct code
+- refactor cnnect code
 - bump dependencies
 - config schema updated
 - redme updated

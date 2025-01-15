@@ -83,7 +83,7 @@ class OpenWebIf extends EventEmitter {
             //prepare channels
             const channels = await this.getInputs(allChannels, this.bouquets, this.inputs, this.getInputsFromDevice);
             if (!channels) {
-                this.emit('error', `Found: ${channels} channels`);
+                this.emit('error', `Found: 0 channels`);
                 return false;
             }
 

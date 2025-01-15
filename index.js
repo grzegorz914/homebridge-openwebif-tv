@@ -32,7 +32,6 @@ class OpenWebIfPlatform {
 					log.warn(`Name: ${deviceName ? 'OK' : deviceName}, host: ${host ? 'OK' : host}, port: ${port ? 'OK' : port}, in config missing.`);
 					return;
 				}
-				await new Promise(resolve => setTimeout(resolve, 500))
 
 				//log config
 				const enableDebugMode = device.enableDebugMode || false;
@@ -126,6 +125,7 @@ class OpenWebIfPlatform {
 				} catch (error) {
 					throw new Error(`Device: ${host} ${deviceName}, Did finish launching error: ${error}.`);
 				}
+				await new Promise(resolve => setTimeout(resolve, 500));
 			}
 		});
 	}
