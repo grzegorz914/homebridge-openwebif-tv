@@ -87,7 +87,7 @@ class OpenWebIfPlatform {
 					const openWebIfDevice = new OpenWebIfDevice(api, device, devInfoFile, inputsFile, channelsFile, inputsNamesFile, inputsTargetVisibilityFile, refreshInterval);
 					openWebIfDevice.on('publishAccessory', (accessory) => {
 						api.publishExternalAccessories(PluginName, [accessory]);
-						log.success(`Device: ${host} ${deviceName}, Published as external accessory.`);
+						const emitLog = disableLogSuccess ? false : log.success(`Device: ${host} ${deviceName}, Published as external accessory.`);
 					})
 						.on('devInfo', (devInfo) => {
 							const emitLog = disableLogDeviceInfo ? false : log.info(devInfo);
