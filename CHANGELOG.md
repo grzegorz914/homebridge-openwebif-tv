@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - After update to v4.0.0 MQTT config settings need to be updated
 
+## [4.2.4] - (16.01.2025)
+
+## Changes
+
+- added 1 default channel if no channels was created or 0 found to allow publisch accessory
+
 ## [4.2.2] - (15.01.2025)
 
 ## Changes
