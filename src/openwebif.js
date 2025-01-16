@@ -83,7 +83,7 @@ class OpenWebIf extends EventEmitter {
             //prepare channels
             let channels = await this.getInputs(allChannels, this.bouquets, this.inputs, this.getInputsFromDevice);
             if (!channels) {
-                this.emit('error', `Found: 0 channels, adding 1 default channel`);
+                this.emit('warn', `Found: 0 channels, adding 1 default channel`);
                 channels = [{
                     name: "CNN HD",
                     reference: "1:0:1:1C8A:1CE8:71:820000:0:0:0::CNN HD",
