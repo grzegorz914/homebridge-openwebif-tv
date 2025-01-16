@@ -106,242 +106,6 @@ class OpenWebIfDevice extends EventEmitter {
         this.playPause = false;
     }
 
-    async start() {
-        try {
-            //openwebif client
-            this.openwebif = new OpenWebIf({
-                host: this.host,
-                port: this.port,
-                user: this.user,
-                pass: this.pass,
-                auth: this.auth,
-                inputs: this.inputs,
-                bouquets: this.bouquets,
-                devInfoFile: this.devInfoFile,
-                inputsFile: this.inputsFile,
-                channelsFile: this.channelsFile,
-                getInputsFromDevice: this.getInputsFromDevice,
-                enableDebugMode: this.enableDebugMode,
-                disableLogError: this.disableLogError
-            });
-
-            this.openwebif.on('deviceInfo', (manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) => {
-                this.emit('devInfo', `-------- ${this.name} --------`);
-                this.emit('devInfo', `Manufacturer: ${manufacturer}`);
-                this.emit('devInfo', `Model: ${modelName}`);
-                this.emit('devInfo', `Kernel: ${kernelVer}`);
-                this.emit('devInfo', `Chipset: ${chipset}`);
-                this.emit('devInfo', `Webif version: ${serialNumber}`);
-                this.emit('devInfo', `Firmware: ${firmwareRevision}`);
-                this.emit('devInfo', `----------------------------------`)
-
-                this.manufacturer = manufacturer || 'Manufacturer';
-                this.modelName = modelName || 'Model Name';
-                this.serialNumber = serialNumber || 'Serial Number';
-                this.firmwareRevision = firmwareRevision || 'Firmware Revision';
-                this.mac = mac;
-            })
-                .on('stateChanged', (power, name, eventName, reference, volume, mute) => {
-                    const input = this.inputsConfigured.find(input => input.reference === reference) ?? false;
-                    const inputIdentifier = input ? input.identifier : this.inputIdentifier;
-                    mute = power ? mute : true;
-
-                    if (this.televisionService) {
-                        this.televisionService
-                            .updateCharacteristic(Characteristic.Active, power)
-                    }
-
-                    if (this.televisionService) {
-                        this.televisionService
-                            .updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier)
-                    }
-
-                    if (this.speakerService) {
-                        this.speakerService
-                            .updateCharacteristic(Characteristic.Active, power)
-                            .updateCharacteristic(Characteristic.Volume, volume)
-                            .updateCharacteristic(Characteristic.Mute, mute);
-
-                        if (this.volumeService) {
-                            this.volumeService
-                                .updateCharacteristic(Characteristic.Brightness, volume)
-                                .updateCharacteristic(Characteristic.On, !mute);
-                        }
-
-                        if (this.volumeServiceFan) {
-                            this.volumeServiceFan
-                                .updateCharacteristic(Characteristic.RotationSpeed, volume)
-                                .updateCharacteristic(Characteristic.On, !mute);
-                        }
-                    }
-
-                    //sensors
-                    if (this.sensorPowerService) {
-                        this.sensorPowerService
-                            .updateCharacteristic(Characteristic.ContactSensorState, power)
-                    }
-
-                    if (volume !== this.volume) {
-                        for (let i = 0; i < 2; i++) {
-                            const state = power ? [true, false][i] : false;
-                            if (this.sensorVolumeService) {
-                                this.sensorVolumeService
-                                    .updateCharacteristic(Characteristic.ContactSensorState, state)
-                                this.sensorVolumeState = state;
-                            }
-                        }
-                    }
-
-                    if (this.sensorMuteService) {
-                        const state = power ? mute : false;
-                        this.sensorMuteService
-                            .updateCharacteristic(Characteristic.ContactSensorState, state)
-                    }
-
-                    if (reference !== this.reference) {
-                        for (let i = 0; i < 2; i++) {
-                            const state = power ? [true, false][i] : false;
-                            if (this.sensorInputService) {
-                                this.sensorInputService
-                                    .updateCharacteristic(Characteristic.ContactSensorState, state)
-                                this.sensorInputState = state;
-                            }
-                        }
-                    }
-
-                    if (this.sensorsInputsConfiguredCount > 0) {
-                        for (let i = 0; i < this.sensorsInputsConfiguredCount; i++) {
-                            const sensorInput = this.sensorsInputsConfigured[i];
-                            const state = power ? sensorInput.reference === reference : false;
-                            sensorInput.state = state;
-                            if (this.sensorsInputsServices) {
-                                const characteristicType = sensorInput.characteristicType;
-                                this.sensorsInputsServices[i]
-                                    .updateCharacteristic(characteristicType, state);
-                            }
-                        }
-                    }
-
-                    //inputs buttons
-                    if (this.inputsButtonsConfigured.length > 0) {
-                        for (let i = 0; i < this.inputsButtonsConfigured.length; i++) {
-                            const inputButton = this.inputsButtonsConfigured[i];
-                            const state = power ? inputButton.reference === reference : false;
-                            inputButton.state = state;
-                            if (this.inputsButtonsServices) {
-                                this.inputsButtonsServices[i]
-                                    .updateCharacteristic(Characteristic.On, state);
-                            }
-                        }
-                    }
-
-                    //buttons
-                    if (this.buttonsConfiguredCount > 0) {
-                        for (let i = 0; i < this.buttonsConfiguredCount; i++) {
-                            const button = this.buttonsConfigured[i];
-                            const state = this.power ? button.reference === reference : false;
-                            button.state = state;
-                            if (this.buttonsServices) {
-                                this.buttonsServices[i]
-                                    .updateCharacteristic(Characteristic.On, state);
-                            }
-                        }
-                    }
-
-                    this.inputIdentifier = inputIdentifier;
-                    this.power = power;
-                    this.reference = reference;
-                    this.volume = volume;
-                    this.mute = mute;
-
-                    if (!this.disableLogInfo) {
-                        this.emit('info', `Power: ${power ? 'ON' : 'OFF'}`);
-                        this.emit('info', `Channel Name: ${name}`);
-                        this.emit('info', `Event Name: ${eventName}`);
-                        this.emit('info', `Reference: ${reference}`);
-                        this.emit('info', `Volume: ${volume}%`);
-                        this.emit('info', `Mute: ${mute ? 'ON' : 'OFF'}`);
-                        this.emit('info', `Closed Captions: 0`);
-                        this.emit('info', `Media State: ${['PLAY', 'PAUSE', 'STOPPED', 'LOADING', 'INTERRUPTED'][2]}`);
-                    };
-                })
-                .on('success', (success) => {
-                    this.emit('success', success);
-                })
-                .on('info', (info) => {
-                    this.emit('info', info);
-                })
-                .on('debug', (debug) => {
-                    this.emit('debug', debug);
-                })
-                .on('warn', async (warn) => {
-                    this.emit('warn', warn);
-                })
-                .on('error', async (error) => {
-                    this.emit('error', error);
-                })
-                .on('mqtt', (topic, message) => {
-                    const mqtt = this.mqttConnected ? this.mqtt1.emit('publish', topic, message) : false;
-                });
-
-            //connect to receiver
-            const connect = await this.openwebif.connect();
-            if (!connect) {
-                return false;
-            }
-
-            //start external integrations
-            const startExternalIntegrations = this.mqtt.enable ? await this.externalIntegrations() : false;
-
-            //prepare accessory
-            if (this.startPrepareAccessory) {
-                //prepare data for accessory
-                await this.prepareDataForAccessory();
-
-                //prepare accessory
-                const accessory = await this.prepareAccessory();
-                this.emit('publishAccessory', accessory);
-                this.startPrepareAccessory = false;
-
-                //start impulse generator 
-                await this.openwebif.impulseGenerator.start([{ name: 'checkState', sampling: this.refreshInterval }]);
-            }
-
-            return true;
-        } catch (error) {
-            throw new Error(`Start error: ${error}`);
-        };
-    };
-
-    async displayOrder() {
-        try {
-            switch (this.inputsDisplayOrder) {
-                case 0:
-                    this.inputsConfigured.sort((a, b) => a.identifier - b.identifier);
-                    break;
-                case 1:
-                    this.inputsConfigured.sort((a, b) => a.name.localeCompare(b.name));
-                    break;
-                case 2:
-                    this.inputsConfigured.sort((a, b) => b.name.localeCompare(a.name));
-                    break;
-                case 3:
-                    this.inputsConfigured.sort((a, b) => a.reference.localeCompare(b.reference));
-                    break;
-                case 4:
-                    this.inputsConfigured.sort((a, b) => b.reference.localeCompare(a.reference));
-                    break;
-            }
-            const debug = !this.enableDebugMode ? false : this.emit('debug', `Inputs display order: ${JSON.stringify(this.inputsConfigured, null, 2)}`);
-
-            const displayOrder = this.inputsConfigured.map(input => input.identifier);
-            this.televisionService.setCharacteristic(Characteristic.DisplayOrder, Encode(1, displayOrder).toString('base64'));
-            return true;
-        } catch (error) {
-            throw new Error(`Display order error: ${error}`);
-        };
-    }
-
     async saveData(path, data) {
         try {
             await fsPromises.writeFile(path, JSON.stringify(data, null, 2));
@@ -447,6 +211,35 @@ class OpenWebIfDevice extends EventEmitter {
         } catch (error) {
             throw new Error(`Prepare data for accessory error: ${error}`);
         }
+    }
+
+    async displayOrder() {
+        try {
+            switch (this.inputsDisplayOrder) {
+                case 0:
+                    this.inputsConfigured.sort((a, b) => a.identifier - b.identifier);
+                    break;
+                case 1:
+                    this.inputsConfigured.sort((a, b) => a.name.localeCompare(b.name));
+                    break;
+                case 2:
+                    this.inputsConfigured.sort((a, b) => b.name.localeCompare(a.name));
+                    break;
+                case 3:
+                    this.inputsConfigured.sort((a, b) => a.reference.localeCompare(b.reference));
+                    break;
+                case 4:
+                    this.inputsConfigured.sort((a, b) => b.reference.localeCompare(a.reference));
+                    break;
+            }
+            const debug = !this.enableDebugMode ? false : this.emit('debug', `Inputs display order: ${JSON.stringify(this.inputsConfigured, null, 2)}`);
+
+            const displayOrder = this.inputsConfigured.map(input => input.identifier);
+            this.televisionService.setCharacteristic(Characteristic.DisplayOrder, Encode(1, displayOrder).toString('base64'));
+            return true;
+        } catch (error) {
+            throw new Error(`Display order error: ${error}`);
+        };
     }
 
     //prepare accessory
@@ -750,10 +543,6 @@ class OpenWebIfDevice extends EventEmitter {
                         return input.name;
                     })
                     .onSet(async (value) => {
-                        if (value === this.savedInputsNames[inputReference]) {
-                            return;
-                        }
-
                         try {
                             input.name = value;
                             this.savedInputsNames[inputReference] = value;
@@ -774,10 +563,6 @@ class OpenWebIfDevice extends EventEmitter {
                         return input.visibility;
                     })
                     .onSet(async (state) => {
-                        if (state === this.savedInputsTargetVisibility[inputReference]) {
-                            return;
-                        }
-
                         try {
                             input.visibility = state;
                             this.savedInputsTargetVisibility[inputReference] = state;
@@ -1060,5 +845,212 @@ class OpenWebIfDevice extends EventEmitter {
             throw new Error(error)
         };
     }
+
+    //start
+    async start() {
+        try {
+            //openwebif client
+            this.openwebif = new OpenWebIf({
+                host: this.host,
+                port: this.port,
+                user: this.user,
+                pass: this.pass,
+                auth: this.auth,
+                inputs: this.inputs,
+                bouquets: this.bouquets,
+                devInfoFile: this.devInfoFile,
+                inputsFile: this.inputsFile,
+                channelsFile: this.channelsFile,
+                getInputsFromDevice: this.getInputsFromDevice,
+                enableDebugMode: this.enableDebugMode,
+                disableLogError: this.disableLogError
+            });
+
+            this.openwebif.on('deviceInfo', (manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) => {
+                this.emit('devInfo', `-------- ${this.name} --------`);
+                this.emit('devInfo', `Manufacturer: ${manufacturer}`);
+                this.emit('devInfo', `Model: ${modelName}`);
+                this.emit('devInfo', `Kernel: ${kernelVer}`);
+                this.emit('devInfo', `Chipset: ${chipset}`);
+                this.emit('devInfo', `Webif version: ${serialNumber}`);
+                this.emit('devInfo', `Firmware: ${firmwareRevision}`);
+                this.emit('devInfo', `----------------------------------`)
+
+                this.manufacturer = manufacturer || 'Manufacturer';
+                this.modelName = modelName || 'Model Name';
+                this.serialNumber = serialNumber || 'Serial Number';
+                this.firmwareRevision = firmwareRevision || 'Firmware Revision';
+                this.mac = mac;
+            })
+                .on('stateChanged', (power, name, eventName, reference, volume, mute) => {
+                    const input = this.inputsConfigured.find(input => input.reference === reference) ?? false;
+                    const inputIdentifier = input ? input.identifier : this.inputIdentifier;
+                    mute = power ? mute : true;
+
+                    if (this.televisionService) {
+                        this.televisionService
+                            .updateCharacteristic(Characteristic.Active, power)
+                    }
+
+                    if (this.televisionService) {
+                        this.televisionService
+                            .updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier)
+                    }
+
+                    if (this.speakerService) {
+                        this.speakerService
+                            .updateCharacteristic(Characteristic.Active, power)
+                            .updateCharacteristic(Characteristic.Volume, volume)
+                            .updateCharacteristic(Characteristic.Mute, mute);
+
+                        if (this.volumeService) {
+                            this.volumeService
+                                .updateCharacteristic(Characteristic.Brightness, volume)
+                                .updateCharacteristic(Characteristic.On, !mute);
+                        }
+
+                        if (this.volumeServiceFan) {
+                            this.volumeServiceFan
+                                .updateCharacteristic(Characteristic.RotationSpeed, volume)
+                                .updateCharacteristic(Characteristic.On, !mute);
+                        }
+                    }
+
+                    //sensors
+                    if (this.sensorPowerService) {
+                        this.sensorPowerService
+                            .updateCharacteristic(Characteristic.ContactSensorState, power)
+                    }
+
+                    if (volume !== this.volume) {
+                        for (let i = 0; i < 2; i++) {
+                            const state = power ? [true, false][i] : false;
+                            if (this.sensorVolumeService) {
+                                this.sensorVolumeService
+                                    .updateCharacteristic(Characteristic.ContactSensorState, state)
+                                this.sensorVolumeState = state;
+                            }
+                        }
+                    }
+
+                    if (this.sensorMuteService) {
+                        const state = power ? mute : false;
+                        this.sensorMuteService
+                            .updateCharacteristic(Characteristic.ContactSensorState, state)
+                    }
+
+                    if (reference !== this.reference) {
+                        for (let i = 0; i < 2; i++) {
+                            const state = power ? [true, false][i] : false;
+                            if (this.sensorInputService) {
+                                this.sensorInputService
+                                    .updateCharacteristic(Characteristic.ContactSensorState, state)
+                                this.sensorInputState = state;
+                            }
+                        }
+                    }
+
+                    if (this.sensorsInputsConfiguredCount > 0) {
+                        for (let i = 0; i < this.sensorsInputsConfiguredCount; i++) {
+                            const sensorInput = this.sensorsInputsConfigured[i];
+                            const state = power ? sensorInput.reference === reference : false;
+                            sensorInput.state = state;
+                            if (this.sensorsInputsServices) {
+                                const characteristicType = sensorInput.characteristicType;
+                                this.sensorsInputsServices[i]
+                                    .updateCharacteristic(characteristicType, state);
+                            }
+                        }
+                    }
+
+                    //inputs buttons
+                    if (this.inputsButtonsConfigured.length > 0) {
+                        for (let i = 0; i < this.inputsButtonsConfigured.length; i++) {
+                            const inputButton = this.inputsButtonsConfigured[i];
+                            const state = power ? inputButton.reference === reference : false;
+                            inputButton.state = state;
+                            if (this.inputsButtonsServices) {
+                                this.inputsButtonsServices[i]
+                                    .updateCharacteristic(Characteristic.On, state);
+                            }
+                        }
+                    }
+
+                    //buttons
+                    if (this.buttonsConfiguredCount > 0) {
+                        for (let i = 0; i < this.buttonsConfiguredCount; i++) {
+                            const button = this.buttonsConfigured[i];
+                            const state = this.power ? button.reference === reference : false;
+                            button.state = state;
+                            if (this.buttonsServices) {
+                                this.buttonsServices[i]
+                                    .updateCharacteristic(Characteristic.On, state);
+                            }
+                        }
+                    }
+
+                    this.inputIdentifier = inputIdentifier;
+                    this.power = power;
+                    this.reference = reference;
+                    this.volume = volume;
+                    this.mute = mute;
+
+                    if (!this.disableLogInfo) {
+                        this.emit('info', `Power: ${power ? 'ON' : 'OFF'}`);
+                        this.emit('info', `Channel Name: ${name}`);
+                        this.emit('info', `Event Name: ${eventName}`);
+                        this.emit('info', `Reference: ${reference}`);
+                        this.emit('info', `Volume: ${volume}%`);
+                        this.emit('info', `Mute: ${mute ? 'ON' : 'OFF'}`);
+                        this.emit('info', `Closed Captions: 0`);
+                        this.emit('info', `Media State: ${['PLAY', 'PAUSE', 'STOPPED', 'LOADING', 'INTERRUPTED'][2]}`);
+                    };
+                })
+                .on('success', (success) => {
+                    this.emit('success', success);
+                })
+                .on('info', (info) => {
+                    this.emit('info', info);
+                })
+                .on('debug', (debug) => {
+                    this.emit('debug', debug);
+                })
+                .on('warn', async (warn) => {
+                    this.emit('warn', warn);
+                })
+                .on('error', async (error) => {
+                    this.emit('error', error);
+                })
+                .on('mqtt', (topic, message) => {
+                    const mqtt = this.mqttConnected ? this.mqtt1.emit('publish', topic, message) : false;
+                });
+
+            //connect to receiver
+            const connect = await this.openwebif.connect();
+            if (!connect) {
+                return false;
+            }
+
+            //start external integrations
+            const startExternalIntegrations = this.mqtt.enable ? await this.externalIntegrations() : false;
+
+            //prepare data for accessory
+            await this.prepareDataForAccessory();
+
+            //prepare accessory
+            if (this.startPrepareAccessory) {
+                const accessory = await this.prepareAccessory();
+                this.emit('publishAccessory', accessory);
+                this.startPrepareAccessory = false;
+
+                //start impulse generator 
+                await this.openwebif.impulseGenerator.start([{ name: 'checkState', sampling: this.refreshInterval }]);
+            }
+
+            return true;
+        } catch (error) {
+            throw new Error(`Start error: ${error}`);
+        };
+    };
 };
 export default OpenWebIfDevice;
