@@ -112,7 +112,7 @@ class OpenWebIfPlatform {
 					impulseGenerator.on('start', async () => {
 						try {
 							const startDone = await openWebIfDevice.start();
-							const stopImpulseGenerator = startDone ? impulseGenerator.stop() : false;
+							const stopImpulseGenerator = startDone ? await impulseGenerator.stop() : false;
 						} catch (error) {
 							const emitLog = disableLogError ? false : log.error(`Device: ${host} ${deviceName}, ${error}, trying again.`);
 						};
@@ -121,7 +121,7 @@ class OpenWebIfPlatform {
 					});
 
 					//start impulse generator
-					impulseGenerator.start([{ name: 'start', sampling: 45000 }]);
+					await impulseGenerator.start([{ name: 'start', sampling: 45000 }]);
 				} catch (error) {
 					throw new Error(`Device: ${host} ${deviceName}, Did finish launching error: ${error}.`);
 				}
