@@ -68,7 +68,7 @@ class OpenWebIf extends EventEmitter {
             const mac = devInfo.ifaces[0].mac || false;
 
             if (!mac) {
-                this.emit('error', `Missing Mac Address: ${mac}`);
+                this.emit('error', `Missing Mac Address`);
                 return false;
             }
 

@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - After update to v4.0.0 MQTT config settings need to be updated
 
+## [4.2.8] - (02.06.2025)
+
+## Changes
+
+- fix HAP-NodeJS WARNING: The accessory has an invalid 'Name' characteristic 'configuredName'
+- Please use only alphanumeric, space, and apostrophe characters
+- Ensure it starts and ends with an alphabetic or numeric character, and avoid emojis
+
 ## [4.2.5] - (16.01.2025)
 
 ## Changes
