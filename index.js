@@ -113,6 +113,9 @@ class OpenWebIfPlatform {
 						try {
 							const startDone = await openWebIfDevice.start();
 							const stopImpulseGenerator = startDone ? await impulseGenerator.stop() : false;
+
+							//start device impulse generator 
+							const startImpulseGenerator = startDone ? await openWebIfDevice.startImpulseGenerator() : false;
 						} catch (error) {
 							const emitLog = disableLogError ? false : log.error(`Device: ${host} ${deviceName}, ${error}, trying again.`);
 						};
