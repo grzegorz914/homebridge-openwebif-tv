@@ -139,5 +139,5 @@ class OpenWebIfPlatform {
 };
 
 export default (api) => {
-	api.registerPlatform(PluginName, PlatformName, OpenWebIfPlatform, true);
+	api.registerPlatform(PluginName, PlatformName, OpenWebIfPlatform);
 };
