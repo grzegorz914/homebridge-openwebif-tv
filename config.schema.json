@@ -569,7 +569,7 @@
                         ]
                       }
                     ],
-                    "description": "Here select the remote control command.",
+                    "description": "Here select the power control command.",
                     "required": false
                   },
                   "displayType": {
