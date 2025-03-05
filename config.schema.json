@@ -212,7 +212,8 @@
                     "title": "Mode",
                     "type": "integer",
                     "minimum": 0,
-                    "maximum": 1,
+                    "maximum": 2,
+                    "default": 0,
                     "description": "Here select the function mode.",
                     "oneOf": [
                       {
@@ -226,9 +227,15 @@
                         "enum": [
                           1
                         ]
+                      },
+                      {
+                        "title": "Power Control",
+                        "enum": [
+                          2
+                        ]
                       }
                     ],
-                    "required": false
+                    "required": true
                   },
                   "reference": {
                     "title": "Reference",
@@ -515,6 +522,50 @@
                         "title": "Text",
                         "enum": [
                           "388"
+                        ]
+                      }
+                    ],
+                    "description": "Here select the remote control command.",
+                    "required": false
+                  },
+                  "powerCommand": {
+                    "title": "Power Command",
+                    "type": "string",
+                    "oneOf": [
+                      {
+                        "title": "Toogle Standby",
+                        "enum": [
+                          "0"
+                        ]
+                      },
+                      {
+                        "title": "Deep Standby",
+                        "enum": [
+                          "1"
+                        ]
+                      },
+                      {
+                        "title": "Reboot",
+                        "enum": [
+                          "2"
+                        ]
+                      },
+                      {
+                        "title": "Restart Enigma",
+                        "enum": [
+                          "3"
+                        ]
+                      },
+                      {
+                        "title": "Wake Up",
+                        "enum": [
+                          "4"
+                        ]
+                      },
+                      {
+                        "title": "Standby",
+                        "enum": [
+                          "5"
                         ]
                       }
                     ],
@@ -1013,10 +1064,42 @@
                 "devices[].buttons[].name",
                 "devices[].buttons[].mode",
                 "devices[].buttons[].reference",
+                "devices[].buttons[].displayType",
+                "devices[].buttons[].namePrefix"
+              ],
+              "condition": {
+                "functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].mode === 0;"
+              }
+            },
+            {
+              "key": "devices[].buttons",
+              "type": "tabarray",
+              "title": "{{ value.name || 'button' }}",
+              "items": [
+                "devices[].buttons[].name",
+                "devices[].buttons[].mode",
                 "devices[].buttons[].command",
                 "devices[].buttons[].displayType",
                 "devices[].buttons[].namePrefix"
-              ]
+              ],
+              "condition": {
+                "functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].mode === 1;"
+              }
+            },
+            {
+              "key": "devices[].buttons",
+              "type": "tabarray",
+              "title": "{{ value.name || 'button' }}",
+              "items": [
+                "devices[].buttons[].name",
+                "devices[].buttons[].mode",
+                "devices[].buttons[].powerCommand",
+                "devices[].buttons[].displayType",
+                "devices[].buttons[].namePrefix"
+              ],
+              "condition": {
+                "functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].mode === 2;"
+              }
             }
           ]
         },

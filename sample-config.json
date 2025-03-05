@@ -81,6 +81,13 @@
               "command": "115",
               "displayType": 0,
               "namePrefix": false
+            },
+            {
+              "name": "Toggle Standby",
+              "mode": 2,
+              "powerCommand": "0",
+              "displayType": 0,
+              "namePrefix": false
             }
           ],
           "sensorPower": false,

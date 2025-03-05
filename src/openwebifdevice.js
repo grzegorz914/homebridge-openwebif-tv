@@ -85,7 +85,7 @@ class OpenWebIfDevice extends EventEmitter {
         for (const button of this.buttons) {
             const buttonName = button.name ?? false;
             const buttonMode = button.mode ?? -1;
-            const buttonReferenceCommand = [button.reference, button.command][buttonMode] ?? false;
+            const buttonReferenceCommand = [button.reference, button.command, button.powerCommand][buttonMode] ?? false;
             const buttonDisplayType = button.displayType ?? 0;
             if (buttonName && buttonMode >= 0 && buttonReferenceCommand && buttonDisplayType > 0) {
                 button.serviceType = ['', Service.Outlet, Service.Switch][buttonDisplayType];
@@ -827,6 +827,9 @@ class OpenWebIfDevice extends EventEmitter {
                     //get button command
                     const buttonCommand = button.command;
 
+                    //get button power command
+                    const powerCommand = button.powerCommand;
+
                     //get button name prefix
                     const namePrefix = button.namePrefix || 0;
 
@@ -854,8 +857,13 @@ class OpenWebIfDevice extends EventEmitter {
                                         const debug1 = state && this.enableDebugMode ? this.emit('debug', `Set Command, Name: ${buttonName}, Reference: ${buttonCommand}`) : false;
                                         button.state = false;
                                         break;
+                                    case 2: //Power Control
+                                        const send2 = state ? await this.openwebif.send(ApiUrls.SetPower + powerCommand) : false;
+                                        const debug2 = state && this.enableDebugMode ? this.emit('debug', `Set Power Control, Name: ${buttonName}, Reference: ${powerCommand}`) : false;
+                                        button.state = false;
+                                        break;
                                     default:
-                                        const debug2 = this.enableDebugMode ? this.emit('debug', `Set Unknown Button Mode: ${buttonMode}`) : false;
+                                        const debug3 = this.enableDebugMode ? this.emit('debug', `Set Unknown Button Mode: ${buttonMode}`) : false;
                                         button.state = false;
                                         break;
                                 };

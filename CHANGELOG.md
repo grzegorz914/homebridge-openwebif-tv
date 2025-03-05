@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - After update to v4.0.0 MQTT config settings need to be updated
 
+## [4.3.0] - (05.03.2025)
+
+## Changes
+
+- added Power Control mode for buttons, closes [#76](https://github.com/grzegorz914/homebridge-openwebif-tv/issues/76)
+- bump dependencies
+- redme update
+- cleanup
+
 ## [4.2.9] - (07.02.2025)
 
 ## Changes
