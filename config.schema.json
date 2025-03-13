@@ -34,6 +34,13 @@
               "placeholder": 80,
               "required": true
             },
+            "disableAccessory": {
+              "title": "Disable Accessory",
+              "type": "boolean",
+              "default": false,
+              "description": "Here You can disable this accessory.",
+              "required": false
+            },
             "getInputsFromDevice": {
               "title": "Load Channels From Device",
               "type": "boolean",
@@ -1219,7 +1226,10 @@
                 }
               ]
             }
-          ]
+          ],
+          "condition": {
+            "functionBody": "return model.devices[arrayIndices].disableAccessory === false;"
+          }
         }
       ]
     }

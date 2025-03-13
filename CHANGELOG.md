@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - After update to v4.0.0 MQTT config settings need to be updated
 
+## [4.4.0] - (13.03.2025)
+
+## Changes
+
+- added possibility to disable indyvidual accessory
+- bump dependencies
+- config schema updated
+- redme updated
+- cleanup
+
 ## [4.3.0] - (05.03.2025)
 
 ## Changes
