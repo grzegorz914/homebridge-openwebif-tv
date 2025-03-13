@@ -1024,6 +1024,7 @@
         "devices[].name",
         "devices[].host",
         "devices[].port",
+        "devices[].disableAccessory",
         {
           "key": "devices[]",
           "type": "section",
@@ -1054,7 +1055,10 @@
                 "devices[].inputs[].namePrefix"
               ]
             }
-          ]
+          ],
+          "condition": {
+            "functionBody": "return model.devices[arrayIndices].disableAccessory === false;"
+          }
         },
         {
           "key": "devices[]",
@@ -1108,7 +1112,10 @@
                 "functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].mode === 2;"
               }
             }
-          ]
+          ],
+          "condition": {
+            "functionBody": "return model.devices[arrayIndices].disableAccessory === false;"
+          }
         },
         {
           "key": "devices[]",
