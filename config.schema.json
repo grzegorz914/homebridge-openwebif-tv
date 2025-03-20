@@ -139,8 +139,7 @@
               },
               "condition": {
                 "functionBody": "return model.devices[arrayIndices].getInputsFromDevice === true;"
-              },
-              "required": false
+              }
             },
             "inputs": {
               "title": "Channels",
@@ -199,8 +198,7 @@
               },
               "condition": {
                 "functionBody": "return model.devices[arrayIndices].getInputsFromDevice === false;"
-              },
-              "required": false
+              }
             },
             "buttons": {
               "title": "Button",
@@ -254,6 +252,7 @@
                   "command": {
                     "title": "RC Command",
                     "type": "string",
+                    "default": "116",
                     "oneOf": [
                       {
                         "title": "0",
@@ -538,6 +537,7 @@
                   "powerCommand": {
                     "title": "Power Command",
                     "type": "string",
+                    "default": "0",
                     "oneOf": [
                       {
                         "title": "Toogle Standby",
@@ -613,8 +613,7 @@
                     "required": false
                   }
                 }
-              },
-              "required": false
+              }
             },
             "sensorPower": {
               "title": "Power",
@@ -705,8 +704,7 @@
                     "required": false
                   }
                 }
-              },
-              "required": false
+              }
             },
             "auth": {
               "title": "Authorization",
