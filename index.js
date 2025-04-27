@@ -31,12 +31,12 @@ class OpenWebIfPlatform {
 					continue;
 				}
 
-				const deviceName = device.name;
+				const name = device.name;
 				const host = device.host;
 				const port = device.port;
 
-				if (!deviceName || !host || !port) {
-					log.warn(`Name: ${deviceName ? 'OK' : deviceName}, host: ${host ? 'OK' : host}, port: ${port ? 'OK' : port}, in config missing.`);
+				if (!name || !host || !port) {
+					log.warn(`Name: ${name ? 'OK' : name}, host: ${host ? 'OK' : host}, port: ${port ? 'OK' : port}, in config missing.`);
 					return;
 				}
 
@@ -47,7 +47,7 @@ class OpenWebIfPlatform {
 				const disableLogSuccess = device.disableLogSuccess || false;
 				const disableLogWarn = device.disableLogWarn || false;
 				const disableLogError = device.disableLogError || false;
-				const debug = !enableDebugMode ? false : log.info(`Device: ${host} ${deviceName}, did finish launching.`);
+				const debug = !enableDebugMode ? false : log.info(`Device: ${host} ${name}, did finish launching.`);
 				const config = {
 					...device,
 					pass: 'removed',
@@ -56,7 +56,7 @@ class OpenWebIfPlatform {
 						passwd: 'removed'
 					}
 				};
-				const debug1 = !enableDebugMode ? false : log.info(`Device: ${host} ${deviceName}, Config: ${JSON.stringify(config, null, 2)}.`);
+				const debug1 = !enableDebugMode ? false : log.info(`Device: ${host} ${name}, Config: ${JSON.stringify(config, null, 2)}.`);
 
 				//refresh interval
 				const refreshInterval = device.refreshInterval * 1000 || 5000;
@@ -84,7 +84,7 @@ class OpenWebIfPlatform {
 						}
 					});
 				} catch (error) {
-					const emitLog = disableLogError ? false : log.error(`Device: ${host} ${deviceName}, Prepare files error: ${error}.`);
+					const emitLog = disableLogError ? false : log.error(`Device: ${host} ${name}, Prepare files error: ${error}.`);
 					return;
 				}
 
@@ -93,25 +93,25 @@ class OpenWebIfPlatform {
 					const openWebIfDevice = new OpenWebIfDevice(api, device, devInfoFile, inputsFile, channelsFile, inputsNamesFile, inputsTargetVisibilityFile, refreshInterval);
 					openWebIfDevice.on('publishAccessory', (accessory) => {
 						api.publishExternalAccessories(PluginName, [accessory]);
-						const emitLog = disableLogSuccess ? false : log.success(`Device: ${host} ${deviceName}, Published as external accessory.`);
+						const emitLog = disableLogSuccess ? false : log.success(`Device: ${host} ${name}, Published as external accessory.`);
 					})
 						.on('devInfo', (devInfo) => {
 							const emitLog = disableLogDeviceInfo ? false : log.info(devInfo);
 						})
 						.on('success', (success) => {
-							const emitLog = disableLogSuccess ? false : log.success(`Device: ${host} ${deviceName}, ${success}.`);
+							const emitLog = disableLogSuccess ? false : log.success(`Device: ${host} ${name}, ${success}.`);
 						})
 						.on('info', (info) => {
-							const emitLog = disableLogInfo ? false : log.info(`Device: ${host} ${deviceName}, ${info}.`);
+							const emitLog = disableLogInfo ? false : log.info(`Device: ${host} ${name}, ${info}.`);
 						})
 						.on('debug', (debug) => {
-							const emitLog = !enableDebugMode ? false : log.info(`Device: ${host} ${deviceName}, debug: ${debug}.`);
+							const emitLog = !enableDebugMode ? false : log.info(`Device: ${host} ${name}, debug: ${debug}.`);
 						})
 						.on('warn', (warn) => {
-							const lemitLogog = disableLogWarn ? false : log.warn(`Device: ${host} ${deviceName}, ${warn}.`);
+							const lemitLogog = disableLogWarn ? false : log.warn(`Device: ${host} ${name}, ${warn}.`);
 						})
 						.on('error', (error) => {
-							const emitLog = disableLogError ? false : log.error(`Device: ${host} ${deviceName}, ${error}.`);
+							const emitLog = disableLogError ? false : log.error(`Device: ${host} ${name}, ${error}.`);
 						});
 
 					//create impulse generator
@@ -124,16 +124,16 @@ class OpenWebIfPlatform {
 							//start device impulse generator 
 							const startImpulseGenerator = startDone ? await openWebIfDevice.startImpulseGenerator() : false;
 						} catch (error) {
-							const emitLog = disableLogError ? false : log.error(`Device: ${host} ${deviceName}, ${error}, trying again.`);
+							const emitLog = disableLogError ? false : log.error(`Device: ${host} ${name}, ${error}, trying again.`);
 						};
 					}).on('state', (state) => {
-						const emitLog = !enableDebugMode ? false : state ? log.info(`Device: ${host} ${deviceName}, Start impulse generator started.`) : log.info(`Device: ${host} ${deviceName}, Start impulse generator stopped.`);
+						const emitLog = !enableDebugMode ? false : state ? log.info(`Device: ${host} ${name}, Start impulse generator started.`) : log.info(`Device: ${host} ${name}, Start impulse generator stopped.`);
 					});
 
 					//start impulse generator
 					await impulseGenerator.start([{ name: 'start', sampling: 45000 }]);
 				} catch (error) {
-					const emitLog = disableLogError ? false : log.error(`Device: ${host} ${deviceName}, Did finish launching error: ${error}.`);
+					const emitLog = disableLogError ? false : log.error(`Device: ${host} ${name}, Did finish launching error: ${error}.`);
 				}
 				await new Promise(resolve => setTimeout(resolve, 500));
 			}
