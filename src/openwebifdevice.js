@@ -77,7 +77,7 @@ class OpenWebIfDevice extends EventEmitter {
                 sensor.state = false;
                 this.sensorsInputsConfigured.push(sensor);
             } else {
-                const log = displayType === 0 ? false : this.emit('info', `Sensor Name: ${sensor.name}, Reference: Missing`);
+                this.emit('info', `Sensor Name: ${sensor.name}, Reference: Missing`);
             };
         }
         this.sensorsInputsConfiguredCount = this.sensorsInputsConfigured.length || 0;
@@ -97,7 +97,7 @@ class OpenWebIfDevice extends EventEmitter {
                 button.state = false;
                 this.buttonsConfigured.push(button);
             } else {
-                const log = displayType === 0 ? false : this.emit('info', `Button Name: ${button.name}, Reference: Missing`);
+                this.emit('info', `Button Name: ${button.name}, Reference: Missing`);
             };
         }
         this.buttonsConfiguredCount = this.buttonsConfigured.length || 0;
