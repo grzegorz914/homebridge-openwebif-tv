@@ -69,16 +69,11 @@ class OpenWebIfDevice extends EventEmitter {
                 continue;
             };
 
+            sensor.serviceType = ['', Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][displayType];
+            sensor.characteristicType = ['', Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][displayType];
             sensor.name = sensor.name || 'Sensor Input';
-            sensor.reference = sensor.reference ?? false;
-            if (sensor.reference) {
-                sensor.serviceType = ['', Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][displayType];
-                sensor.characteristicType = ['', Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][displayType];
-                sensor.state = false;
-                this.sensorsInputsConfigured.push(sensor);
-            } else {
-                this.emit('info', `Sensor Name: ${sensor.name}, Reference: Missing`);
-            };
+            sensor.state = false;
+            this.sensorsInputsConfigured.push(sensor);
         }
         this.sensorsInputsConfiguredCount = this.sensorsInputsConfigured.length || 0;
 
@@ -90,15 +85,10 @@ class OpenWebIfDevice extends EventEmitter {
                 continue;
             };
 
+            button.serviceType = ['', Service.Outlet, Service.Switch][displayType];
             button.name = button.name || 'Button';
-            button.reference = button.reference ?? false;
-            if (button.reference) {
-                button.serviceType = ['', Service.Outlet, Service.Switch][displayType];
-                button.state = false;
-                this.buttonsConfigured.push(button);
-            } else {
-                this.emit('info', `Button Name: ${button.name}, Reference: Missing`);
-            };
+            button.state = false;
+            this.buttonsConfigured.push(button);
         }
         this.buttonsConfiguredCount = this.buttonsConfigured.length || 0;
 
@@ -114,7 +104,6 @@ class OpenWebIfDevice extends EventEmitter {
     async saveData(path, data) {
         try {
             await fsPromises.writeFile(path, JSON.stringify(data, null, 2));
-            const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved data: ${JSON.stringify(data, null, 2)}`);
             return true;
         } catch (error) {
             throw new Error(`Save data error: ${error}`);
@@ -124,7 +113,6 @@ class OpenWebIfDevice extends EventEmitter {
     async readData(path) {
         try {
             const data = await fsPromises.readFile(path);
-            const debug = !this.enableDebugMode ? false : this.emit('debug', `Read data: ${JSON.stringify(data, null, 2)}`);
             return data;
         } catch (error) {
             throw new Error(`Read data error: ${error}`);
@@ -725,10 +713,7 @@ class OpenWebIfDevice extends EventEmitter {
             if (maxInputsSwitchesButtonsCount > 0) {
                 this.inputButtonServices = [];
                 const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs buttons services`);
-                for (let i = 0; i < maxInputsSwitchesButtonsCount; i++) {
-                    //get switch
-                    const button = this.inputsConfigured[i];
-
+                this.inputsConfigured.forEach((button, i) => {
                     //get switch name		
                     const name = button.name ?? false;
 
@@ -736,7 +721,7 @@ class OpenWebIfDevice extends EventEmitter {
                     const reference = button.reference ?? false;
 
                     //get switch display type
-                    const displayType = button.displayType || 0;
+                    const displayType = button.displayType ?? 0;
 
                     //get sensor name prefix
                     const namePrefix = button.namePrefix || false;
@@ -770,7 +755,7 @@ class OpenWebIfDevice extends EventEmitter {
                     } else {
                         const log = displayType === 0 ? false : this.emit('info', `Input Button Name: ${name ? name : 'Missing'}, Reference: ${reference ? reference : 'Missing'}`);
                     };
-                }
+                });
             }
 
             //prepare sonsor service
@@ -779,10 +764,7 @@ class OpenWebIfDevice extends EventEmitter {
             if (maxSensorInputsCount > 0) {
                 this.sensorInputServices = [];
                 const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs sensors services`);
-                for (let i = 0; i < maxSensorInputsCount; i++) {
-                    //get sensor
-                    const sensor = this.sensorsInputsConfigured[i];
-
+                this.sensorsInputsConfigured.forEach((sensor, i) => {
                     //get sensor name		
                     const name = sensor.name;
 
@@ -807,7 +789,7 @@ class OpenWebIfDevice extends EventEmitter {
                     this.sensorInputServices.push(sensorInputService);
                     this.allServices.push(sensorInputService);
                     accessory.addService(sensorInputService);
-                }
+                });
             }
 
             //prepare buttons service
@@ -816,10 +798,7 @@ class OpenWebIfDevice extends EventEmitter {
             if (maxButtonsCount > 0) {
                 this.buttonServices = [];
                 const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs buttons services`);
-                for (let i = 0; i < maxButtonsCount; i++) {
-                    //get button
-                    const button = this.buttonsConfigured[i];
-
+                this.buttonsConfigured.forEach((button, i) => {
                     //get button name
                     const name = button.name;
 
@@ -876,7 +855,7 @@ class OpenWebIfDevice extends EventEmitter {
                     this.buttonServices.push(buttonService);
                     this.allServices.push(buttonService);
                     accessory.addService(buttonService);
-                };
+                });
             }
 
             //sort inputs list
@@ -993,8 +972,7 @@ class OpenWebIfDevice extends EventEmitter {
                     }
 
                     if (this.sensorsInputsConfiguredCount > 0) {
-                        for (let i = 0; i < this.sensorsInputsConfiguredCount; i++) {
-                            const sensor = this.sensorsInputsConfigured[i];
+                        this.sensorsInputsConfigured.forEach((sensor, i) => {
                             const state = power ? sensor.reference === reference : false;
                             sensor.state = state;
                             if (this.sensorInputServices) {
@@ -1002,33 +980,31 @@ class OpenWebIfDevice extends EventEmitter {
                                 this.sensorInputServices[i]
                                     .updateCharacteristic(characteristicType, state);
                             }
-                        }
+                        })
                     }
 
                     //inputs buttons
                     if (this.inputButtonConfigured.length > 0) {
-                        for (let i = 0; i < this.inputButtonConfigured.length; i++) {
-                            const button = this.inputButtonConfigured[i];
+                        this.inputButtonConfigured.forEach((button, i) => {
                             const state = power ? button.reference === reference : false;
                             button.state = state;
                             if (this.inputButtonServices) {
                                 this.inputButtonServices[i]
                                     .updateCharacteristic(Characteristic.On, state);
                             }
-                        }
+                        })
                     }
 
                     //buttons
                     if (this.buttonsConfiguredCount > 0) {
-                        for (let i = 0; i < this.buttonsConfiguredCount; i++) {
-                            const button = this.buttonsConfigured[i];
+                        this.buttonsConfigured.forEach((button, i) => {
                             const state = this.power ? button.reference === reference : false;
                             button.state = state;
                             if (this.buttonServices) {
                                 this.buttonServices[i]
                                     .updateCharacteristic(Characteristic.On, state);
                             }
-                        }
+                        })
                     }
 
                     this.inputIdentifier = inputIdentifier;
