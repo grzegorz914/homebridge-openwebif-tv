@@ -713,7 +713,9 @@ class OpenWebIfDevice extends EventEmitter {
             if (maxInputsSwitchesButtonsCount > 0) {
                 this.inputButtonServices = [];
                 const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs buttons services`);
-                this.inputsConfigured.forEach((button, i) => {
+                for (let i = 0; i < maxInputsSwitchesButtonsCount; i++) {
+                    const button = this.inputButtonConfigured[i];
+
                     //get switch name		
                     const name = button.name ?? false;
 
@@ -755,7 +757,7 @@ class OpenWebIfDevice extends EventEmitter {
                     } else {
                         const log = displayType === 0 ? false : this.emit('info', `Input Button Name: ${name ? name : 'Missing'}, Reference: ${reference ? reference : 'Missing'}`);
                     };
-                });
+                };
             }
 
             //prepare sonsor service
@@ -764,7 +766,9 @@ class OpenWebIfDevice extends EventEmitter {
             if (maxSensorInputsCount > 0) {
                 this.sensorInputServices = [];
                 const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs sensors services`);
-                this.sensorsInputsConfigured.forEach((sensor, i) => {
+                for (let i = 0; i < maxSensorInputsCount; i++) {
+                    const sensor = this.sensorsInputsConfigured[i];
+
                     //get sensor name		
                     const name = sensor.name;
 
@@ -789,7 +793,7 @@ class OpenWebIfDevice extends EventEmitter {
                     this.sensorInputServices.push(sensorInputService);
                     this.allServices.push(sensorInputService);
                     accessory.addService(sensorInputService);
-                });
+                };
             }
 
             //prepare buttons service
@@ -798,7 +802,9 @@ class OpenWebIfDevice extends EventEmitter {
             if (maxButtonsCount > 0) {
                 this.buttonServices = [];
                 const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs buttons services`);
-                this.buttonsConfigured.forEach((button, i) => {
+                for (let i = 0; i < maxButtonsCount; i++) {
+                    const button = this.buttonsConfigured[i];
+
                     //get button name
                     const name = button.name;
 
@@ -855,7 +861,7 @@ class OpenWebIfDevice extends EventEmitter {
                     this.buttonServices.push(buttonService);
                     this.allServices.push(buttonService);
                     accessory.addService(buttonService);
-                });
+                };
             }
 
             //sort inputs list
