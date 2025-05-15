@@ -714,7 +714,7 @@ class OpenWebIfDevice extends EventEmitter {
                 this.inputButtonServices = [];
                 const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs buttons services`);
                 for (let i = 0; i < maxInputsSwitchesButtonsCount; i++) {
-                    const button = this.inputButtonConfigured[i];
+                    const button = this.inputsConfigured[i];
 
                     //get switch name		
                     const name = button.name ?? false;
@@ -787,7 +787,7 @@ class OpenWebIfDevice extends EventEmitter {
                     sensorInputService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
                     sensorInputService.getCharacteristic(characteristicType)
                         .onGet(async () => {
-                            const state = sensor.state
+                            const state = sensor.state;
                             return state;
                         });
                     this.sensorInputServices.push(sensorInputService);
