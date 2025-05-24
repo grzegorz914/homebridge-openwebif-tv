@@ -597,7 +597,7 @@ class OpenWebIfDevice extends EventEmitter {
                             this.emit('warn', `save Target Visibility error: ${error}`);
                         }
                     });
-                this.inputsConftigured.push(input);
+                this.inputsConfigured.push(input);
                 this.televisionService.addLinkedService(inputService);
                 this.allServices.push(inputService);
             }
