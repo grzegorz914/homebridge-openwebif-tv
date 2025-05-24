@@ -96,7 +96,7 @@ class OpenWebIfDevice extends EventEmitter {
         this.power = false;
         this.reference = '';
         this.volume = 0;
-        this.mute = true;
+        this.mute = false;
         this.brightness = 0;
         this.playPause = false;
     }
@@ -597,7 +597,7 @@ class OpenWebIfDevice extends EventEmitter {
                             this.emit('warn', `save Target Visibility error: ${error}`);
                         }
                     });
-                this.inputsConfigured.push(input);
+                this.inputsConftigured.push(input);
                 this.televisionService.addLinkedService(inputService);
                 this.allServices.push(inputService);
             }
@@ -688,7 +688,7 @@ class OpenWebIfDevice extends EventEmitter {
                 this.sensorMuteService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Mute Sensor`);
                 this.sensorMuteService.getCharacteristic(Characteristic.ContactSensorState)
                     .onGet(async () => {
-                        const state = this.power ? this.mute : false;
+                        const state = this.mute;
                         return state;
                     });
                 this.allServices.push(this.sensorMuteService);
