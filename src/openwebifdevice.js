@@ -144,7 +144,7 @@ class OpenWebIfDevice extends EventEmitter {
                     host: this.mqtt.host,
                     port: this.mqtt.port || 1883,
                     clientId: this.mqtt.clientId || `openwebif_${Math.random().toString(16).slice(3)}`,
-                    prefix: `${this.mqtt.prefix}/${this.name}`,
+                    prefix: this.mqtt.prefix || `openwebif/${this.name}`,
                     user: this.mqtt.user,
                     passwd: this.mqtt.passwd,
                     debug: this.mqtt.debug || false
@@ -322,8 +322,10 @@ class OpenWebIfDevice extends EventEmitter {
 
                         switch (this.power) {
                             case false:
-                                await new Promise(resolve => setTimeout(resolve, 4000));
-                                const tryAgain = this.power ? this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, activeIdentifier) : false;
+                                for (let attempt = 0; attempt < 10; attempt++) {
+                                    await new Promise(resolve => setTimeout(resolve, 2000));
+                                    const setInput = this.power && this.inputIdentifier !== activeIdentifier ? this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, activeIdentifier) : false;
+                                }
                                 break;
                             case true:
                                 await this.openwebif.send(ApiUrls.SetChannel + reference);
