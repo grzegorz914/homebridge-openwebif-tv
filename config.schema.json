@@ -867,7 +867,7 @@
               "title": "Volume Control",
               "type": "integer",
               "minimum": 0,
-              "maximum": 2,
+              "maximum": 3,
               "default": 0,
               "description": "Here select what a volume control mode You want to use. If select *None/Disabled* only hardware buttons in RC app can be used to control volume.",
               "oneOf": [
@@ -887,6 +887,12 @@
                   "title": "Fan",
                   "enum": [
                     2
+                  ]
+                },
+                {
+                  "title": "Speaker",
+                  "enum": [
+                    3
                   ]
                 }
               ],

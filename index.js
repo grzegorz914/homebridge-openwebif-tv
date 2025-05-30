@@ -55,7 +55,7 @@ class OpenWebIfPlatform {
 						...device.mqtt,
 						passwd: 'removed'
 					}
-				};
+				}
 				const debug1 = !enableDebugMode ? false : log.info(`Device: ${host} ${name}, Config: ${JSON.stringify(config, null, 2)}.`);
 
 				//refresh interval
@@ -125,7 +125,7 @@ class OpenWebIfPlatform {
 							const startImpulseGenerator = startDone ? await openWebIfDevice.startImpulseGenerator() : false;
 						} catch (error) {
 							const emitLog = disableLogError ? false : log.error(`Device: ${host} ${name}, ${error}, trying again.`);
-						};
+						}
 					}).on('state', (state) => {
 						const emitLog = !enableDebugMode ? false : state ? log.info(`Device: ${host} ${name}, Start impulse generator started.`) : log.info(`Device: ${host} ${name}, Start impulse generator stopped.`);
 					});
@@ -143,8 +143,8 @@ class OpenWebIfPlatform {
 	configureAccessory(accessory) {
 		this.accessories.push(accessory);
 	}
-};
+}
 
 export default (api) => {
 	api.registerPlatform(PluginName, PlatformName, OpenWebIfPlatform);
-};
+}

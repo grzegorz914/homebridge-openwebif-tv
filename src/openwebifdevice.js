@@ -107,7 +107,7 @@ class OpenWebIfDevice extends EventEmitter {
             return true;
         } catch (error) {
             throw new Error(`Save data error: ${error}`);
-        };
+        }
     }
 
     async readData(path) {
@@ -116,7 +116,7 @@ class OpenWebIfDevice extends EventEmitter {
             return data;
         } catch (error) {
             throw new Error(`Read data error: ${error}`);
-        };
+        }
     }
 
     async sanitizeString(str) {
@@ -180,10 +180,10 @@ class OpenWebIfDevice extends EventEmitter {
                                 default:
                                     this.emit('info', `MQTT Received key: ${key}, value: ${value}`);
                                     break;
-                            };
+                            }
                         } catch (error) {
                             this.emit('warn', `MQTT set error: ${error}`);
-                        };
+                        }
                     })
                     .on('debug', (debug) => {
                         this.emit('debug', debug);
@@ -199,7 +199,7 @@ class OpenWebIfDevice extends EventEmitter {
             return true;
         } catch (error) {
             this.emit('warn', `External integration start error: ${error}`);
-        };
+        }
     }
 
     async prepareDataForAccessory() {
@@ -232,7 +232,7 @@ class OpenWebIfDevice extends EventEmitter {
             return true;
         } catch (error) {
             throw new Error(`Impulse generator start error: ${error}`);
-        };
+        }
     }
 
     async displayOrder() {
@@ -261,7 +261,7 @@ class OpenWebIfDevice extends EventEmitter {
             return true;
         } catch (error) {
             throw new Error(`Display order error: ${error}`);
-        };
+        }
     }
 
     //prepare accessory
@@ -306,7 +306,7 @@ class OpenWebIfDevice extends EventEmitter {
                         const info = this.disableLogInfo ? false : this.emit('info', `set Power: ${state ? 'ON' : 'OFF'}`);
                     } catch (error) {
                         this.emit('warn', `set Power error: ${error}`);
-                    };
+                    }
                 });
 
             this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
@@ -334,7 +334,7 @@ class OpenWebIfDevice extends EventEmitter {
                         }
                     } catch (error) {
                         this.emit('warn', `set Channel error: ${error}`);
-                    };
+                    }
                 });
 
             this.televisionService.getCharacteristic(Characteristic.RemoteKey)
@@ -387,7 +387,7 @@ class OpenWebIfDevice extends EventEmitter {
                         const info = this.disableLogInfo ? false : this.emit('info', `set Remote Key: ${command}`);
                     } catch (error) {
                         this.emit('warn', `set Remote Key error: ${error}`);
-                    };
+                    }
                 });
 
             //optional television characteristics
@@ -403,7 +403,7 @@ class OpenWebIfDevice extends EventEmitter {
                         const info = this.disableLogInfo ? false : this.emit('info', `set Brightness: ${value}`);
                     } catch (error) {
                         this.emit('warn', `set Brightness error: ${error}`);
-                    };
+                    }
                 });
 
             this.televisionService.getCharacteristic(Characteristic.ClosedCaptions)
@@ -433,7 +433,7 @@ class OpenWebIfDevice extends EventEmitter {
                         const info = this.disableLogInfo ? false : this.emit('info', `set Target Media State: ${['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]}`);
                     } catch (error) {
                         this.emit('warn', `set Target Media state error: ${error}`);
-                    };
+                    }
                 });
 
             this.televisionService.getCharacteristic(Characteristic.PowerModeSelection)
@@ -452,74 +452,155 @@ class OpenWebIfDevice extends EventEmitter {
                         const info = this.disableLogInfo ? false : this.emit('info', `set Power Mode Selection: ${command === '139' ? 'SHOW' : 'HIDE'}`);
                     } catch (error) {
                         this.emit('warn', `set Power Mode Selection error: ${error}`);
-                    };
+                    }
                 });
             this.allServices.push(this.televisionService);
 
-            //prepare speaker service
-            const debug3 = !this.enableDebugMode ? false : this.emit('debug', `Prepare speaker service`);
-            this.speakerService = accessory.addService(Service.TelevisionSpeaker, `${accessoryName} Speaker`, 'Speaker');
-            this.speakerService.getCharacteristic(Characteristic.Active)
-                .onGet(async () => {
-                    const state = this.power;
-                    return state;
-                })
-                .onSet(async (state) => {
-                });
+            //Prepare volume service
+            if (this.volumeControl > 0) {
+                const debug3 = this.enableDebugMode ? this.emit('debug', `Prepare television speaker service`) : false;
+                const volumeServiceName = this.volumeControlNamePrefix ? `${accessoryName} ${this.volumeControlName}` : this.volumeControlName;
+                this.volumeServiceTvSpeaker = accessory.addService(Service.TelevisionSpeaker, volumeServiceName, 'TV Speaker');
+                this.volumeServiceTvSpeaker.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.ConfiguredName, volumeServiceName);
+                this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Active)
+                    .onGet(async () => {
+                        const state = this.power;
+                        return state;
+                    })
+                    .onSet(async (state) => {
+                    });
+                this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.VolumeControlType)
+                    .onGet(async () => {
+                        const state = 3; //none, relative, relative with current, absolute
+                        return state;
+                    });
+                this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.VolumeSelector)
+                    .onSet(async (command) => {
+                        try {
+                            switch (command) {
+                                case Characteristic.VolumeSelector.INCREMENT:
+                                    command = '115';
+                                    break;
+                                case Characteristic.VolumeSelector.DECREMENT:
+                                    command = '114';
+                                    break;
+                            }
 
-            this.speakerService.getCharacteristic(Characteristic.VolumeControlType)
-                .onGet(async () => {
-                    const state = 3; //none, relative, relative with current, absolute
-                    return state;
-                });
-
-            this.speakerService.getCharacteristic(Characteristic.VolumeSelector)
-                .onSet(async (command) => {
-                    try {
-                        switch (command) {
-                            case Characteristic.VolumeSelector.INCREMENT:
-                                command = '115';
-                                break;
-                            case Characteristic.VolumeSelector.DECREMENT:
-                                command = '114';
-                                break;
+                            await this.openwebif.send(ApiUrls.SetRcCommand + command);
+                            const info = this.disableLogInfo ? false : this.emit('info', `set Volume Selector: ${command}`);
+                        } catch (error) {
+                            this.emit('warn', `set Volume Selector command error: ${error}`);
                         }
+                    });
+                this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Volume)
+                    .onGet(async () => {
+                        const volume = this.volume;
+                        return volume;
+                    })
+                    .onSet(async (volume) => {
+                        try {
+                            await this.openwebif.send(ApiUrls.SetVolume + volume);
+                            const info = this.disableLogInfo ? false : this.emit('info', `set Volume: ${volume}`);
+                        } catch (error) {
+                            this.emit('warn', `set Volume level error: ${error}`);
+                        }
+                    });
+                this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Mute)
+                    .onGet(async () => {
+                        const state = this.mute;
+                        return state;
+                    })
+                    .onSet(async (state) => {
+                        try {
+                            await this.openwebif.send(ApiUrls.ToggleMute);
+                            const info = this.disableLogInfo ? false : this.emit('info', `set Mute: ${state ? 'ON' : 'OFF'}`);
+                        } catch (error) {
+                            this.emit('warn', `set Mute error: ${error}`);
+                        }
+                    });
+                this.allServices.push(this.tvSpeakerService);
 
-                        await this.openwebif.send(ApiUrls.SetRcCommand + command);
-                        const info = this.disableLogInfo ? false : this.emit('info', `set Volume Selector: ${command}`);
-                    } catch (error) {
-                        this.emit('warn', `set Volume Selector command error: ${error}`);
-                    };
-                });
-
-            this.speakerService.getCharacteristic(Characteristic.Volume)
-                .onGet(async () => {
-                    const volume = this.volume;
-                    return volume;
-                })
-                .onSet(async (volume) => {
-                    try {
-                        await this.openwebif.send(ApiUrls.SetVolume + volume);
-                        const info = this.disableLogInfo ? false : this.emit('info', `set Volume: ${volume}`);
-                    } catch (error) {
-                        this.emit('warn', `set Volume level error: ${error}`);
-                    };
-                });
-
-            this.speakerService.getCharacteristic(Characteristic.Mute)
-                .onGet(async () => {
-                    const state = this.mute;
-                    return state;
-                })
-                .onSet(async (state) => {
-                    try {
-                        await this.openwebif.send(ApiUrls.ToggleMute);
-                        const info = this.disableLogInfo ? false : this.emit('info', `set Mute: ${state ? 'ON' : 'OFF'}`);
-                    } catch (error) {
-                        this.emit('warn', `set Mute error: ${error}`);
-                    };
-                });
-            this.allServices.push(this.tvSpeakerService);
+                //legacy control
+                switch (this.volumeControl) {
+                    case 1: //lightbulb
+                        const debug = this.enableDebugMode ? this.emit('debug', `Prepare volume service lightbulb`) : false;
+                        this.volumeServiceLightbulb = accessory.addService(Service.Lightbulb, volumeServiceName, 'Lightbulb Speaker');
+                        this.volumeServiceLightbulb.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                        this.volumeServiceLightbulb.setCharacteristic(Characteristic.ConfiguredName, volumeServiceName);
+                        this.volumeServiceLightbulb.getCharacteristic(Characteristic.Brightness)
+                            .onGet(async () => {
+                                const volume = this.volume;
+                                return volume;
+                            })
+                            .onSet(async (value) => {
+                                this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.Volume, value);
+                            });
+                        this.volumeServiceLightbulb.getCharacteristic(Characteristic.On)
+                            .onGet(async () => {
+                                const state = this.power ? !this.mute : false;
+                                return state;
+                            })
+                            .onSet(async (state) => {
+                                this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.Mute, !state);
+                            });
+                        this.allServices.push(this.volumeServiceLightbulb);
+                        break;
+                    case 2: //fan
+                        const debug1 = this.enableDebugMode ? this.emit('debug', `Prepare volume service fan`) : false;
+                        this.volumeServiceFan = accessory.addService(Service.Fan, volumeServiceName, 'Fan Speaker');
+                        this.volumeServiceFan.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                        this.volumeServiceFan.setCharacteristic(Characteristic.ConfiguredName, volumeServiceName);
+                        this.volumeServiceFan.getCharacteristic(Characteristic.RotationSpeed)
+                            .onGet(async () => {
+                                const volume = this.volume;
+                                return volume;
+                            })
+                            .onSet(async (value) => {
+                                this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.Volume, value);
+                            });
+                        this.volumeServiceFan.getCharacteristic(Characteristic.On)
+                            .onGet(async () => {
+                                const state = this.power ? !this.mute : false;
+                                return state;
+                            })
+                            .onSet(async (state) => {
+                                this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.Mute, !state);
+                            });
+                        this.allServices.push(this.volumeServiceFan);
+                        break;
+                    case 3: // speaker
+                        const debug2 = this.enableDebugMode ? this.emit('debug', `Prepare volume service speaker`) : false;
+                        this.volumeServiceSpeaker = accessory.addService(Service.Speaker, volumeServiceName, 'Speaker');
+                        this.volumeServiceSpeaker.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                        this.volumeServiceSpeaker.setCharacteristic(Characteristic.ConfiguredName, volumeServiceName);
+                        this.volumeServiceSpeaker.getCharacteristic(Characteristic.Mute)
+                            .onGet(async () => {
+                                const state = this.mute;
+                                return state;
+                            })
+                            .onSet(async (state) => {
+                                this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.Mute, state);
+                            });
+                        this.volumeServiceSpeaker.getCharacteristic(Characteristic.Active)
+                            .onGet(async () => {
+                                const state = this.power;
+                                return state;
+                            })
+                            .onSet(async (state) => {
+                            });
+                        this.volumeServiceSpeaker.getCharacteristic(Characteristic.Volume)
+                            .onGet(async () => {
+                                const volume = this.volume;
+                                return volume;
+                            })
+                            .onSet(async (value) => {
+                                this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.Volume, value);
+                            });
+                        this.allServices.push(this.volumeServiceSpeaker);
+                        break;
+                }
+            }
 
             //prepare inputs service
             const debug4 = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs servics`);
@@ -563,7 +644,7 @@ class OpenWebIfDevice extends EventEmitter {
                     .setCharacteristic(Characteristic.Name, sanitizedName)
                     .setCharacteristic(Characteristic.IsConfigured, isConfigured)
                     .setCharacteristic(Characteristic.InputSourceType, sourceType)
-                    .setCharacteristic(Characteristic.CurrentVisibilityState, input.visibility)
+                    .setCharacteristic(Characteristic.CurrentVisibilityState, input.visibility);
 
                 inputService.getCharacteristic(Characteristic.ConfiguredName)
                     .onGet(async () => {
@@ -604,58 +685,6 @@ class OpenWebIfDevice extends EventEmitter {
                 this.allServices.push(inputService);
             }
 
-            //prepare volume service
-            if (this.volumeControl) {
-                const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare volume service`);
-                const volumeServiceName = this.volumeControlNamePrefix ? `${accessoryName} ${this.volumeControlName}` : this.volumeControlName;
-                if (this.volumeControl === 1) {
-                    this.volumeService = accessory.addService(Service.Lightbulb, `${volumeServiceName}`, volumeServiceName);
-                    this.volumeService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                    this.volumeService.setCharacteristic(Characteristic.ConfiguredName, `${volumeServiceName}`);
-                    this.volumeService.getCharacteristic(Characteristic.Brightness)
-                        .onGet(async () => {
-                            const volume = this.volume;
-                            return volume;
-                        })
-                        .onSet(async (volume) => {
-                            this.speakerService.setCharacteristic(Characteristic.Volume, volume);
-                        });
-                    this.volumeService.getCharacteristic(Characteristic.On)
-                        .onGet(async () => {
-                            const muteV = this.power ? !mute : false;
-                            return state;
-                        })
-                        .onSet(async (state) => {
-                            this.speakerService.setCharacteristic(Characteristic.Mute, !state);
-                        });
-                    this.allServices.push(this.volumeService);
-                }
-
-                if (this.volumeControl === 2) {
-                    this.volumeServiceFan = accessory.addService(Service.Fan, `${volumeServiceName}`, volumeServiceName);
-                    this.volumeServiceFan.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                    this.volumeServiceFan.setCharacteristic(Characteristic.ConfiguredName, `${volumeServiceName}`);
-                    this.volumeServiceFan.getCharacteristic(Characteristic.RotationSpeed)
-                        .onGet(async () => {
-                            const volume = this.volume;
-                            return volume;
-                        })
-                        .onSet(async (volume) => {
-                            this.speakerService.setCharacteristic(Characteristic.Volume, volume);
-                        });
-                    this.volumeServiceFan.getCharacteristic(Characteristic.On)
-                        .onGet(async () => {
-                            const muteV = this.power ? !mute : false;
-                            return state;
-                        })
-                        .onSet(async (state) => {
-                            this.speakerService.setCharacteristic(Characteristic.Mute, !state);
-                        });
-
-                    this.allServices.push(this.volumeServiceFan);
-                }
-            }
-
             //prepare sensor service
             if (this.sensorPower) {
                 const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare power sensor service`);
@@ -668,7 +697,7 @@ class OpenWebIfDevice extends EventEmitter {
                         return state;
                     });
                 this.allServices.push(this.sensorPowerService);
-            };
+            }
 
             if (this.sensorVolume) {
                 const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare volume sensor service`);
@@ -681,7 +710,7 @@ class OpenWebIfDevice extends EventEmitter {
                         return state;
                     });
                 this.allServices.push(this.sensorVolumeService);
-            };
+            }
 
             if (this.sensorMute) {
                 const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare mute sensor service`);
@@ -694,7 +723,7 @@ class OpenWebIfDevice extends EventEmitter {
                         return state;
                     });
                 this.allServices.push(this.sensorMuteService);
-            };
+            }
 
             if (this.sensorInput) {
                 const debug = !this.enableDebugMode ? false : this.emit('debug', `Prepare input sensor service`);
@@ -707,7 +736,7 @@ class OpenWebIfDevice extends EventEmitter {
                         return state;
                     });
                 this.allServices.push(this.sensorInputService);
-            };
+            }
 
             //prepare inputs switch sensor service
             const possibleInputsButtonsCount = 99 - this.allServices.length;
@@ -750,7 +779,7 @@ class OpenWebIfDevice extends EventEmitter {
                                     const debug = !this.enableDebugMode ? false : this.emit('debug', `Set Channel Name: ${name}, Reference: ${reference}`);
                                 } catch (error) {
                                     this.emit('warn', `set Channel error: ${error}`);
-                                };
+                                }
                             });
                         this.inputButtonConfigured.push(button);
                         this.inputButtonServices.push(inputButtonService);
@@ -758,8 +787,8 @@ class OpenWebIfDevice extends EventEmitter {
                         accessory.addService(inputButtonService);
                     } else {
                         const log = displayType === 0 ? false : this.emit('info', `Input Button Name: ${name ? name : 'Missing'}, Reference: ${reference ? reference : 'Missing'}`);
-                    };
-                };
+                    }
+                }
             }
 
             //prepare sonsor service
@@ -795,7 +824,7 @@ class OpenWebIfDevice extends EventEmitter {
                     this.sensorInputServices.push(sensorInputService);
                     this.allServices.push(sensorInputService);
                     accessory.addService(sensorInputService);
-                };
+                }
             }
 
             //prepare buttons service
@@ -855,15 +884,15 @@ class OpenWebIfDevice extends EventEmitter {
                                         const debug3 = this.enableDebugMode ? this.emit('debug', `Set Unknown Button Mode: ${mode}`) : false;
                                         button.state = false;
                                         break;
-                                };
+                                }
                             } catch (error) {
                                 this.emit('warn', `set ${['Channel', 'Command'][mode]} error: ${error}`);
-                            };
+                            }
                         });
                     this.buttonServices.push(buttonService);
                     this.allServices.push(buttonService);
                     accessory.addService(buttonService);
-                };
+                }
             }
 
             //sort inputs list
@@ -872,7 +901,7 @@ class OpenWebIfDevice extends EventEmitter {
             return accessory;
         } catch (error) {
             throw new Error(error)
-        };
+        }
     }
 
     //start
@@ -919,32 +948,35 @@ class OpenWebIfDevice extends EventEmitter {
                     if (this.televisionService) {
                         this.televisionService
                             .updateCharacteristic(Characteristic.Active, power)
+                            .updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier);
                     }
 
-                    if (this.televisionService) {
-                        this.televisionService
-                            .updateCharacteristic(Characteristic.ActiveIdentifier, inputIdentifier)
-                    }
-
-                    if (this.speakerService) {
-                        this.speakerService
+                    if (this.volumeServiceTvSpeaker) {
+                        this.volumeServiceTvSpeaker
                             .updateCharacteristic(Characteristic.Active, power)
                             .updateCharacteristic(Characteristic.Volume, volume)
                             .updateCharacteristic(Characteristic.Mute, mute);
+                    }
 
-                        if (this.volumeService) {
-                            const muteV = this.power ? !mute : false;
-                            this.volumeService
-                                .updateCharacteristic(Characteristic.Brightness, volume)
-                                .updateCharacteristic(Characteristic.On, muteV);
-                        }
+                    if (this.volumeServiceLightbulb) {
+                        const muteV = this.power ? !mute : false;
+                        this.volumeServiceLightbulb
+                            .updateCharacteristic(Characteristic.Brightness, volume)
+                            .updateCharacteristic(Characteristic.On, muteV);
+                    }
 
-                        if (this.volumeServiceFan) {
-                            const muteV = this.power ? !mute : false;
-                            this.volumeServiceFan
-                                .updateCharacteristic(Characteristic.RotationSpeed, volume)
-                                .updateCharacteristic(Characteristic.On, muteV);
-                        }
+                    if (this.volumeServiceFan) {
+                        const muteV = this.power ? !mute : false;
+                        this.volumeServiceFan
+                            .updateCharacteristic(Characteristic.RotationSpeed, volume)
+                            .updateCharacteristic(Characteristic.On, muteV);
+                    }
+
+                    if (this.volumeServiceSpeaker) {
+                        this.volumeServiceSpeaker
+                            .updateCharacteristic(Characteristic.Active, power)
+                            .updateCharacteristic(Characteristic.Volume, volume)
+                            .updateCharacteristic(Characteristic.Mute, mute);
                     }
 
                     //sensors
@@ -958,7 +990,7 @@ class OpenWebIfDevice extends EventEmitter {
                             const state = power ? [true, false][i] : false;
                             if (this.sensorVolumeService) {
                                 this.sensorVolumeService
-                                    .updateCharacteristic(Characteristic.ContactSensorState, state)
+                                    .updateCharacteristic(Characteristic.ContactSensorState, state);
                                 this.sensorVolumeState = state;
                             }
                         }
@@ -967,7 +999,7 @@ class OpenWebIfDevice extends EventEmitter {
                     if (this.sensorMuteService) {
                         const state = power ? mute : false;
                         this.sensorMuteService
-                            .updateCharacteristic(Characteristic.ContactSensorState, state)
+                            .updateCharacteristic(Characteristic.ContactSensorState, state);
                     }
 
                     if (reference !== this.reference) {
@@ -975,7 +1007,7 @@ class OpenWebIfDevice extends EventEmitter {
                             const state = power ? [true, false][i] : false;
                             if (this.sensorInputService) {
                                 this.sensorInputService
-                                    .updateCharacteristic(Characteristic.ContactSensorState, state)
+                                    .updateCharacteristic(Characteristic.ContactSensorState, state);
                                 this.sensorInputState = state;
                             }
                         }
@@ -990,7 +1022,7 @@ class OpenWebIfDevice extends EventEmitter {
                                 this.sensorInputServices[i]
                                     .updateCharacteristic(characteristicType, state);
                             }
-                        })
+                        });
                     }
 
                     //inputs buttons
@@ -1002,7 +1034,7 @@ class OpenWebIfDevice extends EventEmitter {
                                 this.inputButtonServices[i]
                                     .updateCharacteristic(Characteristic.On, state);
                             }
-                        })
+                        });
                     }
 
                     //buttons
@@ -1014,7 +1046,7 @@ class OpenWebIfDevice extends EventEmitter {
                                 this.buttonServices[i]
                                     .updateCharacteristic(Characteristic.On, state);
                             }
-                        })
+                        });
                     }
 
                     this.inputIdentifier = inputIdentifier;
@@ -1032,7 +1064,7 @@ class OpenWebIfDevice extends EventEmitter {
                         this.emit('info', `Mute: ${mute ? 'ON' : 'OFF'}`);
                         this.emit('info', `Closed Captions: 0`);
                         this.emit('info', `Media State: ${['PLAY', 'PAUSE', 'STOPPED', 'LOADING', 'INTERRUPTED'][2]}`);
-                    };
+                    }
                 })
                 .on('success', (success) => {
                     this.emit('success', success);
@@ -1075,7 +1107,7 @@ class OpenWebIfDevice extends EventEmitter {
             return true;
         } catch (error) {
             throw new Error(`Start error: ${error}`);
-        };
-    };
-};
+        }
+    }
+}
 export default OpenWebIfDevice;

@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - After update to v4.0.0 MQTT config settings need to be updated
 
+## [4.6.0] - (30.05.2025)
+
+## Changes
+
+- added speaker option to volume control
+- now if volume control option is set to disable/nonethe  also TV Speakers (hardware control) is disabled
+- stability improvements
+- cleanup
+
 ## [4.5.0] - (26.04.2025)
 
 ## Changes

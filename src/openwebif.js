@@ -46,11 +46,11 @@ class OpenWebIf extends EventEmitter {
                 await this.checkState();
             } catch (error) {
                 const logError = config.disableLogError ? false : this.emit('error', `Impulse generator error: ${error}`);
-            };
+            }
         }).on('state', (state) => {
             const emitState = state ? this.emit('success', `Impulse generator started`) : this.emit('warn', `Impulse generator stopped`);
         });
-    };
+    }
 
     async connect() {
         try {
@@ -89,7 +89,7 @@ class OpenWebIf extends EventEmitter {
                     reference: "1:0:1:1C8A:1CE8:71:820000:0:0:0::CNN HD",
                     displayType: 0
                 }];
-            };
+            }
 
             //save channels
             await this.saveData(this.inputsFile, channels);
@@ -104,8 +104,8 @@ class OpenWebIf extends EventEmitter {
         } catch (error) {
             throw new Error(`Connect error: ${error}`);
 
-        };
-    };
+        }
+    }
 
     async checkState() {
         try {
@@ -127,7 +127,7 @@ class OpenWebIf extends EventEmitter {
             //update only if value change
             if (power === this.power && name === this.name && eventName === this.eventName && reference === this.reference && volume === this.volume && mute === this.mute) {
                 return;
-            };
+            }
 
             this.power = power;
             this.name = name;
@@ -142,8 +142,8 @@ class OpenWebIf extends EventEmitter {
             return true;
         } catch (error) {
             throw new Error(`Check state error: ${error}`);
-        };
-    };
+        }
+    }
 
     async getInputs(allChannels, bouquets, inputs, getInputsFromDevice) {
         try {
@@ -166,7 +166,7 @@ class OpenWebIf extends EventEmitter {
                                 'displayType': displayType
                             }
                             bouquetChannelsArr.push(obj);
-                        };
+                        }
                     } else {
                         this.emit('warn', `Bouquet: ${bouquetName}, was not found`);
                     }
@@ -188,14 +188,14 @@ class OpenWebIf extends EventEmitter {
 
                 const duplicatedInput = channelArr.some(input => input.reference === inputReference);
                 const push = inputName && inputReference && !duplicatedInput ? channelArr.push(obj) : false;
-            };
+            }
 
             const channels = channelArr.length > 0 ? channelArr : false;
             return channels;
         } catch (error) {
             throw new Error(`Get inputus error: ${error}`);
-        };
-    };
+        }
+    }
 
     async saveData(path, data) {
         try {
@@ -205,8 +205,8 @@ class OpenWebIf extends EventEmitter {
             return true;
         } catch (error) {
             throw new Error(`Save data error: ${error}`);
-        };
-    };
+        }
+    }
 
     async send(apiUrl) {
         try {
@@ -214,7 +214,7 @@ class OpenWebIf extends EventEmitter {
             return true;
         } catch (error) {
             throw new Error(`Send data error: ${error}`);
-        };
-    };
-};
+        }
+    }
+}
 export default OpenWebIf;

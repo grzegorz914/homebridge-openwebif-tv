@@ -88,7 +88,7 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | `sensorInputs.namePrefix` | Here enable/disable the accessory name as a prefix for sensor name.|
 | `volumeControlNamePrefix` | Here enable/disable the accessory name as a prefix for volume control name. |
 | `volumeControlName` | Here set Your own volume control name or leave empty. |
-| `volumeControl` | Here select volume control mode `0 -None/Disabled`, `1 - Slider`, `2 - Fan`. |
+| `volumeControl` | Here select volume control mode `0 -None/Disabled`, `1 - Slider`, `2 - Fan`, `3 - Speaker`. |
 | `infoButtonCommand` | Here select the function of `I` button in RC app. |
 | `refreshInterval` | Here set the data refresh interval. |
 | `disableLogDeviceInfo` | If enabled, add ability to disable log device info by every connections device to the network. |
