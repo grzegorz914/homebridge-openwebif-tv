@@ -211,6 +211,7 @@ class OpenWebIf extends EventEmitter {
     async send(apiUrl) {
         try {
             await this.axiosInstance(apiUrl);
+            const debug = this.enableDebugMode ? this.emit('warn', `Send data: ${apiUrl}`) : false;
             return true;
         } catch (error) {
             throw new Error(`Send data error: ${error}`);

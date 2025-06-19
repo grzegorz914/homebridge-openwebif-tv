@@ -318,7 +318,7 @@ class OpenWebIfDevice extends EventEmitter {
                     try {
                         const input = this.inputsConfigured.find(input => input.identifier === activeIdentifier);
                         const name = input.name;
-                        const reference = input.reference;
+                        const reference = encodeURIComponent(input.reference);
 
                         switch (this.power) {
                             case false:
@@ -328,7 +328,7 @@ class OpenWebIfDevice extends EventEmitter {
                                 }
                                 break;
                             case true:
-                                await this.openwebif.send(ApiUrls.SetChannel + reference);
+                                await this.openwebif.send(`${ApiUrls.SetChannel}${reference}`);
                                 const info = this.disableLogInfo ? false : this.emit('info', `set Channel: ${name}, Reference: ${reference}`);
                                 break;
                         }
@@ -751,7 +751,7 @@ class OpenWebIfDevice extends EventEmitter {
                     const name = button.name ?? false;
 
                     //get switch reference
-                    const reference = button.reference ?? false;
+                    const reference = encodeURIComponent(button.reference) ?? false;
 
                     //get switch display type
                     const displayType = button.displayType ?? 0;
@@ -775,7 +775,7 @@ class OpenWebIfDevice extends EventEmitter {
                             })
                             .onSet(async (state) => {
                                 try {
-                                    const setSwitchInput = state ? await this.openwebif.send(ApiUrls.SetChannel + reference) : false;
+                                    const setSwitchInput = state ? await this.openwebif.send(`${ApiUrls.SetChannel}${reference}`) : false;
                                     const debug = !this.enableDebugMode ? false : this.emit('debug', `Set Channel Name: ${name}, Reference: ${reference}`);
                                 } catch (error) {
                                     this.emit('warn', `set Channel error: ${error}`);
@@ -843,7 +843,7 @@ class OpenWebIfDevice extends EventEmitter {
                     const mode = button.mode;
 
                     //get button command
-                    const reference = button.reference;
+                    const reference = encodeURIComponent(button.reference);
 
                     //get button command
                     const command = mode === 1 ? button.command : button.powerCommand;
@@ -867,7 +867,7 @@ class OpenWebIfDevice extends EventEmitter {
                             try {
                                 switch (mode) {
                                     case 0: //Channel control
-                                        const send = this.power && state ? await this.openwebif.send(ApiUrls.SetChannel + reference) : false;
+                                        const send = this.power && state ? await this.openwebif.send(`${ApiUrls.SetChannel}${reference}`) : false;
                                         const debug0 = state && this.enableDebugMode ? this.emit('debug', `Set Channel, Name: ${name}, Reference: ${reference}`) : false;
                                         break;
                                     case 1: //RC Control
