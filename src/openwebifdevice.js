@@ -143,8 +143,8 @@ class OpenWebIfDevice extends EventEmitter {
                 this.mqtt1 = new Mqtt({
                     host: this.mqtt.host,
                     port: this.mqtt.port || 1883,
-                    clientId: this.mqtt.clientId || `openwebif_${Math.random().toString(16).slice(3)}`,
-                    prefix: this.mqtt.prefix || `openwebif/${this.name}`,
+                    clientId: this.mqtt.clientId ? `openwebif_${this.mqtt.clientId}_${Math.random().toString(16).slice(3)}` : `openwebif_${Math.random().toString(16).slice(3)}`,
+                    prefix: this.mqtt.prefix ? `openwebif/${this.mqtt.prefix}/${this.name}` : `openwebif/${this.name}`,
                     user: this.mqtt.user,
                     passwd: this.mqtt.passwd,
                     debug: this.mqtt.debug || false
