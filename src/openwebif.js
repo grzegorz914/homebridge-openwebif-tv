@@ -40,11 +40,13 @@ class OpenWebIf extends EventEmitter {
         this.mute = false;
         this.devInfo = '';
 
+        //impulse generator
+        this.call = false;
         this.impulseGenerator = new ImpulseGenerator();
         this.impulseGenerator.on('checkState', async () => {
-            try {
-                if (this.call) return;
+            if (this.call) return;
 
+            try {
                 this.call = true;
                 await this.checkState();
                 this.call = false;
