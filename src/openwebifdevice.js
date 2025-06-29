@@ -316,22 +316,28 @@ class OpenWebIfDevice extends EventEmitter {
                 })
                 .onSet(async (activeIdentifier) => {
                     try {
-                        const input = this.inputsConfigured.find(input => input.identifier === activeIdentifier);
-                        const name = input.name;
-                        const reference = encodeURIComponent(input.reference);
-
-                        switch (this.power) {
-                            case false:
-                                for (let attempt = 0; attempt < 10; attempt++) {
-                                    await new Promise(resolve => setTimeout(resolve, 2000));
-                                    const setInput = this.power && this.inputIdentifier !== activeIdentifier ? this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, activeIdentifier) : false;
-                                }
-                                break;
-                            case true:
-                                await this.openwebif.send(`${ApiUrls.SetChannel}${reference}`);
-                                const info = this.disableLogInfo ? false : this.emit('info', `set Channel: ${name}, Reference: ${reference}`);
-                                break;
+                        const input = this.inputsConfigured.find(i => i.identifier === activeIdentifier);
+                        if (!input) {
+                            this.emit('warn', `Input with identifier ${activeIdentifier} not found`);
+                            return;
                         }
+
+                        const { name: name, reference: reference } = input;
+
+                        if (!this.power) {
+                            for (let attempt = 0; attempt < 10; attempt++) {
+                                await new Promise(resolve => setTimeout(resolve, 2000));
+                                if (this.power && this.inputIdentifier !== activeIdentifier) {
+                                    this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, activeIdentifier);
+                                    break;
+                                }
+                            }
+                            return;
+                        }
+
+                        const encodedReference = encodeURIComponent(reference);
+                        await this.openwebif.send(`${ApiUrls.SetChannel}${encodedReference}`);
+                        const info = this.disableLogInfo ? false : this.emit('info', `set Channel: ${name}, Reference: ${encodedReference}`);
                     } catch (error) {
                         this.emit('warn', `set Channel error: ${error}`);
                     }
@@ -945,6 +951,12 @@ class OpenWebIfDevice extends EventEmitter {
                     const inputIdentifier = input ? input.identifier : this.inputIdentifier;
                     mute = power ? mute : true;
 
+                    this.inputIdentifier = inputIdentifier;
+                    this.power = power;
+                    this.reference = reference;
+                    this.volume = volume;
+                    this.mute = mute;
+
                     if (this.televisionService) {
                         this.televisionService
                             .updateCharacteristic(Characteristic.Active, power)
@@ -1048,12 +1060,6 @@ class OpenWebIfDevice extends EventEmitter {
                             }
                         });
                     }
-
-                    this.inputIdentifier = inputIdentifier;
-                    this.power = power;
-                    this.reference = reference;
-                    this.volume = volume;
-                    this.mute = mute;
 
                     if (!this.disableLogInfo) {
                         this.emit('info', `Power: ${power ? 'ON' : 'OFF'}`);
