@@ -237,31 +237,32 @@ class OpenWebIfDevice extends EventEmitter {
 
     async displayOrder() {
         try {
-            switch (this.inputsDisplayOrder) {
-                case 1:
-                    this.inputsConfigured.sort((a, b) => a.name.localeCompare(b.name));
-                    break;
-                case 2:
-                    this.inputsConfigured.sort((a, b) => b.name.localeCompare(a.name));
-                    break;
-                case 3:
-                    this.inputsConfigured.sort((a, b) => a.reference.localeCompare(b.reference));
-                    break;
-                case 4:
-                    this.inputsConfigured.sort((a, b) => b.reference.localeCompare(a.reference));
-                    break;
-                default:
-                    return;
-            }
-            const debug = this.enableDebugMode ? this.emit('debug', `Inputs display order: ${JSON.stringify(this.inputsConfigured, null, 2)}`) : false;
+            const sortStrategies = {
+                1: (a, b) => a.name.localeCompare(b.name),
+                2: (a, b) => b.name.localeCompare(a.name),
+                3: (a, b) => a.reference.localeCompare(b.reference),
+                4: (a, b) => b.reference.localeCompare(a.reference)
+            };
 
-            const displayOrder = this.inputsConfigured.map(input => input.identifier);
-            this.televisionService.setCharacteristic(Characteristic.DisplayOrder, Encode(1, displayOrder).toString('base64'));
-            return;
+            const sortFn = sortStrategies[this.inputsDisplayOrder];
+            if (sortFn) {
+                this.inputsConfigured.sort(sortFn);
+
+                if (this.enableDebugMode) {
+                    this.emit('debug', `Inputs display order: ${JSON.stringify(this.inputsConfigured, null, 2)}`);
+                }
+
+                const displayOrder = this.inputsConfigured.map(input => input.identifier);
+                this.televisionService.setCharacteristic(
+                    Characteristic.DisplayOrder,
+                    Encode(1, displayOrder).toString('base64')
+                );
+            }
         } catch (error) {
             throw new Error(`Display order error: ${error}`);
         }
     }
+
 
     //prepare accessory
     async prepareAccessory() {
@@ -309,10 +310,7 @@ class OpenWebIfDevice extends EventEmitter {
                 });
 
             this.televisionService.getCharacteristic(Characteristic.ActiveIdentifier)
-                .onGet(async () => {
-                    const inputIdentifier = this.inputIdentifier;
-                    return inputIdentifier;
-                })
+                .onGet(async () => this.inputIdentifier)
                 .onSet(async (activeIdentifier) => {
                     try {
                         const input = this.inputsConfigured.find(i => i.identifier === activeIdentifier);
@@ -321,26 +319,43 @@ class OpenWebIfDevice extends EventEmitter {
                             return;
                         }
 
-                        const { name: name, reference: reference } = input;
-
                         if (!this.power) {
-                            for (let attempt = 0; attempt < 10; attempt++) {
-                                await new Promise(resolve => setTimeout(resolve, 2000));
-                                if (this.power && this.inputIdentifier !== activeIdentifier) {
-                                    this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, activeIdentifier);
-                                    break;
-                                }
+                            if (this.inputIdentifier === activeIdentifier) {
+                                return;
                             }
+
+                            if (this.enableDebugMode) {
+                                this.emit('debug', `TV is off, deferring input switch to '${activeIdentifier}'`);
+                            }
+
+                            // Retry mechanism in the background
+                            (async () => {
+                                for (let attempt = 0; attempt < 10; attempt++) {
+                                    await new Promise(resolve => setTimeout(resolve, 1500));
+                                    if (this.power) {
+                                        if (this.enableDebugMode) {
+                                            this.emit('debug', `TV powered on, retrying input switch`);
+                                        }
+                                        this.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, activeIdentifier);
+                                        break;
+                                    }
+                                }
+                            })();
+
                             return;
                         }
 
-                        const encodedReference = encodeURIComponent(reference);
-                        await this.openwebif.send(`${ApiUrls.SetChannel}${encodedReference}`);
-                        const info = this.disableLogInfo ? false : this.emit('info', `set Channel: ${name}, Reference: ${encodedReference}`);
+                        const encodedRef = encodeURIComponent(input.reference);
+                        await this.openwebif.send(`${ApiUrls.SetChannel}${encodedRef}`);
+
+                        if (!this.disableLogInfo) {
+                            this.emit('info', `Set Channel: ${input.name}, Reference: ${encodedRef}`);
+                        }
                     } catch (error) {
-                        this.emit('warn', `set Channel error: ${error}`);
+                        this.emit('warn', `Set Channel error: ${error}`);
                     }
                 });
+
 
             this.televisionService.getCharacteristic(Characteristic.RemoteKey)
                 .onSet(async (command) => {
@@ -611,84 +626,70 @@ class OpenWebIfDevice extends EventEmitter {
             const debug4 = !this.enableDebugMode ? false : this.emit('debug', `Prepare inputs servics`);
 
             //check possible inputs count (max 85)
+            if (this.enableDebugMode) this.emit('debug', 'Prepare inputs services');
+
             const inputs = this.savedInputs;
-            const inputsCount = inputs.length;
-            const possibleInputsCount = 85 - this.allServices.length;
-            const maxInputsCount = inputsCount >= possibleInputsCount ? possibleInputsCount : inputsCount;
-            for (let i = 0; i < maxInputsCount; i++) {
-                //input
+            const maxInputs = Math.min(inputs.length, 85 - this.allServices.length);
+
+            for (let i = 0; i < maxInputs; i++) {
                 const input = inputs[i];
                 const inputIdentifier = i + 1;
-
-                //get input reference
                 const reference = input.reference;
 
-                //get input name
-                const name = input.name ?? `Input ${inputIdentifier}`;
-
-                const savedNames = this.savedInputsNames[reference] ?? false;
-                input.name = savedNames ? savedNames.substring(0, 64) : name.substring(0, 64);
-
-                //get input type
-                const sourceType = 0;
-
-                //get input configured
-                const isConfigured = 1;
-
-                //get visibility
+                // Set name and visibility
+                const savedName = this.savedInputsNames[reference];
+                input.name = (savedName || input.name || `Input ${inputIdentifier}`).substring(0, 64);
+                input.identifier = inputIdentifier;
                 input.visibility = this.savedInputsTargetVisibility[reference] ?? 0;
 
-                //add identifier to the input
-                input.identifier = inputIdentifier;
-
-                //input service
-                const sanitizedName = await this.sanitizeString(input.name)
-                const inputService = accessory.addService(Service.InputSource, sanitizedName, `Input ${inputIdentifier}`);
+                // Create input service
+                const nameSanitized = await this.sanitizeString(input.name);
+                const inputService = accessory.addService(Service.InputSource, nameSanitized, `Input ${inputIdentifier}`);
                 inputService
                     .setCharacteristic(Characteristic.Identifier, inputIdentifier)
-                    .setCharacteristic(Characteristic.Name, sanitizedName)
-                    .setCharacteristic(Characteristic.IsConfigured, isConfigured)
-                    .setCharacteristic(Characteristic.InputSourceType, sourceType)
+                    .setCharacteristic(Characteristic.Name, nameSanitized)
+                    .setCharacteristic(Characteristic.IsConfigured, 1)
+                    .setCharacteristic(Characteristic.InputSourceType, 0)
                     .setCharacteristic(Characteristic.CurrentVisibilityState, input.visibility);
 
+                // Configured Name
                 inputService.getCharacteristic(Characteristic.ConfiguredName)
-                    .onGet(async () => {
-                        return sanitizedName;
-                    })
+                    .onGet(async () => nameSanitized)
                     .onSet(async (value) => {
                         try {
                             input.name = value;
                             this.savedInputsNames[reference] = value;
                             await this.saveData(this.inputsNamesFile, this.savedInputsNames);
-                            const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved Input, Name: ${value}, Reference: ${reference}`);
 
-                            //sort inputs
-                            const index = this.inputsConfigured.findIndex(input => input.reference === reference);
-                            this.inputsConfigured[index].name = value;
+                            const index = this.inputsConfigured.findIndex(i => i.reference === reference);
+                            if (index >= 0) this.inputsConfigured[index].name = value;
+
                             await this.displayOrder();
-                        } catch (error) {
-                            this.emit('warn', `save Input Name error: ${error}`);
+                            if (this.enableDebugMode) this.emit('debug', `Saved Input Name: ${value}, Reference: ${reference}`);
+                        } catch (err) {
+                            this.emit('warn', `Save Input Name Error: ${err}`);
                         }
                     });
 
+                // Target Visibility
                 inputService.getCharacteristic(Characteristic.TargetVisibilityState)
-                    .onGet(async () => {
-                        return input.visibility;
-                    })
+                    .onGet(async () => input.visibility)
                     .onSet(async (state) => {
                         try {
                             input.visibility = state;
                             this.savedInputsTargetVisibility[reference] = state;
                             await this.saveData(this.inputsTargetVisibilityFile, this.savedInputsTargetVisibility);
-                            const debug = !this.enableDebugMode ? false : this.emit('debug', `Saved Input: ${input.name}, Target Visibility: ${state ? 'HIDEN' : 'SHOWN'}`);
-                        } catch (error) {
-                            this.emit('warn', `save Target Visibility error: ${error}`);
+                            if (this.enableDebugMode) this.emit('debug', `Saved Input: ${input.name}, Visibility: ${state ? 'HIDDEN' : 'SHOWN'}`);
+                        } catch (err) {
+                            this.emit('warn', `Save Target Visibility Error: ${err}`);
                         }
                     });
+
                 this.inputsConfigured.push(input);
                 this.televisionService.addLinkedService(inputService);
                 this.allServices.push(inputService);
             }
+
 
             //prepare sensor service
             if (this.sensorPower) {
