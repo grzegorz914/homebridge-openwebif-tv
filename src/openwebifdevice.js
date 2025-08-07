@@ -148,12 +148,11 @@ class OpenWebIfDevice extends EventEmitter {
                     user: this.mqtt.user,
                     passwd: this.mqtt.passwd,
                     debug: this.mqtt.debug || false
-                });
-
-                this.mqtt1.on('connected', (message) => {
-                    this.emit('success', message);
-                    this.mqttConnected = true;
                 })
+                    .on('connected', (message) => {
+                        this.emit('success', message);
+                        this.mqttConnected = true;
+                    })
                     .on('subscribed', (message) => {
                         this.emit('success', message);
                     })
@@ -628,58 +627,68 @@ class OpenWebIfDevice extends EventEmitter {
 
             const inputs = this.savedInputs;
             const maxInputs = Math.min(inputs.length, 85 - this.allServices.length);
-
             for (let i = 0; i < maxInputs; i++) {
                 const input = inputs[i];
+                if (!input) continue;
+
                 const inputIdentifier = i + 1;
-                const reference = input.reference;
+                const inputReference = input.reference;
 
-                // Set name and visibility
-                const savedName = this.savedInputsNames[reference];
-                input.name = (savedName || input.name || `Input ${inputIdentifier}`).substring(0, 64);
+                // Load or fallback to default name
+                const savedName = this.savedInputsNames[inputReference] ?? input.name;
+                input.name = savedName; // Sanitization will be handled later
+
+                // Load visibility state
+                input.visibility = this.savedInputsTargetVisibility[inputReference] ?? 0;
+
+                // Add identifier
                 input.identifier = inputIdentifier;
-                input.visibility = this.savedInputsTargetVisibility[reference] ?? 0;
 
-                // Create input service
-                const nameSanitized = await this.sanitizeString(input.name);
-                const inputService = accessory.addService(Service.InputSource, nameSanitized, `Input ${inputIdentifier}`);
+                // Sanitize and create service
+                const sanitizedName = await this.sanitizeString(input.name);
+                const inputService = accessory.addService(Service.InputSource, sanitizedName, `Input ${inputIdentifier}`);
+
                 inputService
                     .setCharacteristic(Characteristic.Identifier, inputIdentifier)
-                    .setCharacteristic(Characteristic.Name, nameSanitized)
+                    .setCharacteristic(Characteristic.Name, sanitizedName)
+                    .setCharacteristic(Characteristic.ConfiguredName, sanitizedName)
                     .setCharacteristic(Characteristic.IsConfigured, 1)
                     .setCharacteristic(Characteristic.InputSourceType, 0)
-                    .setCharacteristic(Characteristic.CurrentVisibilityState, input.visibility);
+                    .setCharacteristic(Characteristic.CurrentVisibilityState, input.visibility)
+                    .setCharacteristic(Characteristic.TargetVisibilityState, input.visibility);
 
-                // Configured Name
                 inputService.getCharacteristic(Characteristic.ConfiguredName)
-                    .onGet(async () => nameSanitized)
                     .onSet(async (value) => {
                         try {
                             input.name = value;
-                            this.savedInputsNames[reference] = value;
+                            this.savedInputsNames[inputReference] = value;
                             await this.saveData(this.inputsNamesFile, this.savedInputsNames);
 
-                            const index = this.inputsConfigured.findIndex(i => i.reference === reference);
-                            if (index >= 0) this.inputsConfigured[index].name = value;
+                            if (this.enableDebugMode) {
+                                this.emit('debug', `Saved Input Name: ${value}, Reference: ${inputReference}`);
+                            }
+
+                            const index = this.inputsConfigured.findIndex(i => i.reference === inputReference);
+                            if (index !== -1) this.inputsConfigured[index].name = value;
 
                             await this.displayOrder();
-                            if (this.enableDebugMode) this.emit('debug', `Saved Input Name: ${value}, Reference: ${reference}`);
-                        } catch (err) {
-                            this.emit('warn', `Save Input Name Error: ${err}`);
+                        } catch (error) {
+                            this.emit('warn', `Save Input Name error: ${error}`);
                         }
                     });
 
-                // Target Visibility
                 inputService.getCharacteristic(Characteristic.TargetVisibilityState)
-                    .onGet(async () => input.visibility)
                     .onSet(async (state) => {
                         try {
                             input.visibility = state;
-                            this.savedInputsTargetVisibility[reference] = state;
+                            this.savedInputsTargetVisibility[inputReference] = state;
                             await this.saveData(this.inputsTargetVisibilityFile, this.savedInputsTargetVisibility);
-                            if (this.enableDebugMode) this.emit('debug', `Saved Input: ${input.name}, Visibility: ${state ? 'HIDDEN' : 'SHOWN'}`);
-                        } catch (err) {
-                            this.emit('warn', `Save Target Visibility Error: ${err}`);
+
+                            if (this.enableDebugMode) {
+                                this.emit('debug', `Saved Input: ${input.name}, Target Visibility: ${state ? 'HIDDEN' : 'SHOWN'}`);
+                            }
+                        } catch (error) {
+                            this.emit('warn', `Save Target Visibility error: ${error}`);
                         }
                     });
 
@@ -926,24 +935,23 @@ class OpenWebIfDevice extends EventEmitter {
                 getInputsFromDevice: this.getInputsFromDevice,
                 enableDebugMode: this.enableDebugMode,
                 disableLogError: this.disableLogError
-            });
-
-            this.openwebif.on('deviceInfo', (manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) => {
-                this.emit('devInfo', `-------- ${this.name} --------`);
-                this.emit('devInfo', `Manufacturer: ${manufacturer}`);
-                this.emit('devInfo', `Model: ${modelName}`);
-                this.emit('devInfo', `Kernel: ${kernelVer}`);
-                this.emit('devInfo', `Chipset: ${chipset}`);
-                this.emit('devInfo', `Webif version: ${serialNumber}`);
-                this.emit('devInfo', `Firmware: ${firmwareRevision}`);
-                this.emit('devInfo', `----------------------------------`)
-
-                this.manufacturer = manufacturer || 'Manufacturer';
-                this.modelName = modelName || 'Model Name';
-                this.serialNumber = serialNumber || 'Serial Number';
-                this.firmwareRevision = firmwareRevision || 'Firmware Revision';
-                this.mac = mac;
             })
+                .on('deviceInfo', (manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac) => {
+                    this.emit('devInfo', `-------- ${this.name} --------`);
+                    this.emit('devInfo', `Manufacturer: ${manufacturer}`);
+                    this.emit('devInfo', `Model: ${modelName}`);
+                    this.emit('devInfo', `Kernel: ${kernelVer}`);
+                    this.emit('devInfo', `Chipset: ${chipset}`);
+                    this.emit('devInfo', `Webif version: ${serialNumber}`);
+                    this.emit('devInfo', `Firmware: ${firmwareRevision}`);
+                    this.emit('devInfo', `----------------------------------`)
+
+                    this.manufacturer = manufacturer || 'Manufacturer';
+                    this.modelName = modelName || 'Model Name';
+                    this.serialNumber = serialNumber || 'Serial Number';
+                    this.firmwareRevision = firmwareRevision || 'Firmware Revision';
+                    this.mac = mac;
+                })
                 .on('stateChanged', (power, name, eventName, reference, volume, mute) => {
                     const input = this.inputsConfigured.find(input => input.reference === reference) ?? false;
                     const inputIdentifier = input ? input.identifier : this.inputIdentifier;
