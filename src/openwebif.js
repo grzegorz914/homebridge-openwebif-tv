@@ -38,74 +38,70 @@ class OpenWebIf extends EventEmitter {
         this.reference = '';
         this.volume = 0;
         this.mute = false;
-        this.devInfo = '';
+        this.devInfo = {};
 
         //impulse generator
         this.call = false;
-        this.impulseGenerator = new ImpulseGenerator();
-        this.impulseGenerator.on('checkState', async () => {
-            if (this.call) return;
+        this.impulseGenerator = new ImpulseGenerator()
+            .on('checkChannels', async () => {
+                if (this.call) return;
 
-            try {
-                this.call = true;
-                await this.checkState();
-                this.call = false;
-            } catch (error) {
-                this.call = false;
-                this.emit('error', `Inpulse generator error: ${error}`);
-            };
-        }).on('state', (state) => {
-            const emitState = state ? this.emit('success', `Impulse generator started`) : this.emit('warn', `Impulse generator stopped`);
-        });
+                try {
+                    this.call = true;
+                    await this.checkChannels();
+                    this.call = false;
+                } catch (error) {
+                    this.call = false;
+                    this.emit('error', `Inpulse generator error: ${error}`);
+                };
+            })
+            .on('checkState', async () => {
+                if (this.call) return;
+
+                try {
+                    this.call = true;
+                    await this.checkState();
+                    this.call = false;
+                } catch (error) {
+                    this.call = false;
+                    this.emit('error', `Inpulse generator error: ${error}`);
+                };
+            }).on('state', (state) => {
+                const emitState = state ? this.emit('success', `Impulse generator started`) : this.emit('warn', `Impulse generator stopped`);
+            });
     }
 
     async connect() {
         try {
+            // Get device info
             const deviceInfo = await this.axiosInstance(ApiUrls.DeviceInfo);
             const devInfo = deviceInfo.data;
-            const debug = this.enableDebugMode ? this.emit('debug', `Connect data: ${JSON.stringify(devInfo, null, 2)}`) : false;
-            this.devInfo = devInfo;
+            if (this.enableDebugMode) this.emit('debug', `Connect data: ${JSON.stringify(devInfo, null, 2)}`);
 
-            const manufacturer = devInfo.brand || 'undefined';
-            const modelName = devInfo.model || 'undefined';
-            const serialNumber = devInfo.webifver || 'undefined';
-            const firmwareRevision = devInfo.imagever || 'undefined';
-            const kernelVer = devInfo.kernelver || 'undefined';
-            const chipset = devInfo.chipset || 'undefined';
-            const mac = devInfo.ifaces[0].mac || false;
+            const info = {
+                manufacturer: devInfo.brand || 'undefined',
+                modelName: devInfo.model || 'undefined',
+                serialNumber: devInfo.webifver || 'undefined',
+                firmwareRevision: devInfo.imagever || 'undefined',
+                kernelVer: devInfo.kernelver || 'undefined',
+                chipset: devInfo.chipset || 'undefined',
+                adressMac: devInfo.ifaces?.[0]?.mac ?? false,
+            };
+            this.devInfo = info;
 
-            if (!mac) {
-                this.emit('error', `Missing Mac Address`);
-                return false;
+            // Save device info
+            if (info.adressMac) {
+                await this.saveData(this.devInfoFile, info);
             }
 
-            //save device info to the file
-            await this.saveData(this.devInfoFile, devInfo);
+            // Check channels
+            await this.checkChannels();
 
-            //get all channels
-            const channelsInfo = this.getInputsFromDevice ? await this.axiosInstance(ApiUrls.GetAllServices) : false;
-            const allChannels = channelsInfo ? channelsInfo.data.services : false;
-            const debug1 = this.enableDebugMode ? this.emit('debug', `Channels info: ${channelsInfo}`) : false;
-
-            //prepare channels
-            let channels = await this.getInputs(allChannels, this.bouquets, this.inputs, this.getInputsFromDevice);
-            if (!channels) {
-                this.emit('warn', `Found: 0 channels, adding 1 default channel`);
-                channels = [{
-                    name: "CNN HD",
-                    reference: "1:0:1:1C8A:1CE8:71:820000:0:0:0::CNN HD",
-                    displayType: 0
-                }];
-            }
-
-            //save channels
-            await this.saveData(this.inputsFile, channels);
-
-            //connect to deice success
+            // Connect to deice success
             this.emit('success', `Connect Success`)
 
-            //emit device info
-            this.emit('deviceInfo', manufacturer, modelName, serialNumber, firmwareRevision, kernelVer, chipset, mac);
+            // Emit device info
+            this.emit('deviceInfo', info);
 
             return true;
         } catch (error) {
@@ -114,11 +110,33 @@ class OpenWebIf extends EventEmitter {
         }
     }
 
+    async checkChannels() {
+        try {
+            // Get all channels
+            const channelsInfo = this.getInputsFromDevice ? await this.axiosInstance(ApiUrls.GetAllServices) : false;
+            const allChannels = channelsInfo ? channelsInfo.data.services : [];
+
+            // Prepare inputs
+            const inputsArr = await this.getInputs(allChannels, this.bouquets, this.inputs, this.getInputsFromDevice);
+
+            for (const input of inputsArr) {
+                this.emit('addRemoveOrUpdateInput', input, false);
+            }
+
+            // Save inputs
+            await this.saveData(this.inputsFile, inputsArr);
+
+            return true;
+        } catch (error) {
+            throw new Error(`Check channels error: ${error}`);
+        }
+    }
+
     async checkState() {
         try {
             const deviceState = await this.axiosInstance(ApiUrls.DeviceStatus);
             const devState = deviceState.data;
-            const debug = this.enableDebugMode ? this.emit('debug', `State: ${JSON.stringify(devState, null, 2)}`) : false;
+            if (this.enableDebugMode) this.emit('debug', `State: ${JSON.stringify(devState, null, 2)}`);
 
             //mqtt
             this.emit('mqtt', 'Info', this.devInfo);
@@ -164,9 +182,10 @@ class OpenWebIf extends EventEmitter {
 
                     if (bouquetChannels) {
                         for (const channel of bouquetChannels.subservices) {
+                            if (!channel?.servicename || !channel?.servicereference) continue;
+
                             const name = channel.servicename;
                             const reference = channel.servicereference;
-
                             const obj = {
                                 'name': name,
                                 'reference': reference,
@@ -184,20 +203,31 @@ class OpenWebIf extends EventEmitter {
             const channelArr = [];
             const channelsArr = !getInputsFromDevice ? inputs : bouquetChannelsArr;
             for (const input of channelsArr) {
+                if (!input?.name || !input?.reference) continue;
+
                 const inputName = input.name;
                 const inputReference = input.reference;
                 const inputDisplayType = input.displayType ?? 0;
+                const inputNamePrefix = input.namePrefix ?? false;
                 const obj = {
                     'name': inputName,
                     'reference': inputReference,
-                    'displayType': inputDisplayType
+                    'displayType': inputDisplayType,
+                    'namePrefix': inputNamePrefix
                 }
-
-                const duplicatedInput = channelArr.some(input => input.reference === inputReference);
-                const push = inputName && inputReference && !duplicatedInput ? channelArr.push(obj) : false;
+                channelArr.push(obj);
             }
 
             const channels = channelArr.length > 0 ? channelArr : false;
+            if (!channels) {
+                this.emit('warn', `Found: 0 channels, adding 1 default channel`);
+                channels = [{
+                    name: "CNN HD",
+                    reference: "1:0:1:1C8A:1CE8:71:820000:0:0:0::CNN HD",
+                    displayType: 0
+                }];
+            }
+
             return channels;
         } catch (error) {
             throw new Error(`Get inputus error: ${error}`);
@@ -208,7 +238,7 @@ class OpenWebIf extends EventEmitter {
         try {
             data = JSON.stringify(data, null, 2);
             await fsPromises.writeFile(path, data);
-            const debug = this.enableDebugMode ? this.emit('debug', `Saved data: ${data}`) : false;
+            if (this.enableDebugMode) this.emit('debug', `Saved data: ${data}`);
             return true;
         } catch (error) {
             throw new Error(`Save data error: ${error}`);
@@ -218,7 +248,7 @@ class OpenWebIf extends EventEmitter {
     async send(apiUrl) {
         try {
             await this.axiosInstance(apiUrl);
-            const debug = this.enableDebugMode ? this.emit('warn', `Send data: ${apiUrl}`) : false;
+            if (this.enableDebugMode) this.emit('warn', `Send data: ${apiUrl}`);
             return true;
         } catch (error) {
             throw new Error(`Send data error: ${error}`);

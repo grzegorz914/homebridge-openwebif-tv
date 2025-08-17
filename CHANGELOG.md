@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - After update to v4.0.0 MQTT config settings need to be updated
 
+## [4.7.0] - (17.08.2025)
+
+## Changes
+
+- added dynamic add/update/remove input/channel if load from device
+- added dynamic firmware info update if changed
+- cleanup
+
 ## [4.6.0] - (30.05.2025)
 
 ## Changes
