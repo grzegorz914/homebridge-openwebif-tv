@@ -53,9 +53,6 @@ class OpenWebIfDevice extends EventEmitter {
         this.mqtt = device.mqtt ?? {};
         this.mqttConnected = false;
 
-        //services
-        this.allServices = [];
-
         //inputs variable
         this.inputIdentifier = 1;
         this.inputButtonConfigured = [];
@@ -385,7 +382,6 @@ class OpenWebIfDevice extends EventEmitter {
 
                 this.inputsServices.push(inputService);
                 this.televisionService.addLinkedService(inputService);
-                this.allServices.push(inputService);
 
                 if (this.enableDebugMode) this.emit('debug', `Added new input: ${input.name} (${inputReference})`);
             }
@@ -417,7 +413,6 @@ class OpenWebIfDevice extends EventEmitter {
                 .setCharacteristic(Characteristic.SerialNumber, this.savedInfo.serialNumber)
                 .setCharacteristic(Characteristic.FirmwareRevision, this.savedInfo.firmwareRevision)
                 .setCharacteristic(Characteristic.ConfiguredName, accessoryName);
-            this.allServices.push(this.informationService);
 
             //prepare television service
             if (this.enableDebugMode) this.emit('debug', `Prepare television service`);
@@ -608,7 +603,15 @@ class OpenWebIfDevice extends EventEmitter {
                         this.emit('warn', `set Power Mode Selection error: ${error}`);
                     }
                 });
-            this.allServices.push(this.televisionService);
+
+            //prepare inputs service
+            if (this.enableDebugMode) this.emit('debug', `Prepare inputs services`);
+
+            // Prepare inputs (max 85 total services)
+            this.inputsServices = [];
+            for (const input of this.savedInputs) {
+                await this.addRemoveOrUpdateInput(input, false);
+            }
 
             //Prepare volume service
             if (this.volumeControl > 0) {
@@ -673,7 +676,6 @@ class OpenWebIfDevice extends EventEmitter {
                             this.emit('warn', `set Mute error: ${error}`);
                         }
                     });
-                this.allServices.push(this.tvSpeakerService);
 
                 //legacy control
                 switch (this.volumeControl) {
@@ -698,7 +700,6 @@ class OpenWebIfDevice extends EventEmitter {
                             .onSet(async (state) => {
                                 this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.Mute, !state);
                             });
-                        this.allServices.push(this.volumeServiceLightbulb);
                         break;
                     case 2: //fan
                         const debug1 = this.enableDebugMode ? this.emit('debug', `Prepare volume service fan`) : false;
@@ -721,7 +722,6 @@ class OpenWebIfDevice extends EventEmitter {
                             .onSet(async (state) => {
                                 this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.Mute, !state);
                             });
-                        this.allServices.push(this.volumeServiceFan);
                         break;
                     case 3: // speaker
                         const debug2 = this.enableDebugMode ? this.emit('debug', `Prepare volume service speaker`) : false;
@@ -751,18 +751,8 @@ class OpenWebIfDevice extends EventEmitter {
                             .onSet(async (value) => {
                                 this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.Volume, value);
                             });
-                        this.allServices.push(this.volumeServiceSpeaker);
                         break;
                 }
-            }
-
-            //prepare inputs service
-            if (this.enableDebugMode) this.emit('debug', 'Prepare inputs services');
-
-            // Check possible inputs count (max 85)
-            this.inputsServices = [];
-            for (const input of this.savedInputs) {
-                await this.addRemoveOrUpdateInput(input, false);
             }
 
             //prepare sensor service
@@ -776,7 +766,6 @@ class OpenWebIfDevice extends EventEmitter {
                         const state = this.power;
                         return state;
                     });
-                this.allServices.push(this.sensorPowerService);
             }
 
             if (this.sensorVolume) {
@@ -789,7 +778,6 @@ class OpenWebIfDevice extends EventEmitter {
                         const state = this.sensorVolumeState;
                         return state;
                     });
-                this.allServices.push(this.sensorVolumeService);
             }
 
             if (this.sensorMute) {
@@ -802,7 +790,6 @@ class OpenWebIfDevice extends EventEmitter {
                         const state = this.mute;
                         return state;
                     });
-                this.allServices.push(this.sensorMuteService);
             }
 
             if (this.sensorInput) {
@@ -815,11 +802,10 @@ class OpenWebIfDevice extends EventEmitter {
                         const state = this.sensorInputState;
                         return state;
                     });
-                this.allServices.push(this.sensorInputService);
             }
 
             //prepare inputs switch sensor service
-            const possibleInputsButtonsCount = 99 - this.allServices.length;
+            const possibleInputsButtonsCount = 99 - this.accessory.services.length.length;
             const maxInputsSwitchesButtonsCount = this.inputsServices.length >= possibleInputsButtonsCount ? possibleInputsButtonsCount : this.inputsServices.length;
             if (maxInputsSwitchesButtonsCount > 0) {
                 this.inputButtonServices = [];
@@ -863,7 +849,6 @@ class OpenWebIfDevice extends EventEmitter {
                             });
                         this.inputButtonConfigured.push(button);
                         this.inputButtonServices.push(inputButtonService);
-                        this.allServices.push(inputButtonService);
                         accessory.addService(inputButtonService);
                     } else {
                         const log = displayType === 0 ? false : this.emit('info', `Input Button Name: ${name ? name : 'Missing'}, Reference: ${reference ? reference : 'Missing'}`);
@@ -872,7 +857,7 @@ class OpenWebIfDevice extends EventEmitter {
             }
 
             //prepare sonsor service
-            const possibleSensorInputsCount = 99 - this.allServices.length;
+            const possibleSensorInputsCount = 99 - this.accessory.services.length.length;
             const maxSensorInputsCount = this.sensorsInputsConfiguredCount >= possibleSensorInputsCount ? possibleSensorInputsCount : this.sensorsInputsConfiguredCount;
             if (maxSensorInputsCount > 0) {
                 this.sensorInputServices = [];
@@ -902,13 +887,12 @@ class OpenWebIfDevice extends EventEmitter {
                             return state;
                         });
                     this.sensorInputServices.push(sensorInputService);
-                    this.allServices.push(sensorInputService);
                     accessory.addService(sensorInputService);
                 }
             }
 
             //prepare buttons service
-            const possibleButtonsCount = 99 - this.allServices.length;
+            const possibleButtonsCount = 99 - this.accessory.services.length.length;
             const maxButtonsCount = this.buttonsConfiguredCount >= possibleButtonsCount ? possibleButtonsCount : this.buttonsConfiguredCount;
             if (maxButtonsCount > 0) {
                 this.buttonServices = [];
@@ -970,7 +954,6 @@ class OpenWebIfDevice extends EventEmitter {
                             }
                         });
                     this.buttonServices.push(buttonService);
-                    this.allServices.push(buttonService);
                     accessory.addService(buttonService);
                 }
             }
