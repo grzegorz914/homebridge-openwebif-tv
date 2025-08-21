@@ -300,7 +300,7 @@ class OpenWebIfDevice extends EventEmitter {
                 const inputNamePrefix = input.namePrefix;
 
                 if (inputService) {
-                    if (inputService.name === inputName) continue;
+                    if (inputService.name === inputName) return;
 
                     // === UPDATE EXISTING ===
                     inputService.name = sanitizedName;
