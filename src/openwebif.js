@@ -117,14 +117,10 @@ class OpenWebIf extends EventEmitter {
             const allChannels = channelsInfo ? channelsInfo.data.services : [];
 
             // Prepare inputs
-            const inputsArr = await this.getInputs(allChannels, this.bouquets, this.inputs, this.getInputsFromDevice);
+            const inputs = await this.getInputs(allChannels, this.bouquets, this.inputs, this.getInputsFromDevice);
 
-            for (const input of inputsArr) {
-                this.emit('addRemoveOrUpdateInput', input, false);
-            }
-
-            // Save inputs
-            await this.saveData(this.inputsFile, inputsArr);
+            // Emit inputs
+            this.emit('addRemoveOrUpdateInput', inputs, false);
 
             return true;
         } catch (error) {
@@ -210,10 +206,11 @@ class OpenWebIf extends EventEmitter {
                 const inputDisplayType = input.displayType ?? 0;
                 const inputNamePrefix = input.namePrefix ?? false;
                 const obj = {
-                    'name': inputName,
-                    'reference': inputReference,
-                    'displayType': inputDisplayType,
-                    'namePrefix': inputNamePrefix
+                    name: inputName,
+                    reference: inputReference,
+                    mode: 1,
+                    displayType: inputDisplayType,
+                    namePrefix: inputNamePrefix
                 }
                 channelArr.push(obj);
             }
@@ -224,9 +221,14 @@ class OpenWebIf extends EventEmitter {
                 channels = [{
                     name: "CNN HD",
                     reference: "1:0:1:1C8A:1CE8:71:820000:0:0:0::CNN HD",
-                    displayType: 0
+                    mode: 1,
+                    displayType: 0,
+                    namePrefix: false
                 }];
             }
+
+            // Save inputs
+            await this.saveData(this.inputsFile, channels);
 
             return channels;
         } catch (error) {
