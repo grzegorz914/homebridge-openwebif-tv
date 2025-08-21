@@ -66,7 +66,8 @@ class OpenWebIf extends EventEmitter {
                     this.call = false;
                     this.emit('error', `Inpulse generator error: ${error}`);
                 };
-            }).on('state', (state) => {
+            })
+            .on('state', (state) => {
                 const emitState = state ? this.emit('success', `Impulse generator started`) : this.emit('warn', `Impulse generator stopped`);
             });
     }
@@ -120,7 +121,9 @@ class OpenWebIf extends EventEmitter {
             const inputs = await this.getInputs(allChannels, this.bouquets, this.inputs, this.getInputsFromDevice);
 
             // Emit inputs
-            this.emit('addRemoveOrUpdateInput', inputs, false);
+            for (const input of inputs) {
+                this.emit('addRemoveOrUpdateInput', input, false);
+            };
 
             return true;
         } catch (error) {
