@@ -46,7 +46,6 @@ class OpenWebIfDevice extends EventEmitter {
         this.channelsFile = channelsFile;
         this.inputsNamesFile = inputsNamesFile;
         this.inputsTargetVisibilityFile = inputsTargetVisibilityFile;
-        this.startPrepareAccessory = true;
 
         //external integrations
         //mqtt
@@ -981,7 +980,7 @@ class OpenWebIfDevice extends EventEmitter {
                     this.emit('devInfo', `Firmware: ${info.firmwareRevision}`);
                     this.emit('devInfo', `----------------------------------`)
 
-                    this.informationService?.updateCharacteristic(Characteristic.FirmwareRevision, firmwareRevision)
+                    this.informationService?.updateCharacteristic(Characteristic.FirmwareRevision, info.firmwareRevision);
                 })
                 .on('addRemoveOrUpdateInput', async (input, remove) => {
                     await this.addRemoveOrUpdateInput(input, remove);
@@ -1130,7 +1129,7 @@ class OpenWebIfDevice extends EventEmitter {
                     this.emit('error', error);
                 })
                 .on('mqtt', (topic, message) => {
-                    const mqtt = this.mqttConnected ? this.mqtt1.emit('publish', topic, message) : false;
+                    if (this.mqttConnected) this.mqtt1.emit('publish', topic, message);
                 });
 
             //connect to receiver
@@ -1140,7 +1139,7 @@ class OpenWebIfDevice extends EventEmitter {
             }
 
             //start external integrations
-            const startExternalIntegrations = this.mqtt.enable ? await this.externalIntegrations() : false;
+            if (this.mqtt.enable) await this.externalIntegrations();
 
             //prepare data for accessory
             const macAdress = await this.prepareDataForAccessory();
@@ -1150,13 +1149,8 @@ class OpenWebIfDevice extends EventEmitter {
             }
 
             //prepare accessory
-            if (this.startPrepareAccessory) {
-                const accessory = await this.prepareAccessory(macAdress);
-                this.emit('publishAccessory', accessory);
-                this.startPrepareAccessory = false;
-            }
-
-            return true;
+            const accessory = await this.prepareAccessory(macAdress);
+            return accessory;
         } catch (error) {
             throw new Error(`Start error: ${error}`);
         }

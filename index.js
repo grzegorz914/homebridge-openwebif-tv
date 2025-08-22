@@ -84,10 +84,6 @@ class OpenWebIfPlatform {
 						files.inputsVisibility,
 						refreshInterval * 1000
 					)
-						.on('publishAccessory', (accessory) => {
-							api.publishExternalAccessories(PluginName, [accessory]);
-							if (logLevel.success) log.success(`Device: ${host} ${name}, Published as external accessory.`);
-						})
 						.on('devInfo', (info) => logLevel.devInfo && log.info(info))
 						.on('success', (msg) => logLevel.success && log.success(`Device: ${host} ${name}, ${msg}`))
 						.on('info', (msg) => logLevel.info && log.info(`Device: ${host} ${name}, ${msg}`))
@@ -98,7 +94,11 @@ class OpenWebIfPlatform {
 					const impulseGenerator = new ImpulseGenerator()
 						.on('start', async () => {
 							try {
-								if (await deviceInstance.start()) {
+								const accessory = await deviceInstance.start()
+								if (accessory) {
+									api.publishExternalAccessories(PluginName, [accessory]);
+									if (logLevel.success) log.success(`Device: ${host} ${name}, Published as external accessory.`);
+
 									await impulseGenerator.stop();
 									await deviceInstance.startImpulseGenerator();
 								}
@@ -107,9 +107,7 @@ class OpenWebIfPlatform {
 							}
 						})
 						.on('state', (state) => {
-							if (logLevel.debug) {
-								log.info(`Device: ${host} ${name}, Start impulse generator ${state ? 'started' : 'stopped'}.`);
-							}
+							if (logLevel.debug) log.info(`Device: ${host} ${name}, Start impulse generator ${state ? 'started' : 'stopped'}.`);
 						});
 
 					await impulseGenerator.start([{ name: 'start', sampling: 45000 }]);
@@ -117,7 +115,7 @@ class OpenWebIfPlatform {
 					if (logLevel.error) log.error(`Device: ${host} ${name}, Did finish launching error: ${err}`);
 				}
 
-				await new Promise((resolve) => setTimeout(resolve, 500));
+				await new Promise((resolve) => setTimeout(resolve, 300));
 			}
 		});
 	}
