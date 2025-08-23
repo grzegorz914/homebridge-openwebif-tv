@@ -75,15 +75,7 @@ class OpenWebIfPlatform {
 				}
 
 				try {
-					const deviceInstance = new OpenWebIfDevice(
-						api, device,
-						files.devInfo,
-						files.inputs,
-						files.channels,
-						files.inputsNames,
-						files.inputsVisibility,
-						refreshInterval * 1000
-					)
+					const deviceInstance = new OpenWebIfDevice(api, device, files.devInfo, files.inputs, files.channels, files.inputsNames, files.inputsVisibility, refreshInterval * 1000)
 						.on('devInfo', (info) => logLevel.devInfo && log.info(info))
 						.on('success', (msg) => logLevel.success && log.success(`Device: ${host} ${name}, ${msg}`))
 						.on('info', (msg) => logLevel.info && log.info(`Device: ${host} ${name}, ${msg}`))

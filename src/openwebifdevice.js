@@ -115,19 +115,25 @@ class OpenWebIfDevice extends EventEmitter {
     }
 
     async sanitizeString(str) {
-        // Replace dots, colons, and semicolons inside words with a space
+        if (!str) return '';
+
+        // Normalize & transliterate (usuń akcenty/ogonkowe litery)
+        str = str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+        // Replace dot/colon/semicolon inside words with a space
         str = str.replace(/(\w)[.:;]+(\w)/g, '$1 $2');
 
-        // Remove remaining dots, colons, semicolons, plus, and minus anywhere in the string
-        str = str.replace(/[.:;+\-]/g, '');
+        // Replace certain separators (+, -, /) with a space
+        str = str.replace(/[+\-\/]/g, ' ');
 
-        // Replace all other invalid characters (anything not A-Z, a-z, 0-9, space, or apostrophe) with a space
+        // Remove remaining invalid characters (keep letters, digits, space, apostrophe)
         str = str.replace(/[^A-Za-z0-9 ']/g, ' ');
 
-        // Trim leading and trailing spaces
-        str = str.trim();
+        // Collapse multiple spaces into one
+        str = str.replace(/\s+/g, ' ');
 
-        return str;
+        // Trim leading/trailing spaces
+        return str.trim();
     }
 
     async externalIntegrations() {
@@ -272,32 +278,32 @@ class OpenWebIfDevice extends EventEmitter {
             // Input reference
             const inputReference = input.reference;
 
-            // --- REMOVE ---
+            // Remove input
             if (remove) {
                 const svc = this.inputsServices.find(s => s.reference === inputReference);
                 if (svc) {
-                    if (this.enableDebugMode) this.emit('debug', `Removing input: ${input.name} (${inputReference})`);
+                    if (this.enableDebugMode) this.emit('debug', `Removing input: ${input.name}, reference: ${inputReference}`);
                     this.accessory.removeService(svc);
                     this.inputsServices = this.inputsServices.filter(s => s.reference !== inputReference);
                     await this.displayOrder();
                     return true;
                 }
-                if (this.enableDebugMode) this.emit('debug', `Remove failed (not found): ${input.name} (${inputReference})`);
+                if (this.enableDebugMode) this.emit('debug', `Remove input: ${input.name}, reference: ${inputReference}, failed`);
                 return false;
             }
 
-            // --- ADD OR UPDATE ---
+            // Add or update input
             let inputService = this.inputsServices.find(s => s.reference === inputReference);
 
             const savedName = this.savedInputsNames[inputReference] ?? input.name;
             const sanitizedName = await this.sanitizeString(savedName);
-            const inputMode = input.mode;
+            const inputMode = input.mode ?? 0;
             const inputDisplayType = input.displayType;
             const inputDamePrefix = input.namePrefix;
             const inputVisibility = this.savedInputsTargetVisibility[inputReference] ?? 0;
 
             if (inputService) {
-                // === UPDATE EXISTING ===
+                // Update existing input
                 const nameChanged = inputService.name !== sanitizedName;
 
                 if (nameChanged) {
@@ -306,10 +312,10 @@ class OpenWebIfDevice extends EventEmitter {
                         .updateCharacteristic(Characteristic.Name, sanitizedName)
                         .updateCharacteristic(Characteristic.ConfiguredName, sanitizedName)
 
-                    if (this.enableDebugMode) this.emit('debug', `Updated input: ${input.name} (${inputReference})`);
+                    if (this.enableDebugMode) this.emit('debug', `Updated Input: ${input.name}, reference: ${inputReference}`);
                 }
             } else {
-                // === CREATE NEW ===
+                // Create new input
                 const identifier = this.inputsServices.length + 1;
                 inputService = this.accessory.addService(Service.InputSource, sanitizedName, `Input ${identifier}`);
 
@@ -331,39 +337,33 @@ class OpenWebIfDevice extends EventEmitter {
                     .setCharacteristic(Characteristic.CurrentVisibilityState, inputVisibility)
                     .setCharacteristic(Characteristic.TargetVisibilityState, inputVisibility);
 
-                // --- ConfiguredName rename persistence ---
+                // ConfiguredName rename persistence
                 inputService.getCharacteristic(Characteristic.ConfiguredName)
                     .onSet(async (value) => {
                         try {
-                            inputService.name = value;
-                            this.savedInputsNames[inputReference] = value;
+                            const newName = await this.sanitizeString(value);
+                            this.savedInputsNames[inputReference] = newName;
                             await this.saveData(this.inputsNamesFile, this.savedInputsNames);
+                            if (this.enableDebugMode) this.emit('debug', `Saved Input: ${input.name}, reference: ${inputReference}`);
 
-                            if (this.enableDebugMode) {
-                                this.emit('debug', `Saved Input Name: ${value}, Reference: ${inputReference}`);
-                            }
-
-                            // keep in sync
-                            const index = this.inputsServices.findIndex(s => s.reference === inputReference);
-                            if (index !== -1) this.inputsServices[index].name = value;
-
+                            // Update service name to sanitized version
+                            inputService.name = newName;
                             await this.displayOrder();
                         } catch (error) {
                             this.emit('warn', `Save Input Name error: ${error}`);
                         }
                     });
 
-                // --- TargetVisibility persistence ---
+                // TargetVisibility persistence
                 inputService.getCharacteristic(Characteristic.TargetVisibilityState)
                     .onSet(async (state) => {
                         try {
-                            inputService.visibility = state;
                             this.savedInputsTargetVisibility[inputReference] = state;
                             await this.saveData(this.inputsTargetVisibilityFile, this.savedInputsTargetVisibility);
+                            if (this.enableDebugMode) this.emit('debug', `Saved Input: ${input.name}, reference: ${inputReference}, target visibility: ${state ? 'HIDDEN' : 'SHOWN'}`);
 
-                            if (this.enableDebugMode) {
-                                this.emit('debug', `Saved Input: ${input.name}, Target Visibility: ${state ? 'HIDDEN' : 'SHOWN'}`);
-                            }
+                            // Update service visibility to match target state
+                            inputService.visibility = state;
                         } catch (error) {
                             this.emit('warn', `Save Target Visibility error: ${error}`);
                         }
@@ -372,14 +372,14 @@ class OpenWebIfDevice extends EventEmitter {
                 this.inputsServices.push(inputService);
                 this.televisionService.addLinkedService(inputService);
 
-                if (this.enableDebugMode) this.emit('debug', `Added new input: ${input.name} (${inputReference})`);
+                if (this.enableDebugMode) this.emit('debug', `Added Input: ${input.name}, reference: ${inputReference}`);
             }
 
-            // Normalize identifiers and order
+            // Oorder inputs after add/update
             await this.displayOrder();
             return true;
         } catch (error) {
-            throw new Error(`Add/Update input error: ${error}`);
+            throw new Error(`Add/Remove/Update input error: ${error}`);
         }
     }
 
@@ -1113,21 +1113,11 @@ class OpenWebIfDevice extends EventEmitter {
                         this.emit('info', `Media State: ${['PLAY', 'PAUSE', 'STOPPED', 'LOADING', 'INTERRUPTED'][2]}`);
                     }
                 })
-                .on('success', (success) => {
-                    this.emit('success', success);
-                })
-                .on('info', (info) => {
-                    this.emit('info', info);
-                })
-                .on('debug', (debug) => {
-                    this.emit('debug', debug);
-                })
-                .on('warn', (warn) => {
-                    this.emit('warn', warn);
-                })
-                .on('error', (error) => {
-                    this.emit('error', error);
-                })
+                .on('success', (success) => this.emit('success', success))
+                .on('info', (info) => this.emit('info', info))
+                .on('debug', (debug) => this.emit('debug', debug))
+                .on('warn', (warn) => this.emit('warn', warn))
+                .on('error', (error) => this.emit('error', error))
                 .on('mqtt', (topic, message) => {
                     if (this.mqttConnected) this.mqtt1.emit('publish', topic, message);
                 });
