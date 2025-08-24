@@ -68,7 +68,7 @@ class OpenWebIf extends EventEmitter {
                 };
             })
             .on('state', (state) => {
-                const emitState = state ? this.emit('success', `Impulse generator started`) : this.emit('warn', `Impulse generator stopped`);
+                this.emit('success', `Impulse generator ${state ? 'started' : 'stopped'}`);
             });
     }
 
@@ -118,7 +118,7 @@ class OpenWebIf extends EventEmitter {
             const allChannels = channelsInfo ? channelsInfo.data.services : [];
 
             // Prepare inputs
-            const inputs = await this.getInputs(allChannels, this.bouquets, this.inputs, this.getInputsFromDevice);
+            const inputs = await this.prepareInputs(allChannels, this.bouquets, this.inputs, this.getInputsFromDevice);
 
             // Emit inputs
             for (const input of inputs) {
@@ -169,7 +169,7 @@ class OpenWebIf extends EventEmitter {
         }
     }
 
-    async getInputs(allChannels, bouquets, inputs, getInputsFromDevice) {
+    async prepareInputs(allChannels, bouquets, inputs, getInputsFromDevice) {
         try {
             //get channels by bouquet
             const bouquetChannelsArr = [];
@@ -177,6 +177,7 @@ class OpenWebIf extends EventEmitter {
                 for (const bouquet of bouquets) {
                     const bouquetName = bouquet.name;
                     const displayType = bouquet.displayType ?? 0;
+                    const namePrefix = bouquet.namePrefix ?? false;
                     const bouquetChannels = allChannels.find(service => service.servicename === bouquetName);
 
                     if (bouquetChannels) {
@@ -186,9 +187,11 @@ class OpenWebIf extends EventEmitter {
                             const name = channel.servicename;
                             const reference = channel.servicereference;
                             const obj = {
-                                'name': name,
-                                'reference': reference,
-                                'displayType': displayType
+                                name: name,
+                                reference: reference,
+                                mode: 1,
+                                displayType: displayType,
+                                namePrefix: namePrefix
                             }
                             bouquetChannelsArr.push(obj);
                         }
@@ -198,22 +201,18 @@ class OpenWebIf extends EventEmitter {
                 }
             }
 
-            //chack duplicated channels
+            //create final channels array
             const channelArr = [];
             const channelsArr = !getInputsFromDevice ? inputs : bouquetChannelsArr;
             for (const input of channelsArr) {
                 if (!input?.name || !input?.reference) continue;
 
-                const inputName = input.name;
-                const inputReference = input.reference;
-                const inputDisplayType = input.displayType ?? 0;
-                const inputNamePrefix = input.namePrefix ?? false;
                 const obj = {
-                    name: inputName,
-                    reference: inputReference,
+                    name: input.name,
+                    reference: input.reference,
                     mode: 1,
-                    displayType: inputDisplayType,
-                    namePrefix: inputNamePrefix
+                    displayType: input.displayType,
+                    namePrefix: input.namePrefix
                 }
                 channelArr.push(obj);
             }
