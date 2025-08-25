@@ -121,9 +121,7 @@ class OpenWebIf extends EventEmitter {
             const inputs = await this.prepareInputs(allChannels, this.bouquets, this.inputs, this.getInputsFromDevice);
 
             // Emit inputs
-            for (const input of inputs) {
-                this.emit('addRemoveOrUpdateInput', input, false);
-            };
+            this.emit('addRemoveOrUpdateInput', inputs, false);
 
             return true;
         } catch (error) {

@@ -185,15 +185,9 @@ class OpenWebIfDevice extends EventEmitter {
                             this.emit('warn', `MQTT set error: ${error}`);
                         }
                     })
-                    .on('debug', (debug) => {
-                        this.emit('debug', debug);
-                    })
-                    .on('warn', (warn) => {
-                        this.emit('warn', warn);
-                    })
-                    .on('error', (error) => {
-                        this.emit('error', error);
-                    });
+                    .on('debug', (debug) => this.emit('debug', debug))
+                    .on('warn', (warn) => this.emit('warn', warn))
+                    .on('error', (error) => this.emit('error', error));
             };
 
             return true;
@@ -270,108 +264,99 @@ class OpenWebIfDevice extends EventEmitter {
         }
     }
 
-    async addRemoveOrUpdateInput(input, remove = false) {
+    async addRemoveOrUpdateInput(inputs, remove = false) {
         try {
-            // Safety: no services or too many inputs (only block on add)
-            if (!this.inputsServices || (this.inputsServices.length >= 85 && !remove)) return;
+            if (!this.inputsServices) return;
 
-            // Input reference
-            const inputReference = input.reference;
+            for (const input of inputs) {
+                if (this.inputsServices.length >= 85 && !remove) continue;
 
-            // Remove input
-            if (remove) {
-                const svc = this.inputsServices.find(s => s.reference === inputReference);
-                if (svc) {
-                    if (this.enableDebugMode) this.emit('debug', `Removing input: ${input.name}, reference: ${inputReference}`);
-                    this.accessory.removeService(svc);
-                    this.inputsServices = this.inputsServices.filter(s => s.reference !== inputReference);
-                    await this.displayOrder();
-                    return true;
+                const inputReference = input.reference;
+
+                if (remove) {
+                    const svc = this.inputsServices.find(s => s.reference === inputReference);
+                    if (svc) {
+                        if (this.enableDebugMode) this.emit('debug', `Removing input: ${input.name}, reference: ${inputReference}`);
+                        this.accessory.removeService(svc);
+                        this.inputsServices = this.inputsServices.filter(s => s.reference !== inputReference);
+                        await this.displayOrder();
+                    }
+                    continue;
                 }
-                if (this.enableDebugMode) this.emit('debug', `Remove input: ${input.name}, reference: ${inputReference}, failed`);
-                return false;
-            }
 
-            // Add or update input
-            let inputService = this.inputsServices.find(s => s.reference === inputReference);
+                let inputService = this.inputsServices.find(s => s.reference === inputReference);
 
-            const savedName = this.savedInputsNames[inputReference] ?? input.name;
-            const sanitizedName = await this.sanitizeString(savedName);
-            const inputMode = input.mode ?? 0;
-            const inputDisplayType = input.displayType;
-            const inputDamePrefix = input.namePrefix;
-            const inputVisibility = this.savedInputsTargetVisibility[inputReference] ?? 0;
+                const savedName = this.savedInputsNames[inputReference] ?? input.name;
+                const sanitizedName = await this.sanitizeString(savedName);
+                const inputMode = input.mode ?? 0;
+                const inputDisplayType = input.displayType;
+                const inputDamePrefix = input.namePrefix;
+                const inputVisibility = this.savedInputsTargetVisibility[inputReference] ?? 0;
 
-            if (inputService) {
-                // Update existing input
-                const nameChanged = inputService.name !== sanitizedName;
-
-                if (nameChanged) {
+                if (inputService) {
+                    const nameChanged = inputService.name !== sanitizedName;
+                    if (nameChanged) {
+                        inputService.name = sanitizedName;
+                        inputService
+                            .updateCharacteristic(Characteristic.Name, sanitizedName)
+                            .updateCharacteristic(Characteristic.ConfiguredName, sanitizedName);
+                        if (this.enableDebugMode) this.emit('debug', `Updated Input: ${input.name}, reference: ${inputReference}`);
+                    }
+                } else {
+                    const identifier = this.inputsServices.length + 1;
+                    inputService = this.accessory.addService(Service.InputSource, sanitizedName, `Input ${identifier}`);
+                    inputService.identifier = identifier;
+                    inputService.reference = inputReference;
                     inputService.name = sanitizedName;
+                    inputService.mode = inputMode;
+                    inputService.displayType = inputDisplayType;
+                    inputService.namePrefix = inputDamePrefix;
+                    inputService.visibility = inputVisibility;
+
                     inputService
-                        .updateCharacteristic(Characteristic.Name, sanitizedName)
-                        .updateCharacteristic(Characteristic.ConfiguredName, sanitizedName)
+                        .setCharacteristic(Characteristic.Identifier, identifier)
+                        .setCharacteristic(Characteristic.Name, sanitizedName)
+                        .setCharacteristic(Characteristic.ConfiguredName, sanitizedName)
+                        .setCharacteristic(Characteristic.IsConfigured, 1)
+                        .setCharacteristic(Characteristic.InputSourceType, inputMode)
+                        .setCharacteristic(Characteristic.CurrentVisibilityState, inputVisibility)
+                        .setCharacteristic(Characteristic.TargetVisibilityState, inputVisibility);
 
-                    if (this.enableDebugMode) this.emit('debug', `Updated Input: ${input.name}, reference: ${inputReference}`);
+                    // ConfiguredName persistence
+                    inputService.getCharacteristic(Characteristic.ConfiguredName)
+                        .onSet(async (value) => {
+                            try {
+                                value = await this.sanitizeString(value);
+                                inputService.name = value;
+                                this.savedInputsNames[inputReference] = value;
+                                await this.saveData(this.inputsNamesFile, this.savedInputsNames);
+                                if (this.enableDebugMode) this.emit('debug', `Saved Input: ${input.name}, reference: ${inputReference}`);
+                                await this.displayOrder();
+                            } catch (error) {
+                                this.emit('warn', `Save Input Name error: ${error}`);
+                            }
+                        });
+
+                    // TargetVisibility persistence
+                    inputService.getCharacteristic(Characteristic.TargetVisibilityState)
+                        .onSet(async (state) => {
+                            try {
+                                inputService.visibility = state;
+                                this.savedInputsTargetVisibility[inputReference] = state;
+                                await this.saveData(this.inputsTargetVisibilityFile, this.savedInputsTargetVisibility);
+                                if (this.enableDebugMode) this.emit('debug', `Saved Input: ${input.name}, reference: ${inputReference}, target visibility: ${state ? 'HIDDEN' : 'SHOWN'}`);
+                            } catch (error) {
+                                this.emit('warn', `Save Target Visibility error: ${error}`);
+                            }
+                        });
+
+                    this.inputsServices.push(inputService);
+                    this.televisionService.addLinkedService(inputService);
+
+                    if (this.enableDebugMode) this.emit('debug', `Added Input: ${input.name}, reference: ${inputReference}`);
                 }
-            } else {
-                // Create new input
-                const identifier = this.inputsServices.length + 1;
-                inputService = this.accessory.addService(Service.InputSource, sanitizedName, `Input ${identifier}`);
-
-                // Custom props
-                inputService.identifier = identifier;
-                inputService.reference = inputReference;
-                inputService.name = sanitizedName;
-                inputService.mode = inputMode;
-                inputService.displayType = inputDisplayType;
-                inputService.namePrefix = inputDamePrefix;
-                inputService.visibility = inputVisibility;
-
-                inputService
-                    .setCharacteristic(Characteristic.Identifier, identifier)
-                    .setCharacteristic(Characteristic.Name, sanitizedName)
-                    .setCharacteristic(Characteristic.ConfiguredName, sanitizedName)
-                    .setCharacteristic(Characteristic.IsConfigured, 1)
-                    .setCharacteristic(Characteristic.InputSourceType, inputMode) // 0=HDMI-like Input, 1=Tuner/Channel
-                    .setCharacteristic(Characteristic.CurrentVisibilityState, inputVisibility)
-                    .setCharacteristic(Characteristic.TargetVisibilityState, inputVisibility);
-
-                // ConfiguredName rename persistence
-                inputService.getCharacteristic(Characteristic.ConfiguredName)
-                    .onSet(async (value) => {
-                        try {
-                            value = await this.sanitizeString(value);
-                            inputService.name = value;
-                            this.savedInputsNames[inputReference] = value;
-                            await this.saveData(this.inputsNamesFile, this.savedInputsNames);
-                            if (this.enableDebugMode) this.emit('debug', `Saved Input: ${input.name}, reference: ${inputReference}`);
-                            await this.displayOrder();
-                        } catch (error) {
-                            this.emit('warn', `Save Input Name error: ${error}`);
-                        }
-                    });
-
-                // TargetVisibility persistence
-                inputService.getCharacteristic(Characteristic.TargetVisibilityState)
-                    .onSet(async (state) => {
-                        try {
-                            inputService.visibility = state;
-                            this.savedInputsTargetVisibility[inputReference] = state;
-                            await this.saveData(this.inputsTargetVisibilityFile, this.savedInputsTargetVisibility);
-                            if (this.enableDebugMode) this.emit('debug', `Saved Input: ${input.name}, reference: ${inputReference}, target visibility: ${state ? 'HIDDEN' : 'SHOWN'}`);
-                        } catch (error) {
-                            this.emit('warn', `Save Target Visibility error: ${error}`);
-                        }
-                    });
-
-                this.inputsServices.push(inputService);
-                this.televisionService.addLinkedService(inputService);
-
-                if (this.enableDebugMode) this.emit('debug', `Added Input: ${input.name}, reference: ${inputReference}`);
             }
 
-            // Oorder inputs after add/update
             await this.displayOrder();
             return true;
         } catch (error) {
@@ -592,9 +577,7 @@ class OpenWebIfDevice extends EventEmitter {
             //prepare inputs service
             if (this.enableDebugMode) this.emit('debug', `Prepare inputs services`);
             this.inputsServices = [];
-            for (const input of this.savedInputs) {
-                await this.addRemoveOrUpdateInput(input, false);
-            };
+            await this.addRemoveOrUpdateInput(this.savedInputs, false);
 
             //Prepare volume service
             if (this.volumeControl > 0) {
@@ -978,8 +961,8 @@ class OpenWebIfDevice extends EventEmitter {
 
                     this.informationService?.updateCharacteristic(Characteristic.FirmwareRevision, info.firmwareRevision);
                 })
-                .on('addRemoveOrUpdateInput', async (input, remove) => {
-                    await this.addRemoveOrUpdateInput(input, remove);
+                .on('addRemoveOrUpdateInput', async (inputs, remove) => {
+                    await this.addRemoveOrUpdateInput(inputs, remove);
                 })
                 .on('stateChanged', (power, name, eventName, reference, volume, mute) => {
                     if (!this.inputsServices) return;
