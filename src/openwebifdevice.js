@@ -793,31 +793,33 @@ class OpenWebIfDevice extends EventEmitter {
                     //get button state
                     const buttonState = button.state;
 
-                    const serviceName = namePrefix ? `${accessoryName} ${name}` : name;
-                    const serviceType = ['', Service.Outlet, Service.Switch][displayType];
-                    const inputButtonService = new serviceType(serviceName, `Switch ${i}`);
-                    inputButtonService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                    inputButtonService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
-                    inputButtonService.getCharacteristic(Characteristic.On)
-                        .onGet(async () => {
-                            const state = buttonState;
-                            return state;
-                        })
-                        .onSet(async (state) => {
-                            try {
-                                const setSwitchInput = state ? await this.openwebif.send(`${ApiUrls.SetChannel}${reference}`) : false;
-                                if (this.enableDebugMode) this.emit('debug', `Set Channel Name: ${name}, Reference: ${reference}`);
-                            } catch (error) {
-                                this.emit('warn', `set Channel error: ${error}`);
-                            }
-                        });
-                    inputButtonService.name = name;
-                    inputButtonService.reference = reference;
-                    inputButtonService.displayType = displayType;
-                    inputButtonService.namePrefix = namePrefix;
-                    inputButtonService.state = buttonState;
-                    this.inputButtonServices.push(inputButtonService);
-                    accessory.addService(inputButtonService);
+                    if (displayType > 0) {
+                        const serviceName = namePrefix ? `${accessoryName} ${name}` : name;
+                        const serviceType = ['', Service.Outlet, Service.Switch][displayType];
+                        const inputButtonService = new serviceType(serviceName, `Button Input ${i}`);
+                        inputButtonService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                        inputButtonService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
+                        inputButtonService.getCharacteristic(Characteristic.On)
+                            .onGet(async () => {
+                                const state = buttonState;
+                                return state;
+                            })
+                            .onSet(async (state) => {
+                                try {
+                                    const setSwitchInput = state ? await this.openwebif.send(`${ApiUrls.SetChannel}${reference}`) : false;
+                                    if (this.enableDebugMode) this.emit('debug', `Set Channel Name: ${name}, Reference: ${reference}`);
+                                } catch (error) {
+                                    this.emit('warn', `set Channel error: ${error}`);
+                                }
+                            });
+                        inputButtonService.name = name;
+                        inputButtonService.reference = reference;
+                        inputButtonService.displayType = displayType;
+                        inputButtonService.namePrefix = namePrefix;
+                        inputButtonService.state = buttonState;
+                        this.inputButtonServices.push(inputButtonService);
+                        accessory.addService(inputButtonService);
+                    }
                 }
             }
 
@@ -839,7 +841,7 @@ class OpenWebIfDevice extends EventEmitter {
                     //get service type
                     const serviceType = sensor.serviceType;
 
-                    //get service type
+                    //get characteristic type
                     const characteristicType = sensor.characteristicType;
 
                     const serviceName = namePrefix ? `${accessoryName} ${name}` : name;
@@ -861,7 +863,7 @@ class OpenWebIfDevice extends EventEmitter {
             const maxButtonsCount = this.buttonsConfiguredCount >= possibleButtonsCount ? possibleButtonsCount : this.buttonsConfiguredCount;
             if (maxButtonsCount > 0) {
                 this.buttonServices = [];
-                if (this.enableDebugMode) this.emit('debug', `Prepare inputs buttons services`);
+                if (this.enableDebugMode) this.emit('debug', `Prepare buttons services`);
                 for (let i = 0; i < maxButtonsCount; i++) {
                     const button = this.buttonsConfigured[i];
 
