@@ -24,7 +24,7 @@ class OpenWebIf extends EventEmitter {
         this.axiosInstance = axios.create({
             method: 'GET',
             baseURL: baseUrl,
-            timeout: 20000,
+            timeout: 10000,
             withCredentials: auth,
             auth: {
                 username: user,
@@ -72,42 +72,14 @@ class OpenWebIf extends EventEmitter {
             });
     }
 
-    async connect() {
+    async saveData(path, data) {
         try {
-            // Get device info
-            const deviceInfo = await this.axiosInstance(ApiUrls.DeviceInfo);
-            const devInfo = deviceInfo.data;
-            if (this.enableDebugMode) this.emit('debug', `Connect data: ${JSON.stringify(devInfo, null, 2)}`);
-
-            const info = {
-                manufacturer: devInfo.brand || 'undefined',
-                modelName: devInfo.model || 'undefined',
-                serialNumber: devInfo.webifver || 'undefined',
-                firmwareRevision: devInfo.imagever || 'undefined',
-                kernelVer: devInfo.kernelver || 'undefined',
-                chipset: devInfo.chipset || 'undefined',
-                adressMac: devInfo.ifaces?.[0]?.mac ?? false,
-            };
-            this.devInfo = info;
-
-            // Save device info
-            if (info.adressMac) {
-                await this.saveData(this.devInfoFile, info);
-            }
-
-            // Check channels
-            await this.checkChannels();
-
-            // Connect to deice success
-            this.emit('success', `Connect Success`)
-
-            // Emit device info
-            this.emit('deviceInfo', info);
-
+            data = JSON.stringify(data, null, 2);
+            await fsPromises.writeFile(path, data);
+            if (this.enableDebugMode) this.emit('debug', `Saved data: ${data}`);
             return true;
         } catch (error) {
-            throw new Error(`Connect error: ${error}`);
-
+            throw new Error(`Save data error: ${error}`);
         }
     }
 
@@ -169,53 +141,49 @@ class OpenWebIf extends EventEmitter {
 
     async prepareInputs(allChannels, bouquets, inputs, getInputsFromDevice) {
         try {
-            //get channels by bouquet
             const bouquetChannelsArr = [];
             if (getInputsFromDevice) {
                 for (const bouquet of bouquets) {
                     const bouquetName = bouquet.name;
                     const displayType = bouquet.displayType ?? 0;
                     const namePrefix = bouquet.namePrefix ?? false;
+
                     const bouquetChannels = allChannels.find(service => service.servicename === bouquetName);
 
                     if (bouquetChannels) {
                         for (const channel of bouquetChannels.subservices) {
                             if (!channel?.servicename || !channel?.servicereference) continue;
 
-                            const name = channel.servicename;
-                            const reference = channel.servicereference;
-                            const obj = {
-                                name: name,
-                                reference: reference,
+                            bouquetChannelsArr.push({
+                                name: channel.servicename,
+                                reference: channel.servicereference,
                                 mode: 1,
-                                displayType: displayType,
-                                namePrefix: namePrefix
-                            }
-                            bouquetChannelsArr.push(obj);
+                                displayType,
+                                namePrefix
+                            });
                         }
                     } else {
-                        this.emit('warn', `Bouquet: ${bouquetName}, was not found`);
+                        this.emit('warn', `Bouquet: ${bouquetName} was not found`);
                     }
                 }
             }
 
-            //create final channels array
+            // Build final channels
             const channelArr = [];
             const channelsArr = !getInputsFromDevice ? inputs : bouquetChannelsArr;
             for (const input of channelsArr) {
                 if (!input?.name || !input?.reference) continue;
 
-                const obj = {
+                channelArr.push({
                     name: input.name,
                     reference: input.reference,
                     mode: 1,
-                    displayType: input.displayType,
-                    namePrefix: input.namePrefix
-                }
-                channelArr.push(obj);
+                    displayType: input.displayType ?? 0,
+                    namePrefix: input.namePrefix ?? false
+                });
             }
 
-            const channels = channelArr.length > 0 ? channelArr : false;
+            let channels = channelArr.length > 0 ? channelArr : false;
             if (!channels) {
                 this.emit('warn', `Found: 0 channels, adding 1 default channel`);
                 channels = [{
@@ -232,18 +200,46 @@ class OpenWebIf extends EventEmitter {
 
             return channels;
         } catch (error) {
-            throw new Error(`Get inputus error: ${error}`);
+            throw new Error(`Get inputs error: ${error.message || error}`);
         }
     }
 
-    async saveData(path, data) {
+    async connect() {
         try {
-            data = JSON.stringify(data, null, 2);
-            await fsPromises.writeFile(path, data);
-            if (this.enableDebugMode) this.emit('debug', `Saved data: ${data}`);
+            // Get device info
+            const deviceInfo = await this.axiosInstance(ApiUrls.DeviceInfo);
+            const devInfo = deviceInfo.data;
+            if (this.enableDebugMode) this.emit('debug', `Connect data: ${JSON.stringify(devInfo, null, 2)}`);
+
+            const info = {
+                manufacturer: devInfo.brand || 'undefined',
+                modelName: devInfo.model || 'undefined',
+                serialNumber: devInfo.webifver || 'undefined',
+                firmwareRevision: devInfo.imagever || 'undefined',
+                kernelVer: devInfo.kernelver || 'undefined',
+                chipset: devInfo.chipset || 'undefined',
+                adressMac: devInfo.ifaces?.[0]?.mac ?? false,
+            };
+            this.devInfo = info;
+
+            // Save device info
+            if (info.adressMac) {
+                await this.saveData(this.devInfoFile, info);
+            }
+
+            // Check channels
+            await this.checkChannels();
+
+            // Connect to deice success
+            this.emit('success', `Connect Success`)
+
+            // Emit device info
+            this.emit('deviceInfo', info);
+
             return true;
         } catch (error) {
-            throw new Error(`Save data error: ${error}`);
+            throw new Error(`Connect error: ${error}`);
+
         }
     }
 
