@@ -204,7 +204,7 @@ class OpenWebIfDevice extends EventEmitter {
 
             //read inputs file
             const savedInputs = await this.readData(this.inputsFile);
-            this.savedInputs = savedInputs.toString().trim() !== '' ? JSON.parse(savedInputs) : this.inputs;
+            this.savedInputs = savedInputs.toString().trim() !== '' ? JSON.parse(savedInputs) : [];
             if (this.enableDebugMode) this.emit('debug', `Read saved Inputs/Channels: ${JSON.stringify(this.savedInputs, null, 2)}`);
 
             //read inputs names from file
@@ -271,6 +271,12 @@ class OpenWebIfDevice extends EventEmitter {
                 if (this.inputsServices.length >= 85 && !remove) continue;
 
                 const inputReference = input.reference;
+                const savedName = this.savedInputsNames[inputReference] ?? input.name;
+                const sanitizedName = await this.sanitizeString(savedName);
+                const inputMode = input.mode ?? 0;
+                const inputDisplayType = input.displayType;
+                const inputDamePrefix = input.namePrefix;
+                const inputVisibility = this.savedInputsTargetVisibility[inputReference] ?? 0;
 
                 if (remove) {
                     const svc = this.inputsServices.find(s => s.reference === inputReference);
@@ -284,14 +290,6 @@ class OpenWebIfDevice extends EventEmitter {
                 }
 
                 let inputService = this.inputsServices.find(s => s.reference === inputReference);
-
-                const savedName = this.savedInputsNames[inputReference] ?? input.name;
-                const sanitizedName = await this.sanitizeString(savedName);
-                const inputMode = input.mode ?? 0;
-                const inputDisplayType = input.displayType;
-                const inputDamePrefix = input.namePrefix;
-                const inputVisibility = this.savedInputsTargetVisibility[inputReference] ?? 0;
-
                 if (inputService) {
                     const nameChanged = inputService.name !== sanitizedName;
                     if (nameChanged) {
@@ -1073,15 +1071,15 @@ class OpenWebIfDevice extends EventEmitter {
                 return false;
             }
 
-            //start external integrations
-            if (this.mqtt.enable) await this.externalIntegrations();
-
             //prepare data for accessory
             const macAdress = await this.prepareDataForAccessory();
             if (!macAdress) {
                 this.emit('error', `Missing Mac Address`);
                 return false;
             }
+
+            //start external integrations
+            if (this.mqtt.enable) await this.externalIntegrations();
 
             //prepare accessory
             const accessory = await this.prepareAccessory(macAdress);

@@ -40,36 +40,35 @@ class OpenWebIf extends EventEmitter {
         this.mute = false;
         this.devInfo = {};
 
-        //impulse generator
-        this.call = false;
+        //lock flags
+        this.locks = {
+            checkChannels: false,
+            checkState: false,
+        };
         this.impulseGenerator = new ImpulseGenerator()
-            .on('checkChannels', async () => {
-                if (this.call) return;
-
-                try {
-                    this.call = true;
-                    await this.checkChannels();
-                    this.call = false;
-                } catch (error) {
-                    this.call = false;
-                    this.emit('error', `Inpulse generator error: ${error}`);
-                };
-            })
-            .on('checkState', async () => {
-                if (this.call) return;
-
-                try {
-                    this.call = true;
-                    await this.checkState();
-                    this.call = false;
-                } catch (error) {
-                    this.call = false;
-                    this.emit('error', `Inpulse generator error: ${error}`);
-                };
-            })
+            .on('checkChannels', () => this.handleWithLock('checkChannels', async () => {
+                await this.checkChannels();
+            }))
+            .on('checkState', () => this.handleWithLock('checkState', async () => {
+                await this.checkState();
+            }))
             .on('state', (state) => {
                 this.emit('success', `Impulse generator ${state ? 'started' : 'stopped'}`);
             });
+    }
+
+
+    async handleWithLock(lockKey, fn) {
+        if (this.locks[lockKey]) return;
+
+        this.locks[lockKey] = true;
+        try {
+            await fn();
+        } catch (error) {
+            this.emit('error', `Inpulse generator error: ${error}`);
+        } finally {
+            this.locks[lockKey] = false;
+        }
     }
 
     async saveData(path, data) {
@@ -80,62 +79,6 @@ class OpenWebIf extends EventEmitter {
             return true;
         } catch (error) {
             throw new Error(`Save data error: ${error}`);
-        }
-    }
-
-    async checkChannels() {
-        try {
-            // Get all channels
-            const channelsInfo = this.getInputsFromDevice ? await this.axiosInstance(ApiUrls.GetAllServices) : false;
-            const allChannels = channelsInfo ? channelsInfo.data.services : [];
-
-            // Prepare inputs
-            const inputs = await this.prepareInputs(allChannels, this.bouquets, this.inputs, this.getInputsFromDevice);
-
-            // Emit inputs
-            this.emit('addRemoveOrUpdateInput', inputs, false);
-
-            return true;
-        } catch (error) {
-            throw new Error(`Check channels error: ${error}`);
-        }
-    }
-
-    async checkState() {
-        try {
-            const deviceState = await this.axiosInstance(ApiUrls.DeviceStatus);
-            const devState = deviceState.data;
-            if (this.enableDebugMode) this.emit('debug', `State: ${JSON.stringify(devState, null, 2)}`);
-
-            //mqtt
-            this.emit('mqtt', 'Info', this.devInfo);
-            this.emit('mqtt', 'State', devState);
-
-            const power = devState.inStandby === 'false';
-            const name = devState.currservice_station;
-            const eventName = devState.currservice_name;
-            const reference = devState.currservice_serviceref;
-            const volume = devState.volume;
-            const mute = devState.muted;
-
-            //update only if value change
-            if (power === this.power && name === this.name && eventName === this.eventName && reference === this.reference && volume === this.volume && mute === this.mute) {
-                return;
-            }
-
-            this.power = power;
-            this.name = name;
-            this.eventName = eventName;
-            this.reference = reference;
-            this.volume = volume;
-            this.mute = mute;
-
-            //emit state changed
-            this.emit('stateChanged', power, name, eventName, reference, volume, mute);
-
-            return true;
-        } catch (error) {
-            throw new Error(`Check state error: ${error}`);
         }
     }
 
@@ -201,6 +144,62 @@ class OpenWebIf extends EventEmitter {
             return channels;
         } catch (error) {
             throw new Error(`Get inputs error: ${error.message || error}`);
+        }
+    }
+
+    async checkChannels() {
+        try {
+            // Get all channels
+            const channelsInfo = this.getInputsFromDevice ? await this.axiosInstance(ApiUrls.GetAllServices) : false;
+            const allChannels = channelsInfo ? channelsInfo.data.services : [];
+
+            // Prepare inputs
+            const inputs = await this.prepareInputs(allChannels, this.bouquets, this.inputs, this.getInputsFromDevice);
+
+            // Emit inputs
+            this.emit('addRemoveOrUpdateInput', inputs, false);
+
+            return true;
+        } catch (error) {
+            throw new Error(`Check channels error: ${error}`);
+        }
+    }
+
+    async checkState() {
+        try {
+            const deviceState = await this.axiosInstance(ApiUrls.DeviceStatus);
+            const devState = deviceState.data;
+            if (this.enableDebugMode) this.emit('debug', `State: ${JSON.stringify(devState, null, 2)}`);
+
+            //mqtt
+            this.emit('mqtt', 'Info', this.devInfo);
+            this.emit('mqtt', 'State', devState);
+
+            const power = devState.inStandby === 'false';
+            const name = devState.currservice_station;
+            const eventName = devState.currservice_name;
+            const reference = devState.currservice_serviceref;
+            const volume = devState.volume;
+            const mute = devState.muted;
+
+            //update only if value change
+            if (power === this.power && name === this.name && eventName === this.eventName && reference === this.reference && volume === this.volume && mute === this.mute) {
+                return;
+            }
+
+            this.power = power;
+            this.name = name;
+            this.eventName = eventName;
+            this.reference = reference;
+            this.volume = volume;
+            this.mute = mute;
+
+            //emit state changed
+            this.emit('stateChanged', power, name, eventName, reference, volume, mute);
+
+            return true;
+        } catch (error) {
+            throw new Error(`Check state error: ${error}`);
         }
     }
 

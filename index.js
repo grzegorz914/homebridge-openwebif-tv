@@ -86,7 +86,7 @@ class OpenWebIfPlatform {
 					const impulseGenerator = new ImpulseGenerator()
 						.on('start', async () => {
 							try {
-								const accessory = await deviceInstance.start()
+								const accessory = await deviceInstance.start();
 								if (accessory) {
 									api.publishExternalAccessories(PluginName, [accessory]);
 									if (logLevel.success) log.success(`Device: ${host} ${name}, Published as external accessory.`);
