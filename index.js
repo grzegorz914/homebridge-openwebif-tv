@@ -16,8 +16,8 @@ class OpenWebIfPlatform {
 		const prefDir = join(api.user.storagePath(), 'openwebifTv');
 		try {
 			mkdirSync(prefDir, { recursive: true });
-		} catch (err) {
-			log.error(`Prepare directory error: ${err}`);
+		} catch (error) {
+			log.error(`Prepare directory error: ${error.message ?? error}`);
 			return;
 		}
 
@@ -70,7 +70,7 @@ class OpenWebIfPlatform {
 						}
 					});
 				} catch (error) {
-					if (logLevel.error) log.error(`Device: ${host} ${name}, Prepare files error: ${error}`);
+					if (logLevel.error) log.error(`Device: ${host} ${name}, Prepare files error: ${error.message ?? error}`);
 					continue;
 				}
 
@@ -95,7 +95,7 @@ class OpenWebIfPlatform {
 									await deviceInstance.startImpulseGenerator();
 								}
 							} catch (error) {
-								if (logLevel.error) log.error(`Device: ${host} ${name}, ${error}, trying again.`);
+								if (logLevel.error) log.error(`Device: ${host} ${name}, ${error.message ?? error}, trying again.`);
 							}
 						})
 						.on('state', (state) => {
