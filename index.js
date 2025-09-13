@@ -28,7 +28,7 @@ class OpenWebIfPlatform {
 				const { name, host, port, refreshInterval = 5 } = device;
 				if (!name || !host || !port) {
 					log.warn(`Invalid config for device: Name: ${name || 'missing'}, Host: ${host || 'missing'}, Port: ${port || 'missing'}`);
-					return;
+					continue;
 				}
 
 				const enableDebugMode = !!device.enableDebugMode;
@@ -69,9 +69,9 @@ class OpenWebIfPlatform {
 							writeFileSync(file, '');
 						}
 					});
-				} catch (err) {
-					if (logLevel.error) log.error(`Device: ${host} ${name}, Prepare files error: ${err}`);
-					return;
+				} catch (error) {
+					if (logLevel.error) log.error(`Device: ${host} ${name}, Prepare files error: ${error}`);
+					continue;
 				}
 
 				try {
@@ -94,8 +94,8 @@ class OpenWebIfPlatform {
 									await impulseGenerator.stop();
 									await deviceInstance.startImpulseGenerator();
 								}
-							} catch (err) {
-								if (logLevel.error) log.error(`Device: ${host} ${name}, ${err}, trying again.`);
+							} catch (error) {
+								if (logLevel.error) log.error(`Device: ${host} ${name}, ${error}, trying again.`);
 							}
 						})
 						.on('state', (state) => {
@@ -103,11 +103,9 @@ class OpenWebIfPlatform {
 						});
 
 					await impulseGenerator.start([{ name: 'start', sampling: 45000 }]);
-				} catch (err) {
-					if (logLevel.error) log.error(`Device: ${host} ${name}, Did finish launching error: ${err}`);
+				} catch (error) {
+					if (logLevel.error) log.error(`Device: ${host} ${name}, Did finish launching error: ${error.message ?? error}`);
 				}
-
-				await new Promise((resolve) => setTimeout(resolve, 300));
 			}
 		});
 	}
