@@ -6,7 +6,7 @@ import { ApiUrls, DiacriticsMap } from './constants.js';
 let Accessory, Characteristic, Service, Categories, Encode, AccessoryUUID;
 
 class OpenWebIfDevice extends EventEmitter {
-    constructor(api, device, devInfoFile, inputsFile, channelsFile, inputsNamesFile, inputsTargetVisibilityFile, refreshInterval) {
+    constructor(api, device, devInfoFile, inputsFile, channelsFile, inputsNamesFile, inputsTargetVisibilityFile) {
         super();
 
         Accessory = api.platformAccessory;
@@ -40,7 +40,7 @@ class OpenWebIfDevice extends EventEmitter {
         this.volumeControlNamePrefix = device.volumeControlNamePrefix || false;
         this.volumeControlName = device.volumeControlName || 'Volume';
         this.volumeControl = device.volumeControl || false;
-        this.refreshInterval = refreshInterval;
+        this.refreshInterval = (device.refreshInterval ?? 5) * 1000;
         this.devInfoFile = devInfoFile;
         this.inputsFile = inputsFile;
         this.channelsFile = channelsFile;

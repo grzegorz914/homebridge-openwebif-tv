@@ -25,7 +25,7 @@ class OpenWebIfPlatform {
 			for (const device of config.devices) {
 				if (device.disableAccessory) continue;
 
-				const { name, host, port, refreshInterval = 5 } = device;
+				const { name, host, port } = device;
 				if (!name || !host || !port) {
 					log.warn(`Invalid config for device: Name: ${name || 'missing'}, Host: ${host || 'missing'}, Port: ${port || 'missing'}`);
 					continue;
@@ -75,17 +75,18 @@ class OpenWebIfPlatform {
 				}
 
 				try {
-					const deviceInstance = new OpenWebIfDevice(api, device, files.devInfo, files.inputs, files.channels, files.inputsNames, files.inputsVisibility, refreshInterval * 1000)
-						.on('devInfo', (info) => logLevel.devInfo && log.info(info))
-						.on('success', (msg) => logLevel.success && log.success(`Device: ${host} ${name}, ${msg}`))
-						.on('info', (msg) => logLevel.info && log.info(`Device: ${host} ${name}, ${msg}`))
-						.on('debug', (msg) => logLevel.debug && log.info(`Device: ${host} ${name}, debug: ${msg}`))
-						.on('warn', (msg) => logLevel.warn && log.warn(`Device: ${host} ${name}, ${msg}`))
-						.on('error', (msg) => logLevel.error && log.error(`Device: ${host} ${name}, ${msg}`));
-
+					// create impulse generator
 					const impulseGenerator = new ImpulseGenerator()
 						.on('start', async () => {
 							try {
+								const deviceInstance = new OpenWebIfDevice(api, device, files.devInfo, files.inputs, files.channels, files.inputsNames, files.inputsVisibility)
+									.on('devInfo', (info) => logLevel.devInfo && log.info(info))
+									.on('success', (msg) => logLevel.success && log.success(`Device: ${host} ${name}, ${msg}`))
+									.on('info', (msg) => logLevel.info && log.info(`Device: ${host} ${name}, ${msg}`))
+									.on('debug', (msg) => logLevel.debug && log.info(`Device: ${host} ${name}, debug: ${msg}`))
+									.on('warn', (msg) => logLevel.warn && log.warn(`Device: ${host} ${name}, ${msg}`))
+									.on('error', (msg) => logLevel.error && log.error(`Device: ${host} ${name}, ${msg}`));
+
 								const accessory = await deviceInstance.start();
 								if (accessory) {
 									api.publishExternalAccessories(PluginName, [accessory]);
@@ -95,14 +96,15 @@ class OpenWebIfPlatform {
 									await deviceInstance.startImpulseGenerator();
 								}
 							} catch (error) {
-								if (logLevel.error) log.error(`Device: ${host} ${name}, ${error.message ?? error}, trying again.`);
+								if (logLevel.error) log.error(`Device: ${host} ${name}, Start impulse generator error: ${error.message ?? error}, trying again.`);
 							}
 						})
 						.on('state', (state) => {
 							if (logLevel.debug) log.info(`Device: ${host} ${name}, Start impulse generator ${state ? 'started' : 'stopped'}.`);
 						});
 
-					await impulseGenerator.start([{ name: 'start', sampling: 45000 }]);
+					// start impulse generator
+					await impulseGenerator.start([{ name: 'start', sampling: 60000 }]);
 				} catch (error) {
 					if (logLevel.error) log.error(`Device: ${host} ${name}, Did finish launching error: ${error.message ?? error}`);
 				}
