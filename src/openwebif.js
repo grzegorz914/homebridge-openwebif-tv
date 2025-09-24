@@ -9,16 +9,17 @@ class OpenWebIf extends EventEmitter {
         super();
         const host = config.host;
         const port = config.port;
-        const user = config.user;
-        const pass = config.pass;
-        const auth = config.auth;
+        const auth = config.auth.enable || false;;
+        const user = config.auth.user || '';
+        const passwd = config.auth.passwd || '';
         this.inputs = config.inputs;
-        this.bouquets = config.bouquets
+        this.bouquets = config.bouquets;
+        this.getInputsFromDevice = config.getInputsFromDevice;
+        this.logWarn = config.logWarn;
+        this.logDebug = config.logDebug;
         this.devInfoFile = config.devInfoFile;
         this.channelsFile = config.channelsFile;
         this.inputsFile = config.inputsFile;
-        this.getInputsFromDevice = config.getInputsFromDevice;
-        this.enableDebugMode = config.enableDebugMode;
 
         const baseUrl = `http://${host}:${port}`;
         this.axiosInstance = axios.create({
@@ -28,7 +29,7 @@ class OpenWebIf extends EventEmitter {
             withCredentials: auth,
             auth: {
                 username: user,
-                password: pass
+                password: passwd
             }
         });
 
@@ -75,7 +76,7 @@ class OpenWebIf extends EventEmitter {
         try {
             data = JSON.stringify(data, null, 2);
             await fsPromises.writeFile(path, data);
-            if (this.enableDebugMode) this.emit('debug', `Saved data: ${data}`);
+            if (this.logDebug) this.emit('debug', `Saved data: ${data}`);
             return true;
         } catch (error) {
             throw new Error(`Save data error: ${error}`);
@@ -106,7 +107,7 @@ class OpenWebIf extends EventEmitter {
                             });
                         }
                     } else {
-                        this.emit('warn', `Bouquet: ${bouquetName} was not found`);
+                        if (this.logWarn) this.emit('warn', `Bouquet: ${bouquetName} was not found`);
                     }
                 }
             }
@@ -128,7 +129,7 @@ class OpenWebIf extends EventEmitter {
 
             let channels = channelArr.length > 0 ? channelArr : false;
             if (!channels) {
-                this.emit('warn', `Found: 0 channels, adding 1 default channel`);
+                if (this.logWarn) this.emit('warn', `Found: 0 channels, adding 1 default channel`);
                 channels = [{
                     name: "CNN HD",
                     reference: "1:0:1:1C8A:1CE8:71:820000:0:0:0::CNN HD",
@@ -169,7 +170,7 @@ class OpenWebIf extends EventEmitter {
         try {
             const deviceState = await this.axiosInstance(ApiUrls.DeviceStatus);
             const devState = deviceState.data;
-            if (this.enableDebugMode) this.emit('debug', `State: ${JSON.stringify(devState, null, 2)}`);
+            if (this.logDebug) this.emit('debug', `State: ${JSON.stringify(devState, null, 2)}`);
 
             //mqtt
             this.emit('mqtt', 'Info', this.devInfo);
@@ -208,7 +209,7 @@ class OpenWebIf extends EventEmitter {
             // Get device info
             const deviceInfo = await this.axiosInstance(ApiUrls.DeviceInfo);
             const devInfo = deviceInfo.data;
-            if (this.enableDebugMode) this.emit('debug', `Connect data: ${JSON.stringify(devInfo, null, 2)}`);
+            if (this.logDebug) this.emit('debug', `Connect data: ${JSON.stringify(devInfo, null, 2)}`);
 
             const info = {
                 manufacturer: devInfo.brand || 'undefined',
@@ -245,7 +246,7 @@ class OpenWebIf extends EventEmitter {
     async send(apiUrl) {
         try {
             await this.axiosInstance(apiUrl);
-            if (this.enableDebugMode) this.emit('warn', `Send data: ${apiUrl}`);
+            if (this.logWarn) this.emit('warn', `Send data: ${apiUrl}`);
             return true;
         } catch (error) {
             throw new Error(`Send data error: ${error}`);

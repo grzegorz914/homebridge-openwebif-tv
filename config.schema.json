@@ -34,185 +34,203 @@
               "placeholder": 80,
               "required": true
             },
+            "auth": {
+              "title": "Authorization",
+              "type": "object",
+              "properties": {
+                "enable": {
+                  "title": "Enable",
+                  "type": "boolean",
+                  "default": false
+                },
+                "user": {
+                  "title": "User",
+                  "type": "string",
+                  "placeholder": "User",
+                  "condition": {
+                    "functionBody": "return model.devices[arrayIndices].auth.enable === true;"
+                  }
+                },
+                "passwd": {
+                  "title": "Password",
+                  "type": "string",
+                  "placeholder": "Password",
+                  "format": "password",
+                  "condition": {
+                    "functionBody": "return model.devices[arrayIndices].auth.enable === true;"
+                  }
+                }
+              }
+            },
             "disableAccessory": {
               "title": "Disable Accessory",
               "type": "boolean",
               "default": false,
-              "description": "Here You can disable this accessory.",
-              "required": false
-            },
-            "getInputsFromDevice": {
-              "title": "Load Channels From Device",
-              "type": "boolean",
-              "default": false,
-              "description": "This function get channels by bouquet direct from device, manually configured channels will be skipped.",
-              "required": true
-            },
-            "inputsDisplayOrder": {
-              "title": "Channels Display Order",
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 4,
-              "default": 0,
-              "description": "Here select display order of the channels list.",
-              "oneOf": [
-                {
-                  "title": "None",
-                  "enum": [
-                    0
-                  ]
-                },
-                {
-                  "title": "Ascending by Name",
-                  "enum": [
-                    1
-                  ]
-                },
-                {
-                  "title": "Descending by Name",
-                  "enum": [
-                    2
-                  ]
-                },
-                {
-                  "title": "Ascending by Reference",
-                  "enum": [
-                    3
-                  ]
-                },
-                {
-                  "title": "Descending by Reference",
-                  "enum": [
-                    4
-                  ]
-                }
-              ],
-              "required": true
-            },
-            "bouquets": {
-              "title": "Bouquet Name",
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "displayType": {
-                    "title": "Extra Tile",
-                    "type": "integer",
-                    "default": 0,
-                    "oneOf": [
-                      {
-                        "title": "None/Disabled",
-                        "enum": [
-                          0
-                        ]
-                      },
-                      {
-                        "title": "Outlet",
-                        "enum": [
-                          1
-                        ]
-                      },
-                      {
-                        "title": "Switch",
-                        "enum": [
-                          2
-                        ]
-                      }
-                    ],
-                    "description": "Here select extra tile for all channels of this bouquet to be exposed in HomeKit app.",
-                    "required": true
-                  },
-                  "name": {
-                    "title": "Name",
-                    "type": "string",
-                    "placeholder": "Bouquet name",
-                    "description": "Here set bouquet name which should be loaded from device, only first 85 channels will be used.",
-                    "required": false,
-                    "condition": {
-                      "functionBody": "return model.devices[arrayIndices].bouquets[arrayIndices].displayType > 0;"
-                    }
-                  },
-                  "namePrefix": {
-                    "title": "Prefix",
-                    "type": "boolean",
-                    "description": "Here enable/disable the accessory name as a prefix for extra tile name.",
-                    "required": false,
-                    "condition": {
-                      "functionBody": "return model.devices[arrayIndices].bouquets[arrayIndices].displayType > 0;"
-                    }
-                  }
-                }
-              },
-              "condition": {
-                "functionBody": "return model.devices[arrayIndices].getInputsFromDevice === true;"
-              }
+              "description": "Here You can disable this accessory."
             },
             "inputs": {
-              "title": "Channels",
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "displayType": {
-                    "title": "Extra Tile",
-                    "type": "integer",
-                    "default": 0,
-                    "oneOf": [
-                      {
-                        "title": "None/Disabled",
-                        "enum": [
-                          0
-                        ]
+              "title": "Inputs",
+              "type": "object",
+              "properties": {
+                "getFromDevice": {
+                  "title": "Load From Device",
+                  "type": "boolean",
+                  "default": false,
+                  "description": "This function get all available inputs direct from device, manually configured inputs will be skipped."
+                },
+                "displayOrder": {
+                  "title": "Display Order",
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 4,
+                  "default": 0,
+                  "description": "Here select display order of the inputs list.",
+                  "oneOf": [
+                    {
+                      "title": "None",
+                      "enum": [
+                        0
+                      ]
+                    },
+                    {
+                      "title": "Ascending by Name",
+                      "enum": [
+                        1
+                      ]
+                    },
+                    {
+                      "title": "Descending by Name",
+                      "enum": [
+                        2
+                      ]
+                    },
+                    {
+                      "title": "Ascending by Reference",
+                      "enum": [
+                        3
+                      ]
+                    },
+                    {
+                      "title": "Descending by Reference",
+                      "enum": [
+                        4
+                      ]
+                    }
+                  ],
+                  "required": true
+                },
+                "bouquets": {
+                  "title": "Bouquets",
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "title": "Name",
+                        "type": "string",
+                        "placeholder": "Bouquet name",
+                        "description": "Here set bouquet name which should be loaded from device, only first 85 channels will be used."
                       },
-                      {
-                        "title": "Outlet",
-                        "enum": [
-                          1
-                        ]
+                      "displayType": {
+                        "title": "Extra Tile",
+                        "type": "integer",
+                        "default": 0,
+                        "oneOf": [
+                          {
+                            "title": "None/Disabled",
+                            "enum": [
+                              0
+                            ]
+                          },
+                          {
+                            "title": "Outlet",
+                            "enum": [
+                              1
+                            ]
+                          },
+                          {
+                            "title": "Switch",
+                            "enum": [
+                              2
+                            ]
+                          }
+                        ],
+                        "description": "Here select extra tile for all channels of this bouquet to be exposed in HomeKit app.",
+                        "required": true
                       },
-                      {
-                        "title": "Switch",
-                        "enum": [
-                          2
-                        ]
+                      "namePrefix": {
+                        "title": "Prefix",
+                        "type": "boolean",
+                        "description": "Here enable/disable the accessory name as a prefix for extra tile name.",
+                        "condition": {
+                          "functionBody": "return model.devices[arrayIndices].inputs.bouquets[].displayType > 0;"
+                        }
                       }
-                    ],
-                    "description": "Here select extra tile to be exposed in HomeKit app.",
-                    "required": true
-                  },
-                  "name": {
-                    "title": "Name",
-                    "type": "string",
-                    "placeholder": "Channel name",
-                    "description": "Here set Your own name.",
-                    "required": false,
-                    "condition": {
-                      "functionBody": "return model.devices[arrayIndices].inputs[arrayIndices].displayType > 0;"
                     }
                   },
-                  "reference": {
-                    "title": "Reference",
-                    "type": "string",
-                    "placeholder": "Channel reference",
-                    "description": "Here set the reference.",
-                    "required": false,
-                    "condition": {
-                      "functionBody": "return model.devices[arrayIndices].inputs[arrayIndices].displayType > 0;"
+                  "condition": {
+                    "functionBody": "return model.devices[arrayIndices].inputs.getFromDevice === true;"
+                  }
+                },
+                "channels": {
+                  "title": "Channels",
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "title": "Name",
+                        "type": "string",
+                        "placeholder": "Channel name",
+                        "description": "Here set Your own name."
+                      },
+                      "reference": {
+                        "title": "Reference",
+                        "type": "string",
+                        "placeholder": "Channel reference",
+                        "description": "Here set the reference."
+                      },
+                      "displayType": {
+                        "title": "Extra Tile",
+                        "type": "integer",
+                        "default": 0,
+                        "oneOf": [
+                          {
+                            "title": "None/Disabled",
+                            "enum": [
+                              0
+                            ]
+                          },
+                          {
+                            "title": "Outlet",
+                            "enum": [
+                              1
+                            ]
+                          },
+                          {
+                            "title": "Switch",
+                            "enum": [
+                              2
+                            ]
+                          }
+                        ],
+                        "description": "Here select extra tile to be exposed in HomeKit app.",
+                        "required": true
+                      },
+                      "namePrefix": {
+                        "title": "Prefix",
+                        "type": "boolean",
+                        "description": "Here enable/disable the accessory name as a prefix for extra tile name.",
+                        "condition": {
+                          "functionBody": "return model.devices[arrayIndices].inputs.channels[].displayType > 0;"
+                        }
+                      }
                     }
                   },
-                  "namePrefix": {
-                    "title": "Prefix",
-                    "type": "boolean",
-                    "description": "Here enable/disable the accessory name as a prefix for extra tile name.",
-                    "required": false,
-                    "condition": {
-                      "functionBody": "return model.devices[arrayIndices].inputs[arrayIndices].displayType > 0;"
-                    }
+                  "condition": {
+                    "functionBody": "return model.devices[arrayIndices].inputs.getFromDevice === false;"
                   }
                 }
-              },
-              "condition": {
-                "functionBody": "return model.devices[arrayIndices].getInputsFromDevice === false;"
               }
             },
             "buttons": {
@@ -253,7 +271,6 @@
                     "type": "string",
                     "placeholder": "Button name",
                     "description": "Here set Your own name.",
-                    "required": false,
                     "condition": {
                       "functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].displayType > 0;"
                     }
@@ -295,7 +312,6 @@
                     "type": "string",
                     "placeholder": "Button reference",
                     "description": "Here set the reference.",
-                    "required": false,
                     "condition": {
                       "functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].displayType > 0;"
                     }
@@ -583,7 +599,6 @@
                       }
                     ],
                     "description": "Here select the remote control command.",
-                    "required": false,
                     "condition": {
                       "functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].displayType > 0;"
                     }
@@ -631,7 +646,6 @@
                       }
                     ],
                     "description": "Here select the power control command.",
-                    "required": false,
                     "condition": {
                       "functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].displayType > 0;"
                     }
@@ -640,7 +654,6 @@
                     "title": "Prefix",
                     "type": "boolean",
                     "description": "Here enable/disable the accessory name as a prefix for button name.",
-                    "required": false,
                     "condition": {
                       "functionBody": "return model.devices[arrayIndices].buttons[arrayIndices].displayType > 0;"
                     }
@@ -648,127 +661,200 @@
                 }
               }
             },
-            "sensorPower": {
-              "title": "Power",
-              "type": "boolean",
-              "default": false,
-              "description": "This expose Power as a Motion Sensor to use with automations.",
-              "required": false
-            },
-            "sensorVolume": {
-              "title": "Volume",
-              "type": "boolean",
-              "default": false,
-              "description": "This expose Volume as a Motion Sensor to use with automations.",
-              "required": false
-            },
-            "sensorMute": {
-              "title": "Mute",
-              "type": "boolean",
-              "default": false,
-              "description": "This expose Mute as a Motion Sensor to use with automations.",
-              "required": false
-            },
-            "sensorChannel": {
-              "title": "Channel",
-              "type": "boolean",
-              "default": false,
-              "description": "This expose Channel as a Motion Sensor to use with automations.",
-              "required": false
-            },
-            "sensorInputs": {
-              "type": "array",
-              "items": {
-                "title": "Channels",
-                "type": "object",
-                "description": "Here create Channels Sensors based on reference, sensor will active if switch to it.",
-                "properties": {
-                  "displayType": {
-                    "title": "Type",
-                    "type": "integer",
-                    "default": 0,
-                    "oneOf": [
-                      {
-                        "title": "None/Disabled",
-                        "enum": [
-                          0
-                        ]
+            "sensors": {
+              "title": "Log",
+              "type": "object",
+              "properties": {
+                "power": {
+                  "title": "Power",
+                  "type": "boolean",
+                  "default": false,
+                  "description": "This expose Power as a Motion Sensor."
+                },
+                "volume": {
+                  "title": "Volume",
+                  "type": "boolean",
+                  "default": false,
+                  "description": "This expose Volume as a Motion Sensor to use with automations."
+                },
+                "mute": {
+                  "title": "Mute",
+                  "type": "boolean",
+                  "default": false,
+                  "description": "This expose Mute as a Motion Sensor to use with automations."
+                },
+                "channel": {
+                  "title": "Channel",
+                  "type": "boolean",
+                  "default": false,
+                  "description": "This expose Channel as a Motion Sensor to use with automations."
+                },
+                "channels": {
+                  "type": "array",
+                  "items": {
+                    "title": "Channels",
+                    "type": "object",
+                    "description": "Here create Channels Sensors based on reference, sensor will active if switch to it.",
+                    "properties": {
+                      "displayType": {
+                        "title": "Type",
+                        "type": "integer",
+                        "default": 0,
+                        "oneOf": [
+                          {
+                            "title": "None/Disabled",
+                            "enum": [
+                              0
+                            ]
+                          },
+                          {
+                            "title": "Motion Sensor",
+                            "enum": [
+                              1
+                            ]
+                          },
+                          {
+                            "title": "Occupancy Sensor",
+                            "enum": [
+                              2
+                            ]
+                          },
+                          {
+                            "title": "Contact Sensor",
+                            "enum": [
+                              3
+                            ]
+                          }
+                        ],
+                        "description": "Here select sensor type to be exposed in HomeKit app.",
+                        "required": true
                       },
-                      {
-                        "title": "Motion Sensor",
-                        "enum": [
-                          1
-                        ]
+                      "name": {
+                        "title": "Name",
+                        "type": "string",
+                        "placeholder": "Name",
+                        "description": "Here set Your own name.",
+                        "condition": {
+                          "functionBody": "return model.devices[arrayIndices].sensors.channels[arrayIndices].displayType > 0;"
+                        }
                       },
-                      {
-                        "title": "Occupancy Sensor",
-                        "enum": [
-                          2
-                        ]
+                      "reference": {
+                        "title": "Reference",
+                        "type": "string",
+                        "placeholder": "Channel reference",
+                        "description": "Here set the Channel reference.",
+                        "condition": {
+                          "functionBody": "return model.devices[arrayIndices].sensors.channels[arrayIndices].displayType > 0;"
+                        }
                       },
-                      {
-                        "title": "Contact Sensor",
-                        "enum": [
-                          3
-                        ]
+                      "namePrefix": {
+                        "title": "Prefix",
+                        "type": "boolean",
+                        "description": "Here enable/disable the accessory name as a prefix for sensor name.",
+                        "condition": {
+                          "functionBody": "return model.devices[arrayIndices].sensors.channels[arrayIndices].displayType > 0;"
+                        }
                       }
-                    ],
-                    "description": "Here select sensor type to be exposed in HomeKit app.",
-                    "required": true
-                  },
-                  "name": {
-                    "title": "Name",
-                    "type": "string",
-                    "placeholder": "Name",
-                    "description": "Here set Your own name.",
-                    "required": false,
-                    "condition": {
-                      "functionBody": "return model.devices[arrayIndices].sensorInputs[arrayIndices].displayType > 0;"
-                    }
-                  },
-                  "reference": {
-                    "title": "Reference",
-                    "type": "string",
-                    "placeholder": "Channel reference",
-                    "description": "Here set the Channel reference.",
-                    "required": false
-                  },
-                  "namePrefix": {
-                    "title": "Prefix",
-                    "type": "boolean",
-                    "description": "Here enable/disable the accessory name as a prefix for sensor name.",
-                    "required": false,
-                    "condition": {
-                      "functionBody": "return model.devices[arrayIndices].sensorInputs[arrayIndices].displayType > 0;"
                     }
                   }
                 }
               }
             },
-            "auth": {
-              "title": "Authorization",
-              "type": "boolean",
-              "default": false,
-              "required": false
+            "volume": {
+              "title": "Volume Control",
+              "type": "object",
+              "properties": {
+                "type": {
+                  "title": "Volume Control Type",
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 3,
+                  "default": 0,
+                  "description": "Here select what a extra volume/mute control type You want to use.",
+                  "oneOf": [
+                    {
+                      "title": "None/Disabled",
+                      "enum": [
+                        0
+                      ]
+                    },
+                    {
+                      "title": "Lightbulb",
+                      "enum": [
+                        1
+                      ]
+                    },
+                    {
+                      "title": "Fan",
+                      "enum": [
+                        2
+                      ]
+                    },
+                    {
+                      "title": "Speaker",
+                      "enum": [
+                        3
+                      ]
+                    }
+                  ],
+                  "required": true
+                },
+                "name": {
+                  "title": "Name",
+                  "type": "string",
+                  "placeholder": "Volume Control Name",
+                  "description": "Here set Your own volume control name or leave empty.",
+                  "condition": {
+                    "functionBody": "return model.devices[arrayIndices].volume.type > 0;"
+                  }
+                },
+                "namePrefix": {
+                  "title": "Volume Control Name Prefix",
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Here enable/disable the accessory name as a prefix for volume control name.",
+                  "condition": {
+                    "functionBody": "return model.devices[arrayIndices].volume.type > 0;"
+                  }
+                }
+              }
             },
-            "user": {
-              "title": "User",
-              "type": "string",
-              "placeholder": "User",
-              "condition": {
-                "functionBody": "return model.devices[arrayIndices].auth === true;"
-              },
-              "required": false
-            },
-            "pass": {
-              "title": "Password",
-              "type": "string",
-              "placeholder": "Password",
-              "format": "password",
-              "condition": {
-                "functionBody": "return model.devices[arrayIndices].auth === true;"
-              },
-              "required": false
+            "log": {
+              "title": "Log",
+              "type": "object",
+              "properties": {
+                "deviceInfo": {
+                  "title": "Device Info",
+                  "type": "boolean",
+                  "default": true,
+                  "description": "This enable logging device info by every connections device to the network."
+                },
+                "success": {
+                  "title": "Log Success",
+                  "type": "boolean",
+                  "default": true
+                },
+                "info": {
+                  "title": "Log Info",
+                  "type": "boolean",
+                  "default": false
+                },
+                "warn": {
+                  "title": "Log Warn",
+                  "type": "boolean",
+                  "default": true
+                },
+                "error": {
+                  "title": "Log Error",
+                  "type": "boolean",
+                  "default": true
+                },
+                "debug": {
+                  "title": "Log Debug",
+                  "type": "boolean",
+                  "default": false
+                }
+              }
             },
             "infoButtonCommand": {
               "title": "Info Button",
@@ -863,61 +949,6 @@
               "description": "Here select the function of info button in RC.",
               "required": true
             },
-            "volumeControl": {
-              "title": "Volume Control",
-              "type": "integer",
-              "minimum": 0,
-              "maximum": 3,
-              "default": 0,
-              "description": "Here select what a volume control mode You want to use. If select *None/Disabled* only hardware buttons in RC app can be used to control volume.",
-              "oneOf": [
-                {
-                  "title": "None/Disabled",
-                  "enum": [
-                    0
-                  ]
-                },
-                {
-                  "title": "Slider",
-                  "enum": [
-                    1
-                  ]
-                },
-                {
-                  "title": "Fan",
-                  "enum": [
-                    2
-                  ]
-                },
-                {
-                  "title": "Speaker",
-                  "enum": [
-                    3
-                  ]
-                }
-              ],
-              "required": true
-            },
-            "volumeControlName": {
-              "title": "Volume Control Name",
-              "type": "string",
-              "placeholder": "Name",
-              "description": "Here set Your own volume control name or leave empty.",
-              "required": false,
-              "condition": {
-                "functionBody": "return model.devices[arrayIndices].volumeControl > 0;"
-              }
-            },
-            "volumeControlNamePrefix": {
-              "title": "Volume Control Name Prefix",
-              "type": "boolean",
-              "default": false,
-              "description": "Here enable/disable the accessory name as a prefix for volume control name.",
-              "required": false,
-              "condition": {
-                "functionBody": "return model.devices[arrayIndices].volumeControl > 0;"
-              }
-            },
             "refreshInterval": {
               "title": "Refresh interval (sec)",
               "type": "number",
@@ -927,43 +958,6 @@
               "multipleOf": 0.5,
               "description": "Here set the background data refresh interval.",
               "required": true
-            },
-            "disableLogDeviceInfo": {
-              "title": "Disable Log Device Info",
-              "type": "boolean",
-              "default": false,
-              "description": "This disable logging device info by every connections device to the network.",
-              "required": false
-            },
-            "disableLogInfo": {
-              "title": "Disable Log Info",
-              "type": "boolean",
-              "default": false,
-              "required": false
-            },
-            "disableLogSuccess": {
-              "title": "Disable Log Success",
-              "type": "boolean",
-              "default": false,
-              "required": false
-            },
-            "disableLogWarn": {
-              "title": "Disable Log Warn",
-              "type": "boolean",
-              "default": false,
-              "required": false
-            },
-            "disableLogError": {
-              "title": "Disable Log Error",
-              "type": "boolean",
-              "default": false,
-              "required": false
-            },
-            "enableDebugMode": {
-              "title": "Enable Log Debug",
-              "type": "boolean",
-              "default": false,
-              "required": false
             },
             "mqtt": {
               "title": "MQTT",
@@ -975,16 +969,6 @@
                   "default": false,
                   "description": "This enable MQTT client."
                 },
-                "debug": {
-                  "title": "Debug",
-                  "type": "boolean",
-                  "default": false,
-                  "description": "This enable debug mode for MQTT.",
-                  "condition": {
-                    "functionBody": "return model.devices[arrayIndices].mqtt.enable === true;"
-                  },
-                  "required": false
-                },
                 "host": {
                   "title": "IP/Hostname",
                   "type": "string",
@@ -993,8 +977,7 @@
                   "description": "Here set the IP/Hostname of MQTT Broker.",
                   "condition": {
                     "functionBody": "return model.devices[arrayIndices].mqtt.enable === true;"
-                  },
-                  "required": false
+                  }
                 },
                 "port": {
                   "title": "Port",
@@ -1003,8 +986,7 @@
                   "description": "Here set the port of MQTT Broker.",
                   "condition": {
                     "functionBody": "return model.devices[arrayIndices].mqtt.enable === true;"
-                  },
-                  "required": false
+                  }
                 },
                 "clientId": {
                   "title": "Client ID",
@@ -1013,49 +995,59 @@
                   "description": "Here optional set the Client ID of MQTT Broker.",
                   "condition": {
                     "functionBody": "return model.devices[arrayIndices].mqtt.enable === true"
-                  },
-                  "required": false
+                  }
                 },
                 "prefix": {
                   "title": "Prefix",
                   "type": "string",
-                  "placeholder": "home/envoy",
+                  "placeholder": "home",
                   "description": "Here set the prefix.",
                   "condition": {
                     "functionBody": "return model.devices[arrayIndices].mqtt.enable === true;"
-                  },
-                  "required": false
+                  }
+                },
+                "debug": {
+                  "title": "Debug",
+                  "type": "boolean",
+                  "default": false,
+                  "description": "This enable debug mode for MQTT.",
+                  "condition": {
+                    "functionBody": "return model.devices[arrayIndices].mqtt.enable === true;"
+                  }
                 },
                 "auth": {
                   "title": "Authorization",
-                  "type": "boolean",
-                  "default": false,
-                  "description": "This enable authorization for MQTT Broker.",
-                  "condition": {
-                    "functionBody": "return model.devices[arrayIndices].mqtt.enable === true;"
+                  "type": "object",
+                  "properties": {
+                    "enable": {
+                      "title": "Enable",
+                      "type": "boolean",
+                      "default": false,
+                      "description": "This enable authorization for MQTT Broker.",
+                      "condition": {
+                        "functionBody": "return model.devices[arrayIndices].mqtt.enable === true;"
+                      }
+                    }
                   },
-                  "required": false
-                },
-                "user": {
-                  "title": "User",
-                  "type": "string",
-                  "placeholder": "user",
-                  "description": "Here set the user of MQTT Broker.",
-                  "condition": {
-                    "functionBody": "return model.devices[arrayIndices].mqtt.enable === true && model.devices[arrayIndices].mqtt.auth === true;"
+                  "user": {
+                    "title": "User",
+                    "type": "string",
+                    "placeholder": "user",
+                    "description": "Here set the user of MQTT Broker.",
+                    "condition": {
+                      "functionBody": "return model.devices[arrayIndices].mqtt.enable === true && model.devices[arrayIndices].mqtt.auth.enable === true;"
+                    }
                   },
-                  "required": false
-                },
-                "passwd": {
-                  "title": "Password",
-                  "type": "string",
-                  "placeholder": "password",
-                  "description": "Here set the password of MQTT Broker.",
-                  "format": "password",
-                  "condition": {
-                    "functionBody": "return model.devices[arrayIndices].mqtt.enable === true && model.devices[arrayIndices].mqtt.auth === true;"
-                  },
-                  "required": false
+                  "passwd": {
+                    "title": "Password",
+                    "type": "string",
+                    "placeholder": "password",
+                    "description": "Here set the password of MQTT Broker.",
+                    "format": "password",
+                    "condition": {
+                      "functionBody": "return model.devices[arrayIndices].mqtt.enable === true && model.devices[arrayIndices].mqtt.auth.enable === true;"
+                    }
+                  }
                 }
               }
             }
@@ -1075,33 +1067,33 @@
         "devices[].port",
         "devices[].disableAccessory",
         {
-          "key": "devices[]",
+          "key": "devices[].imputs",
           "type": "section",
           "title": "Channels",
           "expandable": true,
           "expanded": false,
           "items": [
-            "devices[].getInputsFromDevice",
-            "devices[].inputsDisplayOrder",
+            "devices[].inputs.getFromDevice",
+            "devices[].inputs.displayOrder",
             {
-              "key": "devices[].bouquets",
+              "key": "devices[].inputs.bouquets",
               "type": "tabarray",
               "title": "{{ value.name || 'bouquet' }}",
               "items": [
-                "devices[].bouquets[].displayType",
-                "devices[].bouquets[].name",
-                "devices[].bouquets[].namePrefix"
+                "devices[].inputs.bouquets[].name",
+                "devices[].inputs.bouquets[].displayType",
+                "devices[].inputs.bouquets[].namePrefix"
               ]
             },
             {
-              "key": "devices[].inputs",
+              "key": "devices[].inputs.channels",
               "type": "tabarray",
               "title": "{{ value.name || 'channel' }}",
               "items": [
-                "devices[].inputs[].displayType",
-                "devices[].inputs[].name",
-                "devices[].inputs[].reference",
-                "devices[].inputs[].namePrefix"
+                "devices[].inputs.channels[].name",
+                "devices[].inputs.channels[].reference",
+                "devices[].inputs.channels[].displayType",
+                "devices[].inputs.channels[].namePrefix"
               ]
             }
           ],
@@ -1179,38 +1171,38 @@
               "title": "{{ value.title }}",
               "items": [
                 {
-                  "key": "devices[]",
+                  "key": "devices[].volume",
                   "title": "Volume",
                   "items": [
-                    "devices[].volumeControl",
-                    "devices[].volumeControlName",
-                    "devices[].volumeControlNamePrefix"
+                    "devices[].volume.type",
+                    "devices[].volume.name",
+                    "devices[].volume.namePrefix"
                   ]
                 },
                 {
-                  "key": "devices[]",
+                  "key": "devices[].sensors",
                   "title": "Sensors",
                   "items": [
-                    "devices[].sensorPower",
-                    "devices[].sensorVolume",
-                    "devices[].sensorMute",
-                    "devices[].sensorChannel",
+                    "devices[].sensors.power",
+                    "devices[].sensors.volume",
+                    "devices[].sensors.mute",
+                    "devices[].sensors.channel",
                     {
-                      "key": "devices[]",
+                      "key": "devices[].sensors",
                       "type": "section",
-                      "title": "Custom Channels",
+                      "title": "Channels",
                       "expandable": true,
                       "expanded": false,
                       "items": [
                         {
-                          "key": "devices[].sensorInputs",
+                          "key": "devices[].sensors.channels",
                           "type": "tabarray",
                           "title": "{{ value.name || 'sensor' }}",
                           "items": [
-                            "devices[].sensorInputs[].displayType",
-                            "devices[].sensorInputs[].name",
-                            "devices[].sensorInputs[].reference",
-                            "devices[].sensorInputs[].namePrefix"
+                            "devices[].sensors.channels[].displayType",
+                            "devices[].sensors.channels[].name",
+                            "devices[].sensors.channels[].reference",
+                            "devices[].sensors.channels[].namePrefix"
                           ]
                         }
                       ]
@@ -1218,13 +1210,13 @@
                   ]
                 },
                 {
-                  "key": "devices[]",
+                  "key": "devices[].auth",
                   "title": "Authorization",
                   "items": [
-                    "devices[].auth",
-                    "devices[].user",
+                    "devices[].auth.enable",
+                    "devices[].auth.user",
                     {
-                      "key": "devices[].pass",
+                      "key": "devices[].auth.passwd",
                       "type": "password"
                     }
                   ]
@@ -1238,15 +1230,15 @@
                   ]
                 },
                 {
-                  "key": "devices[]",
+                  "key": "devices[].log",
                   "title": "Log",
                   "items": [
-                    "devices[].disableLogDeviceInfo",
-                    "devices[].disableLogInfo",
-                    "devices[].disableLogSuccess",
-                    "devices[].disableLogWarn",
-                    "devices[].disableLogError",
-                    "devices[].enableDebugMode"
+                    "devices[].log.deviceInfo",
+                    "devices[].log.success",
+                    "devices[].log.info",
+                    "devices[].log.warn",
+                    "devices[].log.error",
+                    "devices[].log.debug"
                   ]
                 },
                 {
@@ -1263,16 +1255,22 @@
                           "title": "MQTT",
                           "items": [
                             "devices[].mqtt.enable",
-                            "devices[].mqtt.debug",
                             "devices[].mqtt.host",
                             "devices[].mqtt.port",
                             "devices[].mqtt.clientId",
                             "devices[].mqtt.prefix",
-                            "devices[].mqtt.auth",
-                            "devices[].mqtt.user",
+                            "devices[].mqtt.debug",
                             {
-                              "key": "devices[].mqtt.passwd",
-                              "type": "password"
+                              "key": "devices[].mqtt.auth",
+                              "title": "Authorization",
+                              "items": [
+                                "devices[].mqtt.auth.enable",
+                                "devices[].mqtt.auth.user",
+                                {
+                                  "key": "devices[].mqtt.auth.passwd",
+                                  "type": "password"
+                                }
+                              ]
                             }
                           ]
                         }

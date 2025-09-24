@@ -31,24 +31,28 @@ class OpenWebIfPlatform {
 					continue;
 				}
 
-				const enableDebugMode = !!device.enableDebugMode;
 				const logLevel = {
-					debug: enableDebugMode,
-					info: !device.disableLogInfo,
-					success: !device.disableLogSuccess,
-					warn: !device.disableLogWarn,
-					error: !device.disableLogError,
-					devInfo: !device.disableLogDeviceInfo,
+					devInfo: device.log.deviceInfo,
+					success: device.log.success,
+					info: device.log.info,
+					warn: device.log.warn,
+					error: device.log.error,
+					debug: device.log.debug
 				};
 
-				if (enableDebugMode) {
+				if (logLevel.debug) {
 					log.info(`Device: ${host} ${name}, did finish launching.`);
 					const safeConfig = {
 						...device,
-						pass: 'removed',
-						mqtt: {
-							...device.mqtt,
+						auth: {
+							...device.auth,
 							passwd: 'removed',
+						},
+						mqtt: {
+							auth: {
+								...device.mqtt?.auth,
+								passwd: 'removed',
+							}
 						},
 					};
 					log.info(`Device: ${host} ${name}, Config: ${JSON.stringify(safeConfig, null, 2)}`);

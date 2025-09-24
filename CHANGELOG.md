@@ -7,7 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### NOTE
 
+- After update to v4.8.0 plugin need to be reconfigured
 - After update to v4.0.0 MQTT config settings need to be updated
+
+## [4.8.0] - (24.09.2025)
+
+## Changes
+
+- config schema and json refactor
+  - plugin need to be reconfigured
+- bump deependencies
+- redme updated
+- cleanup
 
 ## [4.7.14] - (13.09.2025)
 

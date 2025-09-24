@@ -19,111 +19,85 @@
       "platform": "OpenWebIfTv",
       "devices": [
         {
-          "name": "Sat Receiver",
+          "name": "Tuner Sat",
           "host": "192.168.1.10",
           "port": 80,
+          "auth": {
+            "enable": true,
+            "user": "",
+            "passwd": ""
+          },
           "disableAccessory": false,
-          "auth": false,
-          "user": "user",
-          "pass": "pass",
-          "getInputsFromDevice": false,
-          "inputsDisplayOrder": 0,
-          "bouquets": [
-            {
-              "name": "My bouquet name",
-              "displayType": 0
-            }
-          ],
-          "inputs": [
-            {
-              "name": "Das Erste HD",
-              "reference": "1:0:19:283D:3FB:1:C00000:0:0:0:",
-              "displayType": 0
-            },
-            {
-              "name": "ZDF HD",
-              "reference": "1:0:19:2B66:3F3:1:C00000:0:0:0:",
-              "displayType": 0
-            },
-            {
-              "name": "RTL HD",
-              "reference": "1:0:19:EF10:421:1:C00000:0:0:0:",
-              "displayType": 0
-            },
-            {
-              "name": "SAT.1 HD",
-              "reference": "1:0:19:EF74:3F9:1:C00000:0:0:0:",
-              "displayType": 0
-            }
-          ],
+          "inputs": {
+            "getFromDevice": true,
+            "displayOrder": 0,
+            "bouquets": [
+              {
+                "name": "Polskie",
+                "namePrefix": false,
+                "displayType": 0
+              }
+            ],
+            "channels": [
+              {
+                "name": "",
+                "reference": "",
+                "namePrefix": false,
+                "displayType": 0
+              }
+            ]
+          },
           "buttons": [
             {
-              "name": "Das Erste HD",
-              "mode": 0,
-              "reference": "1:0:19:283D:3FB:1:C00000:0:0:0:",
               "displayType": 0,
-              "namePrefix": false
-            },
-            {
-              "name": "ZDF HD",
-              "mode": 0,
-              "reference": "1:0:19:2B66:3F3:1:C00000:0:0:0:",
-              "displayType": 0,
-              "namePrefix": false
-            },
-            {
-              "name": "RTL HD",
-              "reference": "1:0:19:EF10:421:1:C00000:0:0:0:",
-              "displayType": 0
-            },
-            {
-              "name": "Menu Up",
-              "mode": 1,
-              "command": "115",
-              "displayType": 0,
-              "namePrefix": false
-            },
-            {
-              "name": "Toggle Standby",
+              "name": "Restart Enigma",
               "mode": 2,
-              "powerCommand": "0",
-              "displayType": 0,
+              "command": "116",
+              "powerCommand": "3",
               "namePrefix": false
             }
           ],
-          "sensorPower": false,
-          "sensorVolume": false,
-          "sensorMute": false,
-          "sensorChannel": false,
-          "sensorInputs": [
-            {
-              "name": "RTL HD",
-              "reference": "1:0:19:EF10:421:1:C00000:0:0:0:",
-              "displayType": 0,
-              "namePrefix": false
-            }
-          ],
-          "infoButtonCommand": "139",
-          "volumeControlNamePrefix": false,
-          "volumeControlName": "Volume",
-          "volumeControl": 0,
+          "sensors": {
+            "power": false,
+            "volume": false,
+            "mute": false,
+            "channel": false,
+            "channels": [
+              {
+                "displayType": 0,
+                "name": "",
+                "reference": "",
+                "namePrefix": false
+              }
+            ]
+          },
+          "volume": {
+            "type": 0,
+            "name": "",
+            "namePrefix": false
+          },
+          "log": {
+            "deviceInfo": true,
+            "success": true,
+            "info": false,
+            "warn": true,
+            "error": true,
+            "debug": false
+          },
+          "infoButtonCommand": "401",
           "refreshInterval": 5,
-          "disableLogDeviceInfo": false,
-          "disableLogInfo": false,
-          "disableLogSuccess": false,
-          "disableLogWarn": false,
-          "disableLogError": false,
-          "enableDebugMode": false,
           "mqtt": {
             "enable": false,
-            "host": "192.168.1.33",
+            "host": "",
             "port": 1883,
             "clientId": "",
-            "prefix": "home/envoy",
-            "auth": false,
-            "user": "user",
-            "pass": "password",
-            "debug": false
+            "prefix": "",
+            "debug": false,
+            "auth": {
+              "enable": false,
+              "user": "",
+              "passwd": ""
+            }
           }
         }
       ]

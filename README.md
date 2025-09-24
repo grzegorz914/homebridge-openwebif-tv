@@ -60,53 +60,64 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | `host` | Here set the *Hsostname or Address IP* of Sat Receiver.|
 | `port` | Here set the *Port* of Sat Receiver. |
 | `disableAccessory` | If enabled, the accessory will be disabled. |
-| `auth` | If enabled, authorizatins credentials will be used for login. |
-| `user` | Here set the authorization *Username*. |
-| `pass` | Here set the authorization *Password*. |
-| `getInputsFromDevice` | This function get channels by *Bouquet* direct from device, manually configured channels will be skipped. |
-| `bouquets.name` | Here set *Bouquet Name* which should be loaded from device, only first 90 services will be used. |
-| `bouquets.displayType` | Here select display extra tile for all channels of this bouquet to be exposed in HomeKit app, possible `0 - None/Disabled`, `1 - Outlet`, `2 - Switch`.|
-| `inputsDisplayOrder` | Here select display order of the channels list, `0 - None`, `1 - Ascending by Name`, `2 - Descending by Name`, 3 - `Ascending by Reference`, `4 - Ascending by Reference`. |
-| `inputs.name` | Here set *Channel Name* which should be exposed in the *Homebridge/HomeKit* |
-| `inputs.reference` | Here set *Channel Reference*. All can be found in `homebridge_directory/openwebifTv/inputs_xxxx`. |
-| `inputs.displayType` | Here select display extra tile for this channel to be exposed in HomeKit app, possible `0 - None/Disabled`, `1 -Outlet`, `2 - Switch`.|
-| `buttons.name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*.|
-| `buttons.mode` | Here select button mode, `0 - Live TV Channel`, `1 - Remote Control`. |
-| `buttons.reference` | Here set *Reference*, only for `Live TV Channel` mode, in other case leave empty. |
-| `buttons.command` | Here select `Remote Control` command which will be assigned to the button. |
-| `buttons.powerCommand` | Here select `Power Control` which will be assigned to the button. |
-| `buttons.displayType` | Here select display type in HomeKit app, possible `0 - None/Disabled`, `1 - Outlet`, `2 - Switch`.|
-| `buttons.namePrefix` | Here enable/disable the accessory name as a prefix for button name.|
-| `sensorPower`| If enabled, then the Power will be exposed as a `Contact Sensor`, fired if power ON. |
-| `sensorVolume`| If enabled, then the Volume will be exposed as a `Contact Sensor`, fired on every Volume change. |
-| `sensorMute`| If enabled, then the Mute will be exposed as a `Contact Sensor`, fired if Mmute ON. |
-| `sensorChannel`| If enabled, then the Channel will be exposed as a `Contact Sensor`, fired on every Channel change. |
-| `sensorInputs`| Her create custom Inputs sensor, sensors will be exposed as a `Contact Sensor`, fired if switch to it. |
-| `sensorInputs.name` | Here set own *Name* which You want expose to the *Homebridge/HomeKit* for this sensor. |
-| `sensorInputs.reference` | Here set *Reference* like `1:0:1:3ABD:514:13E:820000:0:0:0:` to be exposed as sensor (active on switch to this Input). |
-| `sensorInputs.displayType` | Here select sensor type to be exposed in HomeKit app, possible `0 - None/Disabled`, `1 - Motion Sensor`, `2 - Occupancy Sensor`, `3 - Contact Sensor`. |
-| `sensorInputs.namePrefix` | Here enable/disable the accessory name as a prefix for sensor name.|
-| `volumeControlNamePrefix` | Here enable/disable the accessory name as a prefix for volume control name. |
-| `volumeControlName` | Here set Your own volume control name or leave empty. |
-| `volumeControl` | Here select volume control mode `0 -None/Disabled`, `1 - Slider`, `2 - Fan`, `3 - Speaker`. |
+| `auth{}` | Authorization object. |
+| `auth.enable` | If enabled, authorizatins credentials will be used for login. |
+| `auth.user` | Here set the authorization *Username*. |
+| `auth.passwd` | Here set the authorization *Password*. |
+| `inputs{}` | Inputs object. |
+| `inputs.getFromDevice` | This function get channels by *Bouquet* direct from device, manually configured channels will be skipped. |
+| `inputs.displayOrder` | Here select display order of the channels list, `0 - None`, `1 - Ascending by Name`, `2 - Descending by Name`, 3 - `Ascending by Reference`, `4 - Ascending by Reference`. |
+| `inputs.bouquets[]` | Inputs bouquets array. |
+| `inputs.bouquets[].name` | Here set *Bouquet Name* which should be loaded from device, only first 90 services will be used. |
+| `inputs.bouquets[].displayType` | Here select display extra tile for all channels of this bouquet to be exposed in HomeKit app, possible `0 - None/Disabled`, `1 - Outlet`, `2 - Switch`.|
+| `inputs.bouquets[].namePrefix` | Here enable/disable the accessory name as a prefix for extra tile channel name.|
+| `inputs.channels[]` | Inputs channels array. |
+| `inputs.channels[].name` | Here set *Channel Name* which should be exposed in the *Homebridge/HomeKit* |
+| `inputs.channels[].reference` | Here set *Channel Reference*. All can be found in `homebridge_directory/openwebifTv/inputs_xxxx`. |
+| `inputs.channels[].displayType` | Here select display extra tile for this channel to be exposed in HomeKit app, possible `0 - None/Disabled`, `1 -Outlet`, `2 - Switch`.|
+| `inputs.channels[].namePrefix` | Here enable/disable the accessory name as a prefix for extra tile channel name.|
+| `buttons[]` | Buttons array. |
+| `buttons[].name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*.|
+| `buttons[].mode` | Here select button mode, `0 - Live TV Channel`, `1 - Remote Control`. |
+| `buttons[].reference` | Here set *Reference*, only for `Live TV Channel` mode, in other case leave empty. |
+| `buttons[].command` | Here select `Remote Control` command which will be assigned to the button. |
+| `buttons[].powerCommand` | Here select `Power Control` which will be assigned to the button. |
+| `buttons[].displayType` | Here select display type in HomeKit app, possible `0 - None/Disabled`, `1 - Outlet`, `2 - Switch`.|
+| `buttons[].namePrefix` | Here enable/disable the accessory name as a prefix for button name.|
+| `sensors{}` | Sensors object. |
+| `sensors.power`| If enabled, then the Power will be exposed as a `Contact Sensor`, fired if power ON. |
+| `sensors.volume`| If enabled, then the Volume will be exposed as a `Contact Sensor`, fired on every Volume change. |
+| `sensors.mute`| If enabled, then the Mute will be exposed as a `Contact Sensor`, fired if Mmute ON. |
+| `sensors.channel`| If enabled, then the Channel will be exposed as a `Contact Sensor`, fired on every Channel change. |
+| `sensors.channels[]` | Sensor channels array. |
+| `sensors.channels[].displayType` | Here select sensor type to be exposed in HomeKit app, possible `0 - None/Disabled`, `1 - Motion Sensor`, `2 - Occupancy Sensor`, `3 - Contact Sensor`. |
+| `sensors.channels[].name` | Here set own *Name* which You want expose to the *Homebridge/HomeKit* for this sensor. |
+| `sensors.channels[].reference` | Here set *Reference* like `1:0:1:3ABD:514:13E:820000:0:0:0:` to be exposed as sensor (active on switch to this Input). |
+| `sensors.channels[].namePrefix` | Here enable/disable the accessory name as a prefix for sensor name.|
+| `volume{}` | Volume object. |
+| `volume.type` | Here select volume control mode `0 -None/Disabled`, `1 - Slider`, `2 - Fan`, `3 - Speaker`. |
+| `volume.name` | Here set Your own volume control name or leave empty. |
+| `volume.namePrefix` | Here enable/disable the accessory name as a prefix for volume control name. |
+| `log{}` | Log object. |
+| `log.deviceInfo` | If enabled, log device info will be displayed by every connections device to the network. |
+| `log.sSuccess` | If enabled, success log will be displayed in console. |
+| `log.info` | If enabled, info log will be displayed in console. |
+| `log.warn` | If enabled, warn log will be displayed in console. |
+| `log.error` | If enabled, error log will be displayed in console. |
+| `log.debug` | If enabled, debug log will be displayed in console. |
 | `infoButtonCommand` | Here select the function of `I` button in RC app. |
 | `refreshInterval` | Here set the data refresh interval. |
-| `disableLogDeviceInfo` | If enabled, add ability to disable log device info by every connections device to the network. |
-| `disableLogInfo` | If enabled, disable log info, all values and state will not be displayed in Homebridge log console. |
-| `disableLogSuccess` | If enabled, disable logging device success. |
-| `disableLogWarn` | If enabled, disable logging device warnings. |
-| `disableLogError` | If enabled, disable logging device error. |
-| `enableDebugMode` | If enabled, deep log will be present in homebridge console. |
-| `mqtt` | This is MQTT Broker. |
-| `enable` | If enabled, MQTT Broker will start automatically and publish all awailable PV data. |
-| `host` | Here set the `IP Address` or `Hostname` for MQTT Broker. |
-| `port` | Here set the `Port` for MQTT Broker, default 1883. |
-| `clientId` | Here optional set the `Client Id` of MQTT Broker. |
-| `prefix` | Here set the `Prefix` for `Topic` or leave empty. |
-| `auth` | If enabled, MQTT Broker will use authorization credentials. |
-| `user` | Here set the MQTT Broker user. |
-| `passwd` | Here set the MQTT Broker password. |
-| `debug` | If enabled, deep log will be present in homebridge console for MQTT. |
+| `mqtt{}` | MQTT object. |
+| `mqtt.enable` | If enabled, MQTT Broker will start automatically and publish all awailable PV data. |
+| `mqtt.host` | Here set the `IP Address` or `Hostname` for MQTT Broker. |
+| `mqtt.port` | Here set the `Port` for MQTT Broker, default 1883. |
+| `mqtt.clientId` | Here optional set the `Client Id` of MQTT Broker. |
+| `mqtt.prefix` | Here set the `Prefix` for `Topic` or leave empty. |
+| `mqtt.debug` | If enabled, deep log will be present in homebridge console for MQTT. |
+| `mqtt.auth{}` | MQTT authorization object. |
+| `mqtt.auth.enable` | Here enable authorization for MQTT Broker. |
+| `mqtt.auth.user` | Here set the MQTT Broker user. |
+| `mqtt.auth.passwd` | Here set the MQTT Broker password. |
 
 ### MQTT Integration
 
