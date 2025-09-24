@@ -772,9 +772,9 @@
               "title": "Volume Control",
               "type": "object",
               "properties": {
-                "type": {
+                "displayType": {
                   "title": "Volume Control Type",
-                  "displayType": "integer",
+                  "type": "integer",
                   "minimum": 0,
                   "maximum": 3,
                   "default": 0,
