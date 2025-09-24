@@ -31,7 +31,7 @@ class OpenWebIfDevice extends EventEmitter {
         this.sensorMute = device.sensors.mute || false;
         this.sensorChannel = device.sensors.channel || false;
         this.sensorChannels = device.sensors.channels || [];
-        this.volumeControl = device.volume.type || false;
+        this.volumeControl = device.volume.displayType || false;
         this.volumeControlName = device.volume.name || 'Volume';
         this.volumeControlNamePrefix = device.volume.namePrefix || false;
         this.logInfo = device.log.info || false;

@@ -134,6 +134,8 @@
                       "displayType": {
                         "title": "Extra Tile",
                         "type": "integer",
+                        "minimum": 0,
+                        "maximum": 2,
                         "default": 0,
                         "oneOf": [
                           {
@@ -193,6 +195,8 @@
                       "displayType": {
                         "title": "Extra Tile",
                         "type": "integer",
+                        "minimum": 0,
+                        "maximum": 2,
                         "default": 0,
                         "oneOf": [
                           {
@@ -242,6 +246,8 @@
                   "displayType": {
                     "title": "Display Type",
                     "type": "integer",
+                    "minimum": 0,
+                    "maximum": 2,
                     "default": 0,
                     "oneOf": [
                       {
@@ -699,6 +705,8 @@
                       "displayType": {
                         "title": "Type",
                         "type": "integer",
+                        "minimum": 0,
+                        "maximum": 3,
                         "default": 0,
                         "oneOf": [
                           {
@@ -766,7 +774,7 @@
               "properties": {
                 "type": {
                   "title": "Volume Control Type",
-                  "type": "integer",
+                  "displayType": "integer",
                   "minimum": 0,
                   "maximum": 3,
                   "default": 0,
@@ -805,7 +813,7 @@
                   "placeholder": "Volume Control Name",
                   "description": "Here set Your own volume control name or leave empty.",
                   "condition": {
-                    "functionBody": "return model.devices[arrayIndices].volume.type > 0;"
+                    "functionBody": "return model.devices[arrayIndices].volume.displayType > 0;"
                   }
                 },
                 "namePrefix": {
@@ -814,7 +822,7 @@
                   "default": false,
                   "description": "Here enable/disable the accessory name as a prefix for volume control name.",
                   "condition": {
-                    "functionBody": "return model.devices[arrayIndices].volume.type > 0;"
+                    "functionBody": "return model.devices[arrayIndices].volume.displayType > 0;"
                   }
                 }
               }
@@ -1023,30 +1031,30 @@
                       "title": "Enable",
                       "type": "boolean",
                       "default": false,
-                      "description": "This enable authorization for MQTT Broker.",
+                      "description": "This enable authorization for MQTT Broker."
+                    },
+                    "user": {
+                      "title": "User",
+                      "type": "string",
+                      "placeholder": "user",
+                      "description": "Here set the user of MQTT Broker.",
                       "condition": {
-                        "functionBody": "return model.devices[arrayIndices].mqtt.enable === true;"
+                        "functionBody": "return model.devices[arrayIndices].mqtt.auth.enable === true;"
+                      }
+                    },
+                    "passwd": {
+                      "title": "Password",
+                      "type": "string",
+                      "placeholder": "password",
+                      "description": "Here set the password of MQTT Broker.",
+                      "format": "password",
+                      "condition": {
+                        "functionBody": "return model.devices[arrayIndices].mqtt.auth.enable === true;"
                       }
                     }
                   },
-                  "user": {
-                    "title": "User",
-                    "type": "string",
-                    "placeholder": "user",
-                    "description": "Here set the user of MQTT Broker.",
-                    "condition": {
-                      "functionBody": "return model.devices[arrayIndices].mqtt.enable === true && model.devices[arrayIndices].mqtt.auth.enable === true;"
-                    }
-                  },
-                  "passwd": {
-                    "title": "Password",
-                    "type": "string",
-                    "placeholder": "password",
-                    "description": "Here set the password of MQTT Broker.",
-                    "format": "password",
-                    "condition": {
-                      "functionBody": "return model.devices[arrayIndices].mqtt.enable === true && model.devices[arrayIndices].mqtt.auth.enable === true;"
-                    }
+                  "condition": {
+                    "functionBody": "return model.devices[arrayIndices].mqtt.enable === true;"
                   }
                 }
               }
@@ -1174,7 +1182,7 @@
                   "key": "devices[].volume",
                   "title": "Volume",
                   "items": [
-                    "devices[].volume.type",
+                    "devices[].volume.displayType",
                     "devices[].volume.name",
                     "devices[].volume.namePrefix"
                   ]

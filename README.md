@@ -77,12 +77,12 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | `inputs.channels[].displayType` | Here select display extra tile for this channel to be exposed in HomeKit app, possible `0 - None/Disabled`, `1 -Outlet`, `2 - Switch`.|
 | `inputs.channels[].namePrefix` | Here enable/disable the accessory name as a prefix for extra tile channel name.|
 | `buttons[]` | Buttons array. |
+| `buttons[].displayType` | Here select display type in HomeKit app, possible `0 - None/Disabled`, `1 - Outlet`, `2 - Switch`.|
 | `buttons[].name` | Here set *Button Name* which You want expose to the *Homebridge/HomeKit*.|
 | `buttons[].mode` | Here select button mode, `0 - Live TV Channel`, `1 - Remote Control`. |
 | `buttons[].reference` | Here set *Reference*, only for `Live TV Channel` mode, in other case leave empty. |
 | `buttons[].command` | Here select `Remote Control` command which will be assigned to the button. |
 | `buttons[].powerCommand` | Here select `Power Control` which will be assigned to the button. |
-| `buttons[].displayType` | Here select display type in HomeKit app, possible `0 - None/Disabled`, `1 - Outlet`, `2 - Switch`.|
 | `buttons[].namePrefix` | Here enable/disable the accessory name as a prefix for button name.|
 | `sensors{}` | Sensors object. |
 | `sensors.power`| If enabled, then the Power will be exposed as a `Contact Sensor`, fired if power ON. |
@@ -95,7 +95,7 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | `sensors.channels[].reference` | Here set *Reference* like `1:0:1:3ABD:514:13E:820000:0:0:0:` to be exposed as sensor (active on switch to this Input). |
 | `sensors.channels[].namePrefix` | Here enable/disable the accessory name as a prefix for sensor name.|
 | `volume{}` | Volume object. |
-| `volume.type` | Here select volume control mode `0 -None/Disabled`, `1 - Slider`, `2 - Fan`, `3 - Speaker`. |
+| `volume.displayType` | Here select volume control mode `0 -None/Disabled`, `1 - Slider`, `2 - Fan`, `3 - Speaker`. |
 | `volume.name` | Here set Your own volume control name or leave empty. |
 | `volume.namePrefix` | Here enable/disable the accessory name as a prefix for volume control name. |
 | `log{}` | Log object. |
