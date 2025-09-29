@@ -21,6 +21,7 @@ class OpenWebIfDevice extends EventEmitter {
         this.host = device.host;
         this.port = device.port;
         this.auth = device.auth || {};
+        this.displayType = device.displayType;
         this.getInputsFromDevice = device.inputs.getFromDevice || false;
         this.inputsDisplayOrder = device.inputs.displayOrder || 0;
         this.bouquets = device.inputs.bouquets || [];
@@ -55,14 +56,16 @@ class OpenWebIfDevice extends EventEmitter {
         //sensors
         this.sensorsChannelsConfigured = [];
         for (const sensor of this.sensorChannels) {
-            const displayType = sensor.displayType ?? 0;
-            if (displayType === 0) {
+            const name = sensor.name;
+            const reference = sensor.reference;
+            const displayType = sensor.displayType;
+            if (!displayType || !name || !reference) {
+                if (this.logWarn && displayType) this.emit('warn', `Sensor Name: ${name ? name : 'Missing'}, Reference: ${reference ? reference : 'Missing'}`);
                 continue;
-            };
+            }
 
             sensor.serviceType = ['', Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][displayType];
             sensor.characteristicType = ['', Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][displayType];
-            sensor.name = sensor.name || 'Sensor Input';
             sensor.state = false;
             this.sensorsChannelsConfigured.push(sensor);
         }
@@ -71,13 +74,16 @@ class OpenWebIfDevice extends EventEmitter {
         //buttons
         this.buttonsConfigured = [];
         for (const button of this.buttons) {
-            const displayType = button.displayType ?? 0;
-            if (displayType === 0) {
+            const name = button.name;
+            const mode = button.mode;
+            const reference = [button.reference, button.command, button.powerCommand][mode];
+            const displayType = button.displayType;
+            if (!displayType || !name || !reference) {
+                if (this.logWarn && displayType) this.emit('warn', `Button Name: ${name ? name : 'Missing'}, ${['Reference:', 'Command:', 'Power Command:'][mode]} ${reference ? reference : 'Missing'}, Mode: ${mode ? mode : 'Missing'}`);
                 continue;
-            };
+            }
 
             button.serviceType = ['', Service.Outlet, Service.Switch][displayType];
-            button.name = button.name || 'Button';
             button.state = false;
             this.buttonsConfigured.push(button);
         }
@@ -365,7 +371,7 @@ class OpenWebIfDevice extends EventEmitter {
             if (this.logDebug) this.emit('debug', `Prepare accessory`);
             const accessoryName = this.name;
             const accessoryUUID = AccessoryUUID.generate(mac);
-            const accessoryCategory = Categories.TV_SET_TOP_BOX;
+            const accessoryCategory = [Categories.OTHER, Categories.TELEVISION, Categories.TV_SET_TOP_BOX, Categories.TV_STREAMING_STICK, Categories.AUDIO_RECEIVER][this.displayType];
             const accessory = new Accessory(accessoryName, accessoryUUID, accessoryCategory);
             this.accessory = accessory;
 
@@ -1034,7 +1040,7 @@ class OpenWebIfDevice extends EventEmitter {
                     //buttons
                     if (this.buttonsConfiguredCount > 0) {
                         this.buttonsConfigured.forEach((button, i) => {
-                            const state = this.power ? button.reference === reference : false;
+                            const state = this.power ? (button.mode === 1 ? (button.command === 'MUTE' ? muteV : button.command === 'POWER' ? power : button.state) : button.reference === reference) : false;
                             button.state = state;
                             this.buttonServices?.[i]?.updateCharacteristic(Characteristic.On, state);
                         });

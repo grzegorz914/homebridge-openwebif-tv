@@ -27,7 +27,7 @@
             "user": "",
             "passwd": ""
           },
-          "disableAccessory": false,
+          "displayType": 2,
           "inputs": {
             "getFromDevice": true,
             "displayOrder": 0,

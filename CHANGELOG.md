@@ -7,8 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### NOTE
 
-- After update to v4.8.0 plugin need to be reconfigured
+- After update to v4.8.0 plugin need to be reconfigured first, in other case will crash!!!
 - After update to v4.0.0 MQTT config settings need to be updated
+
+## [4.8.1] - (29.09.2025)
+
+## Changes
+
+- after update to v4.8.x plugin need to be reconfigured first, in other case will crash!!!
+- fix report mute state in buttons
+- fix report power state in buttons
+- config schema updated
+- redme updated
+- cleanup
 
 ## [4.8.0] - (24.09.2025)
 

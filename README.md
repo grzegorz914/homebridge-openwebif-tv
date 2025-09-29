@@ -59,7 +59,7 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | `name` | Here set the accessory *Name* to be displayed in *Homebridge/HomeKit*. |
 | `host` | Here set the *Hsostname or Address IP* of Sat Receiver.|
 | `port` | Here set the *Port* of Sat Receiver. |
-| `disableAccessory` | If enabled, the accessory will be disabled. |
+| `displayType` | Accessory type to be displayed in Home app: `0 - None/Disabled`, `1 - Television` , `2 - TV Set Top Box`, `3 - TV Streaming Stick`, `4 - Audio Receiver`. |
 | `auth{}` | Authorization object. |
 | `auth.enable` | If enabled, authorizatins credentials will be used for login. |
 | `auth.user` | Here set the authorization *Username*. |

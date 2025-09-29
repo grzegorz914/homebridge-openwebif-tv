@@ -23,7 +23,8 @@ class OpenWebIfPlatform {
 
 		api.on('didFinishLaunching', async () => {
 			for (const device of config.devices) {
-				if (device.disableAccessory) continue;
+				const displayType = device.displayType ?? 2;
+				if (displayType === 0) continue;
 
 				const { name, host, port } = device;
 				if (!name || !host || !port) {
