@@ -63,6 +63,7 @@
               "title": "Accessory type",
               "type": "integer",
               "default": 2,
+              "description": "Accessory type for Home app",
               "oneOf": [
                 {
                   "title": "None/Disabled",
@@ -94,8 +95,7 @@
                     4
                   ]
                 }
-              ],
-              "description": "Accessory type for Home app"
+              ]
             },
             "inputs": {
               "title": "Inputs",
@@ -304,14 +304,16 @@
                     "title": "Name",
                     "type": "string",
                     "placeholder": "Button name",
-                    "description": "Here set Your own name."
+                    "description": "Here set Your own name.",
+                    "condition": {
+                      "functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].displayType > 0;"
+                    }
                   },
                   "mode": {
                     "title": "Mode",
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 2,
-                    "default": 0,
                     "description": "Here select the function mode.",
                     "oneOf": [
                       {
@@ -332,7 +334,10 @@
                           2
                         ]
                       }
-                    ]
+                    ],
+                    "condition": {
+                      "functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].displayType > 0;"
+                    }
                   },
                   "reference": {
                     "title": "Reference",
@@ -340,7 +345,7 @@
                     "placeholder": "Button reference",
                     "description": "Here set the reference.",
                     "condition": {
-                      "functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].mode === 0;"
+                      "functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].displayType > 0 && model.devices[arrayIndices[0]].buttons[arrayIndices[1]].mode === 0;"
                     }
                   },
                   "command": {
@@ -626,7 +631,7 @@
                       }
                     ],
                     "condition": {
-                      "functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].mode === 1;"
+                      "functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].displayType > 0 && model.devices[arrayIndices[0]].buttons[arrayIndices[1]].mode === 1;"
                     }
                   },
                   "powerCommand": {
@@ -672,18 +677,20 @@
                       }
                     ],
                     "condition": {
-                      "functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].mode === 2;"
+                      "functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].displayType > 0 && model.devices[arrayIndices[0]].buttons[arrayIndices[1]].mode === 2;"
                     }
                   },
                   "namePrefix": {
                     "title": "Prefix",
                     "type": "boolean",
-                    "description": "Here enable/disable the accessory name as a prefix for button name."
+                    "description": "Here enable/disable the accessory name as a prefix for button name.",
+                    "condition": {
+                      "functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].displayType > 0;"
+                    }
                   }
                 },
                 "required": [
-                  "displayType",
-                  "mode"
+                  "displayType"
                 ]
               }
             },
@@ -760,18 +767,27 @@
                         "title": "Name",
                         "type": "string",
                         "placeholder": "Name",
-                        "description": "Here set Your own name."
+                        "description": "Here set Your own name.",
+                        "condition": {
+                          "functionBody": "return model.devices[arrayIndices[0]].sensors.channels[arrayIndices[1]].displayType > 0;"
+                        }
                       },
                       "reference": {
                         "title": "Reference",
                         "type": "string",
                         "placeholder": "Channel reference",
-                        "description": "Here set the Channel reference."
+                        "description": "Here set the Channel reference.",
+                        "condition": {
+                          "functionBody": "return model.devices[arrayIndices[0]].sensors.channels[arrayIndices[1]].displayType > 0;"
+                        }
                       },
                       "namePrefix": {
                         "title": "Prefix",
                         "type": "boolean",
-                        "description": "Here enable/disable the accessory name as a prefix for sensor name."
+                        "description": "Here enable/disable the accessory name as a prefix for sensor name.",
+                        "condition": {
+                          "functionBody": "return model.devices[arrayIndices[0]].sensors.channels[arrayIndices[1]].displayType > 0;"
+                        }
                       }
                     },
                     "required": [
@@ -823,13 +839,19 @@
                   "title": "Name",
                   "type": "string",
                   "placeholder": "Volume Control Name",
-                  "description": "Here set Your own volume control name or leave empty."
+                  "description": "Here set Your own volume control name or leave empty.",
+                  "condition": {
+                    "functionBody": "return model.devices[arrayIndices[0]].volume.displayType > 0;"
+                  }
                 },
                 "namePrefix": {
                   "title": "Prefix",
                   "type": "boolean",
                   "default": false,
-                  "description": "Here enable/disable the accessory name as a prefix for volume control name."
+                  "description": "Here enable/disable the accessory name as a prefix for volume control name.",
+                  "condition": {
+                    "functionBody": "return model.devices[arrayIndices[0]].volume.displayType > 0;"
+                  }
                 }
               },
               "required": [
@@ -1117,7 +1139,10 @@
                 "devices[].inputs.channels[].namePrefix"
               ]
             }
-          ]
+          ],
+          "condition": {
+            "functionBody": "return model.devices[arrayIndices[0]].displayType > 0;"
+          }
         },
         {
           "key": "devices[]",
@@ -1140,7 +1165,10 @@
                 "devices[].buttons[].namePrefix"
               ]
             }
-          ]
+          ],
+          "condition": {
+            "functionBody": "return model.devices[arrayIndices[0]].displayType > 0;"
+          }
         },
         {
           "key": "devices[]",
@@ -1264,7 +1292,10 @@
                 }
               ]
             }
-          ]
+          ],
+          "condition": {
+            "functionBody": "return model.devices[arrayIndices[0]].displayType > 0;"
+          }
         }
       ]
     }
