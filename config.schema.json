@@ -338,7 +338,10 @@
                     "title": "Reference",
                     "type": "string",
                     "placeholder": "Button reference",
-                    "description": "Here set the reference."
+                    "description": "Here set the reference.",
+                    "condition": {
+                      "functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].mode === 0;"
+                    }
                   },
                   "command": {
                     "title": "RC Command",
@@ -621,7 +624,10 @@
                           "388"
                         ]
                       }
-                    ]
+                    ],
+                    "condition": {
+                      "functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].mode === 1;"
+                    }
                   },
                   "powerCommand": {
                     "title": "Power Command",
@@ -664,7 +670,10 @@
                           "5"
                         ]
                       }
-                    ]
+                    ],
+                    "condition": {
+                      "functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].mode === 2;"
+                    }
                   },
                   "namePrefix": {
                     "title": "Prefix",
