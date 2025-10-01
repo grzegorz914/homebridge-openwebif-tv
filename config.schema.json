@@ -190,7 +190,11 @@
                       "namePrefix": {
                         "title": "Prefix",
                         "type": "boolean",
-                        "description": "Here enable/disable the accessory name as a prefix for extra tile name."
+                        "default": false,
+                        "description": "Here enable/disable the accessory name as a prefix for extra tile name.",
+                        "condition": {
+                          "functionBody": "return model.devices[arrayIndices[0].inputs.bouquets[arrayIndices[1]].displayType > 0;"
+                        }
                       }
                     },
                     "required": [
@@ -250,7 +254,11 @@
                       "namePrefix": {
                         "title": "Prefix",
                         "type": "boolean",
-                        "description": "Here enable/disable the accessory name as a prefix for extra tile name."
+                        "default": false,
+                        "description": "Here enable/disable the accessory name as a prefix for extra tile name.",
+                        "condition": {
+                          "functionBody": "return model.devices[arrayIndices[0].inputs.channels[arrayIndices[1]].displayType > 0;"
+                        }
                       }
                     },
                     "required": [
@@ -683,6 +691,7 @@
                   "namePrefix": {
                     "title": "Prefix",
                     "type": "boolean",
+                    "default": false,
                     "description": "Here enable/disable the accessory name as a prefix for button name.",
                     "condition": {
                       "functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].displayType > 0;"
@@ -784,6 +793,7 @@
                       "namePrefix": {
                         "title": "Prefix",
                         "type": "boolean",
+                        "default": false,
                         "description": "Here enable/disable the accessory name as a prefix for sensor name.",
                         "condition": {
                           "functionBody": "return model.devices[arrayIndices[0]].sensors.channels[arrayIndices[1]].displayType > 0;"
