@@ -22,22 +22,22 @@ class OpenWebIfDevice extends EventEmitter {
         this.port = device.port;
         this.auth = device.auth || {};
         this.displayType = device.displayType;
-        this.getInputsFromDevice = device.inputs.getFromDevice || false;
-        this.inputsDisplayOrder = device.inputs.displayOrder || 0;
-        this.bouquets = device.inputs.bouquets || [];
-        this.inputs = device.inputs.channels || [];
+        this.getInputsFromDevice = device.inputs?.getFromDevice || false;
+        this.inputsDisplayOrder = device.inputs?.displayOrder || 0;
+        this.bouquets = device.inputs?.bouquets || [];
+        this.inputs = device.inputs?.channels || [];
         this.buttons = device.buttons || [];
-        this.sensorPower = device.sensors.power || false;
-        this.sensorVolume = device.sensors.volume || false;
-        this.sensorMute = device.sensors.mute || false;
-        this.sensorChannel = device.sensors.channel || false;
-        this.sensorChannels = device.sensors.channels || [];
-        this.volumeControl = device.volume.displayType || false;
-        this.volumeControlName = device.volume.name || 'Volume';
-        this.volumeControlNamePrefix = device.volume.namePrefix || false;
-        this.logInfo = device.log.info || false;
-        this.logWarn = device.log.warn || false;
-        this.logDebug = device.log.debug || false;
+        this.sensorPower = device.sensors?.power || false;
+        this.sensorVolume = device.sensors?.volume || false;
+        this.sensorMute = device.sensors?.mute || false;
+        this.sensorChannel = device.sensors?.channel || false;
+        this.sensorChannels = device.sensors?.channels || [];
+        this.volumeControl = device.volume?.displayType || false;
+        this.volumeControlName = device.volume?.name || 'Volume';
+        this.volumeControlNamePrefix = device.volume?.namePrefix || false;
+        this.logInfo = device.log?.info || false;
+        this.logWarn = device.log?.warn || false;
+        this.logDebug = device.log?.debug || false;
         this.infoButtonCommand = device.infoButtonCommand || '139';
         this.refreshInterval = (device.refreshInterval ?? 5) * 1000;
         this.devInfoFile = devInfoFile;
@@ -148,8 +148,8 @@ class OpenWebIfDevice extends EventEmitter {
                     port: this.mqtt.port || 1883,
                     clientId: this.mqtt.clientId ? `openwebif_${this.mqtt.clientId}_${Math.random().toString(16).slice(3)}` : `openwebif_${Math.random().toString(16).slice(3)}`,
                     prefix: this.mqtt.prefix ? `openwebif/${this.mqtt.prefix}/${this.name}` : `openwebif/${this.name}`,
-                    user: this.mqtt.auth.user,
-                    passwd: this.mqtt.auth.passwd,
+                    user: this.mqtt.auth?.user,
+                    passwd: this.mqtt.auth?.passwd,
                     debug: this.mqtt.debug || false
                 })
                     .on('connected', (message) => {
