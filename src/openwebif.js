@@ -184,9 +184,7 @@ class OpenWebIf extends EventEmitter {
             const mute = devState.muted;
 
             //update only if value change
-            if (power === this.power && name === this.name && eventName === this.eventName && reference === this.reference && volume === this.volume && mute === this.mute) {
-                return;
-            }
+            if (power === this.power && name === this.name && eventName === this.eventName && reference === this.reference && volume === this.volume && mute === this.mute) return;
 
             this.power = power;
             this.name = name;
