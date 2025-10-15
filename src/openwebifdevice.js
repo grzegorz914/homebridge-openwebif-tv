@@ -26,12 +26,12 @@ class OpenWebIfDevice extends EventEmitter {
         this.inputsDisplayOrder = device.inputs?.displayOrder || 0;
         this.bouquets = device.inputs?.bouquets || [];
         this.inputs = device.inputs?.channels || [];
-        this.buttons = device.buttons || [];
+        this.buttons = (device.buttons || []).filter(button => (button.displayType ?? 0) > 0);
         this.sensorPower = device.sensors?.power || false;
         this.sensorVolume = device.sensors?.volume || false;
         this.sensorMute = device.sensors?.mute || false;
         this.sensorChannel = device.sensors?.channel || false;
-        this.sensorChannels = device.sensors?.channels || [];
+        this.sensorChannels = (device.sensors?.channels || []).filter(sensor => (sensor.displayType ?? 0) > 0);
         this.volumeControl = device.volume?.displayType || false;
         this.volumeControlName = device.volume?.name || 'Volume';
         this.volumeControlNamePrefix = device.volume?.namePrefix || false;
@@ -54,40 +54,20 @@ class OpenWebIfDevice extends EventEmitter {
         this.inputIdentifier = 1;
 
         //sensors
-        this.sensorsChannelsConfigured = [];
         for (const sensor of this.sensorChannels) {
-            const name = sensor.name;
-            const reference = sensor.reference;
-            const displayType = sensor.displayType;
-            if (!displayType || !name || !reference) {
-                if (this.logWarn && displayType) this.emit('warn', `Sensor Name: ${name ? name : 'Missing'}, Reference: ${reference ? reference : 'Missing'}`);
-                continue;
-            }
-
-            sensor.serviceType = ['', Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][displayType];
-            sensor.characteristicType = ['', Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][displayType];
+            sensor.name = sensor.name || 'Sensor Input';
+            sensor.serviceType = ['', Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][sensor.displayType];
+            sensor.characteristicType = ['', Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][sensor.displayType];
             sensor.state = false;
-            this.sensorsChannelsConfigured.push(sensor);
         }
-        this.sensorsChannelsConfiguredCount = this.sensorsChannelsConfigured.length || 0;
 
         //buttons
-        this.buttonsConfigured = [];
         for (const button of this.buttons) {
-            const name = button.name;
-            const mode = button.mode;
-            const reference = [button.reference, button.command, button.powerCommand][mode];
-            const displayType = button.displayType;
-            if (!displayType || !name || !reference) {
-                if (this.logWarn && displayType) this.emit('warn', `Button Name: ${name ? name : 'Missing'}, ${['Reference:', 'Command:', 'Power Command:'][mode]} ${reference ? reference : 'Missing'}, Mode: ${mode ? mode : 'Missing'}`);
-                continue;
-            }
-
-            button.serviceType = ['', Service.Outlet, Service.Switch][displayType];
+            button.name = button.name || 'Button';
+            button.reference = [button.reference, button.command, button.powerCommand][button.mode];
+            button.serviceType = ['', Service.Outlet, Service.Switch][button.displayType];
             button.state = false;
-            this.buttonsConfigured.push(button);
         }
-        this.buttonsConfiguredCount = this.buttonsConfigured.length || 0;
 
         //state variable
         this.power = false;
@@ -150,7 +130,8 @@ class OpenWebIfDevice extends EventEmitter {
                     prefix: this.mqtt.prefix ? `openwebif/${this.mqtt.prefix}/${this.name}` : `openwebif/${this.name}`,
                     user: this.mqtt.auth?.user,
                     passwd: this.mqtt.auth?.passwd,
-                    debug: this.mqtt.debug || false
+                    logWarn: this.logWarn,
+                    logDebug: this.logDebug
                 })
                     .on('connected', (message) => {
                         this.emit('success', message);
@@ -517,8 +498,6 @@ class OpenWebIfDevice extends EventEmitter {
                 })
                 .onSet(async (value) => {
                     try {
-                        const brightness = value;
-                        const setBrightness = false
                         if (this.logInfo) this.emit('info', `set Brightness: ${value}`);
                     } catch (error) {
                         if (this.logWarn) this.emit('warn', `set Brightness error: ${error}`);
@@ -581,72 +560,199 @@ class OpenWebIfDevice extends EventEmitter {
 
             //Prepare volume service
             if (this.volumeControl > 0) {
-                const debug3 = this.logDebug ? this.emit('debug', `Prepare television speaker service`) : false;
                 const volumeServiceName = this.volumeControlNamePrefix ? `${accessoryName} ${this.volumeControlName}` : this.volumeControlName;
-                this.volumeServiceTvSpeaker = accessory.addService(Service.TelevisionSpeaker, volumeServiceName, 'TV Speaker');
-                this.volumeServiceTvSpeaker.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.ConfiguredName, volumeServiceName);
-                this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Active)
-                    .onGet(async () => {
-                        const state = this.power;
-                        return state;
-                    })
-                    .onSet(async (state) => {
-                    });
-                this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.VolumeControlType)
-                    .onGet(async () => {
-                        const state = 3; //none, relative, relative with current, absolute
-                        return state;
-                    });
-                this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.VolumeSelector)
-                    .onSet(async (command) => {
-                        try {
-                            switch (command) {
-                                case Characteristic.VolumeSelector.INCREMENT:
-                                    command = '115';
-                                    break;
-                                case Characteristic.VolumeSelector.DECREMENT:
-                                    command = '114';
-                                    break;
-                            }
+                const volumeServiceNameTv = this.volumeControlNamePrefix ? `${accessoryName} ${this.volumeControlName}` : this.volumeControlName;
 
-                            await this.openwebif.send(ApiUrls.SetRcCommand + command);
-                            if (this.logInfo) this.emit('info', `set Volume Selector: ${command}`);
-                        } catch (error) {
-                            if (this.logWarn) this.emit('warn', `set Volume Selector command error: ${error}`);
-                        }
-                    });
-                this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Volume)
-                    .onGet(async () => {
-                        const volume = this.volume;
-                        return volume;
-                    })
-                    .onSet(async (volume) => {
-                        try {
-                            await this.openwebif.send(ApiUrls.SetVolume + volume);
-                            if (this.logInfo) this.emit('info', `set Volume: ${volume}`);
-                        } catch (error) {
-                            if (this.logWarn) this.emit('warn', `set Volume level error: ${error}`);
-                        }
-                    });
-                this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Mute)
-                    .onGet(async () => {
-                        const state = this.mute;
-                        return state;
-                    })
-                    .onSet(async (state) => {
-                        try {
-                            await this.openwebif.send(ApiUrls.ToggleMute);
-                            if (this.logInfo) this.emit('info', `set Mute: ${state ? 'ON' : 'OFF'}`);
-                        } catch (error) {
-                            if (this.logWarn) this.emit('warn', `set Mute error: ${error}`);
-                        }
-                    });
-
-                //legacy control
                 switch (this.volumeControl) {
-                    case 1: //lightbulb
-                        const debug = this.logDebug ? this.emit('debug', `Prepare volume service lightbulb`) : false;
+                    case 1: // lightbulb
+                        if (this.logDebug) this.emit('debug', `Prepare volume service lightbulb`);
+                        this.volumeServiceLightbulb = accessory.addService(Service.Lightbulb, volumeServiceName, 'Lightbulb Speaker');
+                        this.volumeServiceLightbulb.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                        this.volumeServiceLightbulb.setCharacteristic(Characteristic.ConfiguredName, volumeServiceName);
+                        this.volumeServiceLightbulb.getCharacteristic(Characteristic.Brightness)
+                            .onGet(async () => {
+                                const volume = this.volume;
+                                return volume;
+                            })
+                            .onSet(async (value) => {
+                                try {
+                                    await this.openwebif.send(ApiUrls.SetVolume + value);
+                                    if (this.logInfo) this.emit('info', `set Volume: ${value}`);
+                                } catch (error) {
+                                    if (this.logWarn) this.emit('warn', `set Volume error: ${error}`);
+                                }
+                            });
+                        this.volumeServiceLightbulb.getCharacteristic(Characteristic.On)
+                            .onGet(async () => {
+                                const state = this.power ? !this.mute : false;
+                                return state;
+                            })
+                            .onSet(async (state) => {
+                                try {
+                                    await this.openwebif.send(ApiUrls.ToggleMute);
+                                    if (this.logInfo) this.emit('info', `set Mute: ${!state ? 'ON' : 'OFF'}`);
+                                } catch (error) {
+                                    if (this.logWarn) this.emit('warn', `set Mute error: ${error}`);
+                                }
+                            });
+                        break;
+                    case 2: // fan
+                        if (this.logDebug) this.emit('debug', `Prepare volume service fan`);
+                        this.volumeServiceFan = accessory.addService(Service.Fan, volumeServiceName, 'Fan Speaker');
+                        this.volumeServiceFan.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                        this.volumeServiceFan.setCharacteristic(Characteristic.ConfiguredName, volumeServiceName);
+                        this.volumeServiceFan.getCharacteristic(Characteristic.RotationSpeed)
+                            .onGet(async () => {
+                                const volume = this.volume;
+                                return volume;
+                            })
+                            .onSet(async (value) => {
+                                try {
+                                    await this.openwebif.send(ApiUrls.SetVolume + value);
+                                    if (this.logInfo) this.emit('info', `set Volume: ${value}`);
+                                } catch (error) {
+                                    if (this.logWarn) this.emit('warn', `set Volume error: ${error}`);
+                                }
+                            });
+                        this.volumeServiceFan.getCharacteristic(Characteristic.On)
+                            .onGet(async () => {
+                                const state = this.power ? !this.mute : false;
+                                return state;
+                            })
+                            .onSet(async (state) => {
+                                try {
+                                    await this.openwebif.send(ApiUrls.ToggleMute);
+                                    if (this.logInfo) this.emit('info', `set Mute: ${!state ? 'ON' : 'OFF'}`);
+                                } catch (error) {
+                                    if (this.logWarn) this.emit('warn', `set Mute error: ${error}`);
+                                }
+                            });
+                        break;
+                    case 3: // tv speaker
+                        if (this.logDebug) this.emit('debug', `Prepare television speaker service`);
+                        const volumeServiceName3 = this.volumeControlNamePrefix ? `${accessoryName} ${this.volumeControlName}` : this.volumeControlName;
+                        this.volumeServiceTvSpeaker = accessory.addService(Service.TelevisionSpeaker, volumeServiceName3, 'TV Speaker');
+                        this.volumeServiceTvSpeaker.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                        this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.ConfiguredName, volumeServiceName3);
+                        this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Active)
+                            .onGet(async () => {
+                                const state = this.power;
+                                return state;
+                            })
+                            .onSet(async (state) => { });
+                        this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.VolumeControlType)
+                            .onGet(async () => {
+                                const state = 3;
+                                return state;
+                            });
+                        this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.VolumeSelector)
+                            .onSet(async (command) => {
+                                try {
+                                    switch (command) {
+                                        case Characteristic.VolumeSelector.INCREMENT:
+                                            command = '115';
+                                            break;
+                                        case Characteristic.VolumeSelector.DECREMENT:
+                                            command = '114';
+                                            break;
+                                    }
+
+                                    await this.openwebif.send(ApiUrls.SetRcCommand + command);
+                                    if (this.logInfo) this.emit('info', `set Volume Selector: ${command}`);
+                                } catch (error) {
+                                    if (this.logWarn) this.emit('warn', `set Volume Selector command error: ${error}`);
+                                }
+                            });
+                        this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Volume)
+                            .onGet(async () => {
+                                const volume = this.volume;
+                                return volume;
+                            })
+                            .onSet(async (value) => {
+                                try {
+                                    await this.openwebif.send(ApiUrls.SetVolume + value);
+                                    if (this.logInfo) this.emit('info', `set Volume: ${value}`);
+                                } catch (error) {
+                                    if (this.logWarn) this.emit('warn', `set Volume error: ${error}`);
+                                }
+                            });
+                        this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Mute)
+                            .onGet(async () => {
+                                const state = this.mute;
+                                return state;
+                            })
+                            .onSet(async (state) => {
+                                try {
+                                    await this.openwebif.send(ApiUrls.ToggleMute);
+                                    if (this.logInfo) this.emit('info', `set Mute: ${state ? 'ON' : 'OFF'}`);
+                                } catch (error) {
+                                    if (this.logWarn) this.emit('warn', `set Mute error: ${error}`);
+                                }
+                            });
+                        break;
+                    case 4: // tv speaker + lightbulb
+                        if (this.logDebug) this.emit('debug', `Prepare television speaker service`);
+                        this.volumeServiceTvSpeaker = accessory.addService(Service.TelevisionSpeaker, volumeServiceNameTv, 'TV Speaker');
+                        this.volumeServiceTvSpeaker.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                        this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.ConfiguredName, volumeServiceNameTv);
+                        this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Active)
+                            .onGet(async () => {
+                                const state = this.power;
+                                return state;
+                            })
+                            .onSet(async (state) => { });
+                        this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.VolumeControlType)
+                            .onGet(async () => {
+                                const state = 3;
+                                return state;
+                            });
+                        this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.VolumeSelector)
+                            .onSet(async (command) => {
+                                try {
+                                    switch (command) {
+                                        case Characteristic.VolumeSelector.INCREMENT:
+                                            command = '115';
+                                            break;
+                                        case Characteristic.VolumeSelector.DECREMENT:
+                                            command = '114';
+                                            break;
+                                    }
+
+                                    await this.openwebif.send(ApiUrls.SetRcCommand + command);
+                                    if (this.logInfo) this.emit('info', `set Volume Selector: ${command}`);
+                                } catch (error) {
+                                    if (this.logWarn) this.emit('warn', `set Volume Selector command error: ${error}`);
+                                }
+                            });
+                        this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Volume)
+                            .onGet(async () => {
+                                const volume = this.volume;
+                                return volume;
+                            })
+                            .onSet(async (value) => {
+                                try {
+                                    await this.openwebif.send(ApiUrls.SetVolume + value);
+                                    if (this.logInfo) this.emit('info', `set Volume: ${value}`);
+                                } catch (error) {
+                                    if (this.logWarn) this.emit('warn', `set Volume error: ${error}`);
+                                }
+                            });
+                        this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Mute)
+                            .onGet(async () => {
+                                const state = this.mute;
+                                return state;
+                            })
+                            .onSet(async (state) => {
+                                try {
+                                    await this.openwebif.send(ApiUrls.ToggleMute);
+                                    if (this.logInfo) this.emit('info', `set Mute: ${state ? 'ON' : 'OFF'}`);
+                                } catch (error) {
+                                    if (this.logWarn) this.emit('warn', `set Mute error: ${error}`);
+                                }
+                            });
+
+                        // lightbulb
+                        if (this.logDebug) this.emit('debug', `Prepare volume service lightbulb`);
                         this.volumeServiceLightbulb = accessory.addService(Service.Lightbulb, volumeServiceName, 'Lightbulb Speaker');
                         this.volumeServiceLightbulb.addOptionalCharacteristic(Characteristic.ConfiguredName);
                         this.volumeServiceLightbulb.setCharacteristic(Characteristic.ConfiguredName, volumeServiceName);
@@ -667,8 +773,69 @@ class OpenWebIfDevice extends EventEmitter {
                                 this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.Mute, !state);
                             });
                         break;
-                    case 2: //fan
-                        const debug1 = this.logDebug ? this.emit('debug', `Prepare volume service fan`) : false;
+                    case 5: // tv speaker + fan
+                        if (this.logDebug) this.emit('debug', `Prepare television speaker service`);
+                        this.volumeServiceTvSpeaker = accessory.addService(Service.TelevisionSpeaker, volumeServiceNameTv, 'TV Speaker');
+                        this.volumeServiceTvSpeaker.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                        this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.ConfiguredName, volumeServiceNameTv);
+                        this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Active)
+                            .onGet(async () => {
+                                const state = this.power;
+                                return state;
+                            })
+                            .onSet(async (state) => { });
+                        this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.VolumeControlType)
+                            .onGet(async () => {
+                                const state = 3;
+                                return state;
+                            });
+                        this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.VolumeSelector)
+                            .onSet(async (command) => {
+                                try {
+                                    switch (command) {
+                                        case Characteristic.VolumeSelector.INCREMENT:
+                                            command = '115';
+                                            break;
+                                        case Characteristic.VolumeSelector.DECREMENT:
+                                            command = '114';
+                                            break;
+                                    }
+
+                                    await this.openwebif.send(ApiUrls.SetRcCommand + command);
+                                    if (this.logInfo) this.emit('info', `set Volume Selector: ${command}`);
+                                } catch (error) {
+                                    if (this.logWarn) this.emit('warn', `set Volume Selector command error: ${error}`);
+                                }
+                            });
+                        this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Volume)
+                            .onGet(async () => {
+                                const volume = this.volume;
+                                return volume;
+                            })
+                            .onSet(async (value) => {
+                                try {
+                                    await this.openwebif.send(ApiUrls.SetVolume + value);
+                                    if (this.logInfo) this.emit('info', `set Volume: ${value}`);
+                                } catch (error) {
+                                    if (this.logWarn) this.emit('warn', `set Volume error: ${error}`);
+                                }
+                            });
+                        this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Mute)
+                            .onGet(async () => {
+                                const state = this.mute;
+                                return state;
+                            })
+                            .onSet(async (state) => {
+                                try {
+                                    await this.openwebif.send(ApiUrls.ToggleMute);
+                                    if (this.logInfo) this.emit('info', `set Mute: ${!state ? 'ON' : 'OFF'}`);
+                                } catch (error) {
+                                    if (this.logWarn) this.emit('warn', `set Mute error: ${error}`);
+                                }
+                            });
+
+                        // fan
+                        if (this.logDebug) this.emit('debug', `Prepare volume service fan`);
                         this.volumeServiceFan = accessory.addService(Service.Fan, volumeServiceName, 'Fan Speaker');
                         this.volumeServiceFan.addOptionalCharacteristic(Characteristic.ConfiguredName);
                         this.volumeServiceFan.setCharacteristic(Characteristic.ConfiguredName, volumeServiceName);
@@ -687,35 +854,6 @@ class OpenWebIfDevice extends EventEmitter {
                             })
                             .onSet(async (state) => {
                                 this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.Mute, !state);
-                            });
-                        break;
-                    case 3: // speaker
-                        const debug2 = this.logDebug ? this.emit('debug', `Prepare volume service speaker`) : false;
-                        this.volumeServiceSpeaker = accessory.addService(Service.Speaker, volumeServiceName, 'Speaker');
-                        this.volumeServiceSpeaker.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                        this.volumeServiceSpeaker.setCharacteristic(Characteristic.ConfiguredName, volumeServiceName);
-                        this.volumeServiceSpeaker.getCharacteristic(Characteristic.Mute)
-                            .onGet(async () => {
-                                const state = this.mute;
-                                return state;
-                            })
-                            .onSet(async (state) => {
-                                this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.Mute, state);
-                            });
-                        this.volumeServiceSpeaker.getCharacteristic(Characteristic.Active)
-                            .onGet(async () => {
-                                const state = this.power;
-                                return state;
-                            })
-                            .onSet(async (state) => {
-                            });
-                        this.volumeServiceSpeaker.getCharacteristic(Characteristic.Volume)
-                            .onGet(async () => {
-                                const volume = this.volume;
-                                return volume;
-                            })
-                            .onSet(async (value) => {
-                                this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.Volume, value);
                             });
                         break;
                 }
@@ -826,18 +964,18 @@ class OpenWebIfDevice extends EventEmitter {
 
             //prepare sonsor service
             const possibleSensorInputsCount = 99 - this.accessory.services.length;
-            const maxSensorInputsCount = this.sensorsChannelsConfiguredCount >= possibleSensorInputsCount ? possibleSensorInputsCount : this.sensorsChannelsConfiguredCount;
+            const maxSensorInputsCount = this.sensorChannels.length >= possibleSensorInputsCount ? possibleSensorInputsCount : this.sensorChannels.length;
             if (maxSensorInputsCount > 0) {
                 this.sensorChannelsServices = [];
                 if (this.logDebug) this.emit('debug', `Prepare inputs sensors services`);
                 for (let i = 0; i < maxSensorInputsCount; i++) {
-                    const sensor = this.sensorsChannelsConfigured[i];
+                    const sensor = this.sensorChannels[i];
 
                     //get sensor name		
                     const name = sensor.name;
 
                     //get sensor name prefix
-                    const namePrefix = sensor.namePrefix || false;
+                    const namePrefix = sensor.namePrefix;
 
                     //get service type
                     const serviceType = sensor.serviceType;
@@ -861,12 +999,12 @@ class OpenWebIfDevice extends EventEmitter {
 
             //prepare buttons service
             const possibleButtonsCount = 99 - this.accessory.services.length;
-            const maxButtonsCount = this.buttonsConfiguredCount >= possibleButtonsCount ? possibleButtonsCount : this.buttonsConfiguredCount;
+            const maxButtonsCount = this.buttons.length >= possibleButtonsCount ? possibleButtonsCount : this.buttons.length;
             if (maxButtonsCount > 0) {
                 this.buttonServices = [];
                 if (this.logDebug) this.emit('debug', `Prepare buttons services`);
                 for (let i = 0; i < maxButtonsCount; i++) {
-                    const button = this.buttonsConfigured[i];
+                    const button = this.buttons[i];
 
                     //get button name
                     const name = button.name;
@@ -881,7 +1019,7 @@ class OpenWebIfDevice extends EventEmitter {
                     const command = mode === 1 ? button.command : button.powerCommand;
 
                     //get button name prefix
-                    const namePrefix = button.namePrefix || 0;
+                    const namePrefix = button.namePrefix;
 
                     //get service type
                     const serviceType = button.serviceType;
@@ -1019,32 +1157,29 @@ class OpenWebIfDevice extends EventEmitter {
                         }
                     }
 
-                    if (this.sensorsChannelsConfiguredCount > 0) {
-                        this.sensorsChannelsConfigured.forEach((sensor, i) => {
-                            const state = power ? sensor.reference === reference : false;
-                            sensor.state = state;
-                            const characteristicType = sensor.characteristicType;
-                            this.sensorChannelsServices?.[i]?.updateCharacteristic(characteristicType, state);
-                        });
-                    }
+                    for (let i = 0; i < this.sensorChannels.length; i++) {
+                        const sensor = this.sensorChannels[i];
+                        const state = power ? sensor.reference === reference : false;
+                        sensor.state = state;
+                        const characteristicType = sensor.characteristicType;
+                        this.sensorChannelsServices?.[i]?.updateCharacteristic(characteristicType, state);
+                    };
 
                     //inputs buttons
-                    if (this.inputButtonServices.length > 0) {
-                        this.inputButtonServices.forEach((button, i) => {
-                            const state = power ? button.reference === reference : false;
-                            button.state = state;
-                            this.inputButtonServices?.[i]?.updateCharacteristic(Characteristic.On, state);
-                        });
-                    }
+                    for (let i = 0; i < this.inputButtonServices.length; i++) {
+                        const button = this.inputButtonServices[i];
+                        const state = power ? button.reference === reference : false;
+                        button.state = state;
+                        this.inputButtonServices?.[i]?.updateCharacteristic(Characteristic.On, state);
+                    };
 
                     //buttons
-                    if (this.buttonsConfiguredCount > 0) {
-                        this.buttonsConfigured.forEach((button, i) => {
-                            const state = this.power ? (button.mode === 1 ? (button.command === 'MUTE' ? muteV : button.command === 'POWER' ? power : button.state) : button.reference === reference) : false;
-                            button.state = state;
-                            this.buttonServices?.[i]?.updateCharacteristic(Characteristic.On, state);
-                        });
-                    }
+                    for (let i = 0; i < this.buttons.length; i++) {
+                        const button = this.buttons[i];
+                        const state = this.power ? (button.mode === 1 ? (button.command === 'MUTE' ? muteV : button.command === 'POWER' ? power : button.state) : button.reference === reference) : false;
+                        button.state = state;
+                        this.buttonServices?.[i]?.updateCharacteristic(Characteristic.On, state);
+                    };
 
                     if (this.logInfo) {
                         this.emit('info', `Power: ${power ? 'ON' : 'OFF'}`);
