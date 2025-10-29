@@ -158,13 +158,13 @@ class OpenWebIfDevice extends EventEmitter {
             this.savedInputsTargetVisibility = await this.functions.readData(this.inputsTargetVisibilityFile, true) ?? {};
             if (this.logDebug) this.emit('debug', `Read saved Inputs Target Visibility: ${JSON.stringify(this.savedInputsTargetVisibility, null, 2)}`);
 
-            return true;
+            return this.savedInfo.adressMac;
         } catch (error) {
             throw new Error(`Prepare data for accessory error: ${error}`);
         }
     }
 
-     async startStopImpulseGenerator(state, timers = []) {
+    async startStopImpulseGenerator(state, timers = []) {
         try {
             //start impulse generator 
             await this.openwebif.impulseGenerator.state(state, timers)
