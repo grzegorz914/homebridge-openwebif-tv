@@ -213,7 +213,7 @@ class OpenWebIfDevice extends EventEmitter {
 
                 const inputReference = input.reference;
                 const savedName = this.savedInputsNames[inputReference] ?? input.name;
-                const sanitizedName = await this.sanitizeString(savedName);
+                const sanitizedName = await this.functions.sanitizeString(savedName);
                 const inputMode = input.mode ?? 0;
                 const inputDisplayType = input.displayType;
                 const inputDamePrefix = input.namePrefix;
@@ -264,7 +264,7 @@ class OpenWebIfDevice extends EventEmitter {
                     inputService.getCharacteristic(Characteristic.ConfiguredName)
                         .onSet(async (value) => {
                             try {
-                                value = await this.sanitizeString(value);
+                                value = await this.functions.sanitizeString(value);
                                 inputService.name = value;
                                 this.savedInputsNames[inputReference] = value;
                                 await this.functions.saveData(this.inputsNamesFile, this.savedInputsNames);
