@@ -1,6 +1,6 @@
-import { promises as fsPromises } from 'fs';
 import axios from 'axios';
 import EventEmitter from 'events';
+import Functions from './functions.js';
 import ImpulseGenerator from './impulsegenerator.js';
 import { ApiUrls } from './constants.js';
 
@@ -33,6 +33,7 @@ class OpenWebIf extends EventEmitter {
             }
         });
 
+        this.functions = new Functions();
         this.power = false;
         this.name = '';
         this.eventName = '';
@@ -69,17 +70,6 @@ class OpenWebIf extends EventEmitter {
             this.emit('error', `Inpulse generator error: ${error}`);
         } finally {
             this.locks[lockKey] = false;
-        }
-    }
-
-    async saveData(path, data) {
-        try {
-            data = JSON.stringify(data, null, 2);
-            await fsPromises.writeFile(path, data);
-            if (this.logDebug) this.emit('debug', `Saved data: ${data}`);
-            return true;
-        } catch (error) {
-            throw new Error(`Save data error: ${error}`);
         }
     }
 
@@ -140,7 +130,7 @@ class OpenWebIf extends EventEmitter {
             }
 
             // Save inputs
-            await this.saveData(this.inputsFile, channels);
+            await this.functions.saveData(this.inputsFile, channels);
 
             return channels;
         } catch (error) {
@@ -222,7 +212,7 @@ class OpenWebIf extends EventEmitter {
 
             // Save device info
             if (info.adressMac) {
-                await this.saveData(this.devInfoFile, info);
+                await this.functions.saveData(this.devInfoFile, info);
             }
 
             // Check channels

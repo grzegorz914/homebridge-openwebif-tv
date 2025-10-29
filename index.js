@@ -97,8 +97,8 @@ class OpenWebIfPlatform {
 									api.publishExternalAccessories(PluginName, [accessory]);
 									if (logLevel.success) log.success(`Device: ${host} ${name}, Published as external accessory.`);
 
-									await impulseGenerator.stop();
-									await deviceInstance.startImpulseGenerator();
+									await deviceInstance.startStopImpulseGenerator(true, [{ name: 'checkChannels', sampling: 60000 }, { name: 'checkState', sampling: this.refreshInterval }]);
+									await impulseGenerator.state(false);
 								}
 							} catch (error) {
 								if (logLevel.error) log.error(`Device: ${host} ${name}, Start impulse generator error: ${error.message ?? error}, trying again.`);
@@ -109,7 +109,7 @@ class OpenWebIfPlatform {
 						});
 
 					// start impulse generator
-					await impulseGenerator.start([{ name: 'start', sampling: 60000 }]);
+					await impulseGenerator.state(true, [{ name: 'start', sampling: 120000 }]);
 				} catch (error) {
 					if (logLevel.error) log.error(`Device: ${host} ${name}, Did finish launching error: ${error.message ?? error}`);
 				}

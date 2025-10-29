@@ -1,7 +1,7 @@
-import { promises as fsPromises } from 'fs';
 import EventEmitter from 'events';
 import Mqtt from './mqtt.js';
 import OpenWebIf from './openwebif.js';
+import Functions from './functions.js';
 import { ApiUrls, DiacriticsMap } from './constants.js';
 let Accessory, Characteristic, Service, Categories, Encode, AccessoryUUID;
 
@@ -51,6 +51,7 @@ class OpenWebIfDevice extends EventEmitter {
         this.mqttConnected = false;
 
         //inputs variable
+        this.functions = new Functions();
         this.inputIdentifier = 1;
 
         //sensors
@@ -76,46 +77,6 @@ class OpenWebIfDevice extends EventEmitter {
         this.mute = false;
         this.brightness = 0;
         this.playPause = false;
-    }
-
-    async saveData(path, data) {
-        try {
-            await fsPromises.writeFile(path, JSON.stringify(data, null, 2));
-            return true;
-        } catch (error) {
-            throw new Error(`Save data error: ${error}`);
-        }
-    }
-
-    async readData(path) {
-        try {
-            const data = await fsPromises.readFile(path);
-            return data;
-        } catch (error) {
-            throw new Error(`Read data error: ${error}`);
-        }
-    }
-
-    async sanitizeString(str) {
-        if (!str) return '';
-
-        // Replace diacritics using map
-        str = str.replace(/[^\u0000-\u007E]/g, ch => DiacriticsMap[ch] || ch);
-
-        // Replace separators between words with space
-        str = str.replace(/(\w)[.:;+\-\/]+(\w)/g, '$1 $2');
-
-        // Replace remaining standalone separators with space
-        str = str.replace(/[.:;+\-\/]/g, ' ');
-
-        // Remove remaining invalid characters (keep letters, digits, space, apostrophe)
-        str = str.replace(/[^A-Za-z0-9 ']/g, ' ');
-
-        // Collapse multiple spaces
-        str = str.replace(/\s+/g, ' ');
-
-        // Trim
-        return str.trim();
     }
 
     async externalIntegrations() {
@@ -182,35 +143,31 @@ class OpenWebIfDevice extends EventEmitter {
     async prepareDataForAccessory() {
         try {
             //read dev info from file
-            const savedInfo = await this.readData(this.devInfoFile);
-            this.savedInfo = savedInfo.toString().trim() !== '' ? JSON.parse(savedInfo) : {};
+            this.savedInfo = await this.functions.readData(this.devInfoFile, true) ?? {};
             if (this.logDebug) this.emit('debug', `Read saved Info: ${JSON.stringify(this.savedInfo, null, 2)}`);
 
             //read inputs file
-            const savedInputs = await this.readData(this.inputsFile);
-            this.savedInputs = savedInputs.toString().trim() !== '' ? JSON.parse(savedInputs) : [];
-            if (this.logDebug) this.emit('debug', `Read saved Inputs/Channels: ${JSON.stringify(this.savedInputs, null, 2)}`);
+            this.savedInputs = await this.functions.readData(this.inputsFile, true) ?? [];
+            if (!this.logDebug) this.emit('debug', `Read saved Inputs: ${JSON.stringify(this.savedInputs, null, 2)}`);
 
             //read inputs names from file
-            const savedNames = await this.readData(this.inputsNamesFile);
-            this.savedInputsNames = savedNames.toString().trim() !== '' ? JSON.parse(savedNames) : {};
-            if (this.logDebug) this.emit('debug', `Read saved Inputs/Channels: Names: ${JSON.stringify(this.savedInputsNames, null, 2)}`);
+            this.savedInputsNames = await this.functions.readData(this.inputsNamesFile, true) ?? {};
+            if (this.logDebug) this.emit('debug', `Read saved Inputs Names: ${JSON.stringify(this.savedInputsNames, null, 2)}`);
 
             //read inputs visibility from file
-            const savedInputsTargetVisibility = await this.readData(this.inputsTargetVisibilityFile);
-            this.savedInputsTargetVisibility = savedInputsTargetVisibility.toString().trim() !== '' ? JSON.parse(savedInputsTargetVisibility) : {};
-            if (this.logDebug) this.emit('debug', `Read saved Inputs/Channels: Target Visibility: ${JSON.stringify(this.savedInputsTargetVisibility, null, 2)}`);
+            this.savedInputsTargetVisibility = await this.functions.readData(this.inputsTargetVisibilityFile, true) ?? {};
+            if (this.logDebug) this.emit('debug', `Read saved Inputs Target Visibility: ${JSON.stringify(this.savedInputsTargetVisibility, null, 2)}`);
 
-            return this.savedInfo.adressMac;
+            return true;
         } catch (error) {
             throw new Error(`Prepare data for accessory error: ${error}`);
         }
     }
 
-    async startImpulseGenerator() {
+     async startStopImpulseGenerator(state, timers = []) {
         try {
             //start impulse generator 
-            await this.openwebif.impulseGenerator.start([{ name: 'checkChannels', sampling: 60000 }, { name: 'checkState', sampling: this.refreshInterval }]);
+            await this.openwebif.impulseGenerator.state(state, timers)
             return true;
         } catch (error) {
             throw new Error(`Impulse generator start error: ${error}`);
@@ -310,7 +267,7 @@ class OpenWebIfDevice extends EventEmitter {
                                 value = await this.sanitizeString(value);
                                 inputService.name = value;
                                 this.savedInputsNames[inputReference] = value;
-                                await this.saveData(this.inputsNamesFile, this.savedInputsNames);
+                                await this.functions.saveData(this.inputsNamesFile, this.savedInputsNames);
                                 if (this.logDebug) this.emit('debug', `Saved Input: ${input.name}, reference: ${inputReference}`);
                                 await this.displayOrder();
                             } catch (error) {
@@ -324,7 +281,7 @@ class OpenWebIfDevice extends EventEmitter {
                             try {
                                 inputService.visibility = state;
                                 this.savedInputsTargetVisibility[inputReference] = state;
-                                await this.saveData(this.inputsTargetVisibilityFile, this.savedInputsTargetVisibility);
+                                await this.functions.saveData(this.inputsTargetVisibilityFile, this.savedInputsTargetVisibility);
                                 if (this.logDebug) this.emit('debug', `Saved Input: ${input.name}, reference: ${inputReference}, target visibility: ${state ? 'HIDDEN' : 'SHOWN'}`);
                             } catch (error) {
                                 if (this.logWarn) this.emit('warn', `Save Target Visibility error: ${error}`);
