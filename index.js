@@ -59,6 +59,7 @@ class OpenWebIfPlatform {
 					log.info(`Device: ${host} ${name}, Config: ${JSON.stringify(safeConfig, null, 2)}`);
 				}
 
+				const refreshInterval = (device.refreshInterval ?? 5) * 1000;
 				const postFix = host.replace(/\./g, '');
 				const files = {
 					devInfo: `${prefDir}/devInfo_${postFix}`,
@@ -97,7 +98,7 @@ class OpenWebIfPlatform {
 									api.publishExternalAccessories(PluginName, [accessory]);
 									if (logLevel.success) log.success(`Device: ${host} ${name}, Published as external accessory.`);
 
-									await deviceInstance.startStopImpulseGenerator(true, [{ name: 'checkChannels', sampling: 60000 }, { name: 'checkState', sampling: this.refreshInterval }]);
+									await deviceInstance.startStopImpulseGenerator(true, [{ name: 'checkChannels', sampling: 60000 }, { name: 'checkState', sampling: refreshInterval }]);
 									await impulseGenerator.state(false);
 								}
 							} catch (error) {

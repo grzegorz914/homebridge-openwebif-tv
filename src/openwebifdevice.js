@@ -17,15 +17,10 @@ class OpenWebIfDevice extends EventEmitter {
         AccessoryUUID = api.hap.uuid;
 
         //device configuration
+        this.device = device;
         this.name = device.name;
-        this.host = device.host;
-        this.port = device.port;
-        this.auth = device.auth || {};
         this.displayType = device.displayType;
-        this.getInputsFromDevice = device.inputs?.getFromDevice || false;
         this.inputsDisplayOrder = device.inputs?.displayOrder || 0;
-        this.bouquets = device.inputs?.bouquets || [];
-        this.inputs = device.inputs?.channels || [];
         this.buttons = (device.buttons || []).filter(button => (button.displayType ?? 0) > 0);
         this.sensorPower = device.sensors?.power || false;
         this.sensorVolume = device.sensors?.volume || false;
@@ -39,7 +34,6 @@ class OpenWebIfDevice extends EventEmitter {
         this.logWarn = device.log?.warn || false;
         this.logDebug = device.log?.debug || false;
         this.infoButtonCommand = device.infoButtonCommand || '139';
-        this.refreshInterval = (device.refreshInterval ?? 5) * 1000;
         this.devInfoFile = devInfoFile;
         this.inputsFile = inputsFile;
         this.channelsFile = channelsFile;
@@ -333,9 +327,7 @@ class OpenWebIfDevice extends EventEmitter {
                     return state;
                 })
                 .onSet(async (state) => {
-                    if (this.power == state) {
-                        return;
-                    }
+                    if (!!state === this.power) return;
 
                     try {
                         const newState = state ? '4' : '5';
@@ -357,23 +349,12 @@ class OpenWebIfDevice extends EventEmitter {
                         }
 
                         if (!this.power) {
-                            if (this.inputIdentifier === activeIdentifier) {
-                                return;
-                            }
-
-                            if (this.logDebug) {
-                                this.emit('debug', `TV is off, deferring input switch to '${activeIdentifier}'`);
-                            }
-
-                            // Retry mechanism in the background
                             (async () => {
-                                for (let attempt = 0; attempt < 10; attempt++) {
+                                for (let attempt = 0; attempt < 20; attempt++) {
                                     await new Promise(resolve => setTimeout(resolve, 1500));
-                                    if (this.power) {
-                                        if (this.logDebug) {
-                                            this.emit('debug', `TV powered on, retrying input switch`);
-                                        }
-                                        this.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, activeIdentifier);
+                                    if (this.power && this.inputIdentifier !== activeIdentifier) {
+                                        if (this.logDebug) this.emit('debug', `TV powered on, retrying input switch`);
+                                        this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, activeIdentifier);
                                         break;
                                     }
                                 }
@@ -1031,19 +1012,7 @@ class OpenWebIfDevice extends EventEmitter {
     async start() {
         try {
             //openwebif client
-            this.openwebif = new OpenWebIf({
-                host: this.host,
-                port: this.port,
-                auth: this.auth,
-                inputs: this.inputs,
-                bouquets: this.bouquets,
-                getInputsFromDevice: this.getInputsFromDevice,
-                logWarn: this.logWarn,
-                logDebug: this.logDebug,
-                devInfoFile: this.devInfoFile,
-                inputsFile: this.inputsFile,
-                channelsFile: this.channelsFile
-            })
+            this.openwebif = new OpenWebIf(this.device, this.devInfoFile, this.inputsFile, this.channelsFile)
                 .on('deviceInfo', (info) => {
                     this.emit('devInfo', `-------- ${this.name} --------`);
                     this.emit('devInfo', `Manufacturer: ${info.manufacturer}`);

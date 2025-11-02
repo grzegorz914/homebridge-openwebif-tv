@@ -5,21 +5,21 @@ import ImpulseGenerator from './impulsegenerator.js';
 import { ApiUrls } from './constants.js';
 
 class OpenWebIf extends EventEmitter {
-    constructor(config) {
+    constructor(config, devInfoFile, inputsFile, channelsFile) {
         super();
         const host = config.host;
         const port = config.port;
-        const auth = config.auth.enable || false;;
-        const user = config.auth.user || '';
-        const passwd = config.auth.passwd || '';
-        this.inputs = config.inputs;
-        this.bouquets = config.bouquets;
-        this.getInputsFromDevice = config.getInputsFromDevice;
-        this.logWarn = config.logWarn;
-        this.logDebug = config.logDebug;
-        this.devInfoFile = config.devInfoFile;
-        this.channelsFile = config.channelsFile;
-        this.inputsFile = config.inputsFile;
+        const auth = config.auth?.enable || false;
+        const user = config.auth?.user;
+        const passwd = config.auth?.passwd;
+        this.getInputsFromDevice = config.inputs?.getFromDevice;
+        this.inputs = config.inputs?.channels || [];
+        this.bouquets = config.inputs?.bouquets || [];
+        this.logWarn = config.log?.warn;
+        this.logDebug = config.log?.debug;
+        this.devInfoFile = devInfoFile;
+        this.channelsFile = channelsFile;
+        this.inputsFile = inputsFile;
 
         const baseUrl = `http://${host}:${port}`;
         this.axiosInstance = axios.create({
@@ -55,7 +55,7 @@ class OpenWebIf extends EventEmitter {
                 await this.checkState();
             }))
             .on('state', (state) => {
-                this.emit('success', `Impulse generator ${state ? 'started' : 'stopped'}`);
+                this.emit(state ? 'success' : 'warn', `Impulse generator ${state ? 'started' : 'stopped'}`);
             });
     }
 
