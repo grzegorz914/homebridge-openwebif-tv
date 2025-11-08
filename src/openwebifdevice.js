@@ -171,28 +171,35 @@ class OpenWebIfDevice extends EventEmitter {
     async displayOrder() {
         try {
             const sortStrategies = {
-                1: (a, b) => a.name.localeCompare(b.name),      // A → Z
-                2: (a, b) => b.name.localeCompare(a.name),      // Z → A
+                1: (a, b) => a.name.localeCompare(b.name),
+                2: (a, b) => b.name.localeCompare(a.name),
                 3: (a, b) => a.reference.localeCompare(b.reference),
                 4: (a, b) => b.reference.localeCompare(a.reference),
             };
 
             const sortFn = sortStrategies[this.inputsDisplayOrder];
-            if (!sortFn) return;
 
-            // Sort inputs in memory
-            this.inputsServices.sort(sortFn);
+            // Sort only if a valid function exists
+            if (sortFn) {
+                this.inputsServices.sort(sortFn);
+            }
 
-            // Debug dump
+            // Debug
             if (this.logDebug) {
-                const orderDump = this.inputsServices.map(svc => ({ name: svc.name, reference: svc.reference, identifier: svc.identifier, }));
+                const orderDump = this.inputsServices.map(svc => ({
+                    name: svc.name,
+                    reference: svc.reference,
+                    identifier: svc.identifier,
+                }));
                 this.emit('debug', `Inputs display order:\n${JSON.stringify(orderDump, null, 2)}`);
             }
 
-            // Update DisplayOrder characteristic (base64 encoded)
+            // Always update DisplayOrder characteristic, even for "none"
             const displayOrder = this.inputsServices.map(svc => svc.identifier);
             const encodedOrder = Encode(1, displayOrder).toString('base64');
             this.televisionService.updateCharacteristic(Characteristic.DisplayOrder, encodedOrder);
+
+            return;
         } catch (error) {
             throw new Error(`Display order error: ${error}`);
         }
@@ -202,6 +209,8 @@ class OpenWebIfDevice extends EventEmitter {
         try {
             if (!this.inputsServices) return;
 
+            let updated = false;
+
             for (const input of inputs) {
                 if (this.inputsServices.length >= 85 && !remove) continue;
 
@@ -210,7 +219,7 @@ class OpenWebIfDevice extends EventEmitter {
                 const sanitizedName = await this.functions.sanitizeString(savedName);
                 const inputMode = input.mode ?? 0;
                 const inputDisplayType = input.displayType;
-                const inputDamePrefix = input.namePrefix;
+                const inputNamePrefix = input.namePrefix;
                 const inputVisibility = this.savedInputsTargetVisibility[inputReference] ?? 0;
 
                 if (remove) {
@@ -219,7 +228,7 @@ class OpenWebIfDevice extends EventEmitter {
                         if (this.logDebug) this.emit('debug', `Removing input: ${input.name}, reference: ${inputReference}`);
                         this.accessory.removeService(svc);
                         this.inputsServices = this.inputsServices.filter(s => s.reference !== inputReference);
-                        await this.displayOrder();
+                        updated = true;
                     }
                     continue;
                 }
@@ -233,6 +242,7 @@ class OpenWebIfDevice extends EventEmitter {
                             .updateCharacteristic(Characteristic.Name, sanitizedName)
                             .updateCharacteristic(Characteristic.ConfiguredName, sanitizedName);
                         if (this.logDebug) this.emit('debug', `Updated Input: ${input.name}, reference: ${inputReference}`);
+                        updated = true;
                     }
                 } else {
                     const identifier = this.inputsServices.length + 1;
@@ -242,7 +252,7 @@ class OpenWebIfDevice extends EventEmitter {
                     inputService.name = sanitizedName;
                     inputService.mode = inputMode;
                     inputService.displayType = inputDisplayType;
-                    inputService.namePrefix = inputDamePrefix;
+                    inputService.namePrefix = inputNamePrefix;
                     inputService.visibility = inputVisibility;
 
                     inputService
@@ -286,10 +296,13 @@ class OpenWebIfDevice extends EventEmitter {
                     this.televisionService.addLinkedService(inputService);
 
                     if (this.logDebug) this.emit('debug', `Added Input: ${input.name}, reference: ${inputReference}`);
+                    updated = true;
                 }
             }
 
-            await this.displayOrder();
+            // Only one time run
+            if (updated) await this.displayOrder();
+
             return true;
         } catch (error) {
             throw new Error(`Add/Remove/Update input error: ${error}`);

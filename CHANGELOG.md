@@ -10,6 +10,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - After update to v4.8.0 plugin need to be reconfigured first, in other case will crash!!!
 - After update to v4.0.0 MQTT config settings need to be updated
 
+## Warning
+
+- Do not use Homebridge UI > v5.5.0 because of break config.json
+
+## [4.8.17] - (08.11.2025)
+
+## Changes
+
+- stability and performance improvements
+- bump dependencies
+- config schema updated
+- cleanup
+
 ## [4.8.4] - (29.09.2025)
 
 ## Changes

@@ -13,8 +13,8 @@ class OpenWebIf extends EventEmitter {
         const user = config.auth?.user;
         const passwd = config.auth?.passwd;
         this.getInputsFromDevice = config.inputs?.getFromDevice;
-        this.inputs = config.inputs?.channels || [];
-        this.bouquets = config.inputs?.bouquets || [];
+        this.inputs = (config.inputs?.channels || []).filter(input => input.name && input.reference);
+        this.bouquets = (config.inputs?.bouquets || []).filter(bouquet => bouquet.name);
         this.logWarn = config.log?.warn;
         this.logDebug = config.log?.debug;
         this.devInfoFile = devInfoFile;
@@ -73,65 +73,52 @@ class OpenWebIf extends EventEmitter {
         }
     }
 
-    async prepareInputs(allChannels, bouquets, inputs, getInputsFromDevice) {
+    async prepareInputs(deviceChannels, bouquets, inputs, getInputsFromDevice) {
         try {
-            const bouquetChannelsArr = [];
+            const channels = [];
+
             if (getInputsFromDevice) {
+                const channelsMap = new Map(deviceChannels.map(channel => [channel.servicename, channel.subservices || []]));
+
                 for (const bouquet of bouquets) {
-                    const bouquetName = bouquet.name;
+                    const name = bouquet.name;
                     const displayType = bouquet.displayType ?? 0;
                     const namePrefix = bouquet.namePrefix ?? false;
 
-                    const bouquetChannels = allChannels.find(service => service.servicename === bouquetName);
+                    const subservices = channelsMap.get(name) || [];
+                    const validSubservices = subservices.filter(channel => channel.servicename && channel.servicereference);
 
-                    if (bouquetChannels) {
-                        for (const channel of bouquetChannels.subservices) {
-                            if (!channel?.servicename || !channel?.servicereference) continue;
-
-                            bouquetChannelsArr.push({
-                                name: channel.servicename,
-                                reference: channel.servicereference,
-                                mode: 1,
-                                displayType,
-                                namePrefix
-                            });
-                        }
-                    } else {
-                        if (this.logWarn) this.emit('warn', `Bouquet: ${bouquetName} was not found`);
+                    if (validSubservices.length === 0 && this.logWarn) {
+                        this.emit('warn', `No channels found in bouquet: ${name}`);
+                        continue;
                     }
+
+                    for (const channel of validSubservices) {
+                        channels.push({
+                            name: channel.servicename,
+                            reference: channel.servicereference,
+                            mode: 1,
+                            displayType,
+                            namePrefix
+                        });
+                    }
+                }
+            } else {
+                for (const input of inputs) {
+
+                    channels.push({
+                        name: input.name,
+                        reference: input.reference,
+                        mode: 1,
+                        displayType: input.displayType ?? 0,
+                        namePrefix: input.namePrefix ?? false
+                    });
                 }
             }
 
-            // Build final channels
-            const channelArr = [];
-            const channelsArr = !getInputsFromDevice ? inputs : bouquetChannelsArr;
-            for (const input of channelsArr) {
-                if (!input?.name || !input?.reference) continue;
+            if (this.logWarn && channels.length === 0) this.emit('warn', `No channels found`);
 
-                channelArr.push({
-                    name: input.name,
-                    reference: input.reference,
-                    mode: 1,
-                    displayType: input.displayType ?? 0,
-                    namePrefix: input.namePrefix ?? false
-                });
-            }
-
-            let channels = channelArr.length > 0 ? channelArr : false;
-            if (!channels) {
-                if (this.logWarn) this.emit('warn', `Found: 0 channels, adding 1 default channel`);
-                channels = [{
-                    name: "CNN HD",
-                    reference: "1:0:1:1C8A:1CE8:71:820000:0:0:0::CNN HD",
-                    mode: 1,
-                    displayType: 0,
-                    namePrefix: false
-                }];
-            }
-
-            // Save inputs
             await this.functions.saveData(this.inputsFile, channels);
-
             return channels;
         } catch (error) {
             throw new Error(`Get inputs error: ${error.message || error}`);
@@ -142,10 +129,10 @@ class OpenWebIf extends EventEmitter {
         try {
             // Get all channels
             const channelsInfo = this.getInputsFromDevice ? await this.axiosInstance(ApiUrls.GetAllServices) : false;
-            const allChannels = channelsInfo ? channelsInfo.data.services : [];
+            const deviceChannels = channelsInfo ? channelsInfo.data.services : [];
 
             // Prepare inputs
-            const inputs = await this.prepareInputs(allChannels, this.bouquets, this.inputs, this.getInputsFromDevice);
+            const inputs = await this.prepareInputs(deviceChannels, this.bouquets, this.inputs, this.getInputsFromDevice);
 
             // Emit inputs
             this.emit('addRemoveOrUpdateInput', inputs, false);

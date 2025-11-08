@@ -24,8 +24,8 @@
           "port": 80,
           "auth": {
             "enable": true,
-            "user": "",
-            "passwd": ""
+            "user": "user",
+            "passwd": "password"
           },
           "displayType": 2,
           "inputs": {
@@ -92,11 +92,10 @@
             "port": 1883,
             "clientId": "",
             "prefix": "",
-            "debug": false,
             "auth": {
               "enable": false,
-              "user": "",
-              "passwd": ""
+              "user": "user",
+              "passwd": "password"
             }
           }
         }
