@@ -74,10 +74,10 @@ class OpenWebIfDevice extends EventEmitter {
     }
 
     async externalIntegrations() {
-        try {
-            //mqtt client
-            const mqttEnabled = this.mqtt.enable || false;
-            if (mqttEnabled) {
+        //mqtt client
+        const mqttEnabled = this.mqtt.enable || false;
+        if (mqttEnabled) {
+            try {
                 this.mqtt1 = new Mqtt({
                     host: this.mqtt.host,
                     port: this.mqtt.port || 1883,
@@ -126,12 +126,12 @@ class OpenWebIfDevice extends EventEmitter {
                     .on('debug', (debug) => this.emit('debug', debug))
                     .on('warn', (warn) => this.emit('warn', warn))
                     .on('error', (error) => this.emit('error', error));
-            };
+            } catch (error) {
+                if (this.logWarn) this.emit('warn', `MQTT start error: ${error}`);
+            }
+        };
 
-            return true;
-        } catch (error) {
-            if (this.logWarn) this.emit('warn', `External integration start error: ${error}`);
-        }
+        return true;
     }
 
     async prepareDataForAccessory() {
@@ -1041,16 +1041,10 @@ class OpenWebIfDevice extends EventEmitter {
                 .on('addRemoveOrUpdateInput', async (inputs, remove) => {
                     await this.addRemoveOrUpdateInput(inputs, remove);
                 })
-                .on('stateChanged', (power, name, eventName, reference, volume, mute) => {
+                .on('stateChanged', async (power, name, eventName, reference, volume, mute) => {
                     const input = this.inputsServices?.find(input => input.reference === reference) ?? false;
                     const inputIdentifier = input ? input.identifier : this.inputIdentifier;
                     mute = power ? mute : true;
-
-                    this.inputIdentifier = inputIdentifier;
-                    this.power = power;
-                    this.reference = reference;
-                    this.volume = volume;
-                    this.mute = mute;
 
                     this.televisionService
                         ?.updateCharacteristic(Characteristic.Active, power)
@@ -1080,9 +1074,10 @@ class OpenWebIfDevice extends EventEmitter {
 
                     if (volume !== this.volume) {
                         for (let i = 0; i < 2; i++) {
-                            const state = power ? [true, false][i] : false;
-                            this.sensorVolumeService?.updateCharacteristic(Characteristic.ContactSensorState, state);
+                            const state = power ? (i === 0 ? true : false) : false;
                             this.sensorVolumeState = state;
+                            this.sensorVolumeService?.updateCharacteristic(Characteristic.ContactSensorState, state);
+                            await new Promise(resolve => setTimeout(resolve, 500));
                         }
                     }
 
@@ -1090,9 +1085,10 @@ class OpenWebIfDevice extends EventEmitter {
 
                     if (reference !== this.reference) {
                         for (let i = 0; i < 2; i++) {
-                            const state = power ? [true, false][i] : false;
-                            this.sensorChannelService?.updateCharacteristic(Characteristic.ContactSensorState, state);
+                            const state = power ? (i === 0 ? true : false) : false;
                             this.sensorChannelState = state;
+                            this.sensorChannelService?.updateCharacteristic(Characteristic.ContactSensorState, state);
+                            await new Promise(resolve => setTimeout(resolve, 500));
                         }
                     }
 
@@ -1120,6 +1116,11 @@ class OpenWebIfDevice extends EventEmitter {
                         this.buttonServices?.[i]?.updateCharacteristic(Characteristic.On, state);
                     };
 
+                    this.inputIdentifier = inputIdentifier;
+                    this.power = power;
+                    this.reference = reference;
+                    this.volume = volume;
+                    this.mute = mute;
                     if (this.logInfo) {
                         this.emit('info', `Power: ${power ? 'ON' : 'OFF'}`);
                         this.emit('info', `Channel Name: ${name}`);
