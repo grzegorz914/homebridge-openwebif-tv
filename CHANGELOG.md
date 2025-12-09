@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Do not use Homebridge UI > v5.5.0 because of break config.json
 
+## [4.8.19] - (09.12.2025)
+
+## Changes
+
+- moved to MQTT v5
+
 ## [4.8.17] - (08.11.2025)
 
 ## Changes
