@@ -161,8 +161,8 @@ class OpenWebIf extends EventEmitter {
             const reference = devState.currservice_serviceref;
             const volume = devState.volume;
             const mute = devState.muted;
-            const recording = devState.isRecording;
-            const streaming = devState.isStreaming;
+            const recording = devState.isRecording === 'true';
+            const streaming = devState.isStreaming === 'true';
 
             //update only if value change
             if (power === this.power && name === this.name && eventName === this.eventName && reference === this.reference && volume === this.volume && mute === this.mute && recording === this.recording && streaming === this.streaming) return;

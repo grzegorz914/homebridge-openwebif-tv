@@ -1110,8 +1110,8 @@ class OpenWebIfDevice extends EventEmitter {
                     }
 
                     this.sensorMuteService?.updateCharacteristic(Characteristic.ContactSensorState, power ? mute : false);
-                    this.sensorRecordingService?.updateCharacteristic(Characteristic.ContactSensorState, power ? recording : false);
-                    this.sensorStreamingService?.updateCharacteristic(Characteristic.ContactSensorState, power ? streaming : false);
+                    this.sensorRecordingService?.updateCharacteristic(Characteristic.ContactSensorState, recording);
+                    this.sensorStreamingService?.updateCharacteristic(Characteristic.ContactSensorState, streaming);
 
                     if (reference !== this.reference) {
                         for (let i = 0; i < 2; i++) {
