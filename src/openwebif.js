@@ -40,6 +40,8 @@ class OpenWebIf extends EventEmitter {
         this.reference = '';
         this.volume = 0;
         this.mute = false;
+        this.recording = false;
+        this.streaming = false;
         this.devInfo = {};
 
         //lock flags
@@ -159,9 +161,11 @@ class OpenWebIf extends EventEmitter {
             const reference = devState.currservice_serviceref;
             const volume = devState.volume;
             const mute = devState.muted;
+            const recording = devState.isRecording;
+            const streaming = devState.isStreaming;
 
             //update only if value change
-            if (power === this.power && name === this.name && eventName === this.eventName && reference === this.reference && volume === this.volume && mute === this.mute) return;
+            if (power === this.power && name === this.name && eventName === this.eventName && reference === this.reference && volume === this.volume && mute === this.mute && recording === this.recording && streaming === this.streaming) return;
 
             this.power = power;
             this.name = name;
@@ -169,9 +173,11 @@ class OpenWebIf extends EventEmitter {
             this.reference = reference;
             this.volume = volume;
             this.mute = mute;
+            this.recording = recording;
+            this.streaming = streaming;
 
             //emit state changed
-            this.emit('stateChanged', power, name, eventName, reference, volume, mute);
+            this.emit('stateChanged', power, name, eventName, reference, volume, mute, recording, streaming);
 
             return true;
         } catch (error) {

@@ -25,6 +25,8 @@ class OpenWebIfDevice extends EventEmitter {
         this.sensorPower = device.sensors?.power || false;
         this.sensorVolume = device.sensors?.volume || false;
         this.sensorMute = device.sensors?.mute || false;
+        this.sensorRecording = device.sensors?.recording || false;
+        this.sensorStreaming = device.sensors?.streaming || false;
         this.sensorChannel = device.sensors?.channel || false;
         this.sensorChannels = (device.sensors?.channels || []).filter(sensor => (sensor.displayType ?? 0) > 0);
         this.volumeControl = device.volume?.displayType || false;
@@ -69,6 +71,8 @@ class OpenWebIfDevice extends EventEmitter {
         this.reference = '';
         this.volume = 0;
         this.mute = false;
+        this.recording = false;
+        this.streaming = false;
         this.brightness = 0;
         this.playPause = false;
     }
@@ -847,6 +851,30 @@ class OpenWebIfDevice extends EventEmitter {
                     });
             }
 
+            if (this.sensorRecording) {
+                if (this.logDebug) this.emit('debug', `Prepare recording sensor service`);
+                this.sensorRecordingService = accessory.addService(Service.ContactSensor, `${accessoryName} Recording Sensor`, `Recording Sensor`);
+                this.sensorRecordingService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                this.sensorRecordingService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Recording Sensor`);
+                this.sensorRecordingService.getCharacteristic(Characteristic.ContactSensorState)
+                    .onGet(async () => {
+                        const state = this.recording;
+                        return state;
+                    });
+            }
+
+            if (this.sensorStreaming) {
+                if (this.logDebug) this.emit('debug', `Prepare streaming sensor service`);
+                this.sensorStreamingService = accessory.addService(Service.ContactSensor, `${accessoryName} Streaming Sensor`, `Streaming Sensor`);
+                this.sensorStreamingService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                this.sensorStreamingService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Streaming Sensor`);
+                this.sensorStreamingService.getCharacteristic(Characteristic.ContactSensorState)
+                    .onGet(async () => {
+                        const state = this.streaming;
+                        return state;
+                    });
+            }
+
             if (this.sensorChannel) {
                 if (this.logDebug) this.emit('debug', `Prepare input sensor service`);
                 this.sensorChannelService = accessory.addService(Service.ContactSensor, `${accessoryName} Input Sensor`, `Input Sensor`);
@@ -1041,7 +1069,7 @@ class OpenWebIfDevice extends EventEmitter {
                 .on('addRemoveOrUpdateInput', async (inputs, remove) => {
                     await this.addRemoveOrUpdateInput(inputs, remove);
                 })
-                .on('stateChanged', async (power, name, eventName, reference, volume, mute) => {
+                .on('stateChanged', async (power, name, eventName, reference, volume, mute, recording, streaming) => {
                     const input = this.inputsServices?.find(input => input.reference === reference) ?? false;
                     const inputIdentifier = input ? input.identifier : this.inputIdentifier;
                     mute = power ? mute : true;
@@ -1082,6 +1110,8 @@ class OpenWebIfDevice extends EventEmitter {
                     }
 
                     this.sensorMuteService?.updateCharacteristic(Characteristic.ContactSensorState, power ? mute : false);
+                    this.sensorRecordingService?.updateCharacteristic(Characteristic.ContactSensorState, power ? recording : false);
+                    this.sensorStreamingService?.updateCharacteristic(Characteristic.ContactSensorState, power ? streaming : false);
 
                     if (reference !== this.reference) {
                         for (let i = 0; i < 2; i++) {
@@ -1121,6 +1151,8 @@ class OpenWebIfDevice extends EventEmitter {
                     this.reference = reference;
                     this.volume = volume;
                     this.mute = mute;
+                    this.recording = recording;
+                    this.streaming = streaming;
                     if (this.logInfo) {
                         this.emit('info', `Power: ${power ? 'ON' : 'OFF'}`);
                         this.emit('info', `Channel Name: ${name}`);
@@ -1128,6 +1160,8 @@ class OpenWebIfDevice extends EventEmitter {
                         this.emit('info', `Reference: ${reference}`);
                         this.emit('info', `Volume: ${volume}%`);
                         this.emit('info', `Mute: ${mute ? 'ON' : 'OFF'}`);
+                        this.emit('info', `Recording: ${recording ? 'ON' : 'OFF'}`);
+                        this.emit('info', `Streaming: ${streaming ? 'ON' : 'OFF'}`);
                         this.emit('info', `Closed Captions: 0`);
                         this.emit('info', `Media State: ${['PLAY', 'PAUSE', 'STOPPED', 'LOADING', 'INTERRUPTED'][2]}`);
                     }

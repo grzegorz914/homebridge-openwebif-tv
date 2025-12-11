@@ -713,25 +713,37 @@
                   "title": "Power",
                   "type": "boolean",
                   "default": false,
-                  "description": "This expose Power as a Motion Sensor."
+                  "description": "This expose Power as a Contact Sensor."
                 },
                 "volume": {
                   "title": "Volume",
                   "type": "boolean",
                   "default": false,
-                  "description": "This expose Volume as a Motion Sensor to use with automations."
+                  "description": "This expose Volume as a Contact Sensor to use with automations."
                 },
                 "mute": {
                   "title": "Mute",
                   "type": "boolean",
                   "default": false,
-                  "description": "This expose Mute as a Motion Sensor to use with automations."
+                  "description": "This expose Mute as a Contact Sensor to use with automations."
+                },
+                "recording": {
+                  "title": "Recording",
+                  "type": "boolean",
+                  "default": false,
+                  "description": "This expose Recording as a Contact Sensor to use with automations."
+                },
+                "streaming": {
+                  "title": "Streaming",
+                  "type": "boolean",
+                  "default": false,
+                  "description": "This expose Streaming as a Contact Sensor to use with automations."
                 },
                 "channel": {
                   "title": "Channel",
                   "type": "boolean",
                   "default": false,
-                  "description": "This expose Channel as a Motion Sensor to use with automations."
+                  "description": "This expose Channel as a Contact Sensor to use with automations."
                 },
                 "channels": {
                   "type": "array",
@@ -1213,6 +1225,8 @@
                     "devices[].sensors.power",
                     "devices[].sensors.volume",
                     "devices[].sensors.mute",
+                    "devices[].sensors.recording",
+                    "devices[].sensors.streaming",
                     "devices[].sensors.channel",
                     {
                       "key": "devices[].sensors",

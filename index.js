@@ -23,12 +23,9 @@ class OpenWebIfPlatform {
 
 		api.on('didFinishLaunching', async () => {
 			for (const device of config.devices) {
-				const displayType = device.displayType ?? 2;
-				if (displayType === 0) continue;
-
-				const { name, host, port } = device;
-				if (!name || !host || !port) {
-					log.warn(`Invalid config for device: Name: ${name || 'missing'}, Host: ${host || 'missing'}, Port: ${port || 'missing'}`);
+				const { name, host, port, displayType } = device;
+				if (!name || !host || !port || !displayType) {
+					log.warn(`Device: ${host || 'host missing'},  ${name || 'name missing'}, ${port || 'port missing'}${!displayType ? ', disply type disabled' : ''} in config, will not be published in the Home app`);
 					continue;
 				}
 

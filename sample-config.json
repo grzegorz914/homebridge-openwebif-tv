@@ -61,6 +61,8 @@
             "power": false,
             "volume": false,
             "mute": false,
+            "recording": false,
+            "streaming": false,
             "channel": false,
             "channels": [
               {

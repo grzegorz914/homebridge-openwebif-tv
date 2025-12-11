@@ -88,6 +88,8 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | `sensors.power`| If enabled, then the Power will be exposed as a `Contact Sensor`, fired if power ON. |
 | `sensors.volume`| If enabled, then the Volume will be exposed as a `Contact Sensor`, fired on every Volume change. |
 | `sensors.mute`| If enabled, then the Mute will be exposed as a `Contact Sensor`, fired if Mmute ON. |
+| `sensors.recording`| If enabled, then the Recording will be exposed as a `Contact Sensor`, fired if Record ON. |
+| `sensors.streaming`| If enabled, then the Streaming will be exposed as a `Contact Sensor`, fired if Stream ON. |
 | `sensors.channel`| If enabled, then the Channel will be exposed as a `Contact Sensor`, fired on every Channel change. |
 | `sensors.channels[]` | Sensor channels array. |
 | `sensors.channels[].displayType` | Here select sensor type to be exposed in HomeKit app, possible `0 - None/Disabled`, `1 - Motion Sensor`, `2 - Occupancy Sensor`, `3 - Contact Sensor`. |
