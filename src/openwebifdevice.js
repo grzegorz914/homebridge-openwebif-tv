@@ -1104,7 +1104,7 @@ class OpenWebIfDevice extends EventEmitter {
                     this.mute = mute;
                     this.recording = recording;
                     this.streaming = streaming;
-                    if (!this.logInfo) {
+                    if (this.logInfo) {
                         this.emit('info', `Power: ${power ? 'ON' : 'OFF'}`);
                         this.emit('info', `Channel Name: ${name}`);
                         this.emit('info', `Event Name: ${eventName}`);
