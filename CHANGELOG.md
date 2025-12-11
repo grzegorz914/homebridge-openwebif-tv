@@ -7,12 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### NOTE
 
+- After update to v5.0.0 sensors need to be reconfigured!!!
 - After update to v4.8.0 plugin need to be reconfigured first, in other case will crash!!!
 - After update to v4.0.0 MQTT config settings need to be updated
 
 ## Warning
 
 - Do not use Homebridge UI > v5.5.0 because of break config.json
+
+## [5.0.0] - (11.12.2025)
+
+## Changes
+
+- after update to v5.0.0 sensors need to be reconfigured!!!
+- full refactor the sensor section code, now is possible to create multiple sensors of differrent types
+- config schema updated
+- redme updated
+- cleanup
 
 ## [4.9.0] - (11.12.2025)
 

@@ -706,119 +706,147 @@
               }
             },
             "sensors": {
-              "title": "Log",
-              "type": "object",
-              "properties": {
-                "power": {
-                  "title": "Power",
-                  "type": "boolean",
-                  "default": false,
-                  "description": "This expose Power as a Contact Sensor."
-                },
-                "volume": {
-                  "title": "Volume",
-                  "type": "boolean",
-                  "default": false,
-                  "description": "This expose Volume as a Contact Sensor to use with automations."
-                },
-                "mute": {
-                  "title": "Mute",
-                  "type": "boolean",
-                  "default": false,
-                  "description": "This expose Mute as a Contact Sensor to use with automations."
-                },
-                "recording": {
-                  "title": "Recording",
-                  "type": "boolean",
-                  "default": false,
-                  "description": "This expose Recording as a Contact Sensor to use with automations."
-                },
-                "streaming": {
-                  "title": "Streaming",
-                  "type": "boolean",
-                  "default": false,
-                  "description": "This expose Streaming as a Contact Sensor to use with automations."
-                },
-                "channel": {
-                  "title": "Channel",
-                  "type": "boolean",
-                  "default": false,
-                  "description": "This expose Channel as a Contact Sensor to use with automations."
-                },
-                "channels": {
-                  "type": "array",
-                  "items": {
-                    "title": "Channels",
-                    "type": "object",
-                    "description": "Here create Channels Sensors based on reference, sensor will active if switch to it.",
-                    "properties": {
-                      "displayType": {
-                        "title": "Display Type",
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 3,
-                        "default": 0,
-                        "anyOf": [
-                          {
-                            "title": "None/Disabled",
-                            "enum": [
-                              0
-                            ]
-                          },
-                          {
-                            "title": "Motion Sensor",
-                            "enum": [
-                              1
-                            ]
-                          },
-                          {
-                            "title": "Occupancy Sensor",
-                            "enum": [
-                              2
-                            ]
-                          },
-                          {
-                            "title": "Contact Sensor",
-                            "enum": [
-                              3
-                            ]
-                          }
-                        ],
-                        "description": "Here select sensor type to be exposed in HomeKit app."
+              "type": "array",
+              "items": {
+                "title": "Sensors",
+                "type": "object",
+                "properties": {
+                  "displayType": {
+                    "title": "Display Type",
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 3,
+                    "default": 0,
+                    "anyOf": [
+                      {
+                        "title": "None/Disabled",
+                        "enum": [
+                          0
+                        ]
                       },
-                      "name": {
-                        "title": "Name",
-                        "type": "string",
-                        "placeholder": "Name",
-                        "description": "Here set Your own name.",
-                        "condition": {
-                          "functionBody": "return model.devices[arrayIndices[0]].sensors.channels[arrayIndices[1]].displayType > 0;"
-                        }
+                      {
+                        "title": "Motion Sensor",
+                        "enum": [
+                          1
+                        ]
                       },
-                      "reference": {
-                        "title": "Reference",
-                        "type": "string",
-                        "placeholder": "Channel reference",
-                        "description": "Here set the Channel reference.",
-                        "condition": {
-                          "functionBody": "return model.devices[arrayIndices[0]].sensors.channels[arrayIndices[1]].displayType > 0;"
-                        }
+                      {
+                        "title": "Occupancy Sensor",
+                        "enum": [
+                          2
+                        ]
                       },
-                      "namePrefix": {
-                        "title": "Prefix",
-                        "type": "boolean",
-                        "default": false,
-                        "description": "Here enable/disable the accessory name as a prefix for sensor name.",
-                        "condition": {
-                          "functionBody": "return model.devices[arrayIndices[0]].sensors.channels[arrayIndices[1]].displayType > 0;"
-                        }
+                      {
+                        "title": "Contact Sensor",
+                        "enum": [
+                          3
+                        ]
                       }
-                    },
-                    "required": [
-                      "displayType"
-                    ]
+                    ],
+                    "description": "Here select sensor type to be exposed in HomeKit app."
+                  },
+                  "mode": {
+                    "title": "Mode",
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5,
+                    "default": 0,
+                    "anyOf": [
+                      {
+                        "title": "Channel",
+                        "enum": [
+                          0
+                        ]
+                      },
+                      {
+                        "title": "Power",
+                        "enum": [
+                          1
+                        ]
+                      },
+                      {
+                        "title": "Volume",
+                        "enum": [
+                          2
+                        ]
+                      },
+                      {
+                        "title": "Mute",
+                        "enum": [
+                          3
+                        ]
+                      },
+                      {
+                        "title": "Recording",
+                        "enum": [
+                          4
+                        ]
+                      },
+                      {
+                        "title": "Streaming",
+                        "enum": [
+                          5
+                        ]
+                      }
+                    ],
+                    "description": "Here select the sensor mode.",
+                    "condition": {
+                      "functionBody": "return model.devices[arrayIndices[0]].sensors[arrayIndices[1]].displayType > 0;"
+                    }
+                  },
+                  "name": {
+                    "title": "Name",
+                    "type": "string",
+                    "placeholder": "Name",
+                    "description": "Here set Your own name.",
+                    "condition": {
+                      "functionBody": "return model.devices[arrayIndices[0]].sensors[arrayIndices[1]].displayType > 0;"
+                    }
+                  },
+                  "reference": {
+                    "title": "Reference",
+                    "type": "string",
+                    "placeholder": "Channel reference",
+                    "description": "Here set the channel reference, fired if switch to this channel.",
+                    "condition": {
+                      "functionBody": "return model.devices[arrayIndices[0]].sensors[arrayIndices[1]].displayType > 0 && model.devices[arrayIndices[0]].sensors[arrayIndices[1]].mode === 0;"
+                    }
+                  },
+                  "pulse": {
+                    "title": "Pulse",
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Here enable/disable sensor pulse, sensor send pulse and fired on every value change.",
+                    "condition": {
+                      "functionBody": "return model.devices[arrayIndices[0]].sensors[arrayIndices[1]].displayType > 0;"
+                    }
+                  },
+                  "namePrefix": {
+                    "title": "Prefix",
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Here enable/disable the accessory name as a prefix for sensor name.",
+                    "condition": {
+                      "functionBody": "return model.devices[arrayIndices[0]].sensors[arrayIndices[1]].displayType > 0;"
+                    }
+                  },
+                  "level": {
+                    "title": "Level",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "multipleOf": 1,
+                    "default": 100,
+                    "description": "Here set the level between 0-100% at which the sensor fired.",
+                    "condition": {
+                      "functionBody": "return model.devices[arrayIndices[0]].sensors[arrayIndices[1]].displayType > 0 && model.devices[arrayIndices[0]].sensors[arrayIndices[1]].pulse === false && model.devices[arrayIndices[0]].sensors[arrayIndices[1]].mode === 2;"
+                    }
                   }
-                }
+                },
+                "required": [
+                  "displayType",
+                  "mode"
+                ]
               }
             },
             "volume": {
@@ -905,27 +933,27 @@
                   "description": "This enable logging device info by every connections device to the network."
                 },
                 "success": {
-                  "title": "Log Success",
+                  "title": "Success",
                   "type": "boolean",
                   "default": true
                 },
                 "info": {
-                  "title": "Log Info",
+                  "title": "Info",
                   "type": "boolean",
                   "default": false
                 },
                 "warn": {
-                  "title": "Log Warn",
+                  "title": "Warn",
                   "type": "boolean",
                   "default": true
                 },
                 "error": {
-                  "title": "Log Error",
+                  "title": "Error",
                   "type": "boolean",
                   "default": true
                 },
                 "debug": {
-                  "title": "Log Debug",
+                  "title": "Debug",
                   "type": "boolean",
                   "default": false
                 }
@@ -1219,33 +1247,21 @@
                   ]
                 },
                 {
-                  "key": "devices[].sensors",
+                  "key": "devices[]",
                   "title": "Sensors",
                   "items": [
-                    "devices[].sensors.power",
-                    "devices[].sensors.volume",
-                    "devices[].sensors.mute",
-                    "devices[].sensors.recording",
-                    "devices[].sensors.streaming",
-                    "devices[].sensors.channel",
                     {
                       "key": "devices[].sensors",
-                      "type": "section",
-                      "title": "Channels",
-                      "expandable": true,
-                      "expanded": false,
+                      "type": "tabarray",
+                      "title": "{{ value.name || 'sensor' }}",
                       "items": [
-                        {
-                          "key": "devices[].sensors.channels",
-                          "type": "tabarray",
-                          "title": "{{ value.name || 'sensor' }}",
-                          "items": [
-                            "devices[].sensors.channels[].displayType",
-                            "devices[].sensors.channels[].name",
-                            "devices[].sensors.channels[].reference",
-                            "devices[].sensors.channels[].namePrefix"
-                          ]
-                        }
+                        "devices[].sensors[].displayType",
+                        "devices[].sensors[].mode",
+                        "devices[].sensors[].name",
+                        "devices[].sensors[].reference",
+                        "devices[].sensors[].pulse",
+                        "devices[].sensors[].namePrefix",
+                        "devices[].sensors[].level"
                       ]
                     }
                   ]

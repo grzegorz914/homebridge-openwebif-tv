@@ -22,13 +22,7 @@ class OpenWebIfDevice extends EventEmitter {
         this.displayType = device.displayType;
         this.inputsDisplayOrder = device.inputs?.displayOrder || 0;
         this.buttons = (device.buttons || []).filter(button => (button.displayType ?? 0) > 0);
-        this.sensorPower = device.sensors?.power || false;
-        this.sensorVolume = device.sensors?.volume || false;
-        this.sensorMute = device.sensors?.mute || false;
-        this.sensorRecording = device.sensors?.recording || false;
-        this.sensorStreaming = device.sensors?.streaming || false;
-        this.sensorChannel = device.sensors?.channel || false;
-        this.sensorChannels = (device.sensors?.channels || []).filter(sensor => (sensor.displayType ?? 0) > 0);
+        this.sensors = (device.sensors || []).filter(sensor => (sensor.displayType ?? 0) > 0 && sensor.mode >= 0);
         this.volumeControl = device.volume?.displayType || false;
         this.volumeControlName = device.volume?.name || 'Volume';
         this.volumeControlNamePrefix = device.volume?.namePrefix || false;
@@ -51,8 +45,7 @@ class OpenWebIfDevice extends EventEmitter {
         this.inputIdentifier = 1;
 
         //sensors
-        for (const sensor of this.sensorChannels) {
-            sensor.name = sensor.name || 'Sensor Input';
+        for (const sensor of this.sensors) {
             sensor.serviceType = ['', Service.MotionSensor, Service.OccupancySensor, Service.ContactSensor][sensor.displayType];
             sensor.characteristicType = ['', Characteristic.MotionDetected, Characteristic.OccupancyDetected, Characteristic.ContactSensorState][sensor.displayType];
             sensor.state = false;
@@ -60,7 +53,6 @@ class OpenWebIfDevice extends EventEmitter {
 
         //buttons
         for (const button of this.buttons) {
-            button.name = button.name || 'Button';
             button.reference = [button.reference, button.command, button.powerCommand][button.mode];
             button.serviceType = ['', Service.Outlet, Service.Switch][button.displayType];
             button.state = false;
@@ -146,7 +138,7 @@ class OpenWebIfDevice extends EventEmitter {
 
             //read inputs file
             this.savedInputs = await this.functions.readData(this.inputsFile, true) ?? [];
-            if (!this.logDebug) this.emit('debug', `Read saved Inputs: ${JSON.stringify(this.savedInputs, null, 2)}`);
+            if (this.logDebug) this.emit('debug', `Read saved Inputs: ${JSON.stringify(this.savedInputs, null, 2)}`);
 
             //read inputs names from file
             this.savedInputsNames = await this.functions.readData(this.inputsNamesFile, true) ?? {};
@@ -814,79 +806,6 @@ class OpenWebIfDevice extends EventEmitter {
                 }
             }
 
-            //prepare sensor service
-            if (this.sensorPower) {
-                if (this.logDebug) this.emit('debug', `Prepare power sensor service`);
-                this.sensorPowerService = accessory.addService(Service.ContactSensor, `${accessoryName} Power Sensor`, `Power Sensor`);
-                this.sensorPowerService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                this.sensorPowerService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Power Sensor`);
-                this.sensorPowerService.getCharacteristic(Characteristic.ContactSensorState)
-                    .onGet(async () => {
-                        const state = this.power;
-                        return state;
-                    });
-            }
-
-            if (this.sensorVolume) {
-                if (this.logDebug) this.emit('debug', `Prepare volume sensor service`);
-                this.sensorVolumeService = accessory.addService(Service.ContactSensor, `${accessoryName} Volume Sensor`, `Volume Sensor`);
-                this.sensorVolumeService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                this.sensorVolumeService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Volume Sensor`);
-                this.sensorVolumeService.getCharacteristic(Characteristic.ContactSensorState)
-                    .onGet(async () => {
-                        const state = this.sensorVolumeState;
-                        return state;
-                    });
-            }
-
-            if (this.sensorMute) {
-                if (this.logDebug) this.emit('debug', `Prepare mute sensor service`);
-                this.sensorMuteService = accessory.addService(Service.ContactSensor, `${accessoryName} Mute Sensor`, `Mute Sensor`);
-                this.sensorMuteService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                this.sensorMuteService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Mute Sensor`);
-                this.sensorMuteService.getCharacteristic(Characteristic.ContactSensorState)
-                    .onGet(async () => {
-                        const state = this.mute;
-                        return state;
-                    });
-            }
-
-            if (this.sensorRecording) {
-                if (this.logDebug) this.emit('debug', `Prepare recording sensor service`);
-                this.sensorRecordingService = accessory.addService(Service.ContactSensor, `${accessoryName} Recording Sensor`, `Recording Sensor`);
-                this.sensorRecordingService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                this.sensorRecordingService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Recording Sensor`);
-                this.sensorRecordingService.getCharacteristic(Characteristic.ContactSensorState)
-                    .onGet(async () => {
-                        const state = this.recording;
-                        return state;
-                    });
-            }
-
-            if (this.sensorStreaming) {
-                if (this.logDebug) this.emit('debug', `Prepare streaming sensor service`);
-                this.sensorStreamingService = accessory.addService(Service.ContactSensor, `${accessoryName} Streaming Sensor`, `Streaming Sensor`);
-                this.sensorStreamingService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                this.sensorStreamingService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Streaming Sensor`);
-                this.sensorStreamingService.getCharacteristic(Characteristic.ContactSensorState)
-                    .onGet(async () => {
-                        const state = this.streaming;
-                        return state;
-                    });
-            }
-
-            if (this.sensorChannel) {
-                if (this.logDebug) this.emit('debug', `Prepare input sensor service`);
-                this.sensorChannelService = accessory.addService(Service.ContactSensor, `${accessoryName} Input Sensor`, `Input Sensor`);
-                this.sensorChannelService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                this.sensorChannelService.setCharacteristic(Characteristic.ConfiguredName, `${accessoryName} Input Sensor`);
-                this.sensorChannelService.getCharacteristic(Characteristic.ContactSensorState)
-                    .onGet(async () => {
-                        const state = this.sensorChannelState;
-                        return state;
-                    });
-            }
-
             //prepare inputs switch sensor service
             const possibleInputsButtonsCount = 99 - this.accessory.services.length;
             const maxInputsSwitchesButtonsCount = this.inputsServices.length >= possibleInputsButtonsCount ? possibleInputsButtonsCount : this.inputsServices.length;
@@ -897,7 +816,7 @@ class OpenWebIfDevice extends EventEmitter {
                     const button = this.inputsServices[i];
 
                     //get switch name		
-                    const name = button.name;
+                    const name = button.name || `Button ${i}`;
 
                     //get switch reference
                     const reference = encodeURIComponent(button.reference);
@@ -942,16 +861,16 @@ class OpenWebIfDevice extends EventEmitter {
             }
 
             //prepare sonsor service
-            const possibleSensorInputsCount = 99 - this.accessory.services.length;
-            const maxSensorInputsCount = this.sensorChannels.length >= possibleSensorInputsCount ? possibleSensorInputsCount : this.sensorChannels.length;
-            if (maxSensorInputsCount > 0) {
-                this.sensorChannelsServices = [];
+            const possibleSensorCount = 99 - this.accessory.services.length;
+            const maxSensorCount = this.sensors.length >= possibleSensorCount ? possibleSensorCount : this.sensors.length;
+            if (maxSensorCount > 0) {
+                this.sensorServices = [];
                 if (this.logDebug) this.emit('debug', `Prepare inputs sensors services`);
-                for (let i = 0; i < maxSensorInputsCount; i++) {
-                    const sensor = this.sensorChannels[i];
+                for (let i = 0; i < maxSensorCount; i++) {
+                    const sensor = this.sensors[i];
 
                     //get sensor name		
-                    const name = sensor.name;
+                    const name = sensor.name || `Sensor ${i}`;
 
                     //get sensor name prefix
                     const namePrefix = sensor.namePrefix;
@@ -963,16 +882,16 @@ class OpenWebIfDevice extends EventEmitter {
                     const characteristicType = sensor.characteristicType;
 
                     const serviceName = namePrefix ? `${accessoryName} ${name}` : name;
-                    const sensorChannelsService = new serviceType(serviceName, `Sensor ${i}`);
-                    sensorChannelsService.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                    sensorChannelsService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
-                    sensorChannelsService.getCharacteristic(characteristicType)
+                    const sensorService = new serviceType(serviceName, `Sensor ${i}`);
+                    sensorService.addOptionalCharacteristic(Characteristic.ConfiguredName);
+                    sensorService.setCharacteristic(Characteristic.ConfiguredName, serviceName);
+                    sensorService.getCharacteristic(characteristicType)
                         .onGet(async () => {
                             const state = sensor.state;
                             return state;
                         });
-                    this.sensorChannelsServices.push(sensorChannelsService);
-                    accessory.addService(sensorChannelsService);
+                    this.sensorServices.push(sensorService);
+                    accessory.addService(sensorService);
                 }
             }
 
@@ -986,7 +905,7 @@ class OpenWebIfDevice extends EventEmitter {
                     const button = this.buttons[i];
 
                     //get button name
-                    const name = button.name;
+                    const name = button.name || `Button ${i}`;
 
                     //get button mode
                     const mode = button.mode;
@@ -1083,7 +1002,7 @@ class OpenWebIfDevice extends EventEmitter {
                         .updateCharacteristic(Characteristic.Volume, volume)
                         .updateCharacteristic(Characteristic.Mute, mute);
 
-                    const muteV = this.power ? !mute : false;
+                    const muteV = power ? !mute : false;
                     this.volumeServiceLightbulb
                         ?.updateCharacteristic(Characteristic.Brightness, volume)
                         .updateCharacteristic(Characteristic.On, muteV);
@@ -1097,38 +1016,70 @@ class OpenWebIfDevice extends EventEmitter {
                         .updateCharacteristic(Characteristic.Volume, volume)
                         .updateCharacteristic(Characteristic.Mute, mute);
 
-                    //sensors
-                    this.sensorPowerService?.updateCharacteristic(Characteristic.ContactSensorState, power);
-
-                    if (volume !== this.volume) {
-                        for (let i = 0; i < 2; i++) {
-                            const state = power ? (i === 0 ? true : false) : false;
-                            this.sensorVolumeState = state;
-                            this.sensorVolumeService?.updateCharacteristic(Characteristic.ContactSensorState, state);
-                            await new Promise(resolve => setTimeout(resolve, 500));
-                        }
-                    }
-
-                    this.sensorMuteService?.updateCharacteristic(Characteristic.ContactSensorState, power ? mute : false);
-                    this.sensorRecordingService?.updateCharacteristic(Characteristic.ContactSensorState, recording);
-                    this.sensorStreamingService?.updateCharacteristic(Characteristic.ContactSensorState, streaming);
-
-                    if (reference !== this.reference) {
-                        for (let i = 0; i < 2; i++) {
-                            const state = power ? (i === 0 ? true : false) : false;
-                            this.sensorChannelState = state;
-                            this.sensorChannelService?.updateCharacteristic(Characteristic.ContactSensorState, state);
-                            await new Promise(resolve => setTimeout(resolve, 500));
-                        }
-                    }
-
-                    for (let i = 0; i < this.sensorChannels.length; i++) {
-                        const sensor = this.sensorChannels[i];
-                        const state = power ? sensor.reference === reference : false;
-                        sensor.state = state;
-                        const characteristicType = sensor.characteristicType;
-                        this.sensorChannelsServices?.[i]?.updateCharacteristic(characteristicType, state);
+                    // sensors
+                    const currentStateModeMap = {
+                        0: reference,
+                        1: power,
+                        2: volume,
+                        3: mute,
+                        4: recording,
+                        5: streaming
                     };
+
+                    const previousStateModeMap = {
+                        0: this.reference,
+                        1: this.power,
+                        2: this.volume,
+                        3: this.mute,
+                        4: this.recording,
+                        5: this.streaming
+                    };
+
+                    for (let i = 0; i < this.sensors.length; i++) {
+                        let state = false;
+
+                        const sensor = this.sensors[i];
+                        const currentValue = currentStateModeMap[sensor.mode];
+                        const previousValue = previousStateModeMap[sensor.mode];
+                        const pulse = sensor.pulse;
+                        const reference = sensor.reference;
+                        const level = sensor.level;
+                        const characteristicType = sensor.characteristicType;
+
+                        // modes >= 4 are independent from main power
+                        const isActiveMode = power || sensor.mode >= 4;
+                        if (pulse && currentValue !== previousValue) {
+                            for (let step = 0; step < 2; step++) {
+                                state = isActiveMode ? (step === 0) : false;
+                                sensor.state = state;
+                                this.sensorServices?.[i]?.updateCharacteristic(characteristicType, state);
+                                await new Promise(resolve => setTimeout(resolve, 500));
+                            }
+
+                        } else {
+                            if (isActiveMode) {
+                                switch (sensor.mode) {
+                                    case 0: // reference mode
+                                        state = currentValue === reference;
+                                        break;
+                                    case 2: // volume mode
+                                        state = currentValue === level;
+                                        break;
+                                    case 1: // power
+                                    case 3: // mute
+                                    case 4: // recording
+                                    case 5: // streaming
+                                        state = currentValue === true;
+                                        break;
+                                    default:
+                                        state = false;
+                                }
+                            }
+
+                            sensor.state = state;
+                            this.sensorServices?.[i]?.updateCharacteristic(characteristicType, state);
+                        }
+                    }
 
                     //inputs buttons
                     for (let i = 0; i < this.inputButtonServices.length; i++) {
@@ -1153,7 +1104,7 @@ class OpenWebIfDevice extends EventEmitter {
                     this.mute = mute;
                     this.recording = recording;
                     this.streaming = streaming;
-                    if (this.logInfo) {
+                    if (!this.logInfo) {
                         this.emit('info', `Power: ${power ? 'ON' : 'OFF'}`);
                         this.emit('info', `Channel Name: ${name}`);
                         this.emit('info', `Event Name: ${eventName}`);
