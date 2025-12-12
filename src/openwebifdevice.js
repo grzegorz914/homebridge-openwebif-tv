@@ -22,7 +22,7 @@ class OpenWebIfDevice extends EventEmitter {
         this.displayType = device.displayType;
         this.inputsDisplayOrder = device.inputs?.displayOrder || 0;
         this.buttons = (device.buttons ?? []).filter(button => (button.displayType ?? 0) > 0);
-        this.sensors = (device.sensors ?? []).filter(sensor => (sensor.displayType ?? 0) > 0 && (sensor.mode ?? -1) >= 0);
+        this.sensors = Array.isArray(device.sensors) ? (device.sensors ?? []).filter(sensor => (sensor.displayType ?? 0) > 0 && (sensor.mode ?? -1) >= 0) : [];
         this.volumeControl = device.volume?.displayType || false;
         this.volumeControlName = device.volume?.name || 'Volume';
         this.volumeControlNamePrefix = device.volume?.namePrefix || false;
