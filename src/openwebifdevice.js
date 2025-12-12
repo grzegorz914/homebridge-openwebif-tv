@@ -21,8 +21,8 @@ class OpenWebIfDevice extends EventEmitter {
         this.name = device.name;
         this.displayType = device.displayType;
         this.inputsDisplayOrder = device.inputs?.displayOrder || 0;
-        this.buttons = (device.buttons || []).filter(button => (button.displayType ?? 0) > 0);
-        this.sensors = (device.sensors || []).filter(sensor => (sensor.displayType ?? 0) > 0 && sensor.mode >= 0);
+        this.buttons = (device.buttons ?? []).filter(button => (button.displayType ?? 0) > 0);
+        this.sensors = (device.sensors ?? []).filter(sensor => (sensor.displayType ?? 0) > 0 && (sensor.mode ?? -1) >= 0);
         this.volumeControl = device.volume?.displayType || false;
         this.volumeControlName = device.volume?.name || 'Volume';
         this.volumeControlNamePrefix = device.volume?.namePrefix || false;
@@ -971,7 +971,7 @@ class OpenWebIfDevice extends EventEmitter {
     async start() {
         try {
             //openwebif client
-            this.openwebif = new OpenWebIf(this.device, this.devInfoFile, this.inputsFile, this.channelsFile)
+            this.openwebif = new OpenWebIf(this.device, this.devInfoFile, this.inputsFile, this.channelsFile, this.mqtt.enable)
                 .on('deviceInfo', (info) => {
                     this.emit('devInfo', `-------- ${this.name} --------`);
                     this.emit('devInfo', `Manufacturer: ${info.manufacturer}`);

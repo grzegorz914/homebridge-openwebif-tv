@@ -5,7 +5,7 @@ import ImpulseGenerator from './impulsegenerator.js';
 import { ApiUrls } from './constants.js';
 
 class OpenWebIf extends EventEmitter {
-    constructor(config, devInfoFile, inputsFile, channelsFile) {
+    constructor(config, devInfoFile, inputsFile, channelsFile, mqttEnabled) {
         super();
         const host = config.host;
         const port = config.port;
@@ -20,6 +20,8 @@ class OpenWebIf extends EventEmitter {
         this.devInfoFile = devInfoFile;
         this.channelsFile = channelsFile;
         this.inputsFile = inputsFile;
+
+        this.mqttEnabled = mqttEnabled;
 
         const baseUrl = `http://${host}:${port}`;
         this.axiosInstance = axios.create({
@@ -153,8 +155,10 @@ class OpenWebIf extends EventEmitter {
             if (this.logDebug) this.emit('debug', `State: ${JSON.stringify(devState, null, 2)}`);
 
             //mqtt
-            this.emit('mqtt', 'Info', this.devInfo);
-            this.emit('mqtt', 'State', devState);
+            if (this.mqttEnabled) {
+                this.emit('mqtt', 'Info', this.devInfo);
+                this.emit('mqtt', 'State', devState);
+            }
 
             const power = devState.inStandby === 'false';
             const name = devState.currservice_station;
