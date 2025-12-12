@@ -68,7 +68,7 @@
               "description": "Accessory type for Home app",
               "anyOf": [
                 {
-                  "title": "None/Disabled",
+                  "title": "None / Disabled",
                   "enum": [
                     0
                   ]
@@ -170,7 +170,7 @@
                         "description": "Here select extra tile for all channels of this bouquet to be exposed in HomeKit app.",
                         "anyOf": [
                           {
-                            "title": "None/Disabled",
+                            "title": "None / Disabled",
                             "enum": [
                               0
                             ]
@@ -193,7 +193,7 @@
                         "title": "Prefix",
                         "type": "boolean",
                         "default": false,
-                        "description": "Here enable/disable the accessory name as a prefix for extra tile name.",
+                        "description": "Here enable the accessory name as a prefix for extra tile name.",
                         "condition": {
                           "functionBody": "return model.devices[arrayIndices[0]].inputs.bouquets[arrayIndices[1]].displayType > 0;"
                         }
@@ -234,7 +234,7 @@
                         "description": "Here select extra tile to be exposed in HomeKit app.",
                         "anyOf": [
                           {
-                            "title": "None/Disabled",
+                            "title": "None / Disabled",
                             "enum": [
                               0
                             ]
@@ -257,7 +257,7 @@
                         "title": "Prefix",
                         "type": "boolean",
                         "default": false,
-                        "description": "Here enable/disable the accessory name as a prefix for extra tile name.",
+                        "description": "Here enable the accessory name as a prefix for extra tile name.",
                         "condition": {
                           "functionBody": "return model.devices[arrayIndices[0]].inputs.channels[arrayIndices[1]].displayType > 0;"
                         }
@@ -290,7 +290,7 @@
                     "default": 0,
                     "anyOf": [
                       {
-                        "title": "None/Disabled",
+                        "title": "None / Disabled",
                         "enum": [
                           0
                         ]
@@ -694,7 +694,7 @@
                     "title": "Prefix",
                     "type": "boolean",
                     "default": false,
-                    "description": "Here enable/disable the accessory name as a prefix for button name.",
+                    "description": "Here enable the accessory name as a prefix for button name.",
                     "condition": {
                       "functionBody": "return model.devices[arrayIndices[0]].buttons[arrayIndices[1]].displayType > 0;"
                     }
@@ -719,7 +719,7 @@
                     "default": 0,
                     "anyOf": [
                       {
-                        "title": "None/Disabled",
+                        "title": "None / Disabled",
                         "enum": [
                           0
                         ]
@@ -749,7 +749,7 @@
                     "title": "Mode",
                     "type": "integer",
                     "minimum": 0,
-                    "maximum": 5,
+                    "maximum": 6,
                     "default": 0,
                     "anyOf": [
                       {
@@ -787,6 +787,12 @@
                         "enum": [
                           5
                         ]
+                      },
+                      {
+                        "title": "Play State",
+                        "enum": [
+                          6
+                        ]
                       }
                     ],
                     "description": "Here select the sensor mode.",
@@ -803,31 +809,31 @@
                       "functionBody": "return model.devices[arrayIndices[0]].sensors[arrayIndices[1]].displayType > 0;"
                     }
                   },
-                  "reference": {
-                    "title": "Reference",
-                    "type": "string",
-                    "placeholder": "Channel reference",
-                    "description": "Here set the channel reference, fired if switch to this channel.",
+                  "namePrefix": {
+                    "title": "Prefix",
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Here enable the accessory name as a prefix for sensor name.",
                     "condition": {
-                      "functionBody": "return model.devices[arrayIndices[0]].sensors[arrayIndices[1]].displayType > 0 && model.devices[arrayIndices[0]].sensors[arrayIndices[1]].mode === 0;"
+                      "functionBody": "return model.devices[arrayIndices[0]].sensors[arrayIndices[1]].displayType > 0;"
                     }
                   },
                   "pulse": {
                     "title": "Pulse",
                     "type": "boolean",
                     "default": false,
-                    "description": "Here enable/disable sensor pulse, sensor send pulse and fired on every value change.",
+                    "description": "Here enable sensor pulse, sensor send pulse and fired on every value change of selected mode.",
                     "condition": {
                       "functionBody": "return model.devices[arrayIndices[0]].sensors[arrayIndices[1]].displayType > 0;"
                     }
                   },
-                  "namePrefix": {
-                    "title": "Prefix",
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Here enable/disable the accessory name as a prefix for sensor name.",
+                  "reference": {
+                    "title": "Reference",
+                    "type": "string",
+                    "placeholder": "Reference",
+                    "description": "Here set the channel reference, sensor fired if switch to this reference.",
                     "condition": {
-                      "functionBody": "return model.devices[arrayIndices[0]].sensors[arrayIndices[1]].displayType > 0;"
+                      "functionBody": "return model.devices[arrayIndices[0]].sensors[arrayIndices[1]].displayType > 0 && model.devices[arrayIndices[0]].sensors[arrayIndices[1]].pulse === false && model.devices[arrayIndices[0]].sensors[arrayIndices[1]].mode === 0;"
                     }
                   },
                   "level": {
@@ -862,7 +868,7 @@
                   "description": "Here select what a extra volume/mute control type You want to use.",
                   "anyOf": [
                     {
-                      "title": "None/Disabled",
+                      "title": "None / Disabled",
                       "enum": [
                         0
                       ]
@@ -880,7 +886,7 @@
                       ]
                     },
                     {
-                      "title": "TV Speaker",
+                      "title": "TV Speaker (HW buttons)",
                       "enum": [
                         3
                       ]
@@ -912,7 +918,7 @@
                   "title": "Prefix",
                   "type": "boolean",
                   "default": false,
-                  "description": "Here enable/disable the accessory name as a prefix for volume control name.",
+                  "description": "Here enable the accessory name as a prefix for volume control name.",
                   "condition": {
                     "functionBody": "return model.devices[arrayIndices[0]].volume.displayType > 0;"
                   }
@@ -1258,9 +1264,9 @@
                         "devices[].sensors[].displayType",
                         "devices[].sensors[].mode",
                         "devices[].sensors[].name",
-                        "devices[].sensors[].reference",
-                        "devices[].sensors[].pulse",
                         "devices[].sensors[].namePrefix",
+                        "devices[].sensors[].pulse",
+                        "devices[].sensors[].reference",
                         "devices[].sensors[].level"
                       ]
                     }

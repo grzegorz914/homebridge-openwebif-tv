@@ -42,6 +42,7 @@ class OpenWebIf extends EventEmitter {
         this.mute = false;
         this.recording = false;
         this.streaming = false;
+        this.playState = false;
         this.devInfo = {};
 
         //lock flags
@@ -163,9 +164,10 @@ class OpenWebIf extends EventEmitter {
             const mute = devState.muted;
             const recording = devState.isRecording === 'true';
             const streaming = devState.isStreaming === 'true';
+            const playState = false;
 
             //update only if value change
-            if (power === this.power && name === this.name && eventName === this.eventName && reference === this.reference && volume === this.volume && mute === this.mute && recording === this.recording && streaming === this.streaming) return;
+            if (power === this.power && name === this.name && eventName === this.eventName && reference === this.reference && volume === this.volume && mute === this.mute && recording === this.recording && streaming === this.streaming && playState === this.playState) return;
 
             this.power = power;
             this.name = name;
@@ -175,9 +177,10 @@ class OpenWebIf extends EventEmitter {
             this.mute = mute;
             this.recording = recording;
             this.streaming = streaming;
+            this.playState = playState;
 
             //emit state changed
-            this.emit('stateChanged', power, name, eventName, reference, volume, mute, recording, streaming);
+            this.emit('stateChanged', power, name, eventName, reference, volume, mute, recording, streaming, playState);
 
             return true;
         } catch (error) {

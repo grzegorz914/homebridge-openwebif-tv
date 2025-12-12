@@ -66,36 +66,36 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | `auth.passwd` | Here set the authorization `Password`. |
 | `inputs{}` | Inputs object. |
 | `inputs.getFromDevice` | This function get channels by `Bouquet` direct from device, manually configured channels will be skipped. |
-| `inputs.displayOrder` | Here select display order of the channels list, `0 - None`, `1 - Ascending by Name`, `2 - Descending by Name`, 3 - `Ascending by Reference`, `4 - Ascending by Reference`. |
+| `inputs.displayOrder` | Here choose display order of the channels list, `0 - None`, `1 - Ascending by Name`, `2 - Descending by Name`, 3 - `Ascending by Reference`, `4 - Ascending by Reference`. |
 | `inputs.bouquets[]` | Inputs bouquets array. |
 | `inputs.bouquets[].name` | Here set `Bouquet Name` which should be loaded from device, only first 90 services will be used. |
-| `inputs.bouquets[].displayType` | Here select display extra tile for all channels of this bouquet to be exposed in HomeKit app, possible `0 - None/Disabled`, `1 - Outlet`, `2 - Switch`.|
-| `inputs.bouquets[].namePrefix` | Here enable/disable the accessory name as a prefix for extra tile channel name.|
+| `inputs.bouquets[].displayType` | Here choose display extra tile for all channels of this bouquet to be exposed in HomeKit app, possible `0 - None/Disabled`, `1 - Outlet`, `2 - Switch`.|
+| `inputs.bouquets[].namePrefix` | Here enable the accessory name as a prefix for extra tile channel name.|
 | `inputs.channels[]` | Inputs channels array. |
 | `inputs.channels[].name` | Here set `Channel Name` which should be exposed in the `Homebridge/HomeKit`. |
 | `inputs.channels[].reference` | Here set `Channel Reference`. All can be found in `homebridge_directory/openwebifTv/inputs_xxxx`. |
-| `inputs.channels[].displayType` | Here select display extra tile for this channel to be exposed in HomeKit app, possible `0 - None/Disabled`, `1 -Outlet`, `2 - Switch`.|
-| `inputs.channels[].namePrefix` | Here enable/disable the accessory name as a prefix for extra tile channel name.|
+| `inputs.channels[].displayType` | Here choose display extra tile for this channel to be exposed in HomeKit app, possible `0 - None/Disabled`, `1 -Outlet`, `2 - Switch`.|
+| `inputs.channels[].namePrefix` | Here enable the accessory name as a prefix for extra tile channel name.|
 | `buttons[]` | Buttons array. |
-| `buttons[].displayType` | Here select display type in HomeKit app, possible `0 - None/Disabled`, `1 - Outlet`, `2 - Switch`.|
+| `buttons[].displayType` | Here choose display type in HomeKit app, possible `0 - None/Disabled`, `1 - Outlet`, `2 - Switch`.|
 | `buttons[].name` | Here set `Button Name` which You want expose to the `Homebridge/HomeKit`.|
-| `buttons[].mode` | Here select button mode, `0 - Live TV Channel`, `1 - Remote Control`. |
+| `buttons[].mode` | Here choose button mode, `0 - Live TV Channel`, `1 - Remote Control`. |
 | `buttons[].reference` | Here set `Reference`, only for `Live TV Channel` mode, in other case leave empty. |
-| `buttons[].command` | Here select `Remote Control` command which will be assigned to the button. |
-| `buttons[].powerCommand` | Here select `Power Control` which will be assigned to the button. |
-| `buttons[].namePrefix` | Here enable/disable the accessory name as a prefix for button name.|
-| `sensors[]` | Sensor channels array. |
-| `sensors[].displayType` | Here select the sensor type to be exposed in HomeKit app, possible `0 - None/Disabled`, `1 - Motion Sensor`, `2 - Occupancy Sensor`, `3 - Contact Sensor`. |
-| `sensors[].mode` | Here select the sensor mode, possible `0 - Channel`, `1 - Power`, `2 - Volume`, `3 - Mute`, `4 - Recording`, `5 - Streaming`. |
+| `buttons[].command` | Here choose `Remote Control` command which will be assigned to the button. |
+| `buttons[].powerCommand` | Here choose `Power Control` which will be assigned to the button. |
+| `buttons[].namePrefix` | Here enable the accessory name as a prefix for button name.|
+| `sensors[]` | Sensors array. |
+| `sensors[].displayType` | Here choose the sensor type to be exposed in HomeKit app, possible `0 - None/Disabled`, `1 - Motion Sensor`, `2 - Occupancy Sensor`, `3 - Contact Sensor`. |
+| `sensors[].mode` | Here choose the sensor mode, possible `0 - Channel`, `1 - Power`, `2 - Volume`, `3 - Mute`, `4 - Recording`, `5 - Streaming`, `6 - Play State`. |
 | `sensors[].name` | Here set own sensor `Name` which You want expose to the `Homebridge/HomeKit`. |
-| `sensors[].reference` | Here set `Channel Reference` like `1:0:1:3ABD:514:13E:820000:0:0:0:`, sensor fired on switch to this channel. |
-| `sensors[].pulse` | Here enable/disable sensor pulse, sensor send pulse and fired on every value change.|
-| `sensors[].namePrefix` | Here enable/disable the accessory name as a prefix for sensor name.|
+| `sensors[].reference` | Here set mode `Reference` like `1:0:1:3ABD:514:13E:820000:0:0:0:`, sensor fired on switch to this reference. |
+| `sensors[].pulse` | Here enable sensor pulse, sensor send pulse and fired on every value change of selected mode. |
+| `sensors[].namePrefix` | Here enable the accessory name as a prefix for sensor name. |
 | `sensors[].level` | Here set `Level` between `0-100`, sensor fired on this level. |
 | `volume{}` | Volume object. |
-| `volume.displayType` | Here choice what a additional volume control mode You want to use `0 - None/Disabled`, `1 - Lightbulb`, `2 - Fan`, `3 - TV Speaker`, `4 - TV Speaker / Lightbulb`, `5 - TV Speaker / Fan`. |
+| `volume.displayType` | Here choice what a additional volume control mode You want to use `0 - None/Disabled`, `1 - Lightbulb`, `2 - Fan`, `3 - TV Speaker (only hardware buttons on R.C. app)`, `4 - TV Speaker / Lightbulb`, `5 - TV Speaker / Fan`. |
 | `volume.name` | Here set Your own volume control name or leave empty. |
-| `volume.namePrefix` | Here enable/disable the accessory name as a prefix for volume control name. |
+| `volume.namePrefix` | Here enable the accessory name as a prefix for volume control name. |
 | `log{}` | Log object. |
 | `log.deviceInfo` | If enabled, log device info will be displayed by every connections device to the network. |
 | `log.sSuccess` | If enabled, success log will be displayed in console. |
@@ -103,7 +103,7 @@ Homebridge plugin for Sat Receivers based on the OpenWebIf API. Tested with VU+ 
 | `log.warn` | If enabled, warn log will be displayed in console. |
 | `log.error` | If enabled, error log will be displayed in console. |
 | `log.debug` | If enabled, debug log will be displayed in console. |
-| `infoButtonCommand` | Here select the function of `I` button in RC app. |
+| `infoButtonCommand` | Here choose the function of `I` button in RC app. |
 | `refreshInterval` | Here set the data refresh interval. |
 | `mqtt{}` | MQTT object. |
 | `mqtt.enable` | If enabled, MQTT Broker will start automatically and publish all awailable PV data. |

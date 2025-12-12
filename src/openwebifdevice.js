@@ -383,7 +383,6 @@ class OpenWebIfDevice extends EventEmitter {
                     }
                 });
 
-
             this.televisionService.getCharacteristic(Characteristic.RemoteKey)
                 .onSet(async (command) => {
                     try {
@@ -816,7 +815,7 @@ class OpenWebIfDevice extends EventEmitter {
                     const button = this.inputsServices[i];
 
                     //get switch name		
-                    const name = button.name || `Button ${i}`;
+                    const name = button.name || `Button Input ${i}`;
 
                     //get switch reference
                     const reference = encodeURIComponent(button.reference);
@@ -865,7 +864,7 @@ class OpenWebIfDevice extends EventEmitter {
             const maxSensorCount = this.sensors.length >= possibleSensorCount ? possibleSensorCount : this.sensors.length;
             if (maxSensorCount > 0) {
                 this.sensorServices = [];
-                if (this.logDebug) this.emit('debug', `Prepare inputs sensors services`);
+                if (this.logDebug) this.emit('debug', `Prepare sensors services`);
                 for (let i = 0; i < maxSensorCount; i++) {
                     const sensor = this.sensors[i];
 
@@ -988,7 +987,7 @@ class OpenWebIfDevice extends EventEmitter {
                 .on('addRemoveOrUpdateInput', async (inputs, remove) => {
                     await this.addRemoveOrUpdateInput(inputs, remove);
                 })
-                .on('stateChanged', async (power, name, eventName, reference, volume, mute, recording, streaming) => {
+                .on('stateChanged', async (power, name, eventName, reference, volume, mute, recording, streaming, playstate) => {
                     const input = this.inputsServices?.find(input => input.reference === reference) ?? false;
                     const inputIdentifier = input ? input.identifier : this.inputIdentifier;
                     mute = power ? mute : true;
@@ -1023,7 +1022,8 @@ class OpenWebIfDevice extends EventEmitter {
                         2: volume,
                         3: mute,
                         4: recording,
-                        5: streaming
+                        5: streaming,
+                        6: playstate
                     };
 
                     const previousStateModeMap = {
@@ -1032,7 +1032,8 @@ class OpenWebIfDevice extends EventEmitter {
                         2: this.volume,
                         3: this.mute,
                         4: this.recording,
-                        5: this.streaming
+                        5: this.streaming,
+                        6: this.playState
                     };
 
                     for (let i = 0; i < this.sensors.length; i++) {
@@ -1055,7 +1056,6 @@ class OpenWebIfDevice extends EventEmitter {
                                 this.sensorServices?.[i]?.updateCharacteristic(characteristicType, state);
                                 await new Promise(resolve => setTimeout(resolve, 500));
                             }
-
                         } else {
                             if (isActiveMode) {
                                 switch (sensor.mode) {
@@ -1069,6 +1069,7 @@ class OpenWebIfDevice extends EventEmitter {
                                     case 3: // mute
                                     case 4: // recording
                                     case 5: // streaming
+                                    case 6: // playState
                                         state = currentValue === true;
                                         break;
                                     default:

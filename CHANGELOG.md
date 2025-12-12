@@ -15,6 +15,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Do not use Homebridge UI > v5.5.0 because of break config.json
 
+## [5.0.2] - (12.12.2025)
+
+## Changes
+
+- after update to v5.x.x sensors need to be reconfigured!!!
+- prepare for next features
+- config schema updated
+- redme updated
+- cleanup
+
 ## [5.0.0] - (11.12.2025)
 
 ## Changes
