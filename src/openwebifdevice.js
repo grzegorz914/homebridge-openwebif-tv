@@ -1023,7 +1023,7 @@ class OpenWebIfDevice extends EventEmitter {
                         3: mute,
                         4: recording,
                         5: streaming,
-                        6: playstate
+                        6: playState
                     };
 
                     const previousStateModeMap = {
