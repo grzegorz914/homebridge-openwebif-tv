@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Changes
 
 - after update to v5.x.x sensors need to be reconfigured!!!
-- fix start error after update to 6.x.x on specific situation
+- fix start error after update to 5.x.x on specific situation
 
 ## [5.0.2] - (12.12.2025)
 
