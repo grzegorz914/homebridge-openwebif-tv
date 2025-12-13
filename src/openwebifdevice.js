@@ -499,12 +499,12 @@ class OpenWebIfDevice extends EventEmitter {
                     }
                 });
 
-            //prepare inputs service
+            //prepare input services
             if (this.logDebug) this.emit('debug', `Prepare inputs services`);
             this.inputsServices = [];
             await this.addRemoveOrUpdateInput(this.savedInputs, false);
 
-            //Prepare volume service
+            //prepare volume service
             if (this.volumeControl > 0) {
                 const volumeServiceName = this.volumeControlNamePrefix ? `${accessoryName} ${this.volumeControlName}` : this.volumeControlName;
                 const volumeServiceNameTv = this.volumeControlNamePrefix ? `${accessoryName} ${this.volumeControlName}` : this.volumeControlName;
@@ -805,7 +805,7 @@ class OpenWebIfDevice extends EventEmitter {
                 }
             }
 
-            //prepare inputs switch sensor service
+            //prepare input buttons services
             const possibleInputsButtonsCount = 99 - this.accessory.services.length;
             const inputButtons = (this.inputsServices ?? []).filter(inputButton => (inputButton.displayType ?? 0) > 0);
             const maxInputsSwitchesButtonsCount = inputButtons.length >= possibleInputsButtonsCount ? possibleInputsButtonsCount : inputButtons.length;
@@ -863,7 +863,7 @@ class OpenWebIfDevice extends EventEmitter {
                 }
             }
 
-            //prepare sonsor service
+            //prepare sonsor services
             const possibleSensorCount = 99 - this.accessory.services.length;
             const maxSensorCount = this.sensors.length >= possibleSensorCount ? possibleSensorCount : this.sensors.length;
             if (maxSensorCount > 0) {
@@ -898,7 +898,7 @@ class OpenWebIfDevice extends EventEmitter {
                 }
             }
 
-            //prepare buttons service
+            //prepare button services
             const possibleButtonsCount = 99 - this.accessory.services.length;
             const maxButtonsCount = this.buttons.length >= possibleButtonsCount ? possibleButtonsCount : this.buttons.length;
             if (maxButtonsCount > 0) {
@@ -1021,7 +1021,7 @@ class OpenWebIfDevice extends EventEmitter {
                         .updateCharacteristic(Characteristic.Volume, volume)
                         .updateCharacteristic(Characteristic.Mute, mute);
 
-                    // sensors
+                    //sensors
                     const currentStateModeMap = {
                         0: reference,
                         1: power,
