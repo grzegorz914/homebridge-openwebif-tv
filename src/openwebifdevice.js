@@ -1082,13 +1082,12 @@ class OpenWebIfDevice extends EventEmitter {
                         }
                     }
 
-                    //inputs buttons
-                    for (let i = 0; i < this.inputButtonServices.length; i++) {
-                        const button = this.inputButtonServices[i];
-                        const state = power ? button.reference === reference : false;
+                    //input buttons
+                    for (const button of this.inputButtonServices ?? []) {
+                        const state = power && button.reference === reference;
                         button.state = state;
-                        this.inputButtonServices?.[i]?.updateCharacteristic(Characteristic.On, state);
-                    };
+                        button.updateCharacteristic(Characteristic.On, state);
+                    }
 
                     //buttons
                     for (let i = 0; i < this.buttons.length; i++) {

@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Do not use Homebridge UI > v5.5.0 because of break config.json
 
+## [5.0.5] - (13.12.2025)
+
+## Changes
+
+- fix [#82](https://github.com/grzegorz914/homebridge-openwebif-tv/issues/82)
+
 ## [5.0.3] - (12.12.2025)
 
 ## Changes
