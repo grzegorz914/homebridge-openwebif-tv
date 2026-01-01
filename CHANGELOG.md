@@ -7,13 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### NOTE
 
+- v5.1.0 Added support for Homebridge UI >= v5.13.0
 - After update to v5.0.0 sensors need to be reconfigured!!!
 - After update to v4.8.0 plugin need to be reconfigured first, in other case will crash!!!
 - After update to v4.0.0 MQTT config settings need to be updated
 
 ## Warning
 
-- Do not use Homebridge UI > v5.5.0 because of break config.json
+- For plugin < v5.1.0 use Homebridge UI <= v5.5.0
+- For plugin >= v5.1.0 use Homebridge UI >= v5.13.0
+
+## [5.1.0] - (01.01.2026)
+
+## Changes
+
+- added support for Homebridge UI >= v5.13.0
+- config schema updated
+- readme updated
 
 ## [5.0.5] - (13.12.2025)
 
