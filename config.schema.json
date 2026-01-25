@@ -12,7 +12,7 @@
       "name": {
         "title": "Platform",
         "type": "string",
-        "default": "Open WebIf TV"
+        "default": "OpenWebIf TV"
       },
       "devices": {
         "type": "array",
@@ -1101,32 +1101,37 @@
                   "title": "Device Info",
                   "type": "boolean",
                   "default": true,
-                  "description": "This enable logging device info by every connections device to the network."
+                  "description": "This enable log level device info, will display overall device info by every plugin restart"
                 },
                 "success": {
                   "title": "Success",
                   "type": "boolean",
-                  "default": true
+                  "default": true,
+                  "description": "This enable log level success"
                 },
                 "info": {
                   "title": "Info",
                   "type": "boolean",
-                  "default": false
+                  "default": false,
+                  "description": "This enable log level info"
                 },
                 "warn": {
                   "title": "Warn",
                   "type": "boolean",
-                  "default": true
+                  "default": true,
+                  "description": "This enable log level warn"
                 },
                 "error": {
                   "title": "Error",
                   "type": "boolean",
-                  "default": true
+                  "default": true,
+                  "description": "This enable log level error"
                 },
                 "debug": {
                   "title": "Debug",
                   "type": "boolean",
-                  "default": false
+                  "default": false,
+                  "description": "This enable log level debug"
                 }
               }
             },
@@ -1358,6 +1363,28 @@
             "host",
             "port",
             "displayType"
+          ],
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "displayType": {
+                    "enum": [
+                      1,
+                      2,
+                      3,
+                      4
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "name",
+                  "host"
+                ]
+              }
+            }
           ]
         }
       }

@@ -26,7 +26,8 @@ class Mqtt extends EventEmitter {
 
         // === CONNECTED ===
         this.mqttClient.on('connect', async (packet) => {
-            this.emit('connected', 'MQTT v5 connected.');
+            this.emit('connected', 'MQTT Connected.');
+            this.emit('connected', `MQTT Subscribe topic: ${subscribeTopic}`);
 
             try {
                 const result = await this.mqttClient.subscribeAsync(subscribeTopic, {
@@ -40,8 +41,6 @@ class Mqtt extends EventEmitter {
 
                 // MQTT v5 subscription results contain reason codes
                 if (config.logDebug) this.emit('debug', `Subscribed to ${subscribeTopic}, reason codes: ${JSON.stringify(result)}`);
-                this.emit('subscribed', `MQTT Subscribe topic: ${subscribeTopic}`);
-
             } catch (error) {
                 if (config.logWarn) this.emit('warn', `MQTT Subscribe error: ${error}`);
             }
