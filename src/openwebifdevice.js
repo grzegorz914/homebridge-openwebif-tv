@@ -1128,8 +1128,8 @@ class OpenWebIfDevice extends EventEmitter {
                 .on('debug', (debug) => this.emit('debug', debug))
                 .on('warn', (warn) => this.emit('warn', warn))
                 .on('error', (error) => this.emit('error', error))
-                .on('mqtt', (topic, message) => {
-                    if (this.mqttConnected) this.mqtt1.emit('publish', topic, message);
+                .on('mqtt', async (topic, message) => {
+                    if (this.mqttConnected) await this.mqtt1.publish(topic, message);
                 });
 
             //connect to receiver
