@@ -341,9 +341,9 @@ class OpenWebIfDevice extends EventEmitter {
                     try {
                         const newState = state ? '4' : '5';
                         await this.openwebif.send(ApiUrls.SetPower + newState);
-                        if (this.logInfo) this.emit('info', `set Power: ${state ? 'ON' : 'OFF'}`);
+                        if (this.logInfo) this.emit('info', `Set Power: ${state ? 'ON' : 'OFF'}`);
                     } catch (error) {
-                        if (this.logWarn) this.emit('warn', `set Power error: ${error}`);
+                        if (this.logWarn) this.emit('warn', `Set Power error: ${error}`);
                     }
                 });
 
@@ -353,31 +353,45 @@ class OpenWebIfDevice extends EventEmitter {
                     try {
                         const input = this.inputsServices.find(i => i.identifier === activeIdentifier);
                         if (!input) {
-                            if (this.logWarn) this.emit('warn', `Input with identifier ${activeIdentifier} not found`);
-                            return;
-                        }
-
-                        if (!this.power) {
-                            (async () => {
-                                for (let attempt = 0; attempt < 20; attempt++) {
-                                    await new Promise(resolve => setTimeout(resolve, 1500));
-                                    if (this.power && this.inputIdentifier !== activeIdentifier) {
-                                        if (this.logDebug) this.emit('debug', `TV powered on, retrying input switch`);
-                                        this.televisionService.setCharacteristic(Characteristic.ActiveIdentifier, activeIdentifier);
-                                        break;
-                                    }
-                                }
-                            })();
-
+                            if (this.logWarn) this.emit('warn', `Channel with identifier ${activeIdentifier} not found`);
                             return;
                         }
 
                         const encodedRef = encodeURIComponent(input.reference);
-                        await this.openwebif.send(`${ApiUrls.SetChannel}${encodedRef}`);
+                        if (!this.power) {
+                            if (this.logDebug) this.emit('debug', `Device is off, deferring input switch to '${activeIdentifier}'`);
 
-                        if (this.logInfo) {
-                            this.emit('info', `Set Channel: ${input.name}, Reference: ${encodedRef}`);
+                            (async () => {
+                                for (let attempt = 0; attempt < 20; attempt++) {
+                                    await new Promise(resolve => setTimeout(resolve, 1500));
+
+                                    // if device is on 
+                                    if (this.power) {
+
+                                        // if input didn't switch → retry
+                                        if (this.inputIdentifier !== activeIdentifier) {
+                                            if (this.logDebug) this.emit('debug', `Retrying channel switch (${attempt + 1}/3)`);
+                                            await this.openwebif.send(`${ApiUrls.SetChannel}${encodedRef}`);
+                                        } else {
+                                            // sukces
+                                            this.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, activeIdentifier);
+                                            if (this.logInfo) this.emit('info', `Channel set successfully: ${input.name}`);
+                                            return;
+                                        }
+                                    }
+                                }
+
+                                if (this.logWarn) this.emit('warn', `Failed to set channel after retries: ${input.name}`);
+                            })().catch(err => {
+                                if (this.logWarn) this.emit('warn', `Set channel retry error: ${err}`);
+                            });
+
+                            return;
                         }
+
+                        // device is on
+                        await this.openwebif.send(`${ApiUrls.SetChannel}${encodedRef}`);
+                        if (this.logInfo) this.emit('info', `Set Channel Name: ${input.name}, Reference: ${input.reference}`);
                     } catch (error) {
                         if (this.logWarn) this.emit('warn', `Set Channel error: ${error}`);
                     }
@@ -430,9 +444,9 @@ class OpenWebIfDevice extends EventEmitter {
                         }
 
                         await this.openwebif.send(ApiUrls.SetRcCommand + command);
-                        if (this.logInfo) this.emit('info', `set Remote Key: ${command}`);
+                        if (this.logInfo) this.emit('info', `Set Remote Key: ${command}`);
                     } catch (error) {
-                        if (this.logWarn) this.emit('warn', `set Remote Key error: ${error}`);
+                        if (this.logWarn) this.emit('warn', `Set Remote Key error: ${error}`);
                     }
                 });
 
@@ -444,9 +458,9 @@ class OpenWebIfDevice extends EventEmitter {
                 })
                 .onSet(async (value) => {
                     try {
-                        if (this.logInfo) this.emit('info', `set Brightness: ${value}`);
+                        if (this.logInfo) this.emit('info', `Set Brightness: ${value}`);
                     } catch (error) {
-                        if (this.logWarn) this.emit('warn', `set Brightness error: ${error}`);
+                        if (this.logWarn) this.emit('warn', `Set Brightness error: ${error}`);
                     }
                 });
 
@@ -456,7 +470,7 @@ class OpenWebIfDevice extends EventEmitter {
                     return state;
                 })
                 .onSet(async (state) => {
-                    if (this.logInfo) this.emit('info', `set Closed Ccaptions: ${state}`);
+                    if (this.logInfo) this.emit('info', `Set Closed Ccaptions: ${state}`);
                 });
 
             this.televisionService.getCharacteristic(Characteristic.CurrentMediaState)
@@ -474,9 +488,9 @@ class OpenWebIfDevice extends EventEmitter {
                 .onSet(async (value) => {
                     try {
                         const newMediaState = value;
-                        if (this.logInfo) this.emit('info', `set Target Media State: ${['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]}`);
+                        if (this.logInfo) this.emit('info', `Set Target Media State: ${['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]}`);
                     } catch (error) {
-                        if (this.logWarn) this.emit('warn', `set Target Media state error: ${error}`);
+                        if (this.logWarn) this.emit('warn', `Set Target Media state error: ${error}`);
                     }
                 });
 
@@ -493,9 +507,9 @@ class OpenWebIfDevice extends EventEmitter {
                         }
 
                         await this.openwebif.send(ApiUrls.SetRcCommand + command);
-                        if (this.logInfo) this.emit('info', `set Power Mode Selection: ${command === '139' ? 'SHOW' : 'HIDE'}`);
+                        if (this.logInfo) this.emit('info', `Set Power Mode Selection: ${command === '139' ? 'SHOW' : 'HIDE'}`);
                     } catch (error) {
-                        if (this.logWarn) this.emit('warn', `set Power Mode Selection error: ${error}`);
+                        if (this.logWarn) this.emit('warn', `Set Power Mode Selection error: ${error}`);
                     }
                 });
 
@@ -523,9 +537,9 @@ class OpenWebIfDevice extends EventEmitter {
                             .onSet(async (value) => {
                                 try {
                                     await this.openwebif.send(ApiUrls.SetVolume + value);
-                                    if (this.logInfo) this.emit('info', `set Volume: ${value}`);
+                                    if (this.logInfo) this.emit('info', `Set Volume: ${value}`);
                                 } catch (error) {
-                                    if (this.logWarn) this.emit('warn', `set Volume error: ${error}`);
+                                    if (this.logWarn) this.emit('warn', `Set Volume error: ${error}`);
                                 }
                             });
                         this.volumeServiceLightbulb.getCharacteristic(Characteristic.On)
@@ -536,9 +550,9 @@ class OpenWebIfDevice extends EventEmitter {
                             .onSet(async (state) => {
                                 try {
                                     await this.openwebif.send(ApiUrls.ToggleMute);
-                                    if (this.logInfo) this.emit('info', `set Mute: ${!state ? 'ON' : 'OFF'}`);
+                                    if (this.logInfo) this.emit('info', `Set Mute: ${!state ? 'ON' : 'OFF'}`);
                                 } catch (error) {
-                                    if (this.logWarn) this.emit('warn', `set Mute error: ${error}`);
+                                    if (this.logWarn) this.emit('warn', `Set Mute error: ${error}`);
                                 }
                             });
                         break;
@@ -555,9 +569,9 @@ class OpenWebIfDevice extends EventEmitter {
                             .onSet(async (value) => {
                                 try {
                                     await this.openwebif.send(ApiUrls.SetVolume + value);
-                                    if (this.logInfo) this.emit('info', `set Volume: ${value}`);
+                                    if (this.logInfo) this.emit('info', `Set Volume: ${value}`);
                                 } catch (error) {
-                                    if (this.logWarn) this.emit('warn', `set Volume error: ${error}`);
+                                    if (this.logWarn) this.emit('warn', `Set Volume error: ${error}`);
                                 }
                             });
                         this.volumeServiceFan.getCharacteristic(Characteristic.On)
@@ -568,9 +582,9 @@ class OpenWebIfDevice extends EventEmitter {
                             .onSet(async (state) => {
                                 try {
                                     await this.openwebif.send(ApiUrls.ToggleMute);
-                                    if (this.logInfo) this.emit('info', `set Mute: ${!state ? 'ON' : 'OFF'}`);
+                                    if (this.logInfo) this.emit('info', `Set Mute: ${!state ? 'ON' : 'OFF'}`);
                                 } catch (error) {
-                                    if (this.logWarn) this.emit('warn', `set Mute error: ${error}`);
+                                    if (this.logWarn) this.emit('warn', `Set Mute error: ${error}`);
                                 }
                             });
                         break;
@@ -604,9 +618,9 @@ class OpenWebIfDevice extends EventEmitter {
                                     }
 
                                     await this.openwebif.send(ApiUrls.SetRcCommand + command);
-                                    if (this.logInfo) this.emit('info', `set Volume Selector: ${command}`);
+                                    if (this.logInfo) this.emit('info', `Set Volume Selector: ${command}`);
                                 } catch (error) {
-                                    if (this.logWarn) this.emit('warn', `set Volume Selector command error: ${error}`);
+                                    if (this.logWarn) this.emit('warn', `Set Volume Selector command error: ${error}`);
                                 }
                             });
                         this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Volume)
@@ -617,9 +631,9 @@ class OpenWebIfDevice extends EventEmitter {
                             .onSet(async (value) => {
                                 try {
                                     await this.openwebif.send(ApiUrls.SetVolume + value);
-                                    if (this.logInfo) this.emit('info', `set Volume: ${value}`);
+                                    if (this.logInfo) this.emit('info', `Set Volume: ${value}`);
                                 } catch (error) {
-                                    if (this.logWarn) this.emit('warn', `set Volume error: ${error}`);
+                                    if (this.logWarn) this.emit('warn', `Set Volume error: ${error}`);
                                 }
                             });
                         this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Mute)
@@ -630,9 +644,9 @@ class OpenWebIfDevice extends EventEmitter {
                             .onSet(async (state) => {
                                 try {
                                     await this.openwebif.send(ApiUrls.ToggleMute);
-                                    if (this.logInfo) this.emit('info', `set Mute: ${state ? 'ON' : 'OFF'}`);
+                                    if (this.logInfo) this.emit('info', `Set Mute: ${state ? 'ON' : 'OFF'}`);
                                 } catch (error) {
-                                    if (this.logWarn) this.emit('warn', `set Mute error: ${error}`);
+                                    if (this.logWarn) this.emit('warn', `Set Mute error: ${error}`);
                                 }
                             });
                         break;
@@ -665,9 +679,9 @@ class OpenWebIfDevice extends EventEmitter {
                                     }
 
                                     await this.openwebif.send(ApiUrls.SetRcCommand + command);
-                                    if (this.logInfo) this.emit('info', `set Volume Selector: ${command}`);
+                                    if (this.logInfo) this.emit('info', `Set Volume Selector: ${command}`);
                                 } catch (error) {
-                                    if (this.logWarn) this.emit('warn', `set Volume Selector command error: ${error}`);
+                                    if (this.logWarn) this.emit('warn', `Set Volume Selector command error: ${error}`);
                                 }
                             });
                         this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Volume)
@@ -678,9 +692,9 @@ class OpenWebIfDevice extends EventEmitter {
                             .onSet(async (value) => {
                                 try {
                                     await this.openwebif.send(ApiUrls.SetVolume + value);
-                                    if (this.logInfo) this.emit('info', `set Volume: ${value}`);
+                                    if (this.logInfo) this.emit('info', `Set Volume: ${value}`);
                                 } catch (error) {
-                                    if (this.logWarn) this.emit('warn', `set Volume error: ${error}`);
+                                    if (this.logWarn) this.emit('warn', `Set Volume error: ${error}`);
                                 }
                             });
                         this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Mute)
@@ -691,9 +705,9 @@ class OpenWebIfDevice extends EventEmitter {
                             .onSet(async (state) => {
                                 try {
                                     await this.openwebif.send(ApiUrls.ToggleMute);
-                                    if (this.logInfo) this.emit('info', `set Mute: ${state ? 'ON' : 'OFF'}`);
+                                    if (this.logInfo) this.emit('info', `Set Mute: ${state ? 'ON' : 'OFF'}`);
                                 } catch (error) {
-                                    if (this.logWarn) this.emit('warn', `set Mute error: ${error}`);
+                                    if (this.logWarn) this.emit('warn', `Set Mute error: ${error}`);
                                 }
                             });
 
@@ -748,9 +762,9 @@ class OpenWebIfDevice extends EventEmitter {
                                     }
 
                                     await this.openwebif.send(ApiUrls.SetRcCommand + command);
-                                    if (this.logInfo) this.emit('info', `set Volume Selector: ${command}`);
+                                    if (this.logInfo) this.emit('info', `Set Volume Selector: ${command}`);
                                 } catch (error) {
-                                    if (this.logWarn) this.emit('warn', `set Volume Selector command error: ${error}`);
+                                    if (this.logWarn) this.emit('warn', `Set Volume Selector command error: ${error}`);
                                 }
                             });
                         this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Volume)
@@ -761,9 +775,9 @@ class OpenWebIfDevice extends EventEmitter {
                             .onSet(async (value) => {
                                 try {
                                     await this.openwebif.send(ApiUrls.SetVolume + value);
-                                    if (this.logInfo) this.emit('info', `set Volume: ${value}`);
+                                    if (this.logInfo) this.emit('info', `Set Volume: ${value}`);
                                 } catch (error) {
-                                    if (this.logWarn) this.emit('warn', `set Volume error: ${error}`);
+                                    if (this.logWarn) this.emit('warn', `Set Volume error: ${error}`);
                                 }
                             });
                         this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Mute)
@@ -774,9 +788,9 @@ class OpenWebIfDevice extends EventEmitter {
                             .onSet(async (state) => {
                                 try {
                                     await this.openwebif.send(ApiUrls.ToggleMute);
-                                    if (this.logInfo) this.emit('info', `set Mute: ${!state ? 'ON' : 'OFF'}`);
+                                    if (this.logInfo) this.emit('info', `Set Mute: ${!state ? 'ON' : 'OFF'}`);
                                 } catch (error) {
-                                    if (this.logWarn) this.emit('warn', `set Mute error: ${error}`);
+                                    if (this.logWarn) this.emit('warn', `Set Mute error: ${error}`);
                                 }
                             });
 
@@ -848,7 +862,7 @@ class OpenWebIfDevice extends EventEmitter {
                                 await this.openwebif.send(`${ApiUrls.SetChannel}${reference}`);
                                 if (this.logDebug) this.emit('debug', `Set Channel Name: ${name}, Reference: ${reference}`);
                             } catch (error) {
-                                if (this.logWarn) this.emit('warn', `set Channel error: ${error}`);
+                                if (this.logWarn) this.emit('warn', `Set Channel error: ${error}`);
                             }
                         });
 
@@ -959,7 +973,7 @@ class OpenWebIfDevice extends EventEmitter {
                                         break;
                                 }
                             } catch (error) {
-                                if (this.logWarn) this.emit('warn', `set ${['Channel', 'Command'][mode]} error: ${error}`);
+                                if (this.logWarn) this.emit('warn', `Set ${['Channel', 'Command'][mode]} error: ${error}`);
                             }
                         });
                     this.buttonServices.push(buttonService);
