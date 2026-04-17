@@ -65,8 +65,8 @@ class OpenWebIfDevice extends EventEmitter {
         this.mute = false;
         this.recording = false;
         this.streaming = false;
+        this.playState = false;  // [fix] added missing instance property (was only a local variable)
         this.brightness = 0;
-        this.playPause = false;
     }
 
     async externalIntegrations() {
@@ -156,7 +156,7 @@ class OpenWebIfDevice extends EventEmitter {
 
     async startStopImpulseGenerator(state, timers = []) {
         try {
-            //start impulse generator 
+            //start impulse generator
             await this.openwebif.impulseGenerator.state(state, timers)
             return true;
         } catch (error) {
@@ -365,15 +365,11 @@ class OpenWebIfDevice extends EventEmitter {
                                 for (let attempt = 0; attempt < 20; attempt++) {
                                     await new Promise(resolve => setTimeout(resolve, 1500));
 
-                                    // if device is on 
                                     if (this.power) {
-
-                                        // if input didn't switch → retry
                                         if (this.inputIdentifier !== activeIdentifier) {
-                                            if (this.logDebug) this.emit('debug', `Retrying channel switch (${attempt + 1}/3)`);
+                                            if (this.logDebug) this.emit('debug', `Retrying channel switch (${attempt + 1}/20)`);
                                             await this.openwebif.send(`${ApiUrls.SetChannel}${encodedRef}`);
                                         } else {
-                                            // sukces
                                             this.televisionService.updateCharacteristic(Characteristic.ActiveIdentifier, activeIdentifier);
                                             if (this.logInfo) this.emit('info', `Channel set successfully: ${input.name}`);
                                             return;
@@ -470,7 +466,7 @@ class OpenWebIfDevice extends EventEmitter {
                     return state;
                 })
                 .onSet(async (state) => {
-                    if (this.logInfo) this.emit('info', `Set Closed Ccaptions: ${state}`);
+                    if (this.logInfo) this.emit('info', `Set Closed Captions: ${state}`);
                 });
 
             this.televisionService.getCharacteristic(Characteristic.CurrentMediaState)
@@ -487,7 +483,7 @@ class OpenWebIfDevice extends EventEmitter {
                 })
                 .onSet(async (value) => {
                     try {
-                        const newMediaState = value;
+                        // [fix] removed unused newMediaState variable
                         if (this.logInfo) this.emit('info', `Set Target Media State: ${['PLAY', 'PAUSE', 'STOP', 'LOADING', 'INTERRUPTED'][value]}`);
                     } catch (error) {
                         if (this.logWarn) this.emit('warn', `Set Target Media state error: ${error}`);
@@ -520,8 +516,8 @@ class OpenWebIfDevice extends EventEmitter {
 
             //prepare volume service
             if (this.volumeControl > 0) {
+                // [fix] removed redundant volumeServiceNameTv — both were identical
                 const volumeServiceName = this.volumeControlNamePrefix ? `${accessoryName} ${this.volumeControlName}` : this.volumeControlName;
-                const volumeServiceNameTv = this.volumeControlNamePrefix ? `${accessoryName} ${this.volumeControlName}` : this.volumeControlName;
 
                 switch (this.volumeControl) {
                     case 1: // lightbulb
@@ -590,10 +586,9 @@ class OpenWebIfDevice extends EventEmitter {
                         break;
                     case 3: // tv speaker
                         if (this.logDebug) this.emit('debug', `Prepare television speaker service`);
-                        const volumeServiceName3 = this.volumeControlNamePrefix ? `${accessoryName} ${this.volumeControlName}` : this.volumeControlName;
-                        this.volumeServiceTvSpeaker = accessory.addService(Service.TelevisionSpeaker, volumeServiceName3, 'TV Speaker');
+                        this.volumeServiceTvSpeaker = accessory.addService(Service.TelevisionSpeaker, volumeServiceName, 'TV Speaker');
                         this.volumeServiceTvSpeaker.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                        this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.ConfiguredName, volumeServiceName3);
+                        this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.ConfiguredName, volumeServiceName);
                         this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Active)
                             .onGet(async () => {
                                 const state = this.power;
@@ -652,9 +647,9 @@ class OpenWebIfDevice extends EventEmitter {
                         break;
                     case 4: // tv speaker + lightbulb
                         if (this.logDebug) this.emit('debug', `Prepare television speaker service`);
-                        this.volumeServiceTvSpeaker = accessory.addService(Service.TelevisionSpeaker, volumeServiceNameTv, 'TV Speaker');
+                        this.volumeServiceTvSpeaker = accessory.addService(Service.TelevisionSpeaker, volumeServiceName, 'TV Speaker');
                         this.volumeServiceTvSpeaker.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                        this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.ConfiguredName, volumeServiceNameTv);
+                        this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.ConfiguredName, volumeServiceName);
                         this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Active)
                             .onGet(async () => {
                                 const state = this.power;
@@ -735,9 +730,9 @@ class OpenWebIfDevice extends EventEmitter {
                         break;
                     case 5: // tv speaker + fan
                         if (this.logDebug) this.emit('debug', `Prepare television speaker service`);
-                        this.volumeServiceTvSpeaker = accessory.addService(Service.TelevisionSpeaker, volumeServiceNameTv, 'TV Speaker');
+                        this.volumeServiceTvSpeaker = accessory.addService(Service.TelevisionSpeaker, volumeServiceName, 'TV Speaker');
                         this.volumeServiceTvSpeaker.addOptionalCharacteristic(Characteristic.ConfiguredName);
-                        this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.ConfiguredName, volumeServiceNameTv);
+                        this.volumeServiceTvSpeaker.setCharacteristic(Characteristic.ConfiguredName, volumeServiceName);
                         this.volumeServiceTvSpeaker.getCharacteristic(Characteristic.Active)
                             .onGet(async () => {
                                 const state = this.power;
@@ -833,7 +828,7 @@ class OpenWebIfDevice extends EventEmitter {
                     //get switch display type
                     const displayType = button.displayType;
 
-                    //get switch name		
+                    //get switch name
                     const name = button.name || `Button Input ${i}`;
 
                     //get switch reference
@@ -877,7 +872,7 @@ class OpenWebIfDevice extends EventEmitter {
                 }
             }
 
-            //prepare sonsor services
+            //prepare sensor services
             const possibleSensorCount = 99 - this.accessory.services.length;
             const maxSensorCount = this.sensors.length >= possibleSensorCount ? possibleSensorCount : this.sensors.length;
             if (maxSensorCount > 0) {
@@ -886,7 +881,7 @@ class OpenWebIfDevice extends EventEmitter {
                 for (let i = 0; i < maxSensorCount; i++) {
                     const sensor = this.sensors[i];
 
-                    //get sensor name		
+                    //get sensor name
                     const name = sensor.name || `Sensor ${i}`;
 
                     //get sensor name prefix
@@ -956,6 +951,7 @@ class OpenWebIfDevice extends EventEmitter {
                                     case 0: //Channel control
                                         if (this.power) await this.openwebif.send(`${ApiUrls.SetChannel}${reference}`);
                                         if (this.logDebug) this.emit('debug', `Set Channel, Name: ${name}, Reference: ${reference}`);
+                                        button.state = false;
                                         break;
                                     case 1: //RC Control
                                         await this.openwebif.send(ApiUrls.SetRcCommand + command);
@@ -964,7 +960,7 @@ class OpenWebIfDevice extends EventEmitter {
                                         break;
                                     case 2: //Power Control
                                         await this.openwebif.send(ApiUrls.SetPower + command);
-                                        if (this.logDebu) this.emit('debug', `Set Power Control, Name: ${name}, Reference: ${command}`);
+                                        if (this.logDebug) this.emit('debug', `Set Power Control, Name: ${name}, Reference: ${command}`);
                                         button.state = false;
                                         break;
                                     default:
@@ -973,7 +969,7 @@ class OpenWebIfDevice extends EventEmitter {
                                         break;
                                 }
                             } catch (error) {
-                                if (this.logWarn) this.emit('warn', `Set ${['Channel', 'Command'][mode]} error: ${error}`);
+                                if (this.logWarn) this.emit('warn', `Set ${['Channel', 'Command', 'Power'][mode] ?? 'Unknown'} error: ${error}`);
                             }
                         });
                     this.buttonServices.push(buttonService);
@@ -983,7 +979,7 @@ class OpenWebIfDevice extends EventEmitter {
 
             return accessory;
         } catch (error) {
-            throw new Error(error)
+            throw new Error(`Prepare accessory error: ${error.message ?? error}`);
         }
     }
 
@@ -1030,11 +1026,6 @@ class OpenWebIfDevice extends EventEmitter {
                         ?.updateCharacteristic(Characteristic.RotationSpeed, volume)
                         .updateCharacteristic(Characteristic.On, muteV);
 
-                    this.volumeServiceSpeaker
-                        ?.updateCharacteristic(Characteristic.Active, power)
-                        .updateCharacteristic(Characteristic.Volume, volume)
-                        .updateCharacteristic(Characteristic.Mute, mute);
-
                     //sensors
                     const currentStateModeMap = {
                         0: reference,
@@ -1053,7 +1044,8 @@ class OpenWebIfDevice extends EventEmitter {
                         3: this.mute,
                         4: this.recording,
                         5: this.streaming,
-                        6: this.playState
+                        // [fix] was this.playState (undefined) — now correctly reads instance property
+                        6: this.playState,
                     };
 
                     for (let i = 0; i < this.sensors.length; i++) {
@@ -1112,7 +1104,8 @@ class OpenWebIfDevice extends EventEmitter {
                     //buttons
                     for (let i = 0; i < this.buttons.length; i++) {
                         const button = this.buttons[i];
-                        const state = this.power ? (button.mode === 1 ? (button.command === 'MUTE' ? muteV : button.command === 'POWER' ? power : button.state) : button.reference === reference) : false;
+                        // [fix] was this.power (stale/old value) — now uses local `power` parameter
+                        const state = power ? (button.mode === 1 ? (button.command === 'MUTE' ? muteV : button.command === 'POWER' ? power : button.state) : button.reference === reference) : false;
                         button.state = state;
                         this.buttonServices?.[i]?.updateCharacteristic(Characteristic.On, state);
                     };
@@ -1124,6 +1117,9 @@ class OpenWebIfDevice extends EventEmitter {
                     this.mute = mute;
                     this.recording = recording;
                     this.streaming = streaming;
+                    // [fix] added missing this.playState assignment — was never persisted between events
+                    this.playState = playState;
+
                     if (this.logInfo) {
                         this.emit('info', `Power: ${power ? 'ON' : 'OFF'}`);
                         this.emit('info', `Channel Name: ${name}`);

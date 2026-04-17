@@ -64,7 +64,6 @@ class OpenWebIf extends EventEmitter {
             });
     }
 
-
     async handleWithLock(lockKey, fn) {
         if (this.locks[lockKey]) return;
 
@@ -72,7 +71,7 @@ class OpenWebIf extends EventEmitter {
         try {
             await fn();
         } catch (error) {
-            this.emit('error', `Inpulse generator error: ${error}`);
+            this.emit('error', `Impulse generator error: ${error}`);
         } finally {
             this.locks[lockKey] = false;
         }
@@ -110,7 +109,6 @@ class OpenWebIf extends EventEmitter {
                 }
             } else {
                 for (const input of inputs) {
-
                     channels.push({
                         name: input.name,
                         reference: input.reference,
@@ -215,11 +213,12 @@ class OpenWebIf extends EventEmitter {
                 await this.functions.saveData(this.devInfoFile, info);
             }
 
-            // Check channels
+            // Check channels on first start — builds the initial channel list before
+            // the impulse generator fires for the first time
             await this.checkChannels();
 
-            // Connect to deice success
-            this.emit('success', `Connect Success`)
+            // Connect success
+            this.emit('success', `Connect Success`);
 
             // Emit device info
             this.emit('deviceInfo', info);
@@ -227,7 +226,6 @@ class OpenWebIf extends EventEmitter {
             return true;
         } catch (error) {
             throw new Error(`Connect error: ${error}`);
-
         }
     }
 
