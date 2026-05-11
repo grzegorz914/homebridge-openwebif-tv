@@ -17,6 +17,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For plugin < v5.1.0 use Homebridge UI <= v5.5.0
 - For plugin >= v5.1.0 use Homebridge UI >= v5.13.0
 
+## [5.1.12] - (11.05.2026)
+
+## Fixes
+
+- fix input buttons active state never matching current channel (encoded vs raw service reference comparison)
+- fix input buttons `onGet` returning stale initial state instead of live state
+- fix `this.playPause` not initialized in constructor (undefined coercion)
+- fix duplicate diacritics entries in `DiacriticsMap` (`ü/Ü` in French, `ó/Ó` in Spanish)
+- fix inverted Mute log message in volume modes 4 and 5
+
+## Changes
+
+- refactor: extract `_setupTvSpeakerService` helper — removed ~120 lines of duplicated TelevisionSpeaker setup across volume modes 3/4/5
+
 ## [5.1.0] - (01.01.2026)
 
 ## Changes
