@@ -29,6 +29,7 @@ class OpenWebIfDevice extends EventEmitter {
         this.logInfo = device.log?.info || false;
         this.logWarn = device.log?.warn || false;
         this.logDebug = device.log?.debug || false;
+        this.logError = device.log?.error || false;
         this.infoButtonCommand = device.infoButtonCommand || '139';
         this.devInfoFile = devInfoFile;
         this.inputsFile = inputsFile;
@@ -151,7 +152,7 @@ class OpenWebIfDevice extends EventEmitter {
 
             return this.savedInfo.adressMac;
         } catch (error) {
-            throw new Error(`Prepare data for accessory error: ${error}`);
+            if (this.logError) throw new Error(`Prepare data for accessory error: ${error}`);
         }
     }
 
@@ -161,7 +162,7 @@ class OpenWebIfDevice extends EventEmitter {
             await this.openwebif.impulseGenerator.state(state, timers)
             return true;
         } catch (error) {
-            throw new Error(`Impulse generator start error: ${error}`);
+            if (this.logError) throw new Error(`Impulse generator start error: ${error}`);
         }
     }
 
@@ -198,7 +199,7 @@ class OpenWebIfDevice extends EventEmitter {
 
             return;
         } catch (error) {
-            throw new Error(`Display order error: ${error}`);
+            if (this.logError) throw new Error(`Display order error: ${error}`);
         }
     }
 
@@ -302,7 +303,7 @@ class OpenWebIfDevice extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`Add/Remove/Update input error: ${error}`);
+            if (this.logError) throw new Error(`Add/Remove/Update input error: ${error}`);
         }
     }
 
@@ -1004,7 +1005,7 @@ class OpenWebIfDevice extends EventEmitter {
             //prepare data for accessory
             const macAdress = await this.prepareDataForAccessory();
             if (!macAdress) {
-                this.emit('error', `Missing Mac Address`);
+                this.emit('warn', `Missing Mac Address`);
                 return false;
             }
 
@@ -1015,7 +1016,7 @@ class OpenWebIfDevice extends EventEmitter {
             const accessory = await this.prepareAccessory(macAdress);
             return accessory;
         } catch (error) {
-            throw new Error(`Start error: ${error}`);
+            if (this.logError) throw new Error(`Start error: ${error}`);
         }
     }
 }

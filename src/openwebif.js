@@ -15,8 +15,9 @@ class OpenWebIf extends EventEmitter {
         this.getInputsFromDevice = config.inputs?.getFromDevice;
         this.inputs = (config.inputs?.channels || []).filter(input => input.name && input.reference);
         this.bouquets = (config.inputs?.bouquets || []).filter(bouquet => bouquet.name);
-        this.logWarn = config.log?.warn;
-        this.logDebug = config.log?.debug;
+        this.logWarn = config.log?.warn || false;
+        this.logDebug = config.log?.debug || false;
+        this.logError = config.log?.error || false;
         this.devInfoFile = devInfoFile;
         this.channelsFile = channelsFile;
         this.inputsFile = inputsFile;
@@ -71,7 +72,7 @@ class OpenWebIf extends EventEmitter {
         try {
             await fn();
         } catch (error) {
-            this.emit('error', `Impulse generator error: ${error}`);
+            if (this.logError) this.emit('error', `Impulse generator error: ${error}`);
         } finally {
             this.locks[lockKey] = false;
         }
@@ -124,7 +125,7 @@ class OpenWebIf extends EventEmitter {
             await this.functions.saveData(this.inputsFile, channels);
             return channels;
         } catch (error) {
-            throw new Error(`Get inputs error: ${error.message || error}`);
+            if (this.logError) throw new Error(`Get inputs error: ${error.message || error}`);
         }
     }
 
@@ -142,7 +143,7 @@ class OpenWebIf extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`Check channels error: ${error}`);
+            if (this.logError) throw new Error(`Check channels error: ${error}`);
         }
     }
 
@@ -186,7 +187,7 @@ class OpenWebIf extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`Check state error: ${error}`);
+            if (this.logError) throw new Error(`Check state error: ${error}`);
         }
     }
 
@@ -225,7 +226,7 @@ class OpenWebIf extends EventEmitter {
 
             return true;
         } catch (error) {
-            throw new Error(`Connect error: ${error}`);
+            if (this.logError) throw new Error(`Connect error: ${error}`);
         }
     }
 
@@ -235,7 +236,7 @@ class OpenWebIf extends EventEmitter {
             if (this.logDebug) this.emit('debug', `Send data: ${apiUrl}`);
             return true;
         } catch (error) {
-            throw new Error(`Send data error: ${error}`);
+            if (this.logError) throw new Error(`Send data error: ${error}`);
         }
     }
 }
