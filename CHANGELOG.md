@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For plugin < v5.1.0 use Homebridge UI <= v5.5.0
 - For plugin >= v5.1.0 use Homebridge UI >= v5.13.0
 
+## [5.1.14] - (04.06.2026)
+
+### Fixed
+
+- MQTT: after a power restart, when the receiver took time to come back, MQTT never recovered without a manual plugin restart; root cause: each retry attempt created a new MQTT client — the second and subsequent clients silently failed or accumulated, leaving `mqttConnected = false`; fixed by creating the MQTT instance once before the retry loop so the connection is established a single time and survives all connect attempts; the `'set'` handler is attached once via an `activeDevice` reference updated only after a successful connect; switch logic extracted to a `setOverMqtt()` method on `OpenWebIfDevice`
+
 ## [5.1.12] - (11.05.2026)
 
 ## Fixes

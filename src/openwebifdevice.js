@@ -1,12 +1,11 @@
 import EventEmitter from 'events';
-import Mqtt from './mqtt.js';
 import OpenWebIf from './openwebif.js';
 import Functions from './functions.js';
 import { ApiUrls, DiacriticsMap } from './constants.js';
 let Accessory, Characteristic, Service, Categories, Encode, AccessoryUUID;
 
 class OpenWebIfDevice extends EventEmitter {
-    constructor(api, device, devInfoFile, inputsFile, channelsFile, inputsNamesFile, inputsTargetVisibilityFile) {
+    constructor(api, device, devInfoFile, inputsFile, channelsFile, inputsNamesFile, inputsTargetVisibilityFile, mqtt1 = null, mqttConnected = false) {
         super();
 
         Accessory = api.platformAccessory;
@@ -39,7 +38,8 @@ class OpenWebIfDevice extends EventEmitter {
 
         //mqtt
         this.mqtt = device.mqtt ?? {};
-        this.mqttConnected = false;
+        this.mqtt1 = mqtt1;
+        this.mqttConnected = mqttConnected;
 
         //inputs variable
         this.functions = new Functions();
@@ -71,65 +71,27 @@ class OpenWebIfDevice extends EventEmitter {
         this.brightness = 0;
     }
 
-    async externalIntegrations() {
-        //mqtt client
-        const mqttEnabled = this.mqtt.enable || false;
-        if (mqttEnabled) {
-            try {
-                this.mqtt1 = new Mqtt({
-                    host: this.mqtt.host,
-                    port: this.mqtt.port || 1883,
-                    clientId: this.mqtt.clientId ? `openwebif_${this.mqtt.clientId}_${Math.random().toString(16).slice(3)}` : `openwebif_${Math.random().toString(16).slice(3)}`,
-                    prefix: this.mqtt.prefix ? `openwebif/${this.mqtt.prefix}/${this.name}` : `openwebif/${this.name}`,
-                    user: this.mqtt.auth?.user,
-                    passwd: this.mqtt.auth?.passwd,
-                    logWarn: this.logWarn,
-                    logDebug: this.logDebug
-                })
-                    .on('connected', (message) => {
-                        this.emit('success', message);
-                        this.mqttConnected = true;
-                    })
-                    .on('subscribed', (message) => {
-                        this.emit('success', message);
-                    })
-                    .on('set', async (key, value) => {
-                        try {
-                            switch (key) {
-                                case 'Power':
-                                    const state = value ? '4' : '5';
-                                    await this.openwebif.send(ApiUrls.SetPower + state);
-                                    break;
-                                case 'Channel':
-                                    await this.openwebif.send(ApiUrls.SetChannel + value);
-                                    break;
-                                case 'Volume':
-                                    const volume = (value < 0 || value > 100) ? this.volume : value;
-                                    await this.openwebif.send(ApiUrls.SetVolume + volume);
-                                    break;
-                                case 'Mute':
-                                    await this.openwebif.send(ApiUrls.ToggleMute);
-                                    break;
-                                case 'RcControl':
-                                    await this.openwebif.send(ApiUrls.SetRcCommand + value);
-                                    break;
-                                default:
-                                    this.emit('info', `MQTT Received key: ${key}, value: ${value}`);
-                                    break;
-                            }
-                        } catch (error) {
-                            if (this.logWarn) this.emit('warn', `MQTT set error: ${error}`);
-                        }
-                    })
-                    .on('debug', (debug) => this.emit('debug', debug))
-                    .on('warn', (warn) => this.emit('warn', warn))
-                    .on('error', (error) => this.emit('error', error));
-            } catch (error) {
-                if (this.logWarn) this.emit('warn', `MQTT start error: ${error}`);
-            }
-        };
-
-        return true;
+    async setOverMqtt(key, value) {
+        switch (key) {
+            case 'Power':
+                await this.openwebif.send(ApiUrls.SetPower + (value ? '4' : '5'));
+                break;
+            case 'Channel':
+                await this.openwebif.send(ApiUrls.SetChannel + value);
+                break;
+            case 'Volume':
+                await this.openwebif.send(ApiUrls.SetVolume + ((value < 0 || value > 100) ? this.volume : value));
+                break;
+            case 'Mute':
+                await this.openwebif.send(ApiUrls.ToggleMute);
+                break;
+            case 'RcControl':
+                await this.openwebif.send(ApiUrls.SetRcCommand + value);
+                break;
+            default:
+                this.emit('info', `MQTT Received key: ${key}, value: ${value}`);
+                break;
+        }
     }
 
     async prepareDataForAccessory() {
@@ -1009,8 +971,6 @@ class OpenWebIfDevice extends EventEmitter {
                 return false;
             }
 
-            //start external integrations
-            if (this.mqtt.enable) await this.externalIntegrations();
 
             //prepare accessory
             const accessory = await this.prepareAccessory(macAdress);

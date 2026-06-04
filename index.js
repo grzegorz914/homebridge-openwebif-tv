@@ -2,6 +2,7 @@ import { join } from 'path';
 import { mkdirSync, existsSync, writeFileSync } from 'fs';
 import OpenWebIfDevice from './src/openwebifdevice.js';
 import ImpulseGenerator from './src/impulsegenerator.js';
+import Mqtt from './src/mqtt.js';
 import { PluginName, PlatformName } from './src/constants.js';
 
 class OpenWebIfPlatform {
@@ -96,6 +97,48 @@ class OpenWebIfPlatform {
 			return;
 		}
 
+		// Create MQTT once — before the retry loop — so the connection is
+		// established a single time and survives across all connect attempts.
+		// The 'set' handler uses activeDevice so it always routes to the current instance.
+		let activeDevice = null;
+		let mqtt1 = null;
+		let mqttConnected = false;
+		if (device.mqtt?.enable) {
+			try {
+				await new Promise((resolve) => {
+					const timer = setTimeout(resolve, 10000);
+					mqtt1 = new Mqtt({
+						host: device.mqtt.host,
+						port: device.mqtt.port || 1883,
+						clientId: device.mqtt.clientId ? `openwebif_${device.mqtt.clientId}_${Math.random().toString(16).slice(3)}` : `openwebif_${Math.random().toString(16).slice(3)}`,
+						prefix: device.mqtt.prefix ? `openwebif/${device.mqtt.prefix}/${name}` : `openwebif/${name}`,
+						user: device.mqtt.auth?.user,
+						passwd: device.mqtt.auth?.passwd,
+						logWarn: logLevel.warn,
+						logDebug: logLevel.debug,
+					})
+						.once('connected', (msg) => {
+							clearTimeout(timer);
+							mqttConnected = true;
+							if (logLevel.success) log.success(`Device: ${host} ${name}, ${msg}`);
+							resolve();
+						})
+						.on('set', async (key, value) => {
+							try {
+								if (activeDevice) await activeDevice.setOverMqtt(key, value);
+							} catch (error) {
+								if (logLevel.warn) log.warn(`Device: ${host} ${name}, MQTT set error: ${error.message ?? error}`);
+							}
+						})
+						.on('debug', (msg) => logLevel.debug && log.info(`Device: ${host} ${name}, debug: ${msg}`))
+						.on('warn', (msg) => logLevel.warn && log.warn(`Device: ${host} ${name}, ${msg}`))
+						.on('error', (msg) => logLevel.error && log.error(`Device: ${host} ${name}, ${msg}`));
+				});
+			} catch (error) {
+				if (logLevel.warn) log.warn(`Device: ${host} ${name}, MQTT start error: ${error.message ?? error}`);
+			}
+		}
+
 		// The startup impulse generator retries the full connect+start cycle
 		// every 120 s until it succeeds, then hands off to the device
 		// impulse generator and stops itself.
@@ -104,7 +147,8 @@ class OpenWebIfPlatform {
 				try {
 					await this.startDevice(
 						device, name, host, refreshInterval,
-						files, logLevel, log, api, impulseGenerator
+						files, logLevel, log, api, impulseGenerator,
+						mqtt1, mqttConnected, (d) => { activeDevice = d; }
 					);
 				} catch (error) {
 					if (logLevel.error) log.error(`Device: ${host} ${name}, Start impulse generator error: ${error.message ?? error}, trying again.`);
@@ -119,8 +163,8 @@ class OpenWebIfPlatform {
 
 	// ── Connect and register accessory for one device ─────────────────────────
 
-	async startDevice(device, name, host, refreshInterval, files, logLevel, log, api, impulseGenerator) {
-		const deviceInstance = new OpenWebIfDevice(api, device, files.devInfo, files.inputs, files.channels, files.inputsNames, files.inputsVisibility)
+	async startDevice(device, name, host, refreshInterval, files, logLevel, log, api, impulseGenerator, mqtt1, mqttConnected, onDeviceReady) {
+		const deviceInstance = new OpenWebIfDevice(api, device, files.devInfo, files.inputs, files.channels, files.inputsNames, files.inputsVisibility, mqtt1, mqttConnected)
 			.on('devInfo', (info) => logLevel.devInfo && log.info(info))
 			.on('success', (msg) => logLevel.success && log.success(`Device: ${host} ${name}, ${msg}`))
 			.on('info', (msg) => log.info(`Device: ${host} ${name}, ${msg}`))
@@ -131,6 +175,7 @@ class OpenWebIfPlatform {
 		const accessory = await deviceInstance.start();
 		if (!accessory) return;
 
+		onDeviceReady(deviceInstance);
 		api.publishExternalAccessories(PluginName, [accessory]);
 		if (logLevel.success) log.success(`Device: ${host} ${name}, Published as external accessory.`);
 
