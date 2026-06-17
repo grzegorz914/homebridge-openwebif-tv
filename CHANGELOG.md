@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For plugin < v5.1.0 use Homebridge UI <= v5.5.0
 - For plugin >= v5.1.0 use Homebridge UI >= v5.13.0
 
+## [5.1.15] - (17.06.2026)
+
+### Fixed
+
+- add support for WiFi MAC address in device info, fixes #84, root cause: some devices have the WiFi interface as the first interface in the `ifaces` array, while others have it as the second; fixed by checking both interfaces and using the first available MAC address for the `adressMac` property in `devInfo`
+
 ## [5.1.14] - (04.06.2026)
 
 ### Fixed

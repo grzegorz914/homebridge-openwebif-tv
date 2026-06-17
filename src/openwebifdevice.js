@@ -763,7 +763,7 @@ class OpenWebIfDevice extends EventEmitter {
         svc.setCharacteristic(Characteristic.ConfiguredName, volumeServiceName);
         svc.getCharacteristic(Characteristic.Active)
             .onGet(async () => this.power)
-            .onSet(async () => {});
+            .onSet(async () => { });
         svc.getCharacteristic(Characteristic.VolumeControlType)
             .onGet(async () => 3);
         svc.getCharacteristic(Characteristic.VolumeSelector)
@@ -970,7 +970,6 @@ class OpenWebIfDevice extends EventEmitter {
                 this.emit('warn', `Missing Mac Address`);
                 return false;
             }
-
 
             //prepare accessory
             const accessory = await this.prepareAccessory(macAdress);

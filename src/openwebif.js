@@ -205,14 +205,15 @@ class OpenWebIf extends EventEmitter {
                 firmwareRevision: devInfo.imagever || 'undefined',
                 kernelVer: devInfo.kernelver || 'undefined',
                 chipset: devInfo.chipset || 'undefined',
-                adressMac: devInfo.ifaces?.[0]?.mac ?? false,
+                adressMac: devInfo.ifaces?.[0]?.mac ?? (devInfo.ifaces?.[1]?.mac || false)
             };
             this.devInfo = info;
 
             // Save device info
-            if (info.adressMac) {
-                await this.functions.saveData(this.devInfoFile, info);
-            }
+            if (!info.adressMac) return false;
+
+            // Save device info
+            await this.functions.saveData(this.devInfoFile, info);
 
             // Check channels on first start — builds the initial channel list before
             // the impulse generator fires for the first time
