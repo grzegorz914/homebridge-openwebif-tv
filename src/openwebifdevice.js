@@ -1,6 +1,7 @@
 import EventEmitter from 'events';
 import OpenWebIf from './openwebif.js';
 import Functions from './functions.js';
+import HaDiscovery from './hadiscovery.js';
 import { ApiUrls, DiacriticsMap } from './constants.js';
 let Accessory, Characteristic, Service, Categories, Encode, AccessoryUUID;
 
@@ -262,6 +263,7 @@ class OpenWebIfDevice extends EventEmitter {
 
             // Only one time run
             if (updated) await this.displayOrder();
+            if (updated) this.haPublishConfig();
 
             return true;
         } catch (error) {
@@ -799,6 +801,68 @@ class OpenWebIfDevice extends EventEmitter {
         return svc;
     }
 
+    //home assistant discovery
+    async setupHaDiscovery() {
+        if (!this.mqttConnected || !this.mqtt.haDiscovery) return;
+
+        try {
+            this.ha = new HaDiscovery(this.mqtt1, {
+                objectId: `openwebif_${this.savedInfo.serialNumber || this.savedInfo.adressMac}`,
+                name: this.name,
+                deviceClass: 'receiver',
+                device: {
+                    manufacturer: this.savedInfo.manufacturer,
+                    model: this.savedInfo.modelName,
+                    sw_version: this.savedInfo.firmwareRevision
+                },
+                commands: {
+                    power: { key: 'Power' },
+                    volume_set: { key: 'Volume', min: 0, max: 100 },
+                    // OpenWebIf mute toggles on every call
+                    mute: { key: 'Mute', toggle: true },
+                    source: { key: 'Channel' },
+                    play: { key: 'RcControl', value: '207' },
+                    pause: { key: 'RcControl', value: '119' },
+                    stop: { key: 'RcControl', value: '128' },
+                    next: { key: 'RcControl', value: '407' },
+                    previous: { key: 'RcControl', value: '412' }
+                }
+            });
+            await this.haPublishConfig();
+        } catch (error) {
+            if (this.logWarn) this.emit('warn', `HA Discovery setup error: ${error}`);
+        }
+    }
+
+    async haPublishConfig() {
+        if (!this.ha) return;
+
+        try {
+            const sources = (this.inputsServices ?? []).map(input => ({ id: input.reference, name: input.name }));
+            await this.ha.publishConfig({ sources });
+            await this.haUpdateState();
+        } catch (error) {
+            if (this.logWarn) this.emit('warn', `HA Discovery publish error: ${error}`);
+        }
+    }
+
+    async haUpdateState() {
+        if (!this.ha) return;
+
+        try {
+            await this.ha.updateState({
+                power: this.power,
+                volume: Number.isFinite(Number(this.volume)) ? Number(this.volume) : undefined,
+                muted: this.mute === undefined ? undefined : this.mute === true || this.mute === 'true',
+                source: this.reference,
+                media_channel: this.channelName ?? '',
+                media_title: this.eventName ?? ''
+            });
+        } catch (error) {
+            if (this.logWarn) this.emit('warn', `HA Discovery state error: ${error}`);
+        }
+    }
+
     //start
     async start() {
         try {
@@ -935,6 +999,9 @@ class OpenWebIfDevice extends EventEmitter {
                     this.streaming = streaming;
                     // [fix] added missing this.playState assignment — was never persisted between events
                     this.playState = playState;
+                    this.channelName = name;
+                    this.eventName = eventName;
+                    this.haUpdateState();
 
                     if (this.logInfo) {
                         this.emit('info', `Power: ${power ? 'ON' : 'OFF'}`);
@@ -973,6 +1040,7 @@ class OpenWebIfDevice extends EventEmitter {
 
             //prepare accessory
             const accessory = await this.prepareAccessory(macAdress);
+            this.setupHaDiscovery();
             return accessory;
         } catch (error) {
             if (this.logError) throw new Error(`Start error: ${error}`);

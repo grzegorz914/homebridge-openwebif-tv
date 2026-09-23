@@ -113,6 +113,7 @@ class OpenWebIfPlatform {
 						clientId: device.mqtt.clientId ? `openwebif_${device.mqtt.clientId}_${Math.random().toString(16).slice(3)}` : `openwebif_${Math.random().toString(16).slice(3)}`,
 						prefix: device.mqtt.prefix ? `openwebif/${device.mqtt.prefix}/${name}` : `openwebif/${name}`,
 						protocolVersion: device.mqtt.protocolVersion,
+						haDiscovery: device.mqtt.haDiscovery,
 						user: device.mqtt.auth?.user,
 						passwd: device.mqtt.auth?.passwd,
 						logWarn: logLevel.warn,
