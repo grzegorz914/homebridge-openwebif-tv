@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fix: MQTT client had `protocolVersion: 5` hardcoded, so brokers that only support MQTT 3.1.1 (e.g. the ioBroker MQTT adapter) accepted the TCP connection, failed the handshake, and got disconnected every second forever, with nothing published and no error logged. Added a `Protocol Version` option (5.0 / 3.1.1) in the MQTT section, and a one-time warning if no successful connection is established within 30 seconds
 - readme update
+- sample config update
 
 ## [5.1.15] - (17.06.2026)
 

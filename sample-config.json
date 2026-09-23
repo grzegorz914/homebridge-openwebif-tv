@@ -89,6 +89,7 @@
             "port": 1883,
             "clientId": "",
             "prefix": "",
+            "protocolVersion": 5,
             "auth": {
               "enable": false,
               "user": "user",
