@@ -173,8 +173,6 @@ class OpenWebIfDevice extends EventEmitter {
             let updated = false;
 
             for (const input of inputs) {
-                if (this.inputsServices.length >= 85 && !remove) continue;
-
                 const inputReference = input.reference;
                 const savedName = this.savedInputsNames[inputReference] ?? input.name;
                 const sanitizedName = await this.functions.sanitizeString(savedName);
@@ -206,6 +204,9 @@ class OpenWebIfDevice extends EventEmitter {
                         updated = true;
                     }
                 } else {
+                    // HomeKit allows at most 85 inputs, the limit applies to new inputs only, existing ones are still updated
+                    if (this.inputsServices.length >= 85) continue;
+
                     const identifier = this.inputsServices.length + 1;
                     inputService = this.accessory.addService(Service.InputSource, sanitizedName, `Input ${inputReference}`);
                     inputService.identifier = identifier;
