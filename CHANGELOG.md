@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For plugin < v5.1.0 use Homebridge UI <= v5.5.0
 - For plugin >= v5.1.0 use Homebridge UI >= v5.13.0
 
+## [5.3.0] - (24.09.2026)
+
+### Changes
+
+- added: HA Discovery, the picon of the current channel is shown in the Home Assistant media card. It is looked up like in the Home Assistant Enigma2 integration (by channel name, then by service reference), fetched with the configured login and published once per channel on the retained `HA Image` topic. Requires MQTT Universal Media Player 0.3.0
+- readme update
+
 ## [5.2.0] - (23.09.2026)
 
 ### Changes

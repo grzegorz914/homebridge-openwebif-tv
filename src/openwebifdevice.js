@@ -808,6 +808,7 @@ class OpenWebIfDevice extends EventEmitter {
         try {
             this.ha = new HaDiscovery(this.mqtt1, {
                 objectId: `openwebif_${this.savedInfo.serialNumber || this.savedInfo.adressMac}`,
+                image: true,
                 name: this.name,
                 deviceClass: 'receiver',
                 device: {
@@ -858,9 +859,46 @@ class OpenWebIfDevice extends EventEmitter {
                 media_channel: this.channelName ?? '',
                 media_title: this.eventName ?? ''
             });
+
+            // Channel picon, recordings (1:0:0...) have none
+            const reference = typeof this.reference === 'string' && !this.reference.startsWith('1:0:0') ? this.reference : null;
+            this.ha.updateImage(reference, () => this.getPicon(reference, this.channelName)).catch(() => { });
         } catch (error) {
             if (this.logWarn) this.emit('warn', `HA Discovery state error: ${error}`);
         }
+    }
+
+    // Picon of a channel, the same lookup as the Home Assistant Enigma2 integration:
+    // /picon/<channel name>.png, then /picon/<service reference>.png, cached per reference
+    async getPicon(reference, channelName) {
+        this.piconCache ??= new Map();
+        if (this.piconCache.has(reference)) return this.piconCache.get(reference);
+
+        const byName = (channelName ?? '')
+            .normalize('NFKD')
+            .replace(/[^\x00-\x7F]/g, '')
+            .replace(/&/g, 'and')
+            .replace(/\+/g, 'plus')
+            .replace(/\*/g, 'star')
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '');
+        const byReference = reference.replace(/:+$/, '').replace(/:/g, '_');
+
+        let picon = null;
+        for (const name of [byName, byReference]) {
+            if (!name) continue;
+            try {
+                const response = await this.openwebif.axiosInstance.get(`/picon/${name}.png`, { responseType: 'arraybuffer', validateStatus: status => status === 200 });
+                picon = Buffer.from(response.data);
+                break;
+            } catch {
+                // not found, try the next name
+            }
+        }
+
+        this.piconCache.set(reference, picon);
+        if (this.logDebug) this.emit('debug', `Picon for ${channelName}: ${picon ? `${picon.length} bytes` : 'not found'}`);
+        return picon;
     }
 
     //start

@@ -129,6 +129,7 @@
   * `homeassistant/media_player/<id>/config` - discovery message.
   * `HA State` - `{"power": true, "volume": 35, "muted": false, "source": "1:0:1:3DD3:640:13E:820000:0:0:0:", "media_channel": "TVP 1 HD"}`.
   * `Availability` - `online`, `offline` (last will).
+  * `HA Image` - picon of the current channel (raw PNG, retained).
 
 | Direction | Topic | Message | Payload Data |
 | --- | --- | --- | --- |
