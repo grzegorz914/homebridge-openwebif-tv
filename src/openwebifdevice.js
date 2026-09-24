@@ -870,7 +870,7 @@ class OpenWebIfDevice extends EventEmitter {
     }
 
     // Picon of a channel, the same lookup as the Home Assistant Enigma2 integration:
-    // /picon/<channel name>.png, then /picon/<service reference>.png, cached per reference
+    // /picon/<channel name>.png, then /picon/<service reference>.png, found picons are cached per reference
     async getPicon(reference, channelName) {
         this.piconCache ??= new Map();
         if (this.piconCache.has(reference)) return this.piconCache.get(reference);
@@ -883,11 +883,14 @@ class OpenWebIfDevice extends EventEmitter {
             .replace(/\*/g, 'star')
             .toLowerCase()
             .replace(/[^a-z0-9]/g, '');
-        const byReference = reference.replace(/:+$/, '').replace(/:/g, '_');
+        // Only the first 10 fields name a picon (streams append an url), picon sets name HD channels (type 19, 16, 1F...) by type 1
+        const fields = reference.split(':').slice(0, 10);
+        const byReference = fields.join('_');
+        const byReferenceType1 = fields.length > 2 && fields[2] !== '1' ? [fields[0], fields[1], '1', ...fields.slice(3)].join('_') : '';
 
         let picon = null;
-        for (const name of [byName, byReference]) {
-            if (!name) continue;
+        const names = [byName, byReference, byReferenceType1].filter(Boolean);
+        for (const name of names) {
             try {
                 const response = await this.openwebif.axiosInstance.get(`/picon/${name}.png`, { responseType: 'arraybuffer', validateStatus: status => status === 200 });
                 picon = Buffer.from(response.data);
@@ -897,8 +900,9 @@ class OpenWebIfDevice extends EventEmitter {
             }
         }
 
-        this.piconCache.set(reference, picon);
-        if (this.logDebug) this.emit('debug', `Picon for ${channelName}: ${picon ? `${picon.length} bytes` : 'not found'}`);
+        // Misses are not cached, picons installed later are found without a restart
+        if (picon) this.piconCache.set(reference, picon);
+        if (this.logDebug) this.emit('debug', `Picon for ${channelName}: ${picon ? `${picon.length} bytes` : `not found, tried: ${names.map(name => `/picon/${name}.png`).join(', ')}`}`);
         return picon;
     }
 

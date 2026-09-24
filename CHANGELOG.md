@@ -17,6 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For plugin < v5.1.0 use Homebridge UI <= v5.5.0
 - For plugin >= v5.1.0 use Homebridge UI >= v5.13.0
 
+## [5.3.2] - (24.09.2026)
+
+### Changes
+
+- fix: Home Assistant channel picon not found for HD channels, the lookup now also tries the service reference with service type 1 (the picon naming convention) and uses only the first 10 fields of the reference
+- fix: a missing picon is no longer cached, picons installed later are found without a restart
+- added: debug log with the tried picon paths when no picon is found
+
 ## [5.3.1] - (24.09.2026)
 
 ### Changes
