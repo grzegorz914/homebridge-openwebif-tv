@@ -9,7 +9,8 @@ export const ApiUrls = {
     "SetChannel": "/api/zap?sRef=",
     "SetVolume": "/api/vol?set=set",
     "ToggleMute": "/api/vol?set=mute",
-    "SetRcCommand": "/api/remotecontrol?command="
+    "SetRcCommand": "/api/remotecontrol?command=",
+    "SendMessage": "/api/message?type=1&timeout=10&text="
 };
 
 export const InputSourceType = [

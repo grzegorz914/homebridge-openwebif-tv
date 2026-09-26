@@ -17,6 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For plugin < v5.1.0 use Homebridge UI <= v5.5.0
 - For plugin >= v5.1.0 use Homebridge UI >= v5.13.0
 
+## [5.4.0] - (26.09.2026)
+
+### Changes
+
+- added: Home Assistant discovery publishes a notify entity that shows a message on the TV screen for 10 seconds (`notify.send_message`). Requires the MQTT Universal Media Player integration 0.4.0 or newer
+- added: MQTT key `Notify` with the message text
+- readme update
+
 ## [5.3.2] - (24.09.2026)
 
 ### Changes

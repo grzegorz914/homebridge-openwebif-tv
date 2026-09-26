@@ -89,6 +89,10 @@ class OpenWebIfDevice extends EventEmitter {
             case 'RcControl':
                 await this.openwebif.send(ApiUrls.SetRcCommand + value);
                 break;
+            case 'Notify':
+                // Info message on the TV screen for 10 s
+                await this.openwebif.send(ApiUrls.SendMessage + encodeURIComponent(String(value)));
+                break;
             default:
                 this.emit('info', `MQTT Received key: ${key}, value: ${value}`);
                 break;
@@ -827,7 +831,9 @@ class OpenWebIfDevice extends EventEmitter {
                     pause: { key: 'RcControl', value: '119' },
                     stop: { key: 'RcControl', value: '128' },
                     next: { key: 'RcControl', value: '407' },
-                    previous: { key: 'RcControl', value: '412' }
+                    previous: { key: 'RcControl', value: '412' },
+                    // Notify entity on the device, needs the integration 0.4.0
+                    notify: { key: 'Notify' }
                 }
             });
             await this.haPublishConfig();

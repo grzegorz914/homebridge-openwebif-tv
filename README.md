@@ -125,7 +125,7 @@
 
 ### MQTT Integration
 
-* HA Discovery - if enabled, the device is published to Home Assistant as one media player (class `receiver`) with power, volume, mute, source selection and more. Channels are available as sources. Requires the [MQTT Universal Media Player](https://github.com/grzegorz914/homeassistant-mqtt-media-player) integration. Additional retained topics:
+* HA Discovery - if enabled, the device is published to Home Assistant as one media player (class `receiver`) with power, volume, mute, source selection and more. Channels are available as sources. The device also gets a notify entity that shows a message on the TV screen (`notify.send_message`), it needs the integration 0.4.0 or newer. Requires the [MQTT Universal Media Player](https://github.com/grzegorz914/homeassistant-mqtt-media-player) integration. Additional retained topics:
   * `homeassistant/media_player/<id>/config` - discovery message.
   * `HA State` - `{"power": true, "volume": 35, "muted": false, "source": "1:0:1:3DD3:640:13E:820000:0:0:0:", "media_channel": "TVP 1 HD"}`.
   * `Availability` - `online`, `offline` (last will).
@@ -144,3 +144,4 @@
 |     | `RcControl` | `168` | string | Send RC command. |
 |     | `Volume` | `55` | integer | Set volume. |
 |     | `Mute` | `true` | boolean | Toggle mute. |
+|     | `Notify` | `message` | string | Show a message on the TV screen for 10 seconds. |
