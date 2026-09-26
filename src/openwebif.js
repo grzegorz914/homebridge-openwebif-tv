@@ -23,6 +23,8 @@ class OpenWebIf extends EventEmitter {
         this.inputsFile = inputsFile;
 
         this.mqttEnabled = mqttEnabled;
+        // Home Assistant media browser shows all bouquets, read even when the inputs come from the config
+        this.haDiscovery = mqttEnabled && config.mqtt?.haDiscovery === true;
 
         const baseUrl = `http://${host}:${port}`;
         this.axiosInstance = axios.create({
@@ -132,8 +134,17 @@ class OpenWebIf extends EventEmitter {
     async checkChannels() {
         try {
             // Get all channels
-            const channelsInfo = this.getInputsFromDevice ? await this.axiosInstance(ApiUrls.GetAllServices) : false;
+            const channelsInfo = this.getInputsFromDevice || this.haDiscovery ? await this.axiosInstance(ApiUrls.GetAllServices) : false;
             const deviceChannels = channelsInfo ? channelsInfo.data.services : [];
+
+            // Bouquets with their channels for the media browser, markers (1:64:...) are separators
+            const bouquets = (deviceChannels ?? []).map(bouquet => ({
+                name: bouquet.servicename,
+                channels: (bouquet.subservices ?? [])
+                    .filter(channel => channel.servicename && channel.servicereference && !channel.servicereference.startsWith('1:64:'))
+                    .map(channel => ({ name: channel.servicename, reference: channel.servicereference }))
+            })).filter(bouquet => bouquet.name && bouquet.channels.length > 0);
+            this.emit('bouquets', bouquets);
 
             // Prepare inputs
             const inputs = await this.prepareInputs(deviceChannels, this.bouquets, this.inputs, this.getInputsFromDevice);
@@ -168,6 +179,15 @@ class OpenWebIf extends EventEmitter {
             const recording = devState.isRecording === 'true';
             const streaming = devState.isStreaming === 'true';
             const playState = false;
+
+            // Current EPG event, start and end in epoch seconds, for the Home Assistant progress bar
+            const eventBegin = Number(devState.currservice_begin_timestamp) || null;
+            const eventEnd = Number(devState.currservice_end_timestamp) || null;
+            if (eventBegin !== this.eventBegin || eventEnd !== this.eventEnd) {
+                this.eventBegin = eventBegin;
+                this.eventEnd = eventEnd;
+                this.emit('epgEvent', eventBegin, eventEnd, devState.currservice_description ?? '');
+            }
 
             //update only if value change
             if (power === this.power && name === this.name && eventName === this.eventName && reference === this.reference && volume === this.volume && mute === this.mute && recording === this.recording && streaming === this.streaming && playState === this.playState) return;

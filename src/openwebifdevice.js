@@ -89,6 +89,26 @@ class OpenWebIfDevice extends EventEmitter {
             case 'RcControl':
                 await this.openwebif.send(ApiUrls.SetRcCommand + value);
                 break;
+            case 'PlayMedia': {
+                // Home Assistant play media: a channel service reference, or a stream url played as a 4097 service
+                const id = String(value?.id ?? value ?? '');
+                if (/^https?:\/\//i.test(id)) {
+                    const streamReference = `4097:0:1:0:0:0:0:0:0:0:${encodeURIComponent(id)}:Home Assistant`;
+                    await this.openwebif.send(ApiUrls.SetChannel + encodeURIComponent(streamReference));
+                } else if (/^\d+:\d+:/.test(id)) {
+                    await this.openwebif.send(ApiUrls.SetChannel + id);
+                } else {
+                    this.emit('warn', `MQTT PlayMedia unsupported id: ${id}`);
+                }
+                break;
+            }
+            case 'BrowseImage': {
+                // Media browser icon: the picon of the channel
+                const reference = String(value?.id ?? '');
+                const channel = (this.bouquets ?? []).flatMap(bouquet => bouquet.channels).find(c => c.reference === reference);
+                await this.ha?.answerBrowseImage(value?.key, () => this.getPicon(reference, channel?.name ?? ''));
+                break;
+            }
             case 'Notify':
                 // Info message on the TV screen for 10 s
                 await this.openwebif.send(ApiUrls.SendMessage + encodeURIComponent(String(value)));
@@ -812,6 +832,7 @@ class OpenWebIfDevice extends EventEmitter {
 
         try {
             this.ha = new HaDiscovery(this.mqtt1, {
+                browseImages: true,
                 objectId: `openwebif_${this.savedInfo.serialNumber || this.savedInfo.adressMac}`,
                 image: true,
                 name: this.name,
@@ -833,7 +854,9 @@ class OpenWebIfDevice extends EventEmitter {
                     next: { key: 'RcControl', value: '407' },
                     previous: { key: 'RcControl', value: '412' },
                     // Notify entity on the device, needs the integration 0.4.0
-                    notify: { key: 'Notify' }
+                    notify: { key: 'Notify' },
+                    // Media browser (bouquets) and play media (channel reference, stream url), integration 0.5.0
+                    play_media: { key: 'PlayMedia' }
                 }
             });
             await this.haPublishConfig();
@@ -847,7 +870,12 @@ class OpenWebIfDevice extends EventEmitter {
 
         try {
             const sources = (this.inputsServices ?? []).map(input => ({ id: input.reference, name: input.name }));
-            await this.ha.publishConfig({ sources });
+            const browse = (this.bouquets ?? []).map(bouquet => ({
+                name: bouquet.name,
+                type: 'channel',
+                items: bouquet.channels.map(channel => ({ id: channel.reference, name: channel.name }))
+            }));
+            await this.ha.publishConfig({ sources, browse });
             await this.haUpdateState();
         } catch (error) {
             if (this.logWarn) this.emit('warn', `HA Discovery publish error: ${error}`);
@@ -860,11 +888,17 @@ class OpenWebIfDevice extends EventEmitter {
         try {
             await this.ha.updateState({
                 power: this.power,
+                // Live TV plays, Home Assistant moves the progress bar only in the playing state
+                state: this.power ? 'playing' : 'off',
                 volume: Number.isFinite(Number(this.volume)) ? Number(this.volume) : undefined,
                 muted: this.mute === undefined ? undefined : this.mute === true || this.mute === 'true',
                 source: this.reference,
                 media_channel: this.channelName ?? '',
-                media_title: this.eventName ?? ''
+                media_title: this.eventName ?? '',
+                // EPG progress bar, position 0 at the event start, Home Assistant moves it
+                ...(this.power && this.eventBegin && this.eventEnd > this.eventBegin
+                    ? { media_position: 0, media_duration: this.eventEnd - this.eventBegin, media_position_updated_at: this.eventBegin }
+                    : { media_position: null, media_duration: null, media_position_updated_at: null })
             });
 
             // Channel picon, recordings (1:0:0...) have none
@@ -931,6 +965,15 @@ class OpenWebIfDevice extends EventEmitter {
                 })
                 .on('addRemoveOrUpdateInput', async (inputs, remove) => {
                     await this.addRemoveOrUpdateInput(inputs, remove);
+                })
+                .on('bouquets', async (bouquets) => {
+                    this.bouquets = bouquets;
+                    await this.haPublishConfig();
+                })
+                .on('epgEvent', async (begin, end) => {
+                    this.eventBegin = begin;
+                    this.eventEnd = end;
+                    await this.haUpdateState();
                 })
                 .on('stateChanged', async (power, name, eventName, reference, volume, mute, recording, streaming, playState) => {
                     const input = this.inputsServices?.find(input => input.reference === reference) ?? false;

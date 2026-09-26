@@ -17,6 +17,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For plugin < v5.1.0 use Homebridge UI <= v5.5.0
 - For plugin >= v5.1.0 use Homebridge UI >= v5.13.0
 
+## [5.5.0] - (26.09.2026)
+
+### Changes
+
+- added: Home Assistant progress bar of the current EPG event (start and end from the receiver), the receiver reports the playing state while on so the bar moves
+- added: Home Assistant media browser with all bouquets of the receiver and their channels, with the channel picons
+- added: Home Assistant play media, a channel by service reference or a stream url (e.g. Home Assistant TTS), MQTT key `PlayMedia`
+- the progress bar, media browser and play media need the MQTT Universal Media Player integration 0.5.0 or newer
+- readme update
+
 ## [5.4.0] - (26.09.2026)
 
 ### Changes

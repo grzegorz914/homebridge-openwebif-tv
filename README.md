@@ -125,7 +125,7 @@
 
 ### MQTT Integration
 
-* HA Discovery - if enabled, the device is published to Home Assistant as one media player (class `receiver`) with power, volume, mute, source selection and more. Channels are available as sources. The device also gets a notify entity that shows a message on the TV screen (`notify.send_message`), it needs the integration 0.4.0 or newer. Requires the [MQTT Universal Media Player](https://github.com/grzegorz914/homeassistant-mqtt-media-player) integration. Additional retained topics:
+* HA Discovery - if enabled, the device is published to Home Assistant as one media player (class `receiver`) with power, volume, mute, source selection and more. Channels are available as sources. The device also gets a notify entity that shows a message on the TV screen (`notify.send_message`), it needs the integration 0.4.0 or newer. With the integration 0.5.0 or newer the media card shows a progress bar of the current EPG event, the media browser lists all bouquets with their channels, and `media_player.play_media` switches to a channel (service reference) or plays a stream url, e.g. Home Assistant TTS. Requires the [MQTT Universal Media Player](https://github.com/grzegorz914/homeassistant-mqtt-media-player) integration. Additional retained topics:
   * `homeassistant/media_player/<id>/config` - discovery message.
   * `HA State` - `{"power": true, "volume": 35, "muted": false, "source": "1:0:1:3DD3:640:13E:820000:0:0:0:", "media_channel": "TVP 1 HD"}`.
   * `Availability` - `online`, `offline` (last will).
@@ -145,3 +145,4 @@
 |     | `Volume` | `55` | integer | Set volume. |
 |     | `Mute` | `true` | boolean | Toggle mute. |
 |     | `Notify` | `message` | string | Show a message on the TV screen for 10 seconds. |
+|     | `PlayMedia` | `{"id": "1:0:1:3DD3:640:13E:820000:0:0:0:", "type": "channel"}` | object | Switch to a channel by service reference, or play a stream when `id` is a http(s) url. |
