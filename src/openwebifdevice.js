@@ -45,6 +45,7 @@ class OpenWebIfDevice extends EventEmitter {
         //inputs variable
         this.functions = new Functions();
         this.inputIdentifier = 1;
+        this.haInputs = new Map();
 
         //sensors
         for (const sensor of this.sensors) {
@@ -205,6 +206,10 @@ class OpenWebIfDevice extends EventEmitter {
                 const inputNamePrefix = input.namePrefix;
                 const inputVisibility = this.savedInputsTargetVisibility[inputReference] ?? 0;
 
+                // Home Assistant gets all inputs, the HomeKit limit of 85 does not apply
+                if (remove) this.haInputs.delete(inputReference);
+                else this.haInputs.set(inputReference, { reference: inputReference, name: sanitizedName, mode: inputMode });
+
                 if (remove) {
                     const svc = this.inputsServices.find(s => s.reference === inputReference);
                     if (svc) {
@@ -288,7 +293,8 @@ class OpenWebIfDevice extends EventEmitter {
 
             // Only one time run
             if (updated) await this.displayOrder();
-            if (updated) this.haPublishConfig();
+            // Home Assistant also gets the inputs over the HomeKit limit, publishConfig skips an unchanged config
+            this.haPublishConfig();
 
             return true;
         } catch (error) {
@@ -869,7 +875,7 @@ class OpenWebIfDevice extends EventEmitter {
         if (!this.ha) return;
 
         try {
-            const sources = (this.inputsServices ?? []).map(input => ({ id: input.reference, name: input.name }));
+            const sources = [...this.haInputs.values()].map(input => ({ id: input.reference, name: input.name }));
             const browse = (this.bouquets ?? []).map(bouquet => ({
                 name: bouquet.name,
                 type: 'channel',
