@@ -41,6 +41,9 @@ class OpenWebIfDevice extends EventEmitter {
         this.mqtt = device.mqtt ?? {};
         this.mqtt1 = mqtt1;
         this.mqttConnected = mqttConnected;
+        // The broker may come online after the start or restart, the device then publishes again
+        this.haReady = false;
+        this.mqtt1?.on('online', () => this.mqttOnline().catch((error) => this.emit('warn', `MQTT online error: ${error}`)));
 
         //inputs variable
         this.functions = new Functions();
@@ -833,6 +836,15 @@ class OpenWebIfDevice extends EventEmitter {
     }
 
     //home assistant discovery
+    // MQTT connected, at start when the broker was not running yet or after a restart of the broker
+    async mqttOnline() {
+        this.mqttConnected = true;
+        if (!this.haReady) return;
+        if (!this.ha) return this.setupHaDiscovery();
+        this.ha.reset();
+        await this.haPublishConfig();
+    }
+
     async setupHaDiscovery() {
         if (!this.mqttConnected || !this.mqtt.haDiscovery) return;
 
@@ -1138,6 +1150,7 @@ class OpenWebIfDevice extends EventEmitter {
 
             //prepare accessory
             const accessory = await this.prepareAccessory(macAdress);
+            this.haReady = true;
             this.setupHaDiscovery();
             return accessory;
         } catch (error) {
