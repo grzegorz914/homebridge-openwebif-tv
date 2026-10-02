@@ -3,6 +3,9 @@ import OpenWebIf from './openwebif.js';
 import Functions from './functions.js';
 import HaDiscovery from './hadiscovery.js';
 import { ApiUrls, DiacriticsMap } from './constants.js';
+
+// Picon folders of Enigma2 images, in the order OpenWebIf searches them
+const PiconFolders = ['/picon', '/media/hdd/picon', '/media/usb/picon', '/media/mmc/picon', '/media/cf/picon', '/usr/share/enigma2/picon', '/data/picon'];
 let Accessory, Characteristic, Service, Categories, Encode, AccessoryUUID;
 
 class OpenWebIfDevice extends EventEmitter {
@@ -946,22 +949,57 @@ class OpenWebIfDevice extends EventEmitter {
         const byReference = fields.join('_');
         const byReferenceType1 = fields.length > 2 && fields[2] !== '1' ? [fields[0], fields[1], '1', ...fields.slice(3)].join('_') : '';
 
-        let picon = null;
         const names = [byName, byReference, byReferenceType1].filter(Boolean);
-        for (const name of names) {
-            try {
-                const response = await this.openwebif.axiosInstance.get(`/picon/${name}.png`, { responseType: 'arraybuffer', validateStatus: status => status === 200 });
-                picon = Buffer.from(response.data);
-                break;
-            } catch {
-                // not found, try the next name
-            }
-        }
+        const picon = await this.fetchPicon(names);
 
         // Misses are not cached, picons installed later are found without a restart
         if (picon) this.piconCache.set(reference, picon);
-        if (this.logDebug) this.emit('debug', `Picon for ${channelName}: ${picon ? `${picon.length} bytes` : `not found, tried: ${names.map(name => `/picon/${name}.png`).join(', ')}`}`);
+        if (this.logDebug) this.emit('debug', `Picon for ${channelName}: ${picon ? `${picon.length} bytes` : `not found, tried: ${names.map(name => `${name}.png`).join(', ')}`}`);
         return picon;
+    }
+
+    // The /picon route serves only the picon folder OpenWebIf found at its start, a folder mounted or filled later
+    // is not served (404 for every picon). The file API reads any folder, the first folder with a picon is kept.
+    async fetchPicon(names) {
+        const image = (data) => {
+            const buffer = Buffer.from(data ?? []);
+            // PNG or JPEG, the file API answers a missing file with a text message and status 200
+            const png = buffer.length > 8 && buffer.readUInt32BE(0) === 0x89504e47;
+            const jpeg = buffer.length > 3 && buffer[0] === 0xff && buffer[1] === 0xd8;
+            return png || jpeg ? buffer : null;
+        };
+        const get = async (url, params) => {
+            try {
+                const response = await this.openwebif.axiosInstance.get(url, { params, responseType: 'arraybuffer', validateStatus: status => status === 200 });
+                return image(response.data);
+            } catch {
+                return null;
+            }
+        };
+
+        if (this.piconRoute !== false) {
+            for (const name of names) {
+                const picon = await get(`/picon/${name}.png`);
+                if (picon) {
+                    this.piconRoute = true;
+                    return picon;
+                }
+            }
+        }
+
+        const folders = this.piconFolder ? [this.piconFolder] : PiconFolders;
+        for (const folder of folders) {
+            for (const name of names) {
+                const picon = await get('/file', { file: `${folder}/${name}.png` });
+                if (picon) {
+                    // The route never served a picon, the folder is read through the file API from now on
+                    if (!this.piconRoute) this.piconRoute = false;
+                    this.piconFolder = folder;
+                    return picon;
+                }
+            }
+        }
+        return null;
     }
 
     //start

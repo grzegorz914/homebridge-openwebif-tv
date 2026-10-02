@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For plugin < v5.1.0 use Homebridge UI <= v5.5.0
 - For plugin >= v5.1.0 use Homebridge UI >= v5.13.0
 
+## [5.5.3] - (02.10.2026)
+
+### Changes
+
+- fixed: Home Assistant, channel picons not shown when OpenWebIf does not serve its /picon route (picon folder mounted or filled after the start of OpenWebIf). The picon is now read through the OpenWebIf file API from the picon folder of the receiver
+
 ## [5.5.2] - (29.09.2026)
 
 ### Changes
