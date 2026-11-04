@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For plugin < v5.1.0 use Homebridge UI <= v5.5.0
 - For plugin >= v5.1.0 use Homebridge UI >= v5.13.0
 
+## [5.5.6] - (04.11.2026)
+
+### Changes
+
+- updated: dependencies, axios and mqtt to the latest versions
+
 ## [5.5.5] - (04.11.2026)
 
 ### Changes
