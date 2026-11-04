@@ -854,7 +854,9 @@ class OpenWebIfDevice extends EventEmitter {
         try {
             this.ha = new HaDiscovery(this.mqtt1, {
                 browseImages: true,
-                objectId: `openwebif_${this.savedInfo.serialNumber || this.savedInfo.adressMac}`,
+                // The MAC address never changes. The serial number field holds the Webif version (OWIF 2.4.1),
+                // an id built from it changed with every OpenWebIf update and created a second device in Home Assistant
+                objectId: `openwebif_${this.savedInfo.adressMac || this.savedInfo.serialNumber}`,
                 image: true,
                 name: this.name,
                 deviceClass: 'receiver',
@@ -880,6 +882,10 @@ class OpenWebIfDevice extends EventEmitter {
                     play_media: { key: 'PlayMedia' }
                 }
             });
+
+            // Up to v5.5.4 the id was built from the Webif version, clear that retained config first so Home Assistant removes the old device before it adds this one
+            const legacyId = `openwebif_${this.savedInfo.serialNumber}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+            if (this.savedInfo.serialNumber && legacyId !== this.ha.objectId) await this.mqtt1.publishRetained(`${this.mqtt1.haPrefix}/media_player/${legacyId}/config`, '');
             await this.haPublishConfig();
         } catch (error) {
             if (this.logWarn) this.emit('warn', `HA Discovery setup error: ${error}`);

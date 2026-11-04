@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For plugin < v5.1.0 use Homebridge UI <= v5.5.0
 - For plugin >= v5.1.0 use Homebridge UI >= v5.13.0
 
+## [5.5.5] - (04.11.2026)
+
+### Changes
+
+- fixed: Home Assistant, a second device (and a second set of entities, e.g. `media_player.tuner_sat_2`) appeared after every OpenWebIf update. The MQTT discovery id was built from the Webif version (OWIF 2.4.1), it is now built from the MAC address of the receiver. On the first start the plugin clears the retained discovery message of the old id (`openwebif_OWIF_x_y_z`), so Home Assistant removes the old device. Messages left by earlier versions (e.g. `homeassistant/media_player/openwebif_OWIF_2_4_0/config`) can be cleared with an empty retained publish
+
 ## [5.5.4] - (29.10.2026)
 
 ### Changes
