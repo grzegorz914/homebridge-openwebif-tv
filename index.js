@@ -2,6 +2,7 @@ import { join } from 'path';
 import { mkdirSync, existsSync, writeFileSync } from 'fs';
 import OpenWebIfDevice from './src/openwebifdevice.js';
 import ImpulseGenerator from './src/impulsegenerator.js';
+import { isConnectionError } from './src/openwebif.js';
 import Mqtt from './src/mqtt.js';
 import { PluginName, PlatformName } from './src/constants.js';
 
@@ -97,13 +98,17 @@ class OpenWebIfPlatform {
 			return;
 		}
 
-		// Create MQTT once — before the retry loop — so the connection is
-		// established a single time and survives across all connect attempts.
+		// MQTT is created once, after the receiver answered for the first time, so nothing
+		// is connected or published while the receiver is not reachable.
 		// The 'set' handler uses activeDevice so it always routes to the current instance.
 		let activeDevice = null;
-		let mqtt1 = null;
-		let mqttConnected = false;
-		if (device.mqtt?.enable) {
+		let mqttStarted = null;
+		const startMqtt = () => (mqttStarted ??= connectMqtt());
+		const connectMqtt = async () => {
+			if (!device.mqtt?.enable) return { mqtt1: null, mqttConnected: false };
+
+			let mqtt1 = null;
+			let mqttConnected = false;
 			try {
 				await new Promise((resolve) => {
 					const timer = setTimeout(resolve, 10000);
@@ -139,20 +144,30 @@ class OpenWebIfPlatform {
 			} catch (error) {
 				if (logLevel.warn) log.warn(`Device: ${host} ${name}, MQTT start error: ${error.message ?? error}`);
 			}
-		}
+			return { mqtt1, mqttConnected };
+		};
 
 		// The startup impulse generator retries the full connect+start cycle
 		// every 120 s until it succeeds, then hands off to the device
 		// impulse generator and stops itself.
+		let notReachable = false;
 		const impulseGenerator = new ImpulseGenerator()
 			.on('start', async () => {
 				try {
 					await this.startDevice(
 						device, name, host, refreshInterval,
 						files, logLevel, log, api, impulseGenerator,
-						mqtt1, mqttConnected, (d) => { activeDevice = d; }
+						startMqtt, (d) => { activeDevice = d; }
 					);
 				} catch (error) {
+					// no answer from the receiver is not an error, it is reported once as not reachable
+					if (isConnectionError(error)) {
+						if (!notReachable) {
+							notReachable = true;
+							if (logLevel.warn) log.warn(`Device: ${host} ${name}, not reachable`);
+						}
+						return;
+					}
 					if (logLevel.error) log.error(`Device: ${host} ${name}, Start impulse generator error: ${error.message ?? error}, trying again.`);
 				}
 			})
@@ -165,8 +180,8 @@ class OpenWebIfPlatform {
 
 	// ── Connect and register accessory for one device ─────────────────────────
 
-	async startDevice(device, name, host, refreshInterval, files, logLevel, log, api, impulseGenerator, mqtt1, mqttConnected, onDeviceReady) {
-		const deviceInstance = new OpenWebIfDevice(api, device, files.devInfo, files.inputs, files.channels, files.inputsNames, files.inputsVisibility, mqtt1, mqttConnected)
+	async startDevice(device, name, host, refreshInterval, files, logLevel, log, api, impulseGenerator, startMqtt, onDeviceReady) {
+		const deviceInstance = new OpenWebIfDevice(api, device, files.devInfo, files.inputs, files.channels, files.inputsNames, files.inputsVisibility)
 			.on('devInfo', (info) => logLevel.devInfo && log.info(info))
 			.on('success', (msg) => logLevel.success && log.success(`Device: ${host} ${name}, ${msg}`))
 			.on('info', (msg) => log.info(`Device: ${host} ${name}, ${msg}`))
@@ -174,12 +189,18 @@ class OpenWebIfPlatform {
 			.on('warn', (msg) => log.warn(`Device: ${host} ${name}, ${msg}`))
 			.on('error', (msg) => log.error(`Device: ${host} ${name}, ${msg}`));
 
-		const accessory = await deviceInstance.start();
-		if (!accessory) return;
+		// The broker is connected as soon as the receiver API answers, the HomeKit accessory is not needed for it
+		const started = await deviceInstance.start(async () => {
+			const { mqtt1, mqttConnected } = await startMqtt();
+			await deviceInstance.attachMqtt(mqtt1, mqttConnected);
+		});
+		if (!started) return;
 
 		onDeviceReady(deviceInstance);
-		api.publishExternalAccessories(PluginName, [accessory]);
-		if (logLevel.success) log.success(`Device: ${host} ${name}, Published as external accessory.`);
+		if (deviceInstance.accessory) {
+			api.publishExternalAccessories(PluginName, [deviceInstance.accessory]);
+			if (logLevel.success) log.success(`Device: ${host} ${name}, Published as external accessory.`);
+		}
 
 		// Stop startup generator and hand off to the device generator
 		await impulseGenerator.state(false);

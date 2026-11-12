@@ -7,6 +7,15 @@ import { ApiUrls } from './constants.js';
 // Errors of a request that got no answer from the receiver, for example after the power of the receiver was cut
 const CONNECTION_ERROR_CODES = ['ECONNREFUSED', 'ECONNRESET', 'ECONNABORTED', 'ETIMEDOUT', 'EHOSTUNREACH', 'EHOSTDOWN', 'ENETUNREACH', 'ENETDOWN', 'ENOTFOUND', 'EAI_AGAIN', 'EPIPE'];
 
+// any failed request without an HTTP answer means that the device cannot be reached, a parse error of an answer is not one of them
+export const isConnectionError = (error) => {
+    for (let e = error; e; e = e.cause) {
+        if (e.response) return false;
+        if (e.isAxiosError || CONNECTION_ERROR_CODES.includes(e.code) || /timeout|socket hang up|EHOST|ENET/i.test(e.message ?? '')) return true;
+    }
+    return false;
+};
+
 class OpenWebIf extends EventEmitter {
     constructor(config, devInfoFile, inputsFile, channelsFile, mqttEnabled) {
         super();
@@ -62,6 +71,8 @@ class OpenWebIf extends EventEmitter {
         };
         this.impulseGenerator = new ImpulseGenerator()
             .on('checkChannels', () => this.handleWithLock('checkChannels', async () => {
+                // the receiver does not answer, only the state check runs until it is back
+                if (this.connectionLost) return;
                 await this.checkChannels();
             }))
             .on('checkState', () => this.handleWithLock('checkState', async () => {
@@ -79,6 +90,8 @@ class OpenWebIf extends EventEmitter {
         try {
             await fn();
         } catch (error) {
+            // no answer from the receiver is not an error, it is reported once as not reachable
+            if (this.isConnectionError(error)) { this.setOffline(error.cause ?? error); return; }
             if (this.logError) this.emit('error', `Impulse generator error: ${error}`);
         } finally {
             this.locks[lockKey] = false;
@@ -159,7 +172,7 @@ class OpenWebIf extends EventEmitter {
 
             return true;
         } catch (error) {
-            if (this.logError) throw new Error(`Check channels error: ${error}`);
+            throw new Error(`Check channels error: ${error}`, { cause: error });
         }
     }
 
@@ -172,7 +185,7 @@ class OpenWebIf extends EventEmitter {
             if (this.connectionLost) {
                 this.connectionLost = false;
                 this.forceEmit = true;
-                this.emit('success', `Receiver is reachable again`);
+                this.emit('success', `reachable again`);
                 this.emit('reachable', true);
             }
 
@@ -220,15 +233,12 @@ class OpenWebIf extends EventEmitter {
 
             return true;
         } catch (error) {
-            if (this.isConnectionError(error)) return this.setOffline(error);
-            if (this.logError) throw new Error(`Check state error: ${error}`);
+            throw new Error(`Check state error: ${error}`, { cause: error });
         }
     }
 
     isConnectionError(error) {
-        // any failed request without an HTTP answer means that the device cannot be reached, a parse error of an answer is not one of them
-        if (error?.response) return false;
-        return !!error?.isAxiosError || CONNECTION_ERROR_CODES.includes(error?.code) || /timeout|socket hang up|EHOST|ENET/i.test(error?.message ?? '');
+        return isConnectionError(error);
     }
 
     // The receiver does not answer, for example after the power was cut, the Home app shows the accessory as not responding
@@ -236,7 +246,8 @@ class OpenWebIf extends EventEmitter {
         if (this.connectionLost) return false;
 
         this.connectionLost = true;
-        this.emit('warn', `Receiver is not reachable: ${error?.code ?? error?.message ?? error}`);
+        if (this.logDebug) this.emit('debug', `Not reachable, error: ${error?.code ?? error?.message ?? error}`);
+        this.emit('warn', `not reachable`);
         this.emit('reachable', false);
         return false;
     }
@@ -277,7 +288,7 @@ class OpenWebIf extends EventEmitter {
 
             return true;
         } catch (error) {
-            if (this.logError) throw new Error(`Connect error: ${error}`);
+            if (this.logError) throw new Error(`Connect error: ${error}`, { cause: error });
         }
     }
 

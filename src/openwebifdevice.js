@@ -843,6 +843,15 @@ class OpenWebIfDevice extends EventEmitter {
         return svc;
     }
 
+    // The broker is connected after the first successful start of the receiver
+    async attachMqtt(mqtt1, mqttConnected) {
+        if (!mqtt1) return;
+
+        this.mqtt1 = mqtt1;
+        this.mqtt1.on('online', () => this.mqttOnline().catch((error) => this.emit('warn', `MQTT online error: ${error}`)));
+        if (mqttConnected) await this.mqttOnline();
+    }
+
     //home assistant discovery
     // MQTT connected, at start when the broker was not running yet or after a restart of the broker
     async mqttOnline() {
@@ -1014,7 +1023,7 @@ class OpenWebIfDevice extends EventEmitter {
     }
 
     //start
-    async start() {
+    async start(onReceiverConnected) {
         try {
             //openwebif client
             this.openwebif = new OpenWebIf(this.device, this.devInfoFile, this.inputsFile, this.channelsFile, this.mqtt.enable)
@@ -1191,20 +1200,32 @@ class OpenWebIfDevice extends EventEmitter {
                 return false;
             }
 
-            //prepare data for accessory
-            const macAdress = await this.prepareDataForAccessory();
-            if (!macAdress) {
-                this.emit('warn', `Missing Mac Address`);
-                return false;
-            }
+            //the receiver answers, start what works on the receiver only, not on the accessory
+            await onReceiverConnected?.();
 
-            //prepare accessory
-            const accessory = await this.prepareAccessory(macAdress);
+            //prepare data, also used by the MQTT and Home Assistant side
+            const macAdress = await this.prepareDataForAccessory();
+
+            //MQTT and Home Assistant work on the receiver, they do not depend on the HomeKit accessory
             this.haReady = true;
             this.setupHaDiscovery();
-            return accessory;
+
+            //prepare accessory, when it is not possible the receiver is still controlled over MQTT
+            this.accessory = null;
+            if (!macAdress) {
+                this.emit('warn', `Missing Mac Address, HomeKit accessory not created`);
+            } else {
+                try {
+                    this.accessory = await this.prepareAccessory(macAdress);
+                } catch (error) {
+                    this.accessory = null;
+                    this.emit('error', `HomeKit accessory not created: ${error}`);
+                }
+            }
+
+            return true;
         } catch (error) {
-            if (this.logError) throw new Error(`Start error: ${error}`);
+            if (this.logError) throw new Error(`Start error: ${error}`, { cause: error });
         }
     }
 }

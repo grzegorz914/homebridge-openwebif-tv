@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For plugin < v5.1.0 use Homebridge UI <= v5.5.0
 - For plugin >= v5.1.0 use Homebridge UI >= v5.13.0
 
+## [5.6.1] - (12.11.2026)
+
+### Changes
+
+- fixed: a receiver that cannot be reached does not generate errors in the log anymore, the plugin logs only `not reachable` once, then checks the receiver quietly and logs `reachable again`, this applies also to the start of the plugin when the receiver is switched off
+- changed: MQTT connects to the broker and publishes only when the receiver answers on the API, and it does not depend on the HomeKit accessory, when the accessory cannot be created the receiver is still controlled over MQTT
+
 ## [5.6.0] - (12.11.2026)
 
 ### Changes
