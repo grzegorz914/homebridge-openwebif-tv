@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - For plugin < v5.1.0 use Homebridge UI <= v5.5.0
 - For plugin >= v5.1.0 use Homebridge UI >= v5.13.0
 
+## [5.5.8] - (12.11.2026)
+
+### Changes
+
+- fixed: a receiver without the power was not set to OFF when the system reported the error EHOSTDOWN (host down, returned by macOS), every request that gets no answer from the receiver is now treated as a lost connection
+
 ## [5.5.7] - (12.11.2026)
 
 ### Changes

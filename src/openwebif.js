@@ -5,7 +5,7 @@ import ImpulseGenerator from './impulsegenerator.js';
 import { ApiUrls } from './constants.js';
 
 // Errors of a request that got no answer from the receiver, for example after the power of the receiver was cut
-const CONNECTION_ERROR_CODES = ['ECONNREFUSED', 'ECONNRESET', 'ECONNABORTED', 'ETIMEDOUT', 'EHOSTUNREACH', 'ENETUNREACH', 'ENETDOWN', 'ENOTFOUND', 'EAI_AGAIN', 'EPIPE'];
+const CONNECTION_ERROR_CODES = ['ECONNREFUSED', 'ECONNRESET', 'ECONNABORTED', 'ETIMEDOUT', 'EHOSTUNREACH', 'EHOSTDOWN', 'ENETUNREACH', 'ENETDOWN', 'ENOTFOUND', 'EAI_AGAIN', 'EPIPE'];
 
 class OpenWebIf extends EventEmitter {
     constructor(config, devInfoFile, inputsFile, channelsFile, mqttEnabled) {
@@ -222,8 +222,9 @@ class OpenWebIf extends EventEmitter {
     }
 
     isConnectionError(error) {
+        // any failed request without an HTTP answer means that the device cannot be reached, a parse error of an answer is not one of them
         if (error?.response) return false;
-        return CONNECTION_ERROR_CODES.includes(error?.code) || /timeout|socket hang up/i.test(error?.message ?? '');
+        return !!error?.isAxiosError || CONNECTION_ERROR_CODES.includes(error?.code) || /timeout|socket hang up|EHOST|ENET/i.test(error?.message ?? '');
     }
 
     // The receiver does not answer, for example after the power was cut, it is set to OFF so the Home app does not keep the last state
