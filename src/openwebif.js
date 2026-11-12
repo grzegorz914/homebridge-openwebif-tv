@@ -53,6 +53,7 @@ class OpenWebIf extends EventEmitter {
         this.playState = false;
         this.devInfo = {};
         this.connectionLost = false;
+        this.forceEmit = false;
 
         //lock flags
         this.locks = {
@@ -170,7 +171,9 @@ class OpenWebIf extends EventEmitter {
 
             if (this.connectionLost) {
                 this.connectionLost = false;
+                this.forceEmit = true;
                 this.emit('success', `Receiver is reachable again`);
+                this.emit('reachable', true);
             }
 
             //mqtt
@@ -199,8 +202,9 @@ class OpenWebIf extends EventEmitter {
             }
 
             //update only if value change
-            if (power === this.power && name === this.name && eventName === this.eventName && reference === this.reference && volume === this.volume && mute === this.mute && recording === this.recording && streaming === this.streaming && playState === this.playState) return;
+            if (!this.forceEmit && power === this.power && name === this.name && eventName === this.eventName && reference === this.reference && volume === this.volume && mute === this.mute && recording === this.recording && streaming === this.streaming && playState === this.playState) return;
 
+            this.forceEmit = false;
             this.power = power;
             this.name = name;
             this.eventName = eventName;
@@ -227,21 +231,14 @@ class OpenWebIf extends EventEmitter {
         return !!error?.isAxiosError || CONNECTION_ERROR_CODES.includes(error?.code) || /timeout|socket hang up|EHOST|ENET/i.test(error?.message ?? '');
     }
 
-    // The receiver does not answer, for example after the power was cut, it is set to OFF so the Home app does not keep the last state
+    // The receiver does not answer, for example after the power was cut, the Home app shows the accessory as not responding
     setOffline(error) {
         if (this.connectionLost) return false;
 
         this.connectionLost = true;
-        this.emit('warn', `Receiver is not reachable, set to OFF: ${error?.code ?? error?.message ?? error}`);
-
-        if (!this.power && !this.recording && !this.streaming) return false;
-
-        this.power = false;
-        this.recording = false;
-        this.streaming = false;
-        this.playState = false;
-        this.emit('stateChanged', this.power, this.name, this.eventName, this.reference, this.volume, this.mute, this.recording, this.streaming, this.playState);
-        return true;
+        this.emit('warn', `Receiver is not reachable: ${error?.code ?? error?.message ?? error}`);
+        this.emit('reachable', false);
+        return false;
     }
 
     async connect() {

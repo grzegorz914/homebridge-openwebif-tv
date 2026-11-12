@@ -1,6 +1,7 @@
 import EventEmitter from 'events';
 import OpenWebIf from './openwebif.js';
 import Functions from './functions.js';
+import { applyReachability } from './reachability.js';
 import HaDiscovery from './hadiscovery.js';
 import { ApiUrls, DiacriticsMap } from './constants.js';
 
@@ -18,6 +19,8 @@ class OpenWebIfDevice extends EventEmitter {
         Categories = api.hap.Categories;
         Encode = api.hap.encode;
         AccessoryUUID = api.hap.uuid;
+        this.hap = api.hap;
+        this.reachable = true;
 
         //device configuration
         this.device = device;
@@ -789,6 +792,8 @@ class OpenWebIfDevice extends EventEmitter {
                 }
             }
 
+            applyReachability(accessory, this.hap, () => this.reachable);
+
             return accessory;
         } catch (error) {
             throw new Error(`Prepare accessory error: ${error.message ?? error}`);
@@ -1013,6 +1018,7 @@ class OpenWebIfDevice extends EventEmitter {
         try {
             //openwebif client
             this.openwebif = new OpenWebIf(this.device, this.devInfoFile, this.inputsFile, this.channelsFile, this.mqtt.enable)
+                .on('reachable', (reachable) => { this.reachable = reachable; })
                 .on('deviceInfo', (info) => {
                     this.emit('devInfo', `-------- ${this.name} --------`);
                     this.emit('devInfo', `Manufacturer: ${info.manufacturer}`);
